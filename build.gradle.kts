@@ -7,6 +7,7 @@ version = "${property("mod.version")}+${stonecutter.current.version}"
 base.archivesName = property("mod.id") as String
 
 repositories {
+    mavenCentral()
     fun strictMaven(url: String, alias: String, vararg groups: String) = exclusiveContent {
         forRepository { maven(url) { name = alias } }
         filter { groups.forEach(::includeGroup) }
@@ -32,8 +33,8 @@ dependencies {
     modImplementation("maven.modrinth:midnightlib:${property("deps.midnightlib_version")}")
     include("maven.modrinth:midnightlib:${property("deps.midnightlib_version")}")
 
-    modImplementation("com.fasterxml.jackson.core:jackson-databind:3.0.0")
-    include("com.fasterxml.jackson.core:jackson-databind:3.0.0")
+    implementation("tools.jackson.core:jackson-core:3.1.0-rc1")
+    implementation("tools.jackson.core:jackson-databind:3.1.0-rc1")
 }
 
 loom {
