@@ -1,0 +1,12 @@
+{
+  "modid.midnightconfig.title": "Skyblock Enhancements",
+
+  "packcore.midnightconfig.category.SKYBLOCK_ENCHANTMENTS": "General Featuers",
+
+  "modid.midnightconfig.text": "General Skyblock Features",
+  "modid.midnightconfig.showMissingEnchantments": "Show Missing Enchantments",
+  "modid.midnightconfig.showMissingEnchantments.tooltip": "Show Missing Enchantments in the tooltip of an item.",
+  "modid.midnightconfig.showMissingEnchantments.label.tooltip": "Show Missing Enchantments in the tooltip of an item.",
+  "modid.midnightconfig.showWhenPressingShift": "Only show Missing Enchantments when pressing shift",
+  "modid.midnightconfig.showWhenPressingShift.label": "Only show Missing Enchantments when pressing shift. \nSetting this to false makes missing Enchantments always visible"
+}
