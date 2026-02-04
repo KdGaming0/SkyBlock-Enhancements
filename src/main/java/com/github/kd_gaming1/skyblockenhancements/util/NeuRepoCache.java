@@ -23,7 +23,7 @@ public class NeuRepoCache {
 
     public NeuRepoCache() {
         this.rawBase = URI.create("https://raw.githubusercontent.com/NotEnoughUpdates/NotEnoughUpdates-REPO/master/");
-        this.storageRoot = FabricLoader.getInstance().getConfigDir().resolve("skyblock-enhancements").resolve("data");
+        this.storageRoot = FabricLoader.getInstance().getConfigDir().resolve("Skyblock Enhancements").resolve("data");
         this.client = HttpClient.newHttpClient();
     }
 
