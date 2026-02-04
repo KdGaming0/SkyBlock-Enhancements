@@ -31,6 +31,9 @@ dependencies {
 
     modImplementation("maven.modrinth:midnightlib:${property("deps.midnightlib_version")}")
     include("maven.modrinth:midnightlib:${property("deps.midnightlib_version")}")
+
+    modImplementation("com.fasterxml.jackson.core:jackson-databind:3.0.0")
+    include("com.fasterxml.jackson.core:jackson-databind:3.0.0")
 }
 
 loom {
