@@ -28,6 +28,9 @@ dependencies {
     modImplementation("net.fabricmc:fabric-loader:${property("deps.fabric_loader")}")
 
     fapi("fabric-lifecycle-events-v1", "fabric-resource-loader-v0", "fabric-content-registries-v0")
+
+    modImplementation("maven.modrinth:midnightlib:${property("deps.midnightlib_version")}")
+    include("maven.modrinth:midnightlib:${property("deps.midnightlib_version")}")
 }
 
 loom {
@@ -58,12 +61,16 @@ tasks {
         inputs.property("name", project.property("mod.name"))
         inputs.property("version", project.property("mod.version"))
         inputs.property("minecraft", project.property("mod.mc_dep"))
+        inputs.property("fabricloader", project.property("deps.fabric_loader"))
+        inputs.property("moulconfig", project.property("deps.moulconfig_version"))
 
         val props = mapOf(
             "id" to project.property("mod.id"),
-            "name" to project.property("mod.id"),
-            "version" to project.property("mod.id"),
-            "minecraft" to project.property("mod.mc_dep")
+            "name" to project.property("mod.name"),
+            "version" to project.property("mod.version"),
+            "minecraft" to project.property("mod.mc_dep"),
+            "fabricloader" to project.property("deps.fabric_loader"),
+            "moulconfig" to project.property("deps.moulconfig_version")
         )
 
         filesMatching("fabric.mod.json") { expand(props) }
