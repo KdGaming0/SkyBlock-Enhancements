@@ -13,28 +13,37 @@ repositories {
         filter { groups.forEach(::includeGroup) }
     }
     strictMaven("https://api.modrinth.com/maven", "Modrinth", "maven.modrinth")
+    maven("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1")
+    exclusiveContent {
+        forRepository {
+            maven {
+                url = uri("https://maven.azureaaron.net/releases")
+            }
+        }
+
+        filter {
+            includeGroup("net.azureaaron")
+        }
+    }
 }
 
 dependencies {
-    /**
-     * Fetches only the required Fabric API modules to not waste time downloading all of them for each version.
-     * @see <a href="https://github.com/FabricMC/fabric">List of Fabric API modules</a>
-     */
-    fun fapi(vararg modules: String) {
-        for (it in modules) modImplementation(fabricApi.module(it, property("deps.fabric_api") as String))
-    }
-
     minecraft("com.mojang:minecraft:${stonecutter.current.version}")
     mappings("net.fabricmc:yarn:${property("deps.yarn_mappings")}:v2")
     modImplementation("net.fabricmc:fabric-loader:${property("deps.fabric_loader")}")
-
-    fapi("fabric-lifecycle-events-v1", "fabric-resource-loader-v0", "fabric-content-registries-v0")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${property("deps.fabric_api")}")
 
     modImplementation("maven.modrinth:midnightlib:${property("deps.midnightlib_version")}")
     include("maven.modrinth:midnightlib:${property("deps.midnightlib_version")}")
 
+    modImplementation("net.azureaaron:hm-api:${property("deps.hm_api_version")}")
+    include("net.azureaaron:hm-api:${property("deps.hm_api_version")}")
+
     implementation("tools.jackson.core:jackson-core:3.1.0-rc1")
     implementation("tools.jackson.core:jackson-databind:3.1.0-rc1")
+
+    modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
+    modRuntimeOnly("maven.modrinth:modmenu:${property("deps.modmenu_version")}")
 }
 
 loom {
@@ -67,6 +76,7 @@ tasks {
         inputs.property("minecraft", project.property("mod.mc_dep"))
         inputs.property("fabricloader", project.property("deps.fabric_loader"))
         inputs.property("moulconfig", project.property("deps.moulconfig_version"))
+        inputs.property("hm_api", project.property("deps.hm_api_version"))
 
         val props = mapOf(
             "id" to project.property("mod.id"),
@@ -74,7 +84,8 @@ tasks {
             "version" to project.property("mod.version"),
             "minecraft" to project.property("mod.mc_dep"),
             "fabricloader" to project.property("deps.fabric_loader"),
-            "moulconfig" to project.property("deps.moulconfig_version")
+            "moulconfig" to project.property("deps.moulconfig_version"),
+            "hm_api" to project.property("deps.hm_api_version"),
         )
 
         filesMatching("fabric.mod.json") { expand(props) }

@@ -1,6 +1,5 @@
 package com.github.kd_gaming1.skyblockenhancements.util;
 
-import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -13,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
+import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 // Downloads files from the NEU repo into the mod data folder
@@ -36,7 +36,7 @@ public class NeuRepoCache {
         return storageRoot.resolve(relativePath.replace("/", java.io.File.separator));
     }
 
-    private Path fetchAndWrite(String relativePath, String action) {
+    private void fetchAndWrite(String relativePath, String action) {
         Path target = getCachedPath(relativePath);
         try {
             String body = fetchText(relativePath);
@@ -45,15 +45,10 @@ public class NeuRepoCache {
             if (parent != null) Files.createDirectories(parent);
 
             Files.writeString(target, body, StandardCharsets.UTF_8);
-            SkyblockEnhancements.LOGGER.info("{} {} -> {}", action, resolve(relativePath), target);
-            return target;
+            LOGGER.info("{} {} -> {}", action, resolve(relativePath), target);
 
         } catch (Exception e) {
-            SkyblockEnhancements.LOGGER.error(
-                    "{} failed for {}. Reason: {}",
-                    action, resolve(relativePath), e.toString()
-            );
-            throw new RuntimeException(action + " failed: " + relativePath, e);
+            LOGGER.error("Failed to download enchants data, will retry on next launch", e);
         }
     }
 
@@ -61,8 +56,8 @@ public class NeuRepoCache {
         fetchAndWrite(relativePath, "Downloaded");
     }
 
-    public Path refresh(String relativePath) {
-        return fetchAndWrite(relativePath, "Refreshed");
+    public void refresh(String relativePath) {
+        fetchAndWrite(relativePath, "Refreshed");
     }
 
     private String fetchText(String relativePath) throws IOException, InterruptedException {
