@@ -9,6 +9,7 @@
   },
   "client": [
     "ClientPacketListener",
-    "ClientPlayNetworkHandlerMixin"
+    "ClientPlayNetworkHandlerMixin",
+    "PackCompatibilityMixin"
   ]
 }

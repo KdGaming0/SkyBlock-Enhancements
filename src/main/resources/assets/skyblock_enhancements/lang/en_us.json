@@ -1,7 +1,8 @@
 {
   "skyblock_enhancements.midnightconfig.title": "Skyblock Enhancements",
 
-  "skyblock_enhancements.midnightconfig.category.SKYBLOCK_ENCHANTMENTS": "General Features",
+  "skyblock_enhancements.midnightconfig.category.skyblock_enhancements": "Skyblock Enhancements",
+  "skyblock_enhancements.midnightconfig.category.general_enhancements": "General Enhancements",
 
   "skyblock_enhancements.midnightconfig.text": "General Skyblock Features",
 
@@ -17,5 +18,10 @@
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation.label.tooltip": "Disables the command confirmation dialog that appears when executing certain commands.",
 
   "skyblock_enhancements.midnightconfig.noDoubleSneak": "Prevent double sneak",
-  "skyblock_enhancements.midnightconfig.noDoubleSneak.tooltip": "Prevents sneak from toggling twice due to pose update packets."
+  "skyblock_enhancements.midnightconfig.noDoubleSneak.tooltip": "Prevents sneak from toggling twice due to pose update packets.",
+
+  "skyblock_enhancements.midnightconfig.text2": "General Enhancements",
+
+  "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring": "Disable resource pack compatibility warning",
+  "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring.tooltip": "Disables the resource pack compatibility warning."
 }
