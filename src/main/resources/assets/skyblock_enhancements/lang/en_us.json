@@ -1,0 +1,14 @@
+{
+  "skyblock_enhancements.midnightconfig.title": "Skyblock Enhancements",
+
+  "skyblock_enhancements.midnightconfig.category.SKYBLOCK_ENCHANTMENTS": "General Featuers",
+
+  "skyblock_enhancements.midnightconfig.text": "General Skyblock Features",
+  "skyblock_enhancements.midnightconfig.showMissingEnchantments": "Show Missing Enchantments",
+  "skyblock_enhancements.midnightconfig.showMissingEnchantments.tooltip": "Show Missing Enchantments in the tooltip of an item.",
+  "skyblock_enhancements.midnightconfig.showMissingEnchantments.label.tooltip": "Show Missing Enchantments in the tooltip of an item.",
+  "skyblock_enhancements.midnightconfig.showWhenPressingShift": "Only show Missing Enchantments when pressing shift",
+  "skyblock_enhancements.midnightconfig.showWhenPressingShift.label": "Only show Missing Enchantments when pressing shift. \nSetting this to false makes missing Enchantments always visible",
+  "skyblock_enhancements.midnightconfig.disableCommandConfirmation": "Disable command confirmation.",
+  "skyblock_enhancements.midnightconfig.disable_command_confirmation.tooltip": "Disables the command confirmation dialog that appears when executing certain commands."
+}

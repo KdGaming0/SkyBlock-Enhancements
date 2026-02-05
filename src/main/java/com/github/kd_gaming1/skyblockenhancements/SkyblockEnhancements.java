@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SkyblockEnhancements implements ClientModInitializer {
-    public static final String MOD_ID = "skyblock-enhancements";
+    public static final String MOD_ID = "skyblock_enhancements";
 
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     private final NeuRepoCache cache = new NeuRepoCache();
