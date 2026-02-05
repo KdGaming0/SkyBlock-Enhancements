@@ -2,5 +2,5 @@ Initial release!
 
 Features:
 
-- Missing enchantments in tooltip
-- Disable command confirmation screen
+- Missing enchantments in the tooltip
+- Disable the command confirmation screen
