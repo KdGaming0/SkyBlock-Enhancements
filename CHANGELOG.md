@@ -1,6 +1,4 @@
-Initial release!
+New Features:
 
-Features:
-
-- Missing enchantments in the tooltip
-- Disable the command confirmation screen
+- No Double Sneak
+- 

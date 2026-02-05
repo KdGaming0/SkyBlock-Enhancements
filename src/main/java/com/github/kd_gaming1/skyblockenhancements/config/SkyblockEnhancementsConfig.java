@@ -16,4 +16,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
 
     @Entry(category = SKYBLOCK_ENCHANTMENTS)
     public static boolean disableCommandConfirmation = true;
+
+    @Entry(category = SKYBLOCK_ENCHANTMENTS)
+    public static boolean noDoubleSneak = true;
 }
