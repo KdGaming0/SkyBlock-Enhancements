@@ -1,7 +1,10 @@
 package com.github.kd_gaming1.skyblockenhancements.util;
 
-import tools.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+import java.io.Reader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +13,7 @@ import java.util.Map;
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 
 public class JsonLookup {
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final Gson GSON = new GsonBuilder().create();
 
     private static volatile EnchantData cached;
 
@@ -21,11 +24,13 @@ public class JsonLookup {
                 return local;
             }
 
-            EnchantData loaded = MAPPER.readValue(location.toFile(), EnchantData.class);
-            if (loaded == null) loaded = new EnchantData();
+            try (Reader reader = Files.newBufferedReader(location)) {
+                EnchantData loaded = GSON.fromJson(reader, EnchantData.class);
+                if (loaded == null) loaded = new EnchantData();
 
-            cached = loaded;
-            return loaded;
+                cached = loaded;
+                return loaded;
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to load enchants json from {}", location, e);
             return new EnchantData();

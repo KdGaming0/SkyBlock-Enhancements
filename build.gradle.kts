@@ -1,6 +1,7 @@
 plugins {
     `maven-publish`
     id("fabric-loom")
+    id("me.modmuss50.mod-publish-plugin")
 }
 
 version = "${property("mod.version")}+${stonecutter.current.version}"
@@ -38,9 +39,6 @@ dependencies {
 
     modImplementation("net.azureaaron:hm-api:${property("deps.hm_api_version")}")
     include("net.azureaaron:hm-api:${property("deps.hm_api_version")}")
-
-    implementation("tools.jackson.core:jackson-core:3.1.0-rc1")
-    implementation("tools.jackson.core:jackson-databind:3.1.0-rc1")
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
     modRuntimeOnly("maven.modrinth:modmenu:${property("deps.modmenu_version")}")
@@ -100,7 +98,6 @@ tasks {
     }
 }
 
-/*
 publishMods {
     file = tasks.remapJar.map { it.archiveFile.get() }
     additionalFiles.from(tasks.remapSourcesJar.map { it.archiveFile.get() })
@@ -118,7 +115,10 @@ publishMods {
         accessToken = providers.environmentVariable("MODRINTH_TOKEN")
         minecraftVersions.add(stonecutter.current.version)
         requires {
-            slug = "fabric-api"
+            slug = "P7dR8mSH"
+        }
+        optional {
+            slug = "mOgUt4GM" // ModMenu
         }
     }
 
@@ -129,29 +129,8 @@ publishMods {
         requires {
             slug = "fabric-api"
         }
-    }
-}
-*/
-/*
-publishing {
-    repositories {
-        maven("...") {
-            name = "..."
-            credentials(PasswordCredentials::class.java)
-            authentication {
-                create<BasicAuthentication>("basic")
-            }
-        }
-    }
-
-    publications {
-        create<MavenPublication>("mavenJava") {
-            groupId = "${property("mod.group")}.${property("mod.id")}"
-            artifactId = property("mod.version") as String
-            version = stonecutter.current.version
-
-            from(components["java"])
+        optional {
+            slug = "modmenu"
         }
     }
 }
-*/
