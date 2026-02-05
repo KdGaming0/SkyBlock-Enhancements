@@ -10,6 +10,10 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
 
     @Entry(category = SKYBLOCK_ENCHANTMENTS)
     public static boolean showMissingEnchantments = true;
+
     @Entry(category = SKYBLOCK_ENCHANTMENTS)
     public static boolean showWhenPressingShift = true;
+
+    @Entry(category = SKYBLOCK_ENCHANTMENTS)
+    public static boolean disableCommandConfirmation = true;
 }
