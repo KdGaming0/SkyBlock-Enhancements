@@ -1,4 +1,3 @@
 New Features:
 
-- No Double Sneak
-- No Resource Pack Compatibility Waring
+- Item Outline Glow on dropped items, matching their rarity

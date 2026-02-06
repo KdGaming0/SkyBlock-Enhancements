@@ -17,6 +17,12 @@
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation.tooltip": "Disables the command confirmation dialog that appears when executing certain commands.",
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation.label.tooltip": "Disables the command confirmation dialog that appears when executing certain commands.",
 
+  "skyblock_enhancements.midnightconfig.enableItemGlowOutline": "Enable item glow outline",
+  "skyblock_enhancements.midnightconfig.enableItemGlowOutline.tooltip": "Shows a glow outline on item drops near you.",
+
+  "skyblock_enhancements.midnightconfig.showThoughWalls": "Show glow through walls",
+  "skyblock_enhancements.midnightconfig.showThoughWalls.tooltip": "Shows the glow outline even if the item is behind a block.",
+
   "skyblock_enhancements.midnightconfig.noDoubleSneak": "Prevent double sneak",
   "skyblock_enhancements.midnightconfig.noDoubleSneak.tooltip": "Prevents sneak from toggling twice due to pose update packets.",
 

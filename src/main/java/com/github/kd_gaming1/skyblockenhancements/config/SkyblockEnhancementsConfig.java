@@ -18,6 +18,16 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean disableCommandConfirmation = true;
 
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean enableItemGlowOutline = false;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean showThoughWalls = true;
+
+    @Hidden
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 300)
+    public static int setItemGlowOutlineDistance = 64;
+
     @Comment(category = GENERAL_ENHANCEMENTS)
     public static Comment text2;
 

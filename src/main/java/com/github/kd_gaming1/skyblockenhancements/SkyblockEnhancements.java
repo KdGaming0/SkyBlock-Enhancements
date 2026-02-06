@@ -3,11 +3,13 @@ package com.github.kd_gaming1.skyblockenhancements;
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.MissingEnchants;
+import com.github.kd_gaming1.skyblockenhancements.feature.glow.ItemGlowManager;
 import com.github.kd_gaming1.skyblockenhancements.util.NeuRepoCache;
 import eu.midnightdust.lib.config.MidnightConfig;
 import net.azureaaron.hmapi.events.HypixelPacketEvents;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +43,10 @@ public class SkyblockEnhancements implements ClientModInitializer {
                 LOGGER.error("Failed to download enchants data", e);
             }
         }));
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> ItemGlowManager.onClientTick());
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ItemGlowManager.clearAllAndRemoveTeamEntries(client));
 
         Commands.register();
     }
