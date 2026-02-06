@@ -18,4 +18,4 @@ stonecutter {
     }
 }
 
-rootProject.name = "Skyblock Enhancements"
+rootProject.name = "Skyblock-Enhancements"

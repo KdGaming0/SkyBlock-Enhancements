@@ -1,9 +1,9 @@
 package com.github.kd_gaming1.skyblockenhancements.mixin;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.data.DataTracker;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -11,22 +11,22 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(ClientPacketListener.class)
 public class ClientPlayNetworkHandlerMixin {
 
     @ModifyArg(
-            method = "onEntityTrackerUpdate",
+            method = "handleSetEntityData",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/entity/data/DataTracker;writeUpdatedEntries(Ljava/util/List;)V"
+                    target = "Lnet/minecraft/network/syncher/SynchedEntityData;assignValues(Ljava/util/List;)V"
             ),
             index = 0
     )
-    private List<DataTracker.SerializedEntry<?>> filterPose(List<DataTracker.SerializedEntry<?>> list) {
+    private List<SynchedEntityData.DataValue<?>> filterPose(List<SynchedEntityData.DataValue<?>> list) {
         if (!SkyblockEnhancementsConfig.noDoubleSneak) return list;
 
         return list.stream()
-                .filter(e -> e.handler() != TrackedDataHandlerRegistry.ENTITY_POSE)
+                .filter(e -> e.serializer() != EntityDataSerializers.POSE)
                 .collect(Collectors.toList());
     }
 }

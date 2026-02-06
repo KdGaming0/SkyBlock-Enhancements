@@ -1,17 +1,17 @@
 package com.github.kd_gaming1.skyblockenhancements.mixin;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(ClientPlayNetworkHandler.class)
-public class ClientPacketListener {
+@Mixin(ClientPacketListener.class)
+public class ClientPacketListenerMixin {
 
-    @Inject(method = "parseCommand", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "verifyCommand", at = @At("RETURN"), cancellable = true)
     private void disableCommandConfirmation(String command, CallbackInfoReturnable<Enum<?>> cir) {
         // Get the return value from Minecraft's command verification
         var ret = cir.getReturnValue();

@@ -5,15 +5,15 @@ import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsCon
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -37,7 +37,7 @@ public class MissingEnchants {
         ItemTooltipCallback.EVENT.register(MissingEnchants::onTooltip);
     }
 
-    private static void onTooltip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipType tooltipType, List<Text> texts) {
+    private static void onTooltip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipFlag tooltipType, List<Component> texts) {
         if (!SkyblockEnhancementsConfig.showMissingEnchantments) return;
         if (!SkyblockEnhancements.helloPacketReceived.get()) return;
 
@@ -54,20 +54,20 @@ public class MissingEnchants {
 
         boolean shift;
         if (SkyblockEnhancementsConfig.showWhenPressingShift) {
-            MinecraftClient client = MinecraftClient.getInstance();
-            shift = client != null && client.isShiftPressed();
+            Minecraft client = Minecraft.getInstance();
+            shift = client.hasShiftDown();
         } else {
             shift = true;
         }
 
-        List<Text> toInsert = buildTooltipBlock(missing, shift);
+        List<Component> toInsert = buildTooltipBlock(missing, shift);
         if (!toInsert.isEmpty()) {
             insertIndex = clamp(insertIndex, texts.size());
             texts.addAll(insertIndex, toInsert);
         }
     }
 
-    private static String extractItemType(List<Text> texts) {
+    private static String extractItemType(List<Component> texts) {
         for (int i = texts.size() - 1; i >= 0; i--) {
             String line = texts.get(i).getString().toUpperCase();
 
@@ -96,22 +96,22 @@ public class MissingEnchants {
     private static List<String> readEnchants(ItemStack stack) {
         List<String> enchantments = new ArrayList<>();
 
-        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData == null) {
             return enchantments;
         }
 
-        NbtCompound nbt = customData.copyNbt();
+        CompoundTag nbt = customData.copyTag();
         if (!nbt.contains("enchantments")) {
             return enchantments;
         }
 
-        NbtCompound enchants = nbt.getCompound("enchantments").orElse(null);
+        CompoundTag enchants = nbt.getCompound("enchantments").orElse(null);
         if (enchants == null) {
             return enchantments;
         }
 
-        enchantments.addAll(enchants.getKeys());
+        enchantments.addAll(enchants.keySet());
 
         return enchantments;
     }
@@ -140,7 +140,7 @@ public class MissingEnchants {
         return missing;
     }
 
-    private static int findInsertIndex(List<Text> texts, List<String> currentEnchants) {
+    private static int findInsertIndex(List<Component> texts, List<String> currentEnchants) {
         int lastMatch = -1;
 
         List<String> tokens = new ArrayList<>(currentEnchants.size());
@@ -178,34 +178,34 @@ public class MissingEnchants {
         return base;
     }
 
-    private static List<Text> buildTooltipBlock(List<String> missingIds, boolean shift) {
-        List<Text> out = new ArrayList<>();
+    private static List<Component> buildTooltipBlock(List<String> missingIds, boolean shift) {
+        List<Component> out = new ArrayList<>();
 
-        out.add(Text.literal(""));
+        out.add(Component.literal(""));
 
         if (!shift) {
-            out.add(Text.literal("◆ Missing enchantments: " + missingIds.size() + " (hold Shift)")
-                    .formatted(Formatting.DARK_AQUA));
+            out.add(Component.literal("◆ Missing enchantments: " + missingIds.size() + " (hold Shift)")
+                    .withStyle(ChatFormatting.DARK_AQUA));
             return out;
         }
 
-        out.add(Text.literal("◆ Missing enchantments:")
-                .formatted(Formatting.AQUA, Formatting.ITALIC));
+        out.add(Component.literal("◆ Missing enchantments:")
+                .withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
 
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         List<EnchantEntry> entries = new ArrayList<>(missingIds.size());
         for (String id : missingIds) {
             String formattedName = formatEnchantName(id);
-            int width = client.textRenderer.getWidth(formattedName);
+            int width = client.font.width(formattedName);
             entries.add(new EnchantEntry(formattedName, width));
         }
 
         entries.sort(Comparator.comparing(e -> e.name, String.CASE_INSENSITIVE_ORDER));
 
         int maxWidth = 200;
-        int commaWidth = client.textRenderer.getWidth(", ");
-        int prefixWidth = client.textRenderer.getWidth("› ");
+        int commaWidth = client.font.width(", ");
+        int prefixWidth = client.font.width("› ");
         int effectiveMaxWidth = maxWidth - prefixWidth;
 
         List<String> currentLine = new ArrayList<>();
@@ -218,8 +218,8 @@ public class MissingEnchants {
 
             if (!currentLine.isEmpty() && currentWidth + addedWidth > effectiveMaxWidth) {
                 // Flush current line
-                out.add(Text.literal("› " + String.join(", ", currentLine))
-                        .formatted(Formatting.GRAY));
+                out.add(Component.literal("› " + String.join(", ", currentLine))
+                        .withStyle(ChatFormatting.GRAY));
                 currentLine.clear();
                 currentWidth = 0;
                 addedWidth = entry.width;
@@ -231,8 +231,8 @@ public class MissingEnchants {
 
         // Flush the remaining line
         if (!currentLine.isEmpty()) {
-            out.add(Text.literal("› " + String.join(", ", currentLine))
-                    .formatted(Formatting.GRAY));
+            out.add(Component.literal("› " + String.join(", ", currentLine))
+                    .withStyle(ChatFormatting.GRAY));
         }
 
         return out;

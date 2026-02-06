@@ -7,8 +7,8 @@ import com.mojang.brigadier.context.CommandContext;
 import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
@@ -29,7 +29,7 @@ public class Commands {
      * Uses client.send() to delay opening until after the chat closes.
      */
     private static int executeOpenConfig(CommandContext<FabricClientCommandSource> ctx) {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         if (client.player == null) {
             sendError(ctx);
@@ -37,9 +37,9 @@ public class Commands {
         }
 
         // Schedule GUI opening on the next tick (after chat closes)
-        client.send(() -> {
+        client.schedule(() -> {
             try {
-                MidnightConfig.getScreen(client.currentScreen, SkyblockEnhancements.MOD_ID);
+                MidnightConfig.getScreen(client.screen, SkyblockEnhancements.MOD_ID);
             } catch (Exception e) {
                 SkyblockEnhancements.LOGGER.error("Failed to open config menu", e);
             }
@@ -50,7 +50,7 @@ public class Commands {
     }
 
     private static int executeRefreshRepoData(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Text.literal("§e[Skyblock Enhancements] Refreshing repository data..."));
+        ctx.getSource().sendFeedback(Component.literal("§e[Skyblock Enhancements] Refreshing repository data..."));
 
         NeuRepoCache cache = new NeuRepoCache();
 
@@ -59,7 +59,7 @@ public class Commands {
 
         JsonLookup.clearCache();
 
-        ctx.getSource().sendFeedback(Text.literal("§a[Skyblock Enhancements] Repository data refreshed successfully!"));
+        ctx.getSource().sendFeedback(Component.literal("§a[Skyblock Enhancements] Repository data refreshed successfully!"));
         return 1;
     }
 
@@ -68,14 +68,14 @@ public class Commands {
      * Sends a success message to the player.
      */
     private static void sendSuccess(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Text.literal("§a[Skyblock Enhancements] " + "Opening configuration menu..."));
+        ctx.getSource().sendFeedback(Component.literal("§a[Skyblock Enhancements] " + "Opening configuration menu..."));
     }
 
     /**
      * Sends an error message to the player.
      */
     private static void sendError(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendError(Text.literal("§c[Skyblock Enhancements]] " + "You must be in-game to open the config menu."));
+        ctx.getSource().sendError(Component.literal("§c[Skyblock Enhancements]] " + "You must be in-game to open the config menu."));
     }
 
 
