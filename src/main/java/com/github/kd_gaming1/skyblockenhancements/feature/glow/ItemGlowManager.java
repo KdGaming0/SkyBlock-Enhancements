@@ -15,6 +15,8 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.level.block.StainedGlassBlock;
+import net.minecraft.world.level.block.TintedGlassBlock;
+import net.minecraft.world.level.block.TransparentBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
@@ -284,7 +286,7 @@ public final class ItemGlowManager {
         AABB box = item.getBoundingBox().inflate(SHOWCASE_CHECK_RADIUS);
 
         // Search only nearby armor stands
-        List<ArmorStand> stands = mc.level.getEntitiesOfClass(ArmorStand.class, box, Entity::isInvisible);
+        List<ArmorStand> stands = mc.level.getEntitiesOfClass(ArmorStand.class, box);
         if (stands.isEmpty()) return false;
 
         for (ArmorStand as : stands) {
@@ -298,9 +300,9 @@ public final class ItemGlowManager {
     }
 
     private static boolean isGlass(ItemStack stack) {
-        if (!(stack.getItem() instanceof BlockItem bi)) return false;
-        var block = bi.getBlock();
-        return (block instanceof StainedGlassBlock);
+        if (!(stack.getItem() instanceof BlockItem blockItem)) return false;
+        var block = blockItem.getBlock();
+        return (block instanceof TransparentBlock);
     }
 
     public static void clearAllAndRemoveTeamEntries(Minecraft mc) {
