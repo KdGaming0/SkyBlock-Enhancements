@@ -14,8 +14,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
-import net.minecraft.world.level.block.StainedGlassBlock;
-import net.minecraft.world.level.block.TintedGlassBlock;
 import net.minecraft.world.level.block.TransparentBlock;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
