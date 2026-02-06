@@ -17,5 +17,3 @@ stonecutter {
         vcsVersion = "1.21.10"
     }
 }
-
-rootProject.name = "Skyblock-Enhancements"
