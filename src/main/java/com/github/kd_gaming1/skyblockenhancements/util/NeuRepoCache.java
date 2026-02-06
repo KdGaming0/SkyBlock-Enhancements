@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
+import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.MOD_ID;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 // Downloads files from the NEU repo into the mod data folder
@@ -23,7 +24,7 @@ public class NeuRepoCache {
 
     public NeuRepoCache() {
         this.rawBase = URI.create("https://raw.githubusercontent.com/NotEnoughUpdates/NotEnoughUpdates-REPO/master/");
-        this.storageRoot = FabricLoader.getInstance().getConfigDir().resolve("Skyblock Enhancements").resolve("data");
+        this.storageRoot = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("data");
         this.client = HttpClient.newHttpClient();
     }
 
