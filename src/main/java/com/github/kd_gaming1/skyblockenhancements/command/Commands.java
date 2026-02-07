@@ -39,7 +39,7 @@ public class Commands {
         // Schedule GUI opening on the next tick (after chat closes)
         client.schedule(() -> {
             try {
-                MidnightConfig.getScreen(client.screen, SkyblockEnhancements.MOD_ID);
+                client.setScreen(MidnightConfig.getScreen(client.screen, SkyblockEnhancements.MOD_ID));
             } catch (Exception e) {
                 SkyblockEnhancements.LOGGER.error("Failed to open config menu", e);
             }
