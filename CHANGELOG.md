@@ -1,3 +1,3 @@
 Changes:
 
-- Set Glow Outline to be default on
+- fix: missing enchantments not working

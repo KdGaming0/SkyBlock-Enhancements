@@ -2,6 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.util;
 
 import net.fabricmc.loader.api.FabricLoader;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -34,7 +35,7 @@ public class NeuRepoCache {
 
     public Path getCachedPath(String relativePath) {
         // Keep the same folder structure as the repo
-        return storageRoot.resolve(relativePath.replace("/", java.io.File.separator));
+        return storageRoot.resolve(relativePath.replace("/", File.separator));
     }
 
     private void fetchAndWrite(String relativePath, String action) {

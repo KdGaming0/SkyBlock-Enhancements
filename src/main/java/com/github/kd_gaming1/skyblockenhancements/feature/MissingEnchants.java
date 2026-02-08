@@ -19,8 +19,10 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.MOD_ID;
+
 public class MissingEnchants {
-    private static final Path storageRoot = FabricLoader.getInstance().getConfigDir().resolve("Skyblock Enhancements").resolve("data");
+    private static final Path storageRoot = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("data");
     private static final JsonLookup LOOKUP = new JsonLookup();
     private static final Path ENCHANTS_JSON = storageRoot.resolve("constants/enchants.json");
 
