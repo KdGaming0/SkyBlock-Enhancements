@@ -59,9 +59,6 @@ public final class ItemGlowManager {
     private static double maxRangeSqr() { double r = getMaxRange(); return r * r; }
     private static final String TEAM_PREFIX = "sbe_glow_";
 
-    private static boolean wasEnabled = false;
-    private static boolean wasShowThroughWallsEnabled = false;
-
     private static int tickCounter = 0;
     @SuppressWarnings("unchecked")
     private static final Iterator<ItemEntity>[] scanIterator = new Iterator[]{null};
@@ -78,23 +75,7 @@ public final class ItemGlowManager {
 
     public static void onClientTick() {
         Minecraft mc = Minecraft.getInstance();
-        boolean isEnabled = SkyblockEnhancementsConfig.enableItemGlowOutline;
         boolean showThroughWalls = SkyblockEnhancementsConfig.showThoughWalls;
-
-        if (!isEnabled) {
-            if (wasEnabled) {
-                clearAllAndRemoveTeamEntries(mc);
-                wasEnabled = false;
-            }
-            return;
-        }
-
-        wasEnabled = true;
-
-        if (wasShowThroughWallsEnabled != showThroughWalls) {
-            clearAllAndRemoveTeamEntries(mc);
-            wasShowThroughWallsEnabled = showThroughWalls;
-        }
 
         if (mc.level == null || mc.player == null) {
             clearAllAndRemoveTeamEntries(mc);
