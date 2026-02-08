@@ -19,7 +19,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static boolean disableCommandConfirmation = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean enableItemGlowOutline = false;
+    public static boolean enableItemGlowOutline = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean showThoughWalls = true;
