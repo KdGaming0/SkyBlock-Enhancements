@@ -31,7 +31,7 @@ public class MissingEnchants {
     );
 
     private static final List<String> TYPES = Arrays.asList(
-            "SWORD", "BOW", "AXE", "DRILL", "FISHING ROD", "FISHING WEAPON", "SHOVEL", "HOE", "HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS",
+            "SWORD", "BOW", "AXE", "PICKAXE", "DRILL", "FISHING ROD", "FISHING WEAPON", "SHOVEL", "HOE", "HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS",
             "GAUNTLET", "GLOVES", "BELT", "NECKLACE", "BRACELET", "CLOAK", "CARNIVAL MASK"
     );
 
@@ -47,7 +47,9 @@ public class MissingEnchants {
         List<String> currentEnchants = readEnchants(itemStack);
 
         if (itemType == null || currentEnchants.isEmpty()) return;
-        if (currentEnchants.contains("one_for_all")) return;
+        for (String e : currentEnchants) {
+            if ("one_for_all".equalsIgnoreCase(e)) return;
+        }
 
         List<String> missing = findMissingEnchants(itemType, currentEnchants);
         if (missing.isEmpty()) return;

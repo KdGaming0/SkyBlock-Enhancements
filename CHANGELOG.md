@@ -1,3 +1,3 @@
 Changes:
 
-- fix: missing enchantments not working
+- fix: missing enchants showing axe enchants on pickaxe
