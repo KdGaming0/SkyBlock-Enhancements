@@ -16,7 +16,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static boolean showWhenPressingShift = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean disableCommandConfirmation = true;
+    public static boolean enterToConfirmSign = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean enableItemGlowOutline = true;
@@ -62,4 +62,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
 
     @Entry(category = GENERAL_ENHANCEMENTS)
     public static boolean disableResourcePackCompatibilityWaring = true;
+
+    @Entry(category = GENERAL_ENHANCEMENTS)
+    public static boolean disableCommandConfirmation = true;
 }
