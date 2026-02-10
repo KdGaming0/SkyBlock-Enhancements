@@ -28,7 +28,33 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 300)
     public static int setItemGlowOutlineDistance = 64;
 
-    @Comment(category = GENERAL_ENHANCEMENTS)
+    @Comment(category = SKYBLOCK_ENHANCEMENTS)
+    public static Comment reminderSoundText;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean enableReminderSound = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static ReminderSoundType reminderSound = ReminderSoundType.EXPERIENCE;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 0, max = 3)
+    public static double reminderSoundVolume = 1.5;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 0.5, max = 2)
+    public static double reminderSoundPitch = 1.0;
+
+    public enum ReminderSoundType {
+        UI,
+        BELL,
+        CHIME,
+        LEVEL_UP,
+        EXPERIENCE,
+        HARP,
+        PLING,
+        SUCCESS
+    }
+
+    @Comment(category = GENERAL_ENHANCEMENTS, centered = true)
     public static Comment text2;
 
     @Entry(category = GENERAL_ENHANCEMENTS)

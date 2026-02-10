@@ -1,7 +1,12 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.reminder;
 
+import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.core.Holder;
+import net.minecraft.sounds.SoundSource;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -149,6 +154,44 @@ public class ReminderManager {
             client.gui.setSubtitle(Component.literal(reminder.message));
             client.gui.setTimes(10, 70, 20);
         }
+
+        if (SkyblockEnhancementsConfig.enableReminderSound && client.level != null) {
+            playReminderSound(client);
+        }
+    }
+
+    private void playReminderSound(Minecraft client) {
+        final Object soundCandidate = switch (SkyblockEnhancementsConfig.reminderSound) {
+            case BELL -> SoundEvents.NOTE_BLOCK_BELL;
+            case PLING -> SoundEvents.NOTE_BLOCK_PLING;
+            case CHIME -> SoundEvents.NOTE_BLOCK_CHIME;
+            case LEVEL_UP -> SoundEvents.PLAYER_LEVELUP;
+            case EXPERIENCE -> SoundEvents.EXPERIENCE_ORB_PICKUP;
+            case HARP -> SoundEvents.NOTE_BLOCK_HARP;
+            case SUCCESS -> SoundEvents.UI_TOAST_CHALLENGE_COMPLETE;
+            case UI -> SoundEvents.UI_TOAST_IN;
+        };
+
+        float volume = (float) SkyblockEnhancementsConfig.reminderSoundVolume;
+        float pitch = (float) SkyblockEnhancementsConfig.reminderSoundPitch;
+
+        final SoundEvent soundEvent;
+        if (soundCandidate instanceof Holder<?> holder) {
+            Object value = holder.value();
+            soundEvent = (SoundEvent) value;
+        } else {
+            soundEvent = (SoundEvent) soundCandidate;
+        }
+
+        if (client.level != null && client.player != null)
+            client.level.playSound(
+                    client.player,
+                    client.player.blockPosition(),
+                    soundEvent,
+                    SoundSource.PLAYERS,
+                    volume,
+                    pitch
+            );
     }
 
     public boolean removeReminder(int id) {

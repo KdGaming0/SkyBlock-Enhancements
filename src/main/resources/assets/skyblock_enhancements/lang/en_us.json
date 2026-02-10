@@ -23,10 +23,24 @@
   "skyblock_enhancements.midnightconfig.showThoughWalls": "Show glow through walls",
   "skyblock_enhancements.midnightconfig.showThoughWalls.tooltip": "Shows the glow outline even if the item is behind a block.",
 
-  "skyblock_enhancements.midnightconfig.noDoubleSneak": "Prevent double sneak",
-  "skyblock_enhancements.midnightconfig.noDoubleSneak.tooltip": "Prevents sneak from toggling twice due to pose update packets.",
+  "skyblock_enhancements.midnightconfig.reminderSoundText": "Reminder Sound Settings",
+
+  "skyblock_enhancements.midnightconfig.enableReminderSound": "Enable Reminder Sound",
+  "skyblock_enhancements.midnightconfig.enableReminderSound.tooltip": "Play a sound when a reminder is triggered.",
+
+  "skyblock_enhancements.midnightconfig.reminderSound": "Reminder Sound Type",
+  "skyblock_enhancements.midnightconfig.reminderSound.tooltip": "Choose which sound to play for reminders.\nClick to cycle through available sounds.",
+
+  "skyblock_enhancements.midnightconfig.reminderSoundVolume": "Reminder Sound Volume",
+  "skyblock_enhancements.midnightconfig.reminderSoundVolume.tooltip": "Adjust the volume of reminder sounds.\nRange: 0.0 (silent) to 2.0 (very loud)",
+
+  "skyblock_enhancements.midnightconfig.reminderSoundPitch": "Reminder Sound Pitch",
+  "skyblock_enhancements.midnightconfig.reminderSoundPitch.tooltip": "Adjust the pitch of reminder sounds.\nRange: 0.5 (low) to 2.0 (high)\nDefault: 1.0 (normal)",
 
   "skyblock_enhancements.midnightconfig.text2": "General Enhancements",
+
+  "skyblock_enhancements.midnightconfig.noDoubleSneak": "Prevent double sneak",
+  "skyblock_enhancements.midnightconfig.noDoubleSneak.tooltip": "Prevents sneak from toggling twice due to pose update packets.",
 
   "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring": "Disable resource pack compatibility warning",
   "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring.tooltip": "Disables the resource pack compatibility warning."
