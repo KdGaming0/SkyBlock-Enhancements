@@ -1,3 +1,3 @@
 Changes:
 
-- fix: missing enchants showing axe enchants on pickaxe
+- feat: optimized missing enchants with cache to avoid recalculating every frame

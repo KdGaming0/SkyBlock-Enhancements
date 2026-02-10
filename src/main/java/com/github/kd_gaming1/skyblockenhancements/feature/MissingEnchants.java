@@ -26,6 +26,16 @@ public class MissingEnchants {
     private static final JsonLookup LOOKUP = new JsonLookup();
     private static final Path ENCHANTS_JSON = storageRoot.resolve("constants/enchants.json");
 
+    private static final int CACHE_SIZE = 256;
+    private static final Map<CacheKey, List<String>> MISSING_CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<>(128, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<CacheKey, List<String>> eldest) {
+                    return size() > CACHE_SIZE;
+                }
+            }
+    );
+
     private static final List<String> RARITIES = Arrays.asList(
             "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "DIVINE", "SPECIAL", "VERY SPECIAL", "ULTIMATE", "ADMIN"
     );
@@ -37,6 +47,10 @@ public class MissingEnchants {
 
     public static void init() {
         ItemTooltipCallback.EVENT.register(MissingEnchants::onTooltip);
+    }
+
+    public static void clearCache() {
+        MISSING_CACHE.clear();
     }
 
     private static void onTooltip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipFlag tooltipType, List<Component> texts) {
@@ -51,7 +65,12 @@ public class MissingEnchants {
             if ("one_for_all".equalsIgnoreCase(e)) return;
         }
 
-        List<String> missing = findMissingEnchants(itemType, currentEnchants);
+        CacheKey cacheKey = CacheKey.from(itemType, currentEnchants);
+        List<String> missing = MISSING_CACHE.get(cacheKey);
+        if (missing == null) {
+            missing = findMissingEnchants(itemType, currentEnchants);
+            MISSING_CACHE.put(cacheKey, missing);
+        }
         if (missing.isEmpty()) return;
 
         int insertIndex = findInsertIndex(texts, currentEnchants);
@@ -243,6 +262,14 @@ public class MissingEnchants {
     }
 
     private record EnchantEntry(String name, int width) {
+    }
+
+    private record CacheKey(String itemType, String enchantKey) {
+        private static CacheKey from(String itemType, List<String> enchants) {
+            List<String> sorted = new ArrayList<>(enchants);
+            sorted.sort(String.CASE_INSENSITIVE_ORDER);
+            return new CacheKey(itemType, String.join(",", sorted));
+        }
     }
 
     private static String normalizeEnchantToken(String id) {

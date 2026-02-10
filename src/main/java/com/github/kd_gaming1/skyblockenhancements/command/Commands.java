@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.command;
 
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
+import com.github.kd_gaming1.skyblockenhancements.feature.MissingEnchants;
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 import com.github.kd_gaming1.skyblockenhancements.util.NeuRepoCache;
 import com.mojang.brigadier.context.CommandContext;
@@ -58,6 +59,7 @@ public class Commands {
         cache.refresh("constants/enchants.json");
 
         JsonLookup.clearCache();
+        MissingEnchants.clearCache();
 
         ctx.getSource().sendFeedback(Component.literal("§a[Skyblock Enhancements] Repository data refreshed successfully!"));
         return 1;
