@@ -13,9 +13,12 @@
   "skyblock_enhancements.midnightconfig.showWhenPressingShift": "Only show missing enchantments when pressing Shift",
   "skyblock_enhancements.midnightconfig.showWhenPressingShift.tooltip": "Only show missing enchantments when pressing Shift.\nSetting this to false makes missing enchantments always visible.",
 
-  "skyblock_enhancements.midnightconfig.enterToConfirmSign": "Enter to confirm sign \n(press Shift + Enter for normal behavior)",
-  "skyblock_enhancements.midnightconfig.enterToConfirmSign.tooltip": "Press Enter to finish sign editing. Shift plus Enter still adds a new line.",
+  "skyblock_enhancements.midnightconfig.enterToConfirmSign": "Enter to confirm input sign \n(press Shift + Enter for new line)",
+  "skyblock_enhancements.midnightconfig.enterToConfirmSign.tooltip": "Press Enter to finish sign editing on Hypixel input signs (AH and BZ). \nShift plus Enter always makes a new line like vanilla.",
   "skyblock_enhancements.midnightconfig.enterToConfirmSign.label.tooltip": "Press Enter to finish sign editing. Shift plus Enter still adds a new line.",
+
+  "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns": "Apply Enter confirm to all signs",
+  "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns.tooltip": "Ignores the Hypixel input sign check and applies Enter to confirm on every sign editor. Shift plus Enter always makes a new line.",
 
   "skyblock_enhancements.midnightconfig.enableItemGlowOutline": "Enable item glow outline",
   "skyblock_enhancements.midnightconfig.enableItemGlowOutline.tooltip": "Shows a glow outline on item drops near you.",

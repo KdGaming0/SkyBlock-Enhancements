@@ -6,4 +6,4 @@ Changes:
 
 New Features:
 
-- feat: added Enter to confirm when editing a sign. This lets you write the price for an item you want to sell on BZ or AH and hit Enter to confirm instead of moving your mouse to "Done."
+- feat: Added Enter to confirm on Hypixel input signs. You can now type prices for Bazaar or Auction House signs and press Enter to confirm. Shift + Enter still creates a new line. An option is included to apply this to all signs.
