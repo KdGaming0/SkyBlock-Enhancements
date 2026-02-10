@@ -39,6 +39,13 @@ public final class ItemGlowManager {
             "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "DIVINE", "SPECIAL", "VERY SPECIAL", "ULTIMATE", "ADMIN"
     );
 
+    private static final List<String> RARITIES_SORTED;
+    static {
+        RARITIES_SORTED = new ArrayList<>(RARITIES);
+        // check longer names first to avoid substring false positives (e.g., UNCOMMON vs COMMON)
+        RARITIES_SORTED.sort((a, b) -> Integer.compare(b.length(), a.length()));
+    }
+
     // Items we want to force-glow right now
     private static final Set<UUID> SHOULD_GLOW = ConcurrentHashMap.newKeySet();
 
@@ -234,7 +241,7 @@ public final class ItemGlowManager {
         for (int i = loreLines.size() - 1; i >= 0; i--) {
             String lineContent = loreLines.get(i).getString().toUpperCase(java.util.Locale.ROOT);
 
-            for (String rarity : RARITIES) {
+            for (String rarity : RARITIES_SORTED) {
                 if (lineContent.contains(rarity)) {
                     return rarity;
                 }
