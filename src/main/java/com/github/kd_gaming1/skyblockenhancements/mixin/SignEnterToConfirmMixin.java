@@ -39,27 +39,18 @@ public abstract class SignEnterToConfirmMixin {
         if (lines == null) return false;
 
         for (String line : lines) {
-            if (line == null || line.isEmpty()) continue;
-
-            int visible = 0;
+            if (line == null) continue;
             int carets = 0;
-
-            for (int i = 0, len = line.length(); i < len; i++) {
+            for (int i = 0; i < line.length(); i++) {
                 char c = line.charAt(i);
-                if (c == ' ') continue;
-
-                visible++;
                 if (c == '^') {
                     carets++;
-
-                    if (visible >= 5 && (carets * 10) >= (visible * 6)) {
+                    if (carets >= 8) {
                         return true;
                     }
+                } else if (c != ' ') {
+                    break;
                 }
-            }
-
-            if (visible >= 5 && (carets * 10) >= (visible * 6)) {
-                return true;
             }
         }
         return false;
