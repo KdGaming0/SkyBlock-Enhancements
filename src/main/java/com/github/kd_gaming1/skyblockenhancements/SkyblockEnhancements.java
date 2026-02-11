@@ -5,6 +5,7 @@ import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.MissingEnchants;
 import com.github.kd_gaming1.skyblockenhancements.feature.glow.ItemGlowManager;
+import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminderFeature;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
@@ -63,6 +64,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
         // Remind me features
         reminderStorage.load();
         reminderManager.loadFromStorage(reminderStorage.getRemindersData());
+        KatReminderFeature.init(MOD_ID);
 
         ClientTickEvents.END_CLIENT_TICK.register(reminderManager::onClientTick);
 
