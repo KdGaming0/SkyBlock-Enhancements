@@ -17,7 +17,14 @@ import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LO
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.MOD_ID;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
-// Downloads files from the NEU repo into the mod data folder
+/**
+ * Downloads and caches files from the NotEnoughUpdates raw GitHub repository into the mod's
+ * config `data` directory.
+ *
+ * <p>Resolves raw repo URIs, fetches text via {@code HttpClient}, writes files preserving
+ * repository paths, and logs failures. Use {@code downloadAndSave} or {@code refresh} to
+ * update cached files.</p>
+ */
 public class NeuRepoCache {
     private final URI rawBase;
     private final Path storageRoot;

@@ -12,6 +12,14 @@ import java.util.Map;
 
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 
+/**
+ * Utility for loading and caching enchant configuration from a JSON file.
+ *
+ * <p>Reads a JSON file that matches the {@code EnchantData} structure using Gson,
+ * caches the parsed result in-memory and exposes convenience accessors.</p>
+ *
+ * Errors while reading/parsing are logged and an empty {@code EnchantData} is returned.</p>
+ */
 public class JsonLookup {
     private static final Gson GSON = new GsonBuilder().create();
 

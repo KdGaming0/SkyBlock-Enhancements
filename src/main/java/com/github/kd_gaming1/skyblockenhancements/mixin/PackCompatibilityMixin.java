@@ -7,6 +7,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * Mixin that forces pack compatibility to return true if compatibility warnings are disabled.
+ */
 @Mixin(PackCompatibility.class)
 public class PackCompatibilityMixin {
 

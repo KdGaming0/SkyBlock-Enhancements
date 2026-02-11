@@ -7,9 +7,11 @@ import net.minecraft.world.scores.Scoreboard;
 
 import java.util.Map;
 
+/**
+ * Manages scoreboard teams used to apply glow colors for item rarities.
+ */
 public final class GlowTeams {
-    private GlowTeams() {
-    }
+    private GlowTeams() {}
 
     private static final Map<String, ChatFormatting> RARITY_COLORS = Map.ofEntries(
             Map.entry("COMMON", ChatFormatting.WHITE),

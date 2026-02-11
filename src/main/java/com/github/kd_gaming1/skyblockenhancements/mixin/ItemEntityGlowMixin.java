@@ -10,6 +10,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * Mixin that controls item glow outlines for ItemEntity based on config and ItemGlowManager
+ */
 @Mixin(Entity.class)
 public abstract class ItemEntityGlowMixin {
 

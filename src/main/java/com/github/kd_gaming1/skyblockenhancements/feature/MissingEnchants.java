@@ -21,6 +21,14 @@ import java.util.stream.Collectors;
 
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.MOD_ID;
 
+/**
+ * Displays missing Skyblock enchantments on item tooltips.
+ * <p>
+ * Registers a tooltip callback (via {@code init()}), reads current enchants from item NBT,
+ * compares them to enchants loaded from JSON using {@code JsonLookup} (path `constants/enchants.json`),
+ * and inserts a compact tooltip block. Uses an LRU cache (`MISSING_CACHE`) and can be cleared
+ * with {@code clearCache()}. Visibility respects {@code SkyblockEnhancementsConfig} and Shift.
+ */
 public class MissingEnchants {
     private static final Path storageRoot = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("data");
     private static final JsonLookup LOOKUP = new JsonLookup();

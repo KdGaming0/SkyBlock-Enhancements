@@ -11,6 +11,9 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Mixin that removes POSE entity data to prevent double-sneak behavior when taping sneak on high ping.
+ */
 @Mixin(ClientPacketListener.class)
 public class ClientPlayNetworkHandlerMixin {
 

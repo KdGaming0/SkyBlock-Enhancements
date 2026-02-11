@@ -8,6 +8,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * Mixin that disables command confirmations by converting certain verifyCommand results to NO_ISSUES.
+ */
 @Mixin(ClientPacketListener.class)
 public class ClientPacketListenerMixin {
 

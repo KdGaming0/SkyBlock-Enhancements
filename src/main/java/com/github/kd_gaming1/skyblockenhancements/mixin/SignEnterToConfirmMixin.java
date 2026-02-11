@@ -11,8 +11,20 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.regex.Pattern;
+
+/**
+ * Mixin to allow confirming sign edits with Enter when a Hypixel-style input sign is detected.
+ * Behavior:
+ * - If `SkyblockEnhancementsConfig.enterToConfirmSign` is enabled and the user presses Enter
+ *   (without Shift), this mixin can trigger the sign's confirmation action.
+ * - When `enterToConfirmAllSigns` is enabled, skips the check for Hypixel input sing.
+ */
 @Mixin(AbstractSignEditScreen.class)
 public abstract class SignEnterToConfirmMixin {
+
+    @Unique
+    private static final Pattern HYPIXEL_CARETS_PATTERN = Pattern.compile("(?:\\^\\s*){8,}");
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void sbe$enterToConfirm(KeyEvent keyEvent, CallbackInfoReturnable<Boolean> cir) {
@@ -40,17 +52,8 @@ public abstract class SignEnterToConfirmMixin {
 
         for (String line : lines) {
             if (line == null) continue;
-            int carets = 0;
-            for (int i = 0; i < line.length(); i++) {
-                char c = line.charAt(i);
-                if (c == '^') {
-                    carets++;
-                    if (carets >= 8) {
-                        return true;
-                    }
-                } else if (c != ' ') {
-                    break;
-                }
+            if (HYPIXEL_CARETS_PATTERN.matcher(line).find()) {
+                return true;
             }
         }
         return false;

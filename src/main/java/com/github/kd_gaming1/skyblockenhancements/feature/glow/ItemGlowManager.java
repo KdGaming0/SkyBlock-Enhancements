@@ -29,8 +29,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>This system performs incremental scanning of nearby items to avoid
  * performance spikes. Items are added to scoreboard teams to apply colored
  * glow effects based on their Hypixel Skyblock rarity tier.</p>
- *
- * @author kd_gaming1
  */
 public final class ItemGlowManager {
     private ItemGlowManager() {}
