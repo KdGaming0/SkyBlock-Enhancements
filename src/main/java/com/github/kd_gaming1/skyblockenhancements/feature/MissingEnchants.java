@@ -34,6 +34,7 @@ public class MissingEnchants {
     private static final JsonLookup LOOKUP = new JsonLookup();
     private static final Path ENCHANTS_JSON = storageRoot.resolve("constants/enchants.json");
 
+    // Shared upper bound for all LRU caches in this feature.
     private static final int CACHE_SIZE = 256;
     private static final Map<CacheKey, List<String>> MISSING_CACHE = Collections.synchronizedMap(
             new LinkedHashMap<>(128, 0.75f, true) {
@@ -43,6 +44,27 @@ public class MissingEnchants {
                 }
             }
     );
+    private static final Map<TooltipBlockKey, List<Component>> TOOLTIP_BLOCK_CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<>(128, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<TooltipBlockKey, List<Component>> eldest) {
+                    return size() > CACHE_SIZE;
+                }
+            }
+    );
+    // Caches fully built tooltip blocks to skip sorting/wrapping and font width calls per frame.
+    // Caches normalized enchant tokens used during insert-position lookup.
+    private static final Map<CacheKey, List<String>> ENCHANT_TOKEN_CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<>(128, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<CacheKey, List<String>> eldest) {
+                    return size() > CACHE_SIZE;
+                }
+            }
+    );
+    // Identity cache for CustomData to avoid copyTag()/NBT parsing every render pass.
+    private static final IdentityHashMap<CustomData, List<String>> ENCHANTS_BY_CUSTOM_DATA = new IdentityHashMap<>();
+    private static final int CUSTOM_DATA_CACHE_SIZE = CACHE_SIZE * 2;
 
     private static final List<String> RARITIES = Arrays.asList(
             "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "DIVINE", "SPECIAL", "VERY SPECIAL", "ULTIMATE", "ADMIN"
@@ -58,10 +80,17 @@ public class MissingEnchants {
     }
 
     public static void clearCache() {
+        // Keep all memoized values in sync when the feature cache is reset by command/config flow.
         MISSING_CACHE.clear();
+        TOOLTIP_BLOCK_CACHE.clear();
+        ENCHANT_TOKEN_CACHE.clear();
+        synchronized (ENCHANTS_BY_CUSTOM_DATA) {
+            ENCHANTS_BY_CUSTOM_DATA.clear();
+        }
     }
 
     private static void onTooltip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipFlag tooltipType, List<Component> texts) {
+        // Called on tooltip build/render; keep this path allocation-light.
         if (!SkyblockEnhancementsConfig.showMissingEnchantments) return;
         if (!SkyblockEnhancements.helloPacketReceived.get()) return;
 
@@ -76,12 +105,13 @@ public class MissingEnchants {
         CacheKey cacheKey = CacheKey.from(itemType, currentEnchants);
         List<String> missing = MISSING_CACHE.get(cacheKey);
         if (missing == null) {
-            missing = findMissingEnchants(itemType, currentEnchants);
+            missing = List.copyOf(findMissingEnchants(itemType, currentEnchants));
             MISSING_CACHE.put(cacheKey, missing);
         }
         if (missing.isEmpty()) return;
 
-        int insertIndex = findInsertIndex(texts, currentEnchants);
+        List<String> enchantTokens = getEnchantTokens(cacheKey, currentEnchants);
+        int insertIndex = findInsertIndex(texts, enchantTokens);
 
         boolean shift;
         if (SkyblockEnhancementsConfig.showWhenPressingShift) {
@@ -91,11 +121,42 @@ public class MissingEnchants {
             shift = true;
         }
 
-        List<Component> toInsert = buildTooltipBlock(missing, shift);
+        List<Component> toInsert = getTooltipBlock(cacheKey, missing, shift);
         if (!toInsert.isEmpty()) {
             insertIndex = clamp(insertIndex, texts.size());
             texts.addAll(insertIndex, toInsert);
         }
+    }
+
+    private static List<Component> getTooltipBlock(CacheKey cacheKey, List<String> missingIds, boolean shift) {
+        // Final rendered lines only depend on enchant set + shift state.
+        TooltipBlockKey tooltipKey = new TooltipBlockKey(cacheKey, shift);
+        List<Component> cached = TOOLTIP_BLOCK_CACHE.get(tooltipKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        List<Component> built = buildTooltipBlock(missingIds, shift);
+        List<Component> immutable = List.copyOf(built);
+        TOOLTIP_BLOCK_CACHE.put(tooltipKey, immutable);
+        return immutable;
+    }
+
+    private static List<String> getEnchantTokens(CacheKey cacheKey, List<String> currentEnchants) {
+        // Token normalization is reused by findInsertIndex and does not change per frame.
+        List<String> cached = ENCHANT_TOKEN_CACHE.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        List<String> tokens = new ArrayList<>(currentEnchants.size());
+        for (String id : currentEnchants) {
+            tokens.add(normalizeEnchantToken(id));
+        }
+
+        List<String> immutable = List.copyOf(tokens);
+        ENCHANT_TOKEN_CACHE.put(cacheKey, immutable);
+        return immutable;
     }
 
     private static String extractItemType(List<Component> texts) {
@@ -125,26 +186,29 @@ public class MissingEnchants {
     }
 
     private static List<String> readEnchants(ItemStack stack) {
-        List<String> enchantments = new ArrayList<>();
-
         CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData == null) {
-            return enchantments;
+            return List.of();
+        }
+
+        synchronized (ENCHANTS_BY_CUSTOM_DATA) {
+            List<String> cached = ENCHANTS_BY_CUSTOM_DATA.get(customData);
+            if (cached != null) {
+                return cached;
+            }
         }
 
         CompoundTag nbt = customData.copyTag();
         if (!nbt.contains("enchantments")) {
-            return enchantments;
+            return cacheCustomDataEnchants(customData, List.of());
         }
 
         CompoundTag enchants = nbt.getCompound("enchantments").orElse(null);
         if (enchants == null) {
-            return enchantments;
+            return cacheCustomDataEnchants(customData, List.of());
         }
 
-        enchantments.addAll(enchants.keySet());
-
-        return enchantments;
+        return cacheCustomDataEnchants(customData, List.copyOf(enchants.keySet()));
     }
 
     private static List<String> findMissingEnchants(String itemType, List<String> enchants) {
@@ -171,13 +235,19 @@ public class MissingEnchants {
         return missing;
     }
 
-    private static int findInsertIndex(List<Component> texts, List<String> currentEnchants) {
-        int lastMatch = -1;
-
-        List<String> tokens = new ArrayList<>(currentEnchants.size());
-        for (String id : currentEnchants) {
-            tokens.add(normalizeEnchantToken(id));
+    private static List<String> cacheCustomDataEnchants(CustomData customData, List<String> enchantments) {
+        synchronized (ENCHANTS_BY_CUSTOM_DATA) {
+            ENCHANTS_BY_CUSTOM_DATA.put(customData, enchantments);
+            // Cheap bounded strategy: clear whole identity cache once it grows too much.
+            if (ENCHANTS_BY_CUSTOM_DATA.size() > CUSTOM_DATA_CACHE_SIZE) {
+                ENCHANTS_BY_CUSTOM_DATA.clear();
+            }
         }
+        return enchantments;
+    }
+
+    private static int findInsertIndex(List<Component> texts, List<String> enchantTokens) {
+        int lastMatch = -1;
 
         for (int i = 0; i < texts.size(); i++) {
             String line = texts.get(i).getString().toLowerCase(Locale.ROOT);
@@ -187,7 +257,7 @@ public class MissingEnchants {
                 continue;
             }
 
-            for (String token : tokens) {
+            for (String token : enchantTokens) {
                 if (!token.isEmpty() && line.contains(token)) {
                     lastMatch = i;
                     break;
@@ -278,6 +348,9 @@ public class MissingEnchants {
             sorted.sort(String.CASE_INSENSITIVE_ORDER);
             return new CacheKey(itemType, String.join(",", sorted));
         }
+    }
+
+    private record TooltipBlockKey(CacheKey cacheKey, boolean shift) {
     }
 
     private static String normalizeEnchantToken(String id) {
