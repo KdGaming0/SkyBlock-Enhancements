@@ -9,7 +9,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.nio.file.Path;
 
 /**
- * Minimal bootstrap for the Kat reminder feature to keep main mod init clean.
+ * Minimal bootstrap for the Kat reminder feature to keep the main mod init clean.
  */
 public final class KatReminderFeature {
     private static final Object SAVE_LOCK = new Object();

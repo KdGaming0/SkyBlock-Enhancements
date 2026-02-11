@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
+import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.JsonFileUtil;
 
 import net.minecraft.ChatFormatting;
@@ -78,6 +79,8 @@ public class KatUpgradeReminderManager {
     }
 
     public void onNpcDialog(String npcName, String dialog) {
+        if (!SkyblockEnhancementsConfig.setKatReminderForPetUpgrades) return;
+
         // This manager currently only handles Kat dialog flow.
         if (!"Kat".equals(npcName)) return;
 
@@ -89,6 +92,8 @@ public class KatUpgradeReminderManager {
     }
 
     public void onClientTick(Minecraft client) {
+        if (!SkyblockEnhancementsConfig.setKatReminderForPetUpgrades) return;
+
         if (client.player == null) return;
 
         long currentTimeMillis = System.currentTimeMillis();
@@ -188,6 +193,7 @@ public class KatUpgradeReminderManager {
                         .withColor(ChatFormatting.AQUA)
                         .withClickEvent(new ClickEvent.RunCommand("/call kat"))));
 
+        assert client.player != null;
         client.player.displayClientMessage(message, false);
     }
 
@@ -202,27 +208,9 @@ public class KatUpgradeReminderManager {
         };
     }
 
-    private static class PendingUpgrade {
-        private final String pet;
-        private final String rarity;
+    private record PendingUpgrade(String pet, String rarity) { }
 
-        private PendingUpgrade(String pet, String rarity) {
-            this.pet = pet;
-            this.rarity = rarity;
-        }
-    }
-
-    private static class KatUpgradeReminder {
-        private final String pet;
-        private final String rarity;
-        private final long readyAtMs;
-
-        private KatUpgradeReminder(String pet, String rarity, long readyAtMs) {
-            this.pet = pet;
-            this.rarity = rarity;
-            this.readyAtMs = readyAtMs;
-        }
-    }
+    private record KatUpgradeReminder(String pet, String rarity, long readyAtMs) { }
 
     public static class KatRemindersFileData {
         public List<KatReminderData> reminders = new ArrayList<>();

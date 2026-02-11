@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  */
 public class NpcDialogWatcher {
     // Captures: 1) NPC name, 2) spoken dialog line.
-    private static final Pattern NPC_MESSAGE_PATTERN = Pattern.compile("^\\[NPC\\]\\s+([^:]+):\\s*(.+)$");
+    private static final Pattern NPC_MESSAGE_PATTERN = Pattern.compile("^\\[NPC]\\s+([^:]+):\\s*(.+)$");
     // Strip legacy Minecraft formatting codes like section-sign + format char.
     private static final Pattern LEGACY_FORMAT_CODE_PATTERN = Pattern.compile("(?i)\\u00A7[0-9A-FK-OR]");
 
@@ -32,7 +32,7 @@ public class NpcDialogWatcher {
     }
 
     public void onGameMessage(Component message) {
-        // Convert formatted chat component to plain text for regex matching.
+        // Convert the formatted chat component to plain text for regex matching.
         String raw = LEGACY_FORMAT_CODE_PATTERN.matcher(message.getString()).replaceAll("");
         Matcher matcher = NPC_MESSAGE_PATTERN.matcher(raw);
         if (!matcher.matches()) return;
