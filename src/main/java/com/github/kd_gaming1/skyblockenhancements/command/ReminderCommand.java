@@ -308,10 +308,14 @@ public class ReminderCommand {
         long hours = minutes / 60;
         long days = hours / 24;
 
-        if (days > 0) return days + " day(s)";
-        if (hours > 0) return hours + " hour(s)";
-        if (minutes > 0) return minutes + " minute(s)";
-        return seconds + " second(s)";
+        if (days > 0) return formatUnit(days, "day");
+        if (hours > 0) return formatUnit(hours, "hour");
+        if (minutes > 0) return formatUnit(minutes, "minute");
+        return formatUnit(seconds, "second");
+    }
+
+    private static String formatUnit(long amount, String singular) {
+        return amount + " " + (amount == 1 ? singular : singular + "s");
     }
 
     private static MutableComponent buildTimerLine(String indexLabel, Component reminderName, String timeLeft, String timerType, String removeCommand) {

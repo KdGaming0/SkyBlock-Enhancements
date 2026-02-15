@@ -20,6 +20,7 @@ public final class KatReminderFeature {
     private static KatUpgradeReminderManager katUpgradeReminderManager;
     // Updated by Hypixel location packets and used as a lightweight Hub gate for Kat parsing.
     private static volatile boolean inSkyBlockHub;
+    private static volatile boolean hasLocationUpdate;
 
     private KatReminderFeature() {}
 
@@ -32,13 +33,14 @@ public final class KatReminderFeature {
         if (katUpgradeReminderManager != null) return;
 
         Path storagePath = FabricLoader.getInstance().getConfigDir().resolve(modId).resolve("kat_reminders.json");
-        katUpgradeReminderManager = new KatUpgradeReminderManager(storagePath, KatReminderFeature::isInSkyBlockHub);
+        katUpgradeReminderManager = new KatUpgradeReminderManager(storagePath, KatReminderFeature::isInSkyBlock);
         NpcDialogWatcher npcDialogWatcher = new NpcDialogWatcher(katUpgradeReminderManager::onNpcDialog, "Kat");
 
         // Track current location to avoid processing Kat dialog outside SkyBlock Hub.
         HypixelPacketEvents.LOCATION_UPDATE.register(packet -> {
             if (packet instanceof LocationUpdateS2CPacket locationPacket) {
-                inSkyBlockHub = isHubLocation(locationPacket);
+                hasLocationUpdate = true;
+                inSkyBlockHub = isSkyBlockLocation(locationPacket);
             }
         });
 
@@ -55,6 +57,7 @@ public final class KatReminderFeature {
         );
 
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            hasLocationUpdate = false;
             inSkyBlockHub = false;
             save();
         });
@@ -84,19 +87,13 @@ public final class KatReminderFeature {
         return katUpgradeReminderManager.getActiveReminders();
     }
 
-    private static boolean isInSkyBlockHub() {
-        return inSkyBlockHub;
+    private static boolean isInSkyBlock() {
+        // If location updates are unavailable, allow Kat parsing instead of blocking it entirely.
+        return !hasLocationUpdate || inSkyBlockHub;
     }
 
-    private static boolean isHubLocation(LocationUpdateS2CPacket locationPacket) {
+    private static boolean isSkyBlockLocation(LocationUpdateS2CPacket locationPacket) {
         String serverType = locationPacket.serverType().orElse("");
-        String mode = locationPacket.mode().orElse("");
-        String map = locationPacket.map().orElse("");
-
-        if (!"SKYBLOCK".equalsIgnoreCase(serverType)) {
-            return false;
-        }
-
-        return "hub".equalsIgnoreCase(mode) || "hub".equalsIgnoreCase(map);
+        return "SKYBLOCK".equalsIgnoreCase(serverType);
     }
 }
