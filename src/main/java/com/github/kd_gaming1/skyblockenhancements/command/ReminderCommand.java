@@ -1,15 +1,25 @@
 package com.github.kd_gaming1.skyblockenhancements.command;
 
+import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
+import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminderFeature;
+import com.github.kd_gaming1.skyblockenhancements.feature.reminder.JsonFileUtil;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.Reminder;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
+import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
@@ -161,13 +171,28 @@ public class ReminderCommand {
             return 0;
         }
 
-        String feedbackMsg = repeatCount != null
-                ? String.format("Created repeating %s reminder #%d (every %d %s, %s)",
-                trigger, reminder.id, amount, unit,
-                repeatCount == -1 ? "until removed" : repeatCount + " times")
-                : String.format("Created %s reminder #%d in %d %s", trigger, reminder.id, amount, unit);
+        String triggerText = toReadableTrigger(trigger);
+        MutableComponent feedback = Component.literal("Created ").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(triggerText).withStyle(ChatFormatting.GOLD))
+                .append(Component.literal(" Reminder").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(" ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal("#" + reminder.id).withStyle(ChatFormatting.DARK_GRAY))
+                .append(Component.literal(" "))
+                .append(Component.literal(message).withStyle(ChatFormatting.YELLOW));
 
-        context.getSource().sendFeedback(Component.literal(feedbackMsg));
+        if (repeatCount != null) {
+            String repeatText = repeatCount == -1 ? "until removed" : repeatCount + " times";
+            feedback.append(Component.literal(" for every ").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(amount + " " + unit).withStyle(ChatFormatting.AQUA))
+                    .append(Component.literal(" ").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal("|").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(" " + repeatText).withStyle(ChatFormatting.LIGHT_PURPLE));
+        } else {
+            feedback.append(Component.literal(" in ").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(amount + " " + unit).withStyle(ChatFormatting.AQUA));
+        }
+
+        context.getSource().sendFeedback(feedback);
         return 1;
     }
 
@@ -175,7 +200,11 @@ public class ReminderCommand {
         int id = IntegerArgumentType.getInteger(context, "id");
 
         if (reminderManager.removeReminder(id)) {
-            context.getSource().sendFeedback(Component.literal("Removed reminder " + id));
+            persistReminders(reminderManager);
+            context.getSource().sendFeedback(
+                    Component.literal("Removed Reminder ").withStyle(ChatFormatting.GRAY)
+                            .append(Component.literal("#" + id).withStyle(ChatFormatting.DARK_GRAY))
+            );
             return 1;
         } else {
             context.getSource().sendError(Component.literal("Reminder " + id + " not found"));
@@ -185,30 +214,49 @@ public class ReminderCommand {
 
     private static int executeRemoveAll(CommandContext<FabricClientCommandSource> context, ReminderManager reminderManager) {
         int count = reminderManager.removeAllReminders();
+        count += KatReminderFeature.removeAllReminders();
+        persistReminders(reminderManager);
         context.getSource().sendFeedback(Component.literal("Removed " + count + " reminder(s)"));
         return 1;
     }
 
     private static int executeList(CommandContext<FabricClientCommandSource> context, ReminderManager reminderManager) {
         List<Reminder> reminders = reminderManager.getActiveReminders();
+        var katReminders = KatReminderFeature.getActiveReminders();
 
-        if (reminders.isEmpty()) {
+        if (reminders.isEmpty() && katReminders.isEmpty()) {
             context.getSource().sendFeedback(Component.literal("No active reminders"));
             return 0;
         }
 
-        context.getSource().sendFeedback(Component.literal("Active reminders:"));
+        MutableComponent header = Component.literal("Your Active Timers:").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(" "))
+                .append(Component.literal("[remove all]").withStyle(style -> style
+                        .withColor(ChatFormatting.RED)
+                        .withClickEvent(new ClickEvent.RunCommand("/remindme remove all"))));
+        context.getSource().sendFeedback(header);
         for (Reminder reminder : reminders) {
             String timeInfo = formatRemainingTime(reminder);
-            context.getSource().sendFeedback(Component.literal(
-                    String.format("Reminder %d - Message: \"%s\" | Time left: %s | Type: %s",
-                            reminder.id,
-                            reminder.message,
-                            timeInfo,
-                            reminder.triggerType.toLowerCase().replace("_", " ")
-                    )
+            context.getSource().sendFeedback(buildTimerLine(
+                    "#" + reminder.id,
+                    Component.literal(reminder.message).withStyle(ChatFormatting.YELLOW),
+                    timeInfo,
+                    "REAL_TIME".equals(reminder.triggerType) ? "real time" : "play time",
+                    "/remindme remove " + reminder.id
             ));
+        }
 
+        for (var reminder : katReminders) {
+            String timeInfo = formatRemainingTime(Math.max(0L, reminder.readyAtMs - System.currentTimeMillis()));
+            MutableComponent katName = Component.literal("Kat: ").withStyle(ChatFormatting.YELLOW)
+                    .append(Component.literal(reminder.pet).withStyle(mapRarityColor(reminder.rarity)));
+            context.getSource().sendFeedback(buildTimerLine(
+                    "#K",
+                    katName,
+                    timeInfo,
+                    "real time",
+                    null
+            ));
         }
 
         return 1;
@@ -245,6 +293,10 @@ public class ReminderCommand {
             ms = reminder.remainingMs;
         }
 
+        return formatRemainingTime(ms);
+    }
+
+    private static String formatRemainingTime(long ms) {
         if (ms < 0) ms = 0;
 
         long seconds = ms / 1000;
@@ -256,6 +308,66 @@ public class ReminderCommand {
         if (hours > 0) return hours + " hour(s)";
         if (minutes > 0) return minutes + " minute(s)";
         return seconds + " second(s)";
+    }
+
+    private static MutableComponent buildTimerLine(String indexLabel, Component reminderName, String timeLeft, String timerType, String removeCommand) {
+        MutableComponent line = Component.literal("")
+                .append(Component.literal(indexLabel).withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(" "))
+                .append(Component.literal("|").withStyle(ChatFormatting.DARK_GRAY))
+                .append(Component.literal(" "))
+                .append(reminderName)
+                .append(Component.literal(" "))
+                .append(Component.literal("|").withStyle(ChatFormatting.DARK_GRAY))
+                .append(Component.literal(" "))
+                .append(Component.literal(timeLeft).withStyle(ChatFormatting.AQUA))
+                .append(Component.literal(" left"))
+                .append(Component.literal(" "))
+                .append(Component.literal("|").withStyle(ChatFormatting.DARK_GRAY))
+                .append(Component.literal(" "))
+                .append(Component.literal(timerType).withStyle(ChatFormatting.GOLD));
+
+        if (removeCommand != null) {
+            line.append(Component.literal(" "))
+                    .append(Component.literal("|").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(" "))
+                    .append(Component.literal("[remove]").withStyle(style -> style
+                            .withColor(ChatFormatting.RED)
+                            .withClickEvent(new ClickEvent.RunCommand(removeCommand))));
+        }
+
+        return line;
+    }
+
+    private static ChatFormatting mapRarityColor(String rarity) {
+        if (rarity == null) return ChatFormatting.WHITE;
+        return switch (rarity.toUpperCase()) {
+            case "UNCOMMON" -> ChatFormatting.GREEN;
+            case "RARE" -> ChatFormatting.BLUE;
+            case "EPIC" -> ChatFormatting.DARK_PURPLE;
+            case "LEGENDARY" -> ChatFormatting.GOLD;
+            case "MYTHIC" -> ChatFormatting.LIGHT_PURPLE;
+            default -> ChatFormatting.WHITE;
+        };
+    }
+
+    private static String toReadableTrigger(String trigger) {
+        if ("real_time".equalsIgnoreCase(trigger)) return "real time";
+        if ("while_playing".equalsIgnoreCase(trigger)) return "play time";
+        return trigger.replace("_", " ").toLowerCase();
+    }
+
+    private static void persistReminders(ReminderManager reminderManager) {
+        Path reminderPath = FabricLoader.getInstance()
+                .getConfigDir()
+                .resolve(SkyblockEnhancements.MOD_ID)
+                .resolve("reminders.json");
+        RemindersFileData data = reminderManager.saveToStorage();
+        try {
+            JsonFileUtil.writeAtomic(reminderPath, data);
+        } catch (IOException e) {
+            SkyblockEnhancements.LOGGER.error("Failed to save reminders data", e);
+        }
     }
 
 
