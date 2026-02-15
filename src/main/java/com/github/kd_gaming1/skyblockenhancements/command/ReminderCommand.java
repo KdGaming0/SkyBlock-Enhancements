@@ -200,6 +200,7 @@ public class ReminderCommand {
         int id = IntegerArgumentType.getInteger(context, "id");
 
         if (reminderManager.removeReminder(id)) {
+            // Persist immediately so removed reminders disappear from reminders.json right away.
             persistReminders(reminderManager);
             context.getSource().sendFeedback(
                     Component.literal("Removed Reminder ").withStyle(ChatFormatting.GRAY)
@@ -214,7 +215,9 @@ public class ReminderCommand {
 
     private static int executeRemoveAll(CommandContext<FabricClientCommandSource> context, ReminderManager reminderManager) {
         int count = reminderManager.removeAllReminders();
+        // Keep "remove all" consistent with the combined list output (normal + Kat timers).
         count += KatReminderFeature.removeAllReminders();
+        // Persist immediately so bulk removal is reflected on disk without waiting for disconnect.
         persistReminders(reminderManager);
         context.getSource().sendFeedback(Component.literal("Removed " + count + " reminder(s)"));
         return 1;
@@ -231,6 +234,7 @@ public class ReminderCommand {
 
         MutableComponent header = Component.literal("Your Active Timers:").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(" "))
+                // Header action for bulk removal using the existing command path.
                 .append(Component.literal("[remove all]").withStyle(style -> style
                         .withColor(ChatFormatting.RED)
                         .withClickEvent(new ClickEvent.RunCommand("/remindme remove all"))));
@@ -328,6 +332,7 @@ public class ReminderCommand {
                 .append(Component.literal(timerType).withStyle(ChatFormatting.GOLD));
 
         if (removeCommand != null) {
+            // Reuse the existing "/remindme remove <id>" logic via clickable chat action.
             line.append(Component.literal(" "))
                     .append(Component.literal("|").withStyle(ChatFormatting.DARK_GRAY))
                     .append(Component.literal(" "))
@@ -362,6 +367,7 @@ public class ReminderCommand {
                 .getConfigDir()
                 .resolve(SkyblockEnhancements.MOD_ID)
                 .resolve("reminders.json");
+        // Mirror manager state to the same file used by the normal startup/disconnect persistence flow.
         RemindersFileData data = reminderManager.saveToStorage();
         try {
             JsonFileUtil.writeAtomic(reminderPath, data);

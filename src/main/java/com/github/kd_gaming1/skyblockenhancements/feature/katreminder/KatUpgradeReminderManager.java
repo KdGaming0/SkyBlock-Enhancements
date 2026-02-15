@@ -88,6 +88,7 @@ public class KatUpgradeReminderManager {
     }
 
     public List<KatReminderData> getActiveReminders() {
+        // Return a detached snapshot for list rendering; callers must not mutate internal state.
         List<KatReminderData> reminders = new ArrayList<>();
         for (KatUpgradeReminder reminder : activeReminders) {
             KatReminderData reminderData = new KatReminderData();
@@ -100,6 +101,7 @@ public class KatUpgradeReminderManager {
     }
 
     public int removeAllReminders() {
+        // Command-driven bulk delete for Kat reminders.
         int count = activeReminders.size();
         activeReminders.clear();
         reset();
@@ -111,6 +113,7 @@ public class KatUpgradeReminderManager {
         if (!SkyblockEnhancementsConfig.setKatReminderForPetUpgrades) return;
         if (!"Kat".equals(npcName)) return;
         if (!inHubSupplier.getAsBoolean()) {
+            // Strictly clear pending dialog context when no longer in a valid location.
             reset();
             return;
         }

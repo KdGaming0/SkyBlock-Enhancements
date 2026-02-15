@@ -18,6 +18,7 @@ public final class KatReminderFeature {
     private static final Object SAVE_LOCK = new Object();
 
     private static KatUpgradeReminderManager katUpgradeReminderManager;
+    // Updated by Hypixel location packets and used as a lightweight Hub gate for Kat parsing.
     private static volatile boolean inSkyBlockHub;
 
     private KatReminderFeature() {}
@@ -34,6 +35,7 @@ public final class KatReminderFeature {
         katUpgradeReminderManager = new KatUpgradeReminderManager(storagePath, KatReminderFeature::isInSkyBlockHub);
         NpcDialogWatcher npcDialogWatcher = new NpcDialogWatcher(katUpgradeReminderManager::onNpcDialog, "Kat");
 
+        // Track current location to avoid processing Kat dialog outside SkyBlock Hub.
         HypixelPacketEvents.LOCATION_UPDATE.register(packet -> {
             if (packet instanceof LocationUpdateS2CPacket locationPacket) {
                 inSkyBlockHub = isHubLocation(locationPacket);
@@ -72,6 +74,7 @@ public final class KatReminderFeature {
     public static int removeAllReminders() {
         if (katUpgradeReminderManager == null) return 0;
         synchronized (SAVE_LOCK) {
+            // Used by "/remindme remove all" so Kat timers are cleared with normal reminders.
             return katUpgradeReminderManager.removeAllReminders();
         }
     }
