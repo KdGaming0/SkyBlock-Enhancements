@@ -112,11 +112,6 @@ public class KatUpgradeReminderManager {
     public void onNpcDialog(String npcName, String dialog) {
         if (!SkyblockEnhancementsConfig.setKatReminderForPetUpgrades) return;
         if (!"Kat".equals(npcName)) return;
-        if (!inHubSupplier.getAsBoolean()) {
-            // Strictly clear pending dialog context when no longer in a valid location.
-            reset();
-            return;
-        }
 
         if (handleSpecialDialog(dialog)) return;
         if (tryReadUpgradeStart(dialog)) return;
@@ -147,6 +142,7 @@ public class KatUpgradeReminderManager {
         while (iterator.hasNext()) {
             KatUpgradeReminder reminder = iterator.next();
             if (currentTimeMillis < reminder.readyAtMs) continue;
+            if (!inHubSupplier.getAsBoolean()) continue;
 
             sendReadyMessage(client, reminder);
             iterator.remove();
