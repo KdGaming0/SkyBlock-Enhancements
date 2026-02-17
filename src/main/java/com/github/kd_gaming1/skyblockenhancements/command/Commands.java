@@ -59,7 +59,7 @@ public class Commands {
         cache.refresh("constants/enchants.json");
 
         JsonLookup.clearCache();
-        MissingEnchants.clearCache();
+        MissingEnchants.invalidateRepoDataCaches();
 
         ctx.getSource().sendFeedback(Component.literal("§a[Skyblock Enhancements] Repository data refreshed successfully!"));
         return 1;

@@ -5,392 +5,244 @@ import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsCon
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.component.CustomData;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.ChatFormatting;
 
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
+// import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.MOD_ID;
 
 /**
- * Displays missing Skyblock enchantments on item tooltips.
- * <p>
- * Registers a tooltip callback (via {@code init()}), reads current enchants from item NBT,
- * compares them to enchants loaded from JSON using {@code JsonLookup} (path `constants/enchants.json`),
- * and inserts a compact tooltip block. Uses an LRU cache (`MISSING_CACHE`) and can be cleared
- * with {@code clearCache()}. Visibility respects {@code SkyblockEnhancementsConfig} and Shift.
+ * Appends a "Missing enchantments" section to the tooltip of any enchantable Skyblock item.
+ *
+ * <p>For each hovered item is the feature:
+ * <ol>
+ *   <li>Reads the item type and current enchants from the tooltip / NBT via {@link HoveredEnchantReader}.</li>
+ *   <li>Compares the current enchants against the full list for that item type (loaded from
+ *       {@code enchants.json}) via {@link MissingEnchantResolver}, respecting mutually exclusive
+ *       enchant pools so that only one enchant per pool is ever counted as missing.</li>
+ *   <li>Injects the resulting list into the tooltip, either as a compact count (default) or a
+ *       full expanded list (while Shift is held), positioned just after the existing enchant lines.</li>
+ * </ol>
+ *
+ * <p><b>Caching:</b> {@code onTooltip} is called every frame for the hovered item, so three layers
+ * of caching keep it cheap:
+ * <ul>
+ *   <li><b>Identity cache</b> — if the same {@link ItemStack} object is seen again, skip all NBT
+ *       parsing and jump straight to inserting (or rebuilding if Shift changed).</li>
+ *   <li><b>Item cache</b> — if the item type and enchant set are unchanged, skip the resolver.</li>
+ *   <li><b>Render cache</b> — if neither the missing list nor the expanded state changed, reuse
+ *       the already-built {@link Component} list.</li>
+ * </ul>
+ * Items without enchants (e.g. plain tools, consumables) are ignored and do <em>not</em> update
+ * the identity cache, so mousing back to a previously analysed enchanted item still hits the fast path.
  */
-public class MissingEnchants {
-    private static final Path storageRoot = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("data");
-    private static final JsonLookup LOOKUP = new JsonLookup();
-    private static final Path ENCHANTS_JSON = storageRoot.resolve("constants/enchants.json");
+public final class MissingEnchants {
 
-    // Shared upper bound for all LRU caches in this feature.
-    private static final int CACHE_SIZE = 256;
-    private static final Map<CacheKey, List<String>> MISSING_CACHE = Collections.synchronizedMap(
-            new LinkedHashMap<>(128, 0.75f, true) {
-                @Override
-                protected boolean removeEldestEntry(Map.Entry<CacheKey, List<String>> eldest) {
-                    return size() > CACHE_SIZE;
-                }
-            }
-    );
-    private static final Map<TooltipBlockKey, List<Component>> TOOLTIP_BLOCK_CACHE = Collections.synchronizedMap(
-            new LinkedHashMap<>(128, 0.75f, true) {
-                @Override
-                protected boolean removeEldestEntry(Map.Entry<TooltipBlockKey, List<Component>> eldest) {
-                    return size() > CACHE_SIZE;
-                }
-            }
-    );
-    // Caches fully built tooltip blocks to skip sorting/wrapping and font width calls per frame.
-    // Caches normalized enchant tokens used during insert-position lookup.
-    private static final Map<CacheKey, List<String>> ENCHANT_TOKEN_CACHE = Collections.synchronizedMap(
-            new LinkedHashMap<>(128, 0.75f, true) {
-                @Override
-                protected boolean removeEldestEntry(Map.Entry<CacheKey, List<String>> eldest) {
-                    return size() > CACHE_SIZE;
-                }
-            }
-    );
-    // Identity cache for CustomData to avoid copyTag()/NBT parsing every render pass.
-    private static final IdentityHashMap<CustomData, List<String>> ENCHANTS_BY_CUSTOM_DATA = new IdentityHashMap<>();
-    private static final int CUSTOM_DATA_CACHE_SIZE = CACHE_SIZE * 2;
+    private static final Path DATA_ROOT = FabricLoader.getInstance().getConfigDir()
+            .resolve(MOD_ID).resolve("data");
+    private static final Path ENCHANTS_JSON_PATH = DATA_ROOT.resolve("constants/enchants.json");
 
-    private static final List<String> RARITIES = Arrays.asList(
-            "COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "DIVINE", "SPECIAL", "VERY SPECIAL", "ULTIMATE", "ADMIN"
+    private static final int MAX_LINE_WIDTH = 200;
+    private static final String LIST_PREFIX = "› ";
+
+    private static final HoveredEnchantReader ENCHANT_READER = new HoveredEnchantReader();
+    private static final MissingEnchantResolver MISSING_RESOLVER =
+            new MissingEnchantResolver(new JsonLookup(), ENCHANTS_JSON_PATH);
+
+    private static final Set<String> ROMAN_NUMERALS = Set.of(
+            "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"
     );
 
-    private static final List<String> TYPES = Arrays.asList(
-            "SWORD", "BOW", "AXE", "PICKAXE", "DRILL", "FISHING ROD", "FISHING WEAPON", "SHOVEL", "HOE", "HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS",
-            "GAUNTLET", "GLOVES", "BELT", "NECKLACE", "BRACELET", "CLOAK", "CARNIVAL MASK"
-    );
+    // --- Item cache: what was the last enchantable item we resolved? ---
+    private static String lastItemType;
+    private static Set<String> lastCurrentEnchants = Set.of();
+    private static List<String> lastMissingNamesSorted = List.of();
+
+    // --- Render cache: the built Component list, valid while the missing list and expanded state are unchanged ---
+    private static List<String> lastRenderedForMissing = List.of();
+    private static boolean lastRenderedExpanded;
+    private static List<Component> lastRenderBlock = List.of();
+
+    // --- Identity cache: the last ItemStack object we successfully analysed ---
+    private static ItemStack lastStack = ItemStack.EMPTY;
 
     public static void init() {
         ItemTooltipCallback.EVENT.register(MissingEnchants::onTooltip);
     }
 
-    public static void clearCache() {
-        // Keep all memoized values in sync when the feature cache is reset by command/config flow.
-        MISSING_CACHE.clear();
-        TOOLTIP_BLOCK_CACHE.clear();
-        ENCHANT_TOKEN_CACHE.clear();
-        synchronized (ENCHANTS_BY_CUSTOM_DATA) {
-            ENCHANTS_BY_CUSTOM_DATA.clear();
-        }
-    }
-
-    private static void onTooltip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipFlag tooltipType, List<Component> texts) {
-        // Called on tooltip build/render; keep this path allocation-light.
+    private static void onTooltip(ItemStack stack, Item.TooltipContext ctx, TooltipFlag flag, List<Component> tooltipLines) {
         if (!SkyblockEnhancementsConfig.showMissingEnchantments) return;
         if (!SkyblockEnhancements.helloPacketReceived.get()) return;
 
-        String itemType = extractItemType(texts);
-        List<String> currentEnchants = readEnchants(itemStack);
+        boolean expanded = !SkyblockEnhancementsConfig.showWhenPressingShift || Minecraft.getInstance().hasShiftDown();
 
-        if (itemType == null || currentEnchants.isEmpty()) return;
-        for (String e : currentEnchants) {
-            if ("one_for_all".equalsIgnoreCase(e)) return;
-        }
-
-        CacheKey cacheKey = CacheKey.from(itemType, currentEnchants);
-        List<String> missing = MISSING_CACHE.get(cacheKey);
-        if (missing == null) {
-            missing = List.copyOf(findMissingEnchants(itemType, currentEnchants));
-            MISSING_CACHE.put(cacheKey, missing);
-        }
-        if (missing.isEmpty()) return;
-
-        List<String> enchantTokens = getEnchantTokens(cacheKey, currentEnchants);
-        int insertIndex = findInsertIndex(texts, enchantTokens);
-
-        boolean shift;
-        if (SkyblockEnhancementsConfig.showWhenPressingShift) {
-            Minecraft client = Minecraft.getInstance();
-            shift = client.hasShiftDown();
-        } else {
-            shift = true;
-        }
-
-        List<Component> toInsert = getTooltipBlock(cacheKey, missing, shift);
-        if (!toInsert.isEmpty()) {
-            insertIndex = clamp(insertIndex, texts.size());
-            texts.addAll(insertIndex, toInsert);
-        }
-    }
-
-    private static List<Component> getTooltipBlock(CacheKey cacheKey, List<String> missingIds, boolean shift) {
-        // Final rendered lines only depend on enchant set + shift state.
-        TooltipBlockKey tooltipKey = new TooltipBlockKey(cacheKey, shift);
-        List<Component> cached = TOOLTIP_BLOCK_CACHE.get(tooltipKey);
-        if (cached != null) {
-            return cached;
-        }
-
-        List<Component> built = buildTooltipBlock(missingIds, shift);
-        List<Component> immutable = List.copyOf(built);
-        TOOLTIP_BLOCK_CACHE.put(tooltipKey, immutable);
-        return immutable;
-    }
-
-    private static List<String> getEnchantTokens(CacheKey cacheKey, List<String> currentEnchants) {
-        // Token normalization is reused by findInsertIndex and does not change per frame.
-        List<String> cached = ENCHANT_TOKEN_CACHE.get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
-
-        List<String> tokens = new ArrayList<>(currentEnchants.size());
-        for (String id : currentEnchants) {
-            tokens.add(normalizeEnchantToken(id));
-        }
-
-        List<String> immutable = List.copyOf(tokens);
-        ENCHANT_TOKEN_CACHE.put(cacheKey, immutable);
-        return immutable;
-    }
-
-    private static String extractItemType(List<Component> texts) {
-        for (int i = texts.size() - 1; i >= 0; i--) {
-            String line = texts.get(i).getString().toUpperCase();
-
-            for (String rarity : RARITIES) {
-                int rarityIndex = line.indexOf(rarity);
-                if (rarityIndex != -1) {
-                    String afterRarity = line.substring(rarityIndex + rarity.length()).trim();
-
-                    for (String type : TYPES) {
-                        if (afterRarity.startsWith(type)) {
-                            return type;
-                        }
-                    }
-
-                    for (String type : TYPES) {
-                        if (afterRarity.contains(type)) {
-                            return type;
-                        }
-                    }
-                }
+        // Identity fast path: the same ItemStack object means the item hasn't changed.
+        if (stack == lastStack) {
+            if (expanded == lastRenderedExpanded) {
+                // Nothing changed — just re-insert the cached block.
+                if (!lastRenderBlock.isEmpty()) insertBlock(tooltipLines, lastRenderBlock, lastCurrentEnchants);
+                return;
             }
+            // Only Shift changed — rebuild the block without reparsing NBT.
+            if (!lastMissingNamesSorted.isEmpty()) {
+                // LOGGER.info("Rebuilding tooltip block (expanded={})", expanded);
+                lastRenderBlock = expanded
+                        ? buildExpandedBlock(lastMissingNamesSorted)
+                        : buildCollapsedBlock(lastMissingNamesSorted.size());
+                lastRenderedExpanded = expanded;
+                lastRenderedForMissing = lastMissingNamesSorted;
+                insertBlock(tooltipLines, lastRenderBlock, lastCurrentEnchants);
+            }
+            return;
         }
-        return null;
+
+        // New stack — parse it. If the item isn't enchantable, we return without updating the lastStack so that mousing back to the previous enchanted item still hits the identity fast path above.
+        HoveredEnchantReader.HoveredItemInfo hovered = ENCHANT_READER.readHoveredItemInfo(stack, tooltipLines);
+        if (hovered == null) return;
+
+        if (!isSameItem(hovered)) {
+            // LOGGER.info("Recomputing missing enchants for {} with enchants {}", hovered.itemType(), hovered.currentEnchants());
+            lastMissingNamesSorted = MISSING_RESOLVER.findMissingEnchantNames(hovered.itemType(), hovered.currentEnchants());
+            lastItemType = hovered.itemType();
+            lastCurrentEnchants = hovered.currentEnchants();
+            lastRenderedForMissing = List.of(); // invalidate render cache for the new item
+        }
+
+        // Commit the identity cache only after confirming this is an enchantable item.
+        lastStack = stack;
+
+        if (lastMissingNamesSorted.isEmpty()) return;
+
+        // Rebuild the rendered Component list only when content or view mode changed.
+        if (lastMissingNamesSorted != lastRenderedForMissing || expanded != lastRenderedExpanded) {
+            // LOGGER.info("Rebuilding tooltip block (expanded={})", expanded);
+            lastRenderBlock = expanded
+                    ? buildExpandedBlock(lastMissingNamesSorted)
+                    : buildCollapsedBlock(lastMissingNamesSorted.size());
+            lastRenderedForMissing = lastMissingNamesSorted;
+            lastRenderedExpanded = expanded;
+        }
+
+        insertBlock(tooltipLines, lastRenderBlock, lastCurrentEnchants);
     }
 
-    private static List<String> readEnchants(ItemStack stack) {
-        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-        if (customData == null) {
-            return List.of();
-        }
-
-        synchronized (ENCHANTS_BY_CUSTOM_DATA) {
-            List<String> cached = ENCHANTS_BY_CUSTOM_DATA.get(customData);
-            if (cached != null) {
-                return cached;
-            }
-        }
-
-        CompoundTag nbt = customData.copyTag();
-        if (!nbt.contains("enchantments")) {
-            return cacheCustomDataEnchants(customData, List.of());
-        }
-
-        CompoundTag enchants = nbt.getCompound("enchantments").orElse(null);
-        if (enchants == null) {
-            return cacheCustomDataEnchants(customData, List.of());
-        }
-
-        return cacheCustomDataEnchants(customData, List.copyOf(enchants.keySet()));
+    private static boolean isSameItem(HoveredEnchantReader.HoveredItemInfo hovered) {
+        return Objects.equals(hovered.itemType(), lastItemType)
+                && hovered.currentEnchants().equals(lastCurrentEnchants);
     }
 
-    private static List<String> findMissingEnchants(String itemType, List<String> enchants) {
-        List<String> allEnchantsForType = LOOKUP.getEnchants(itemType, ENCHANTS_JSON);
-        List<List<String>> enchantPools = LOOKUP.getEnchantPools(ENCHANTS_JSON);
-
-        // Find missing enchants
-        Set<String> currentSet = new HashSet<>(enchants);
-        List<String> missing = allEnchantsForType.stream()
-                .filter(e -> !currentSet.contains(e))
-                .collect(Collectors.toList());
-
-        // Remove conflicting enchants
-        for (String currentEnchant : enchants) {
-            for (List<String> pool : enchantPools) {
-                if (pool.contains(currentEnchant)) {
-                    // Remove all other enchants from this conflict pool
-                    missing.removeAll(pool);
-                    break;
-                }
-            }
-        }
-
-        return missing;
+    private static List<Component> buildCollapsedBlock(int missingCount) {
+        return List.of(
+                Component.literal(""),
+                Component.literal("◆ Missing enchantments: " + missingCount + " (hold Shift)")
+                        .withStyle(ChatFormatting.DARK_AQUA)
+        );
     }
 
-    private static List<String> cacheCustomDataEnchants(CustomData customData, List<String> enchantments) {
-        synchronized (ENCHANTS_BY_CUSTOM_DATA) {
-            ENCHANTS_BY_CUSTOM_DATA.put(customData, enchantments);
-            // Cheap bounded strategy: clear whole identity cache once it grows too much.
-            if (ENCHANTS_BY_CUSTOM_DATA.size() > CUSTOM_DATA_CACHE_SIZE) {
-                ENCHANTS_BY_CUSTOM_DATA.clear();
-            }
-        }
-        return enchantments;
-    }
+    private static List<Component> buildExpandedBlock(List<String> missingNamesSorted) {
+        Minecraft mc = Minecraft.getInstance();
 
-    private static int findInsertIndex(List<Component> texts, List<String> enchantTokens) {
-        int lastMatch = -1;
-
-        for (int i = 0; i < texts.size(); i++) {
-            String line = texts.get(i).getString().toLowerCase(Locale.ROOT);
-
-            if (line.contains("enchant")) {
-                lastMatch = i;
-                continue;
-            }
-
-            for (String token : enchantTokens) {
-                if (!token.isEmpty() && line.contains(token)) {
-                    lastMatch = i;
-                    break;
-                }
-            }
-        }
-
-        int base = (lastMatch >= 0) ? (lastMatch + 1) : texts.size();
-        base = clamp(base, texts.size());
-
-        // Insert before the next blank line
-        int scanLimit = Math.min(texts.size(), base + 8);
-        for (int i = base; i < scanLimit; i++) {
-            if (texts.get(i).getString().isEmpty()) {
-                return i;
-            }
-        }
-
-        return base;
-    }
-
-    private static List<Component> buildTooltipBlock(List<String> missingIds, boolean shift) {
         List<Component> out = new ArrayList<>();
-
         out.add(Component.literal(""));
-
-        if (!shift) {
-            out.add(Component.literal("◆ Missing enchantments: " + missingIds.size() + " (hold Shift)")
-                    .withStyle(ChatFormatting.DARK_AQUA));
-            return out;
-        }
-
         out.add(Component.literal("◆ Missing enchantments:")
                 .withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
 
-        Minecraft client = Minecraft.getInstance();
-
-        List<EnchantEntry> entries = new ArrayList<>(missingIds.size());
-        for (String id : missingIds) {
-            String formattedName = formatEnchantName(id);
-            int width = client.font.width(formattedName);
-            entries.add(new EnchantEntry(formattedName, width));
-        }
-
-        entries.sort(Comparator.comparing(e -> e.name, String.CASE_INSENSITIVE_ORDER));
-
-        int maxWidth = 200;
-        int commaWidth = client.font.width(", ");
-        int prefixWidth = client.font.width("› ");
-        int effectiveMaxWidth = maxWidth - prefixWidth;
+        // Word-wrap the names onto lines that fit within MAX_LINE_WIDTH pixels.
+        int commaWidth = mc.font.width(", ");
+        int prefixWidth = mc.font.width(LIST_PREFIX);
+        int maxWidth = MAX_LINE_WIDTH - prefixWidth;
 
         List<String> currentLine = new ArrayList<>();
         int currentWidth = 0;
 
-        for (EnchantEntry entry : entries) {
-            int addedWidth = currentLine.isEmpty()
-                    ? entry.width
-                    : commaWidth + entry.width;
+        for (String name : missingNamesSorted) {
+            int nameWidth = mc.font.width(name);
+            int addWidth = currentLine.isEmpty() ? nameWidth : (commaWidth + nameWidth);
 
-            if (!currentLine.isEmpty() && currentWidth + addedWidth > effectiveMaxWidth) {
-                // Flush current line
-                out.add(Component.literal("› " + String.join(", ", currentLine))
+            if (!currentLine.isEmpty() && currentWidth + addWidth > maxWidth) {
+                out.add(Component.literal(LIST_PREFIX + String.join(", ", currentLine))
                         .withStyle(ChatFormatting.GRAY));
                 currentLine.clear();
                 currentWidth = 0;
-                addedWidth = entry.width;
+                addWidth = nameWidth;
             }
 
-            currentLine.add(entry.name);
-            currentWidth += addedWidth;
+            currentLine.add(name);
+            currentWidth += addWidth;
         }
 
-        // Flush the remaining line
         if (!currentLine.isEmpty()) {
-            out.add(Component.literal("› " + String.join(", ", currentLine))
+            out.add(Component.literal(LIST_PREFIX + String.join(", ", currentLine))
                     .withStyle(ChatFormatting.GRAY));
         }
 
         return out;
     }
 
-    private record EnchantEntry(String name, int width) {
+    private static void insertBlock(List<Component> tooltipLines, List<Component> block, Set<String> currentEnchants) {
+        tooltipLines.addAll(findInsertIndex(tooltipLines, currentEnchants), block);
     }
 
-    private record CacheKey(String itemType, String enchantKey) {
-        private static CacheKey from(String itemType, List<String> enchants) {
-            List<String> sorted = new ArrayList<>(enchants);
-            sorted.sort(String.CASE_INSENSITIVE_ORDER);
-            return new CacheKey(itemType, String.join(",", sorted));
-        }
-    }
+    private static int findInsertIndex(List<Component> tooltipLines, Set<String> currentEnchants) {
+        List<String> tokens = currentEnchants.stream()
+                .map(MissingEnchants::normalizeEnchantToken)
+                .filter(t -> !t.isEmpty())
+                .toList();
 
-    private record TooltipBlockKey(CacheKey cacheKey, boolean shift) {
-    }
+        int lastRomanLine   = -1;
+        int lastEnchantLine = -1;
 
-    private static String normalizeEnchantToken(String id) {
-        String s = id.toLowerCase(Locale.ROOT);
-        s = s.replace("ultimate_", "");
-        s = s.replace("turbo_", "turbo-");
-        s = s.replace("_", " ");
-        return s.trim();
-    }
+        for (int i = 0; i < tooltipLines.size(); i++) {
+            String raw  = tooltipLines.get(i).getString();
+            String line = raw.toLowerCase(Locale.ROOT);
 
-    private static String formatEnchantName(String id) {
-        String s = id.toLowerCase(Locale.ROOT);
-        s = s.replace("ultimate_", "");
-        s = s.replace("turbo_", "turbo-");
-        s = s.replace("_", " ");
-        s = titleCase(s);
-        if ("pristine".equalsIgnoreCase(s)) s = "Prismatic";
-        return s.trim();
-    }
+            String trimmed = raw.stripTrailing();
+            int spaceIdx = trimmed.lastIndexOf(' ');
+            if (spaceIdx >= 0 && ROMAN_NUMERALS.contains(trimmed.substring(spaceIdx + 1))) {
+                lastRomanLine = i;
+                continue;
+            }
 
-    private static String titleCase(String input) {
-        if (input == null || input.isEmpty()) return input;
-
-        String[] parts = input.split("\\s+");
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < parts.length; i++) {
-            String p = parts[i];
-            if (p.isEmpty()) continue;
-
-            String word = Character.toUpperCase(p.charAt(0)) + p.substring(1);
-            if (i > 0) sb.append(" ");
-            sb.append(word);
+            if (line.contains("enchant") || tokens.stream().anyMatch(line::contains)) {
+                lastEnchantLine = i;
+            }
         }
 
-        return sb.toString();
+        int anchor = lastRomanLine >= 0 ? lastRomanLine
+                : lastEnchantLine >= 0 ? lastEnchantLine
+                : tooltipLines.size() - 1;
+
+        int base = Math.min(anchor + 1, tooltipLines.size());
+
+        for (int i = base; i < Math.min(tooltipLines.size(), base + 8); i++) {
+            if (tooltipLines.get(i).getString().isEmpty()) return i;
+        }
+        return base;
     }
 
-    private static int clamp(int v, int max) {
-        if (v < 0) return 0;
-        return Math.min(v, max);
+    private static String normalizeEnchantToken(String enchantId) {
+        return enchantId.replace("ultimate_", "")
+                .replace('_', ' ')
+                .toLowerCase(Locale.ROOT);
+    }
+
+    /** Clears all caches — called when the repo data is reloaded from disk. */
+    public static void invalidateRepoDataCaches() {
+        MISSING_RESOLVER.clearCaches();
+
+        lastItemType = null;
+        lastCurrentEnchants = Set.of();
+        lastMissingNamesSorted = List.of();
+
+        lastRenderedForMissing = List.of();
+        lastRenderedExpanded = false;
+        lastRenderBlock = List.of();
     }
 }
