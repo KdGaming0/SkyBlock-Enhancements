@@ -22,12 +22,16 @@ public class ReminderStorage {
         try {
             remindersData = JsonFileUtil.readOrCreate(
                     remindersPath,
-                    RemindersFileData.class, // Change type
+                    RemindersFileData.class,
                     new RemindersFileData()
             );
-        } catch (IOException e) {
+
+            if (remindersData == null) {
+                remindersData = new RemindersFileData();
+            }
+        } catch (Exception e) {
             remindersData = new RemindersFileData();
-            SkyblockEnhancements.LOGGER.error("Failed to load reminders data", e);
+            SkyblockEnhancements.LOGGER.error("Failed to load reminders data, resetting file", e);
         }
     }
 

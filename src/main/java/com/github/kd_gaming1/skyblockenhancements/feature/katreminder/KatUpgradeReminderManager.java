@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,28 +21,37 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
 /**
- * Handles Kat's two-line upgrade dialog and creates real-time reminders that
+ * Handles Kat dialogs and creates real-time reminders that
  * persist across sessions in a dedicated JSON file.
  */
 public class KatUpgradeReminderManager {
-    // First Kat line: stores pet + target rarity context.
-    private static final Pattern START_PATTERN = Pattern.compile("^I[’']ll get your (.+) upgraded to ([A-Za-z]+) in no time[!.]?$");
-    // Second Kat line: stores countdown until pickup.
-    private static final Pattern TIME_PATTERN = Pattern.compile("^Come back in (\\d+) (minute|minutes|hour|hours|houre|houres|day|days) to pick it up[!.]?$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern GIVE_REGEX = Pattern.compile("^I(?:['\\u2019])ll get your (?<pet>.+) upgraded to (?<rarity>[A-Za-z]+) in no time[!.]?$");
+    private static final Pattern REMIND_REGEX = Pattern.compile("^I(?:['\\u2019])ll remind you when your (?<pet>.+) is done[!.]?$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DURATION_REGEX = Pattern.compile("^Come back in (?<duration>.+) to pick it up[!.]?$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DURATION_REMIND_REGEX = Pattern.compile("^I(?:['\\u2019])ll remind you in (?<duration>.+)[!.]?$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DURATION_PART_REGEX = Pattern.compile("(\\d+)\\s*(day|days|hour|hours|houre|houres|minute|minutes|second|seconds)", Pattern.CASE_INSENSITIVE);
+
+    private static final String FLOWER_MESSAGE = "A flower? For me? How sweet!";
+    private static final String BOUQUET_MESSAGE = "A bouquet? For me? How sweet!";
+    private static final String RESET_MESSAGE = "If you have any other pets you'd like to upgrade, you know where to find me!";
+
+    private static final long FLOWER_REDUCTION_MS = 86_400_000L;
+    private static final long BOUQUET_REDUCTION_MS = 432_000_000L;
 
     private final Path storagePath;
+    private final BooleanSupplier inHubSupplier;
     private final List<KatUpgradeReminder> activeReminders = new ArrayList<>();
 
     private PendingUpgrade pendingUpgrade;
     private long lastSecondUpdateMs;
 
-    public KatUpgradeReminderManager(Path storagePath) {
+    public KatUpgradeReminderManager(Path storagePath, BooleanSupplier inHubSupplier) {
         this.storagePath = storagePath;
+        this.inHubSupplier = inHubSupplier;
     }
 
     public void load() {
         try {
-            // Load existing reminders from disk (or create file on first run).
             KatRemindersFileData data = JsonFileUtil.readOrCreate(storagePath, KatRemindersFileData.class, new KatRemindersFileData());
             activeReminders.clear();
 
@@ -60,7 +70,6 @@ public class KatUpgradeReminderManager {
     }
 
     public void save() {
-        // Persist only data required to rebuild runtime reminders.
         KatRemindersFileData data = new KatRemindersFileData();
 
         for (KatUpgradeReminder reminder : activeReminders) {
@@ -78,22 +87,41 @@ public class KatUpgradeReminderManager {
         }
     }
 
+    public List<KatReminderData> getActiveReminders() {
+        // Return a detached snapshot for list rendering; callers must not mutate internal state.
+        List<KatReminderData> reminders = new ArrayList<>();
+        for (KatUpgradeReminder reminder : activeReminders) {
+            KatReminderData reminderData = new KatReminderData();
+            reminderData.pet = reminder.pet;
+            reminderData.rarity = reminder.rarity;
+            reminderData.readyAtMs = reminder.readyAtMs;
+            reminders.add(reminderData);
+        }
+        return reminders;
+    }
+
+    public int removeAllReminders() {
+        // Command-driven bulk delete for Kat reminders.
+        int count = activeReminders.size();
+        activeReminders.clear();
+        reset();
+        save();
+        return count;
+    }
+
     public void onNpcDialog(String npcName, String dialog) {
         if (!SkyblockEnhancementsConfig.setKatReminderForPetUpgrades) return;
-
-        // This manager currently only handles Kat dialog flow.
         if (!"Kat".equals(npcName)) return;
 
-        if (tryReadUpgradeStart(dialog)) {
-            return;
-        }
-
-        tryCreateReminderFromTime(dialog);
+        if (handleSpecialDialog(dialog)) return;
+        if (tryReadUpgradeStart(dialog)) return;
+        if (tryReadReminderStart(dialog)) return;
+        if (tryCreateReminderFromDuration(dialog, DURATION_REGEX)) return;
+        tryCreateReminderFromDuration(dialog, DURATION_REMIND_REGEX);
     }
 
     public void onClientTick(Minecraft client) {
         if (!SkyblockEnhancementsConfig.setKatReminderForPetUpgrades) return;
-
         if (client.player == null) return;
 
         long currentTimeMillis = System.currentTimeMillis();
@@ -114,8 +142,8 @@ public class KatUpgradeReminderManager {
         while (iterator.hasNext()) {
             KatUpgradeReminder reminder = iterator.next();
             if (currentTimeMillis < reminder.readyAtMs) continue;
+            if (!inHubSupplier.getAsBoolean()) continue;
 
-            // Reminder expired: notify once, then remove from active list.
             sendReadyMessage(client, reminder);
             iterator.remove();
             changed = true;
@@ -126,53 +154,99 @@ public class KatUpgradeReminderManager {
         }
     }
 
-    private boolean tryReadUpgradeStart(String dialog) {
-        Matcher startMatcher = START_PATTERN.matcher(dialog);
-        if (!startMatcher.matches()) return false;
+    private boolean handleSpecialDialog(String dialog) {
+        if (FLOWER_MESSAGE.equals(dialog)) {
+            reduceMostRecentReminder(FLOWER_REDUCTION_MS);
+            return true;
+        }
+        if (BOUQUET_MESSAGE.equals(dialog)) {
+            reduceMostRecentReminder(BOUQUET_REDUCTION_MS);
+            return true;
+        }
+        if (RESET_MESSAGE.equals(dialog)) {
+            reset();
+            return true;
+        }
+        return false;
+    }
 
-        String pet = startMatcher.group(1).trim();
-        String rarity = normalizeRarity(startMatcher.group(2));
+    private boolean tryReadUpgradeStart(String dialog) {
+        Matcher giveMatcher = GIVE_REGEX.matcher(dialog);
+        if (!giveMatcher.matches()) return false;
+
+        String pet = giveMatcher.group("pet").trim();
+        String rarity = normalizeRarity(giveMatcher.group("rarity"));
         if (rarity == null) return false;
 
         pendingUpgrade = new PendingUpgrade(pet, rarity);
         return true;
     }
 
-    private void tryCreateReminderFromTime(String dialog) {
-        // Second line is only valid after we parsed a matching first line.
-        if (pendingUpgrade == null) return;
+    private boolean tryReadReminderStart(String dialog) {
+        Matcher remindMatcher = REMIND_REGEX.matcher(dialog);
+        if (!remindMatcher.matches()) return false;
 
-        Matcher timeMatcher = TIME_PATTERN.matcher(dialog);
-        if (!timeMatcher.matches()) return;
+        pendingUpgrade = new PendingUpgrade(remindMatcher.group("pet").trim(), "COMMON");
+        return true;
+    }
 
-        long amount = Long.parseLong(timeMatcher.group(1));
-        if (amount <= 0) return;
+    private boolean tryCreateReminderFromDuration(String dialog, Pattern durationPattern) {
+        if (pendingUpgrade == null) return false;
 
-        String unit = timeMatcher.group(2).toLowerCase(Locale.ROOT);
-        long durationMs = toDurationMilliseconds(amount, unit);
-        if (durationMs <= 0) return;
+        Matcher durationMatcher = durationPattern.matcher(dialog);
+        if (!durationMatcher.matches()) return false;
+
+        long durationMs = parseLongDurationMilliseconds(durationMatcher.group("duration"));
+        if (durationMs <= 0) return false;
 
         activeReminders.add(new KatUpgradeReminder(
                 pendingUpgrade.pet,
                 pendingUpgrade.rarity,
                 System.currentTimeMillis() + durationMs
         ));
-        // Clear dialog state so unrelated lines do not create accidental reminders.
-        pendingUpgrade = null;
+        reset();
+        save();
+        return true;
+    }
+
+    private long parseLongDurationMilliseconds(String rawDuration) {
+        Matcher partMatcher = DURATION_PART_REGEX.matcher(rawDuration);
+
+        long totalSeconds = 0L;
+        boolean foundPart = false;
+
+        while (partMatcher.find()) {
+            long amount = Long.parseLong(partMatcher.group(1));
+            if (amount <= 0) continue;
+
+            String unit = partMatcher.group(2).toLowerCase(Locale.ROOT);
+            totalSeconds += switch (unit) {
+                case "day", "days" -> amount * 86_400L;
+                case "hour", "hours", "houre", "houres" -> amount * 3_600L;
+                case "minute", "minutes" -> amount * 60L;
+                case "second", "seconds" -> amount;
+                default -> 0L;
+            };
+            foundPart = true;
+        }
+
+        if (!foundPart) return 0L;
+        return totalSeconds * 1000L;
+    }
+
+    private void reduceMostRecentReminder(long reductionMs) {
+        if (activeReminders.isEmpty()) return;
+
+        int index = activeReminders.size() - 1;
+        KatUpgradeReminder reminder = activeReminders.get(index);
+        long reducedReadyAt = Math.max(System.currentTimeMillis(), reminder.readyAtMs - reductionMs);
+
+        activeReminders.set(index, new KatUpgradeReminder(reminder.pet, reminder.rarity, reducedReadyAt));
         save();
     }
 
-    private long toDurationMilliseconds(long amount, String unit) {
-        if (unit.startsWith("minute")) {
-            return amount * 60_000L;
-        }
-        if (unit.startsWith("hour") || unit.startsWith("houre")) {
-            return amount * 3_600_000L;
-        }
-        if (unit.startsWith("day")) {
-            return amount * 86_400_000L;
-        }
-        return 0L;
+    private void reset() {
+        pendingUpgrade = null;
     }
 
     private String normalizeRarity(String rawRarity) {
@@ -185,7 +259,6 @@ public class KatUpgradeReminderManager {
 
     private void sendReadyMessage(Minecraft client, KatUpgradeReminder reminder) {
         ChatFormatting rarityColor = mapRarityColor(reminder.rarity);
-        // Keep "[call]" clickable to execute "/call kat" directly from chat.
         MutableComponent message = Component.literal("Your ")
                 .append(Component.literal(reminder.pet).withStyle(rarityColor))
                 .append(Component.literal(" is Ready to pick up! "))
@@ -216,7 +289,6 @@ public class KatUpgradeReminderManager {
         public List<KatReminderData> reminders = new ArrayList<>();
     }
 
-    // Serialized representation for one reminder entry in kat_reminders.json.
     public static class KatReminderData {
         public String pet;
         public String rarity;

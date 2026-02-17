@@ -1,5 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.katreminder;
 
+import net.azureaaron.hmapi.events.HypixelPacketEvents;
+import net.azureaaron.hmapi.network.packet.v1.s2c.LocationUpdateS2CPacket;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
@@ -7,6 +9,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Minimal bootstrap for the Kat reminder feature to keep the main mod init clean.
@@ -15,6 +18,9 @@ public final class KatReminderFeature {
     private static final Object SAVE_LOCK = new Object();
 
     private static KatUpgradeReminderManager katUpgradeReminderManager;
+    // Updated by Hypixel location packets and used as a lightweight Hub gate for Kat parsing.
+    private static volatile boolean inSkyBlockHub;
+    private static volatile boolean hasLocationUpdate;
 
     private KatReminderFeature() {}
 
@@ -27,8 +33,16 @@ public final class KatReminderFeature {
         if (katUpgradeReminderManager != null) return;
 
         Path storagePath = FabricLoader.getInstance().getConfigDir().resolve(modId).resolve("kat_reminders.json");
-        katUpgradeReminderManager = new KatUpgradeReminderManager(storagePath);
+        katUpgradeReminderManager = new KatUpgradeReminderManager(storagePath, KatReminderFeature::isInSkyBlock);
         NpcDialogWatcher npcDialogWatcher = new NpcDialogWatcher(katUpgradeReminderManager::onNpcDialog, "Kat");
+
+        // Track current location to avoid processing Kat dialog outside SkyBlock Hub.
+        HypixelPacketEvents.LOCATION_UPDATE.register(packet -> {
+            if (packet instanceof LocationUpdateS2CPacket locationPacket) {
+                hasLocationUpdate = true;
+                inSkyBlockHub = isSkyBlockLocation(locationPacket);
+            }
+        });
 
         katUpgradeReminderManager.load();
 
@@ -42,7 +56,11 @@ public final class KatReminderFeature {
                 npcDialogWatcher.onGameMessage(message)
         );
 
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> save());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            hasLocationUpdate = false;
+            inSkyBlockHub = false;
+            save();
+        });
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> save());
     }
 
@@ -54,5 +72,28 @@ public final class KatReminderFeature {
         synchronized (SAVE_LOCK) {
             katUpgradeReminderManager.save();
         }
+    }
+
+    public static int removeAllReminders() {
+        if (katUpgradeReminderManager == null) return 0;
+        synchronized (SAVE_LOCK) {
+            // Used by "/remindme remove all" so Kat timers are cleared with normal reminders.
+            return katUpgradeReminderManager.removeAllReminders();
+        }
+    }
+
+    public static List<KatUpgradeReminderManager.KatReminderData> getActiveReminders() {
+        if (katUpgradeReminderManager == null) return List.of();
+        return katUpgradeReminderManager.getActiveReminders();
+    }
+
+    private static boolean isInSkyBlock() {
+        // If location updates are unavailable, allow Kat parsing instead of blocking it entirely.
+        return !hasLocationUpdate || inSkyBlockHub;
+    }
+
+    private static boolean isSkyBlockLocation(LocationUpdateS2CPacket locationPacket) {
+        String serverType = locationPacket.serverType().orElse("");
+        return "SKYBLOCK".equalsIgnoreCase(serverType);
     }
 }
