@@ -1,4 +1,4 @@
-package com.github.kd_gaming1.skyblockenhancements.feature;
+package com.github.kd_gaming1.skyblockenhancements.feature.missingenchants;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;

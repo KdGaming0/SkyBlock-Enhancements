@@ -1,7 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.command;
 
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
-import com.github.kd_gaming1.skyblockenhancements.feature.MissingEnchants;
+import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 import com.github.kd_gaming1.skyblockenhancements.util.NeuRepoCache;
 import com.mojang.brigadier.context.CommandContext;

@@ -1,4 +1,4 @@
-package com.github.kd_gaming1.skyblockenhancements.feature;
+package com.github.kd_gaming1.skyblockenhancements.feature.missingenchants;
 
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 
