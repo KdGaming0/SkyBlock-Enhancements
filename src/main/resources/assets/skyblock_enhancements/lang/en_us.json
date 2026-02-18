@@ -27,8 +27,11 @@
   "skyblock_enhancements.midnightconfig.enableItemGlowOutline": "Enable item glow outline",
   "skyblock_enhancements.midnightconfig.enableItemGlowOutline.tooltip": "Shows a glow outline on item drops near you.",
 
-  "skyblock_enhancements.midnightconfig.showThoughWalls": "Show glow through walls",
-  "skyblock_enhancements.midnightconfig.showThoughWalls.tooltip": "Shows the glow outline even if the item is behind a block.",
+  "skyblock_enhancements.midnightconfig.showThroughWalls": "Show glow through walls",
+  "skyblock_enhancements.midnightconfig.showThroughWalls.tooltip": "Shows the glow outline even if the item is behind a block.",
+
+  "skyblock_enhancements.midnightconfig.defaultGlowColor": "Default glow color",
+  "skyblock_enhancements.midnightconfig.defaultGlowColor.tooltip": "Default color for the item glow outline. Use hex format like #RRGGBB.",
 
   "skyblock_enhancements.midnightconfig.reminderSoundText": "Reminder Sound Settings",
 

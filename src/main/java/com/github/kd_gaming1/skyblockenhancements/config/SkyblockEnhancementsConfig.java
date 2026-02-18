@@ -28,11 +28,10 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static boolean enableItemGlowOutline = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean showThoughWalls = true;
+    public static boolean showThroughWalls = true;
 
-    @Hidden
-    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 300)
-    public static int setItemGlowOutlineDistance = 64;
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
+    public static String defaultGlowColor = "#ff9900";
 
     @Comment(category = SKYBLOCK_ENHANCEMENTS)
     public static Comment reminderSoundText;

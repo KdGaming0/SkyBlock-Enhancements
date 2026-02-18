@@ -3,8 +3,8 @@ package com.github.kd_gaming1.skyblockenhancements;
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.feature.ItemGlowManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.MissingEnchants;
-import com.github.kd_gaming1.skyblockenhancements.feature.glow.ItemGlowManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminderFeature;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
@@ -44,6 +44,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
         // Initializing features
         MissingEnchants.init();
+        ItemGlowManager.init();
 
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> CompletableFuture.runAsync(() -> {
             try {
@@ -52,10 +53,6 @@ public class SkyblockEnhancements implements ClientModInitializer {
                 LOGGER.error("Failed to download enchants data", e);
             }
         }));
-
-        ClientTickEvents.END_CLIENT_TICK.register(client -> ItemGlowManager.onClientTick());
-
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ItemGlowManager.clearAllAndRemoveTeamEntries(client));
 
         // Commands
         Commands.register();
