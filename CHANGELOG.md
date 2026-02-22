@@ -1,5 +1,3 @@
 Changes:
 
-- perf: optimized Missing Enchants feature
-- perf: optimized ItemGlow Outline feature
-- fix: crash when reminder.json is not a valid json format
+- fix: missing enchants listing enchantments that will conflict with an enchantment already present

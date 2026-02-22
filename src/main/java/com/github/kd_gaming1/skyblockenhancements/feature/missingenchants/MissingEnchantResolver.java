@@ -30,7 +30,7 @@ final class MissingEnchantResolver {
     private final Path enchantsJsonPath;
 
     // Flat map from enchant ID to its pool index, populated once from enchants.json.
-    private final Map<String, Integer> poolIdByEnchant = new HashMap<>();
+    private final Map<String, List<Integer>> poolIdsByEnchant = new HashMap<>();
     private int poolCount = 0;
     private boolean poolsLoaded = false;
 
@@ -80,7 +80,7 @@ final class MissingEnchantResolver {
     }
 
     void clearCaches() {
-        poolIdByEnchant.clear();
+        poolIdsByEnchant.clear();
         poolCount = 0;
         poolsLoaded = false;
         prettyNameCache.clear();
@@ -95,12 +95,12 @@ final class MissingEnchantResolver {
         List<List<String>> pools = lookup.getEnchantPools(enchantsJsonPath);
         if (pools == null || pools.isEmpty()) return false;
 
-        poolIdByEnchant.clear();
+        poolIdsByEnchant.clear();
         poolCount = pools.size();
 
         for (int poolId = 0; poolId < pools.size(); poolId++) {
             for (String enchantId : pools.get(poolId)) {
-                poolIdByEnchant.put(enchantId, poolId);
+                poolIdsByEnchant.computeIfAbsent(enchantId, k -> new ArrayList<>()).add(poolId);
             }
         }
 
@@ -111,18 +111,27 @@ final class MissingEnchantResolver {
     private BitSet buildSatisfiedPools(Set<String> currentEnchants) {
         BitSet satisfiedPools = new BitSet(poolCount);
         for (String enchantId : currentEnchants) {
-            Integer poolId = poolIdByEnchant.get(enchantId);
-            if (poolId != null) satisfiedPools.set(poolId);
+            List<Integer> poolIds = poolIdsByEnchant.get(enchantId);
+            if (poolIds != null) {
+                for (int poolId : poolIds) satisfiedPools.set(poolId);
+            }
         }
         return satisfiedPools;
     }
 
     private boolean isMissingEnchant(String enchantId, Set<String> currentEnchants, BitSet satisfiedPools) {
         if (currentEnchants.contains(enchantId)) return false;
+        if (currentEnchants.contains("ultimate_one_for_all")) return false;
 
-        // If the enchant belongs to a pool and that pool is already satisfied by another enchant the item has, this one isn't counted as missing.
-        Integer poolId = poolIdByEnchant.get(enchantId);
-        return poolId == null || !satisfiedPools.get(poolId);
+        List<Integer> poolIds = poolIdsByEnchant.get(enchantId);
+        if (poolIds == null) return true;
+
+        for (int poolId : poolIds) {
+            // If this non-OFA pool is satisfied, the enchant isn't missing
+            if (satisfiedPools.get(poolId)) return false;
+        }
+
+        return true;
     }
 
     private boolean hasUltimateEnchant(Set<String> currentEnchants) {
