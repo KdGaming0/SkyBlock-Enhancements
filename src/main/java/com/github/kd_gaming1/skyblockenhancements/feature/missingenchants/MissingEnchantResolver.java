@@ -37,6 +37,9 @@ final class MissingEnchantResolver {
     // Pretty-name cache: enchant ID -> display name (e.g. "turbo_wheat" -> "Turbo-Wheat")
     private final Map<String, String> prettyNameCache = new HashMap<>(512);
 
+    private static final String[] ROMAN = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
+
+
     MissingEnchantResolver(JsonLookup lookup, Path enchantsJsonPath) {
         this.lookup = lookup;
         this.enchantsJsonPath = enchantsJsonPath;
@@ -139,6 +142,27 @@ final class MissingEnchantResolver {
             if (id.startsWith("ultimate_")) return true;
         }
         return false;
+    }
+
+    List<String> findNotMaxedEnchantNames(String itemType, Map<String, Integer> currentEnchants) {
+        List<String> possibleEnchants = lookup.getEnchants(itemType, enchantsJsonPath);
+        List<String> notMaxed = new ArrayList<>();
+
+        for (Map.Entry<String, Integer> entry : currentEnchants.entrySet()) {
+            String id = entry.getKey();
+            int currentLevel = entry.getValue();
+            int maxLevel = lookup.getMaxLevel(id, enchantsJsonPath);
+            if (maxLevel > 0 && currentLevel < maxLevel) {
+                notMaxed.add(toPrettyName(id) + " " + toRoman(currentLevel) + "→" + toRoman(maxLevel));
+            }
+        }
+
+        notMaxed.sort(String.CASE_INSENSITIVE_ORDER);
+        return notMaxed;
+    }
+
+    private static String toRoman(int level) {
+        return (level >= 1 && level < ROMAN.length) ? ROMAN[level] : String.valueOf(level);
     }
 
     private String toPrettyName(String enchantId) {

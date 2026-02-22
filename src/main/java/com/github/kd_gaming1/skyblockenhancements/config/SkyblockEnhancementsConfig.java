@@ -13,6 +13,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static boolean showMissingEnchantments = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean showNotMaxedEnchantments = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean setKatReminderForPetUpgrades = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)

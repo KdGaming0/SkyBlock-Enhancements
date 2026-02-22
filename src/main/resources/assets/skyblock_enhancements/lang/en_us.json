@@ -10,6 +10,9 @@
   "skyblock_enhancements.midnightconfig.showMissingEnchantments.tooltip": "Show missing enchantments in the tooltip of an item.",
   "skyblock_enhancements.midnightconfig.showMissingEnchantments.label.tooltip": "Show missing enchantments in the tooltip of an item.",
 
+  "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments": "Show Not-Maxed Enchantments",
+  "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments.tooltip": "Show enchantments that are not at their maximum level in the tooltip of an item.",
+
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades": "Set Kat reminder for pet upgrades",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.tooltip": "Automatically create a reminder when Kat starts upgrading your pet so you get notified when it's ready to pick up.",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.label.tooltip": "Automatically create a reminder when Kat starts upgrading your pet.",

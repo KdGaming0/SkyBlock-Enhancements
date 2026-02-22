@@ -39,8 +39,8 @@ final class HoveredEnchantReader {
         if (itemType == null) return null;
 
         // One For All replaces all other enchants, so the normal "what's missing" logic doesn't apply.
-        Set<String> currentEnchants = readCurrentEnchants(stack);
-        if (currentEnchants.contains("one_for_all")) return null;
+        Map<String, Integer> currentEnchants = readCurrentEnchants(stack);
+        if (currentEnchants.containsKey("one_for_all")) return null;
 
         return new HoveredItemInfo(itemType, currentEnchants);
     }
@@ -57,20 +57,24 @@ final class HoveredEnchantReader {
         return null;
     }
 
-    private Set<String> readCurrentEnchants(ItemStack stack) {
+    private Map<String, Integer> readCurrentEnchants(ItemStack stack) {
         CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-        if (customData == null) return Set.of();
+        if (customData == null) return Map.of();
         return extractEnchantIds(customData);
     }
 
-    private Set<String> extractEnchantIds(CustomData customData) {
+    private Map<String, Integer> extractEnchantIds(CustomData customData) {
         // LOGGER.info("Parsing enchants from NBT");
         CompoundTag tag = customData.copyTag();
 
-        return tag.getCompound("enchantments")
-                .map(enchantments -> Set.copyOf(enchantments.keySet()))
-                .orElse(Set.of());
+        return tag.getCompound("enchantments").map(enchantments -> {
+            Map<String, Integer> result = new HashMap<>();
+            for (String key : enchantments.keySet()) {
+                enchantments.getInt(key).ifPresent(level -> result.put(key, level));
+            }
+            return result;
+        }).orElse(Map.of());
     }
 
-    record HoveredItemInfo(String itemType, Set<String> currentEnchants) {}
+    record HoveredItemInfo(String itemType, Map<String, Integer> currentEnchants) {}
 }

@@ -62,8 +62,9 @@ public final class MissingEnchants {
 
     // --- Item cache: what was the last enchantable item we resolved? ---
     private static String lastItemType;
-    private static Set<String> lastCurrentEnchants = Set.of();
+    private static Map<String, Integer> lastCurrentEnchants = Map.of();
     private static List<String> lastMissingNamesSorted = List.of();
+    private static List<String> lastNotMaxedNamesSorted = List.of();
 
     // --- Render cache: the built Component list, valid while the missing list and expanded state are unchanged ---
     private static List<String> lastRenderedForMissing = List.of();
@@ -94,8 +95,8 @@ public final class MissingEnchants {
             if (!lastMissingNamesSorted.isEmpty()) {
                 // LOGGER.info("Rebuilding tooltip block (expanded={})", expanded);
                 lastRenderBlock = expanded
-                        ? buildExpandedBlock(lastMissingNamesSorted)
-                        : buildCollapsedBlock(lastMissingNamesSorted.size());
+                        ? buildExpandedBlock(lastMissingNamesSorted, lastNotMaxedNamesSorted)
+                        : buildCollapsedBlock(lastMissingNamesSorted.size(), lastNotMaxedNamesSorted.size());
                 lastRenderedExpanded = expanded;
                 lastRenderedForMissing = lastMissingNamesSorted;
                 insertBlock(tooltipLines, lastRenderBlock, lastCurrentEnchants);
@@ -103,13 +104,23 @@ public final class MissingEnchants {
             return;
         }
 
-        // New stack — parse it. If the item isn't enchantable, we return without updating the lastStack so that mousing back to the previous enchanted item still hits the identity fast path above.
+        // New stack — parse it. If the item isn't enchantable, we return without updating the lastStack
+        // so that mousing back to the previous enchanted item still hits the identity fast path above.
         HoveredEnchantReader.HoveredItemInfo hovered = ENCHANT_READER.readHoveredItemInfo(stack, tooltipLines);
         if (hovered == null) return;
 
         if (!isSameItem(hovered)) {
             // LOGGER.info("Recomputing missing enchants for {} with enchants {}", hovered.itemType(), hovered.currentEnchants());
-            lastMissingNamesSorted = MISSING_RESOLVER.findMissingEnchantNames(hovered.itemType(), hovered.currentEnchants());
+            lastMissingNamesSorted = MISSING_RESOLVER.findMissingEnchantNames(
+                    hovered.itemType(), hovered.currentEnchants().keySet());
+
+            if (SkyblockEnhancementsConfig.showNotMaxedEnchantments) {
+                lastNotMaxedNamesSorted = MISSING_RESOLVER.findNotMaxedEnchantNames(
+                        hovered.itemType(), hovered.currentEnchants());
+            } else {
+                lastNotMaxedNamesSorted = List.of();
+            }
+
             lastItemType = hovered.itemType();
             lastCurrentEnchants = hovered.currentEnchants();
             lastRenderedForMissing = List.of(); // invalidate render cache for the new item
@@ -118,14 +129,14 @@ public final class MissingEnchants {
         // Commit the identity cache only after confirming this is an enchantable item.
         lastStack = stack;
 
-        if (lastMissingNamesSorted.isEmpty()) return;
+        if (lastMissingNamesSorted.isEmpty() && lastNotMaxedNamesSorted.isEmpty()) return;
 
         // Rebuild the rendered Component list only when content or view mode changed.
         if (lastMissingNamesSorted != lastRenderedForMissing || expanded != lastRenderedExpanded) {
             // LOGGER.info("Rebuilding tooltip block (expanded={})", expanded);
             lastRenderBlock = expanded
-                    ? buildExpandedBlock(lastMissingNamesSorted)
-                    : buildCollapsedBlock(lastMissingNamesSorted.size());
+                    ? buildExpandedBlock(lastMissingNamesSorted, lastNotMaxedNamesSorted)
+                    : buildCollapsedBlock(lastMissingNamesSorted.size(), lastNotMaxedNamesSorted.size());
             lastRenderedForMissing = lastMissingNamesSorted;
             lastRenderedExpanded = expanded;
         }
@@ -138,23 +149,44 @@ public final class MissingEnchants {
                 && hovered.currentEnchants().equals(lastCurrentEnchants);
     }
 
-    private static List<Component> buildCollapsedBlock(int missingCount) {
-        return List.of(
-                Component.literal(""),
-                Component.literal("◆ Missing enchantments: " + missingCount + " (hold Shift)")
-                        .withStyle(ChatFormatting.DARK_AQUA)
-        );
+    private static List<Component> buildCollapsedBlock(int missingCount, int notMaxedCount) {
+        List<Component> out = new ArrayList<>();
+        out.add(Component.literal(""));
+        if (missingCount > 0) {
+            out.add(Component.literal("◆ Missing enchantments: " + missingCount + " (hold Shift)")
+                    .withStyle(ChatFormatting.DARK_AQUA));
+        }
+        if (SkyblockEnhancementsConfig.showNotMaxedEnchantments && notMaxedCount > 0) {
+            out.add(Component.literal("◆ Not maxed: " + notMaxedCount + " (hold Shift)")
+                    .withStyle(ChatFormatting.GOLD));
+        }
+        return out;
     }
 
-    private static List<Component> buildExpandedBlock(List<String> missingNamesSorted) {
+    private static List<Component> buildExpandedBlock(List<String> missingNamesSorted, List<String> notMaxedNamesSorted) {
         Minecraft mc = Minecraft.getInstance();
 
         List<Component> out = new ArrayList<>();
-        out.add(Component.literal(""));
-        out.add(Component.literal("◆ Missing enchantments:")
-                .withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
 
-        // Word-wrap the names onto lines that fit within MAX_LINE_WIDTH pixels.
+        if (!missingNamesSorted.isEmpty()) {
+            out.add(Component.literal(""));
+            out.add(Component.literal("◆ Missing enchantments:")
+                    .withStyle(ChatFormatting.AQUA, ChatFormatting.ITALIC));
+            appendWrappedNames(mc, out, missingNamesSorted, ChatFormatting.GRAY);
+        }
+
+        if (SkyblockEnhancementsConfig.showNotMaxedEnchantments && !notMaxedNamesSorted.isEmpty()) {
+            out.add(Component.literal(""));
+            out.add(Component.literal("◆ Not maxed enchantments:")
+                    .withStyle(ChatFormatting.GOLD, ChatFormatting.ITALIC));
+            appendWrappedNames(mc, out, notMaxedNamesSorted, ChatFormatting.YELLOW);
+        }
+
+        return out;
+    }
+
+    /** Word-wraps {@code names} onto lines fitting within {@link #MAX_LINE_WIDTH} pixels and appends them to {@code out}. */
+    private static void appendWrappedNames(Minecraft mc, List<Component> out, List<String> names, ChatFormatting color) {
         int commaWidth = mc.font.width(", ");
         int prefixWidth = mc.font.width(LIST_PREFIX);
         int maxWidth = MAX_LINE_WIDTH - prefixWidth;
@@ -162,13 +194,13 @@ public final class MissingEnchants {
         List<String> currentLine = new ArrayList<>();
         int currentWidth = 0;
 
-        for (String name : missingNamesSorted) {
+        for (String name : names) {
             int nameWidth = mc.font.width(name);
             int addWidth = currentLine.isEmpty() ? nameWidth : (commaWidth + nameWidth);
 
             if (!currentLine.isEmpty() && currentWidth + addWidth > maxWidth) {
                 out.add(Component.literal(LIST_PREFIX + String.join(", ", currentLine))
-                        .withStyle(ChatFormatting.GRAY));
+                        .withStyle(color));
                 currentLine.clear();
                 currentWidth = 0;
                 addWidth = nameWidth;
@@ -180,18 +212,16 @@ public final class MissingEnchants {
 
         if (!currentLine.isEmpty()) {
             out.add(Component.literal(LIST_PREFIX + String.join(", ", currentLine))
-                    .withStyle(ChatFormatting.GRAY));
+                    .withStyle(color));
         }
-
-        return out;
     }
 
-    private static void insertBlock(List<Component> tooltipLines, List<Component> block, Set<String> currentEnchants) {
-        tooltipLines.addAll(findInsertIndex(tooltipLines, currentEnchants), block);
+    private static void insertBlock(List<Component> tooltipLines, List<Component> block, Map<String, Integer> currentEnchants) {
+        tooltipLines.addAll(findInsertIndex(tooltipLines, currentEnchants.keySet()), block);
     }
 
-    private static int findInsertIndex(List<Component> tooltipLines, Set<String> currentEnchants) {
-        List<String> tokens = currentEnchants.stream()
+    private static int findInsertIndex(List<Component> tooltipLines, Set<String> enchantKeys) {
+        List<String> tokens = enchantKeys.stream()
                 .map(MissingEnchants::normalizeEnchantToken)
                 .filter(t -> !t.isEmpty())
                 .toList();
@@ -238,8 +268,9 @@ public final class MissingEnchants {
         MISSING_RESOLVER.clearCaches();
 
         lastItemType = null;
-        lastCurrentEnchants = Set.of();
+        lastCurrentEnchants = Map.of();
         lastMissingNamesSorted = List.of();
+        lastNotMaxedNamesSorted = List.of();
 
         lastRenderedForMissing = List.of();
         lastRenderedExpanded = false;

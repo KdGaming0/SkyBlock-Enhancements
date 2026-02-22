@@ -63,8 +63,16 @@ public class JsonLookup {
         return data.enchant_pools;
     }
 
+    public int getMaxLevel(String enchantId, Path location) {
+        EnchantData data = getData(location);
+        if (data.enchants_xp_cost == null) return -1;
+        List<Integer> costs = data.enchants_xp_cost.get(enchantId);
+        return (costs != null && !costs.isEmpty()) ? costs.size() : -1;
+    }
+
     public static class EnchantData {
         public Map<String, List<String>> enchants;
         public List<List<String>> enchant_pools;
+        public Map<String, List<Integer>> enchants_xp_cost;
     }
 }
