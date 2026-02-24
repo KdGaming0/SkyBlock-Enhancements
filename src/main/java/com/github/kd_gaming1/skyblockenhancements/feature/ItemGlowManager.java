@@ -37,7 +37,7 @@ public class ItemGlowManager {
     /** Skyblock rarity name → outline RGB color. */
     private static final Map<String, Integer> RARITY_COLORS = Map.ofEntries(
             Map.entry("COMMON",       0xFFFFFF),
-            Map.entry("UNCOMMON",     0x55FFF5),
+            Map.entry("UNCOMMON",     0x55FF55),
             Map.entry("RARE",         0x5555FF),
             Map.entry("EPIC",         0x800080),
             Map.entry("LEGENDARY",    0xFFD700),
