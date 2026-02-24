@@ -9,19 +9,28 @@ import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminde
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
+import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.NeuRepoCache;
+
 import eu.midnightdust.lib.config.MidnightConfig;
-import net.azureaaron.hmapi.events.HypixelPacketEvents;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import net.azureaaron.hmapi.network.HypixelNetworking;
+import net.azureaaron.hmapi.network.packet.v1.s2c.LocationUpdateS2CPacket;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
+//? if >=1.21.11 {
+/*import net.minecraft.util.Util;
+ *///?} else {
+import net.minecraft.Util;
+//?}
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SkyblockEnhancements implements ClientModInitializer {
     public static final String MOD_ID = "skyblock_enhancements";
@@ -34,13 +43,14 @@ public class SkyblockEnhancements implements ClientModInitializer {
     private final ReminderManager reminderManager = new ReminderManager();
     private final Object saveLock = new Object();
 
-    public static final AtomicBoolean helloPacketReceived = new AtomicBoolean(false);
-
     @Override public void onInitializeClient() {
         MidnightConfig.init(MOD_ID, SkyblockEnhancementsConfig.class);
 
-        HypixelPacketEvents.HELLO.register((packet) -> helloPacketReceived.set(true));
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> reset());
+        HypixelNetworking.registerToEvents(Util.make(new Object2IntOpenHashMap<>(), map -> map.put(LocationUpdateS2CPacket.ID, 1)));
+
+        HypixelLocationState.register();
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> HypixelLocationState.reset());
 
         // Initializing features
         MissingEnchants.init();
@@ -75,9 +85,5 @@ public class SkyblockEnhancements implements ClientModInitializer {
             reminderStorage.setRemindersData(data);
             reminderStorage.save();
         }
-    }
-
-    private void reset() {
-        helloPacketReceived.set(false);
     }
 }

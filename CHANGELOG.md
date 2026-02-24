@@ -1,7 +1,3 @@
 Changes:
 
-- fix: missing enchants listing enchantments that will conflict with an enchantment already present
-
-New Additions:
-
-- feat: added Not maxed enchantments line to the tooltip
+- fix: glowing item outline working when on hypixel but not in skyblock. It will now only work in skyblock or when not on Hypxiel.

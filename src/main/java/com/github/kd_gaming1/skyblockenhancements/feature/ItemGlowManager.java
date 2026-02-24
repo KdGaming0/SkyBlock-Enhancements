@@ -1,7 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.feature;
 
-import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
@@ -32,11 +32,12 @@ public class ItemGlowManager {
 
     private static final double SHOWCASE_DETECTION_RADIUS = 1.5;
     private static final double LOOK_DOT_THRESHOLD = 0.15;
+    private static volatile boolean onSkyblock = false;
 
     /** Skyblock rarity name → outline RGB color. */
     private static final Map<String, Integer> RARITY_COLORS = Map.ofEntries(
             Map.entry("COMMON",       0xFFFFFF),
-            Map.entry("UNCOMMON",     0x55FF55),
+            Map.entry("UNCOMMON",     0x55FFF5),
             Map.entry("RARE",         0x5555FF),
             Map.entry("EPIC",         0x800080),
             Map.entry("LEGENDARY",    0xFFD700),
@@ -94,6 +95,7 @@ public class ItemGlowManager {
 
     /** Returns true if this item should render with a glow outline this frame. */
     public static boolean isGlowing(UUID uuid) {
+        if (!onSkyblock) return false;
         if (!SkyblockEnhancementsConfig.enableItemGlowOutline) return false;
         if (SkyblockEnhancementsConfig.showThroughWalls) return glowColors.containsKey(uuid);
         return lineOfSightVisible.contains(uuid);
@@ -108,6 +110,7 @@ public class ItemGlowManager {
      * Returns the glow color if the item is currently glowing, or -1 if it is not.
      */
     public static int getGlowColorIfActive(UUID uuid) {
+        if (!onSkyblock) return -1;
         if (uuid == null || !SkyblockEnhancementsConfig.enableItemGlowOutline) return -1;
         if (SkyblockEnhancementsConfig.showThroughWalls) return glowColors.getOrDefault(uuid, -1);
         return lineOfSightVisible.contains(uuid) ? glowColors.getOrDefault(uuid, -1) : -1;
@@ -125,8 +128,7 @@ public class ItemGlowManager {
 
     /** Registers an item for glow tracking and resolves its rarity color from lore. */
     private static void onItemSpawned(ItemEntity item) {
-        if (SkyblockEnhancements.helloPacketReceived.get() && isShowcaseItem(item)) return;
-
+        if (HypixelLocationState.isOnHypixel() && isShowcaseItem(item)) return;
         String rarity = extractRarity(item);
         int color = RARITY_COLORS.getOrDefault(rarity, parseColor(SkyblockEnhancementsConfig.defaultGlowColor));
         UUID uuid = item.getUUID();
@@ -146,6 +148,7 @@ public class ItemGlowManager {
     /** Runs every tick: processes the spawn queue, then updates line-of-sight visibility. */
     private static void tick(Minecraft client) {
         if (!SkyblockEnhancementsConfig.enableItemGlowOutline) return;
+        onSkyblock = HypixelLocationState.isOnHypixel() && HypixelLocationState.isOnSkyblock();
         if (client.player == null || client.level == null) return;
 
         // Drain the spawn queue — items were held for one tick, so component data has arrived.

@@ -1,7 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.missingenchants;
 
-import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.loader.api.FabricLoader;
@@ -80,7 +80,7 @@ public final class MissingEnchants {
 
     private static void onTooltip(ItemStack stack, Item.TooltipContext ctx, TooltipFlag flag, List<Component> tooltipLines) {
         if (!SkyblockEnhancementsConfig.showMissingEnchantments) return;
-        if (!SkyblockEnhancements.helloPacketReceived.get()) return;
+        if (!HypixelLocationState.isOnHypixel()) return;
 
         boolean expanded = !SkyblockEnhancementsConfig.showWhenPressingShift || Minecraft.getInstance().hasShiftDown();
 
