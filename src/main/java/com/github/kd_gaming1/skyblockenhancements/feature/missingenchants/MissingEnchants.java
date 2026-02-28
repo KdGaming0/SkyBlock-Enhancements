@@ -85,14 +85,14 @@ public final class MissingEnchants {
         boolean expanded = !SkyblockEnhancementsConfig.showWhenPressingShift || Minecraft.getInstance().hasShiftDown();
 
         // Identity fast path: the same ItemStack object means the item hasn't changed.
-        if (stack == lastStack) {
+        if (!lastStack.isEmpty() && ItemStack.isSameItemSameComponents(stack, lastStack)) {
             if (expanded == lastRenderedExpanded) {
                 // Nothing changed — just re-insert the cached block.
                 if (!lastRenderBlock.isEmpty()) insertBlock(tooltipLines, lastRenderBlock, lastCurrentEnchants);
                 return;
             }
             // Only Shift changed — rebuild the block without reparsing NBT.
-            if (!lastMissingNamesSorted.isEmpty()) {
+            if (!lastMissingNamesSorted.isEmpty() || !lastNotMaxedNamesSorted.isEmpty()) {
                 // LOGGER.info("Rebuilding tooltip block (expanded={})", expanded);
                 lastRenderBlock = expanded
                         ? buildExpandedBlock(lastMissingNamesSorted, lastNotMaxedNamesSorted)
@@ -127,12 +127,12 @@ public final class MissingEnchants {
         }
 
         // Commit the identity cache only after confirming this is an enchantable item.
-        lastStack = stack;
+        lastStack = stack.copy();
 
         if (lastMissingNamesSorted.isEmpty() && lastNotMaxedNamesSorted.isEmpty()) return;
 
         // Rebuild the rendered Component list only when content or view mode changed.
-        if (lastMissingNamesSorted != lastRenderedForMissing || expanded != lastRenderedExpanded) {
+        if (!Objects.equals(lastMissingNamesSorted, lastRenderedForMissing) || expanded != lastRenderedExpanded) {
             // LOGGER.info("Rebuilding tooltip block (expanded={})", expanded);
             lastRenderBlock = expanded
                     ? buildExpandedBlock(lastMissingNamesSorted, lastNotMaxedNamesSorted)

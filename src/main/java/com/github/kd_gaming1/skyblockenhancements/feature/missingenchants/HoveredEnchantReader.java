@@ -31,7 +31,7 @@ final class HoveredEnchantReader {
 
     private static final Pattern TYPE_LINE = Pattern.compile(
             "(?:COMMON|UNCOMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|VERY SPECIAL|SPECIAL)\\s+(?:DUNGEON\\s+)" +
-                    "?(SWORD|BOW|AXE|PICKAXE|DRILL|FISHING ROD|FISHING WEAPON|SHOVEL|HOE|HELMET|CHESTPLATE|LEGGINGS|BOOTS|GAUNTLET|GLOVES|BELT|NECKLACE|BRACELET|CLOAK|CARNIVAL MASK)\\b"
+                    "?(SWORD|LONGSWORD|BOW|AXE|PICKAXE|DRILL|FISHING ROD|FISHING WEAPON|SHOVEL|HOE|HELMET|CHESTPLATE|LEGGINGS|BOOTS|GAUNTLET|GLOVES|BELT|NECKLACE|BRACELET|CLOAK|CARNIVAL MASK)\\b"
     );
 
     HoveredItemInfo readHoveredItemInfo(ItemStack stack, List<Component> tooltipLines) {
@@ -40,7 +40,7 @@ final class HoveredEnchantReader {
 
         // One For All replaces all other enchants, so the normal "what's missing" logic doesn't apply.
         Map<String, Integer> currentEnchants = readCurrentEnchants(stack);
-        if (currentEnchants.containsKey("one_for_all")) return null;
+        if (currentEnchants.containsKey("ultimate_one_for_all")) return null;
 
         return new HoveredItemInfo(itemType, currentEnchants);
     }
