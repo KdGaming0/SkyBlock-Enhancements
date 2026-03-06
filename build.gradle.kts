@@ -42,6 +42,10 @@ dependencies {
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
     modRuntimeOnly("maven.modrinth:modmenu:${property("deps.modmenu_version")}")
+
+    testImplementation(platform("org.junit:junit-bom:5.10.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 loom {
@@ -101,6 +105,10 @@ tasks {
         from(remapJar.map { it.archiveFile }, remapSourcesJar.map { it.archiveFile })
         into(rootProject.layout.buildDirectory.file("libs/${project.property("mod.version")}"))
         dependsOn("build")
+    }
+
+    test {
+        useJUnitPlatform()
     }
 }
 
