@@ -4,53 +4,43 @@ import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Handles loading and saving reminder data to disk.
- * Provides persistence layer between ReminderManager and file system.
+ * Thread-safe via {@link AtomicReference}.
  */
 public class ReminderStorage {
-    private final Path remindersPath;
+    private final Path filePath;
+    private final AtomicReference<RemindersFileData> dataRef = new AtomicReference<>(new RemindersFileData());
 
-    private RemindersFileData remindersData;
-
-    public ReminderStorage(Path remindersPath) {
-        this.remindersPath = remindersPath;
+    public ReminderStorage(Path filePath) {
+        this.filePath = filePath;
     }
 
     public void load() {
         try {
-            remindersData = JsonFileUtil.readOrCreate(
-                    remindersPath,
-                    RemindersFileData.class,
-                    new RemindersFileData()
-            );
-
-            if (remindersData == null) {
-                remindersData = new RemindersFileData();
-            }
-        } catch (Exception e) {
-            remindersData = new RemindersFileData();
-            SkyblockEnhancements.LOGGER.error("Failed to load reminders data, resetting file", e);
+            RemindersFileData loaded = JsonFileUtil.readOrCreate(filePath, RemindersFileData.class, new RemindersFileData());
+            dataRef.set(loaded != null ? loaded : new RemindersFileData());
+        } catch (IOException e) {
+            dataRef.set(new RemindersFileData());
+            SkyblockEnhancements.LOGGER.error("Failed to load reminders, starting fresh", e);
         }
     }
 
     public void save() {
-        if (remindersData == null) return;
-
         try {
-            JsonFileUtil.writeAtomic(remindersPath, remindersData);
+            JsonFileUtil.writeAtomic(filePath, dataRef.get());
         } catch (IOException e) {
-            SkyblockEnhancements.LOGGER.error("Failed to save reminders data", e);
+            SkyblockEnhancements.LOGGER.error("Failed to save reminders", e);
         }
     }
 
-    public  RemindersFileData getRemindersData() {
-        return remindersData;
+    public RemindersFileData getRemindersData() {
+        return dataRef.get();
     }
 
-
-    public synchronized void setRemindersData(RemindersFileData data) {
-        this.remindersData = (data != null) ? data : new RemindersFileData();
+    public void setRemindersData(RemindersFileData data) {
+        dataRef.set(data != null ? data : new RemindersFileData());
     }
 }

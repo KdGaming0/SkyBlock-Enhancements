@@ -4,8 +4,8 @@ import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.ItemGlowManager;
-import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
 import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminderFeature;
+import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
@@ -31,28 +31,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SkyblockEnhancements implements ClientModInitializer {
     public static final String MOD_ID = "skyblock_enhancements";
-
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
     private final NeuRepoCache cache = new NeuRepoCache();
-
-    private final ReminderStorage reminderStorage = new ReminderStorage(FabricLoader.getInstance()
-            .getConfigDir().resolve(MOD_ID).resolve("reminders.json"));
+    private final ReminderStorage reminderStorage = new ReminderStorage(
+            FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("reminders.json"));
     private final ReminderManager reminderManager = new ReminderManager();
-    private final Object saveLock = new Object();
 
-    @Override public void onInitializeClient() {
+    /** Guards against saving reminders more than once per lifecycle event pair. */
+    private final AtomicBoolean remindersSaved = new AtomicBoolean(false);
+
+    @Override
+    public void onInitializeClient() {
         MidnightConfig.init(MOD_ID, SkyblockEnhancementsConfig.class);
 
-        HypixelNetworking.registerToEvents(Util.make(new Object2IntOpenHashMap<>(), map -> map.put(LocationUpdateS2CPacket.ID, 1)));
+        HypixelNetworking.registerToEvents(
+                Util.make(new Object2IntOpenHashMap<>(), map -> map.put(LocationUpdateS2CPacket.ID, 1)));
 
         HypixelLocationState.register();
-
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> HypixelLocationState.reset());
 
-        // Initializing features
         MissingEnchants.init();
         ItemGlowManager.init();
 
@@ -64,11 +66,9 @@ public class SkyblockEnhancements implements ClientModInitializer {
             }
         }));
 
-        // Commands
         Commands.register();
         ReminderCommand.register(reminderManager);
 
-        // Remind me features
         reminderStorage.load();
         reminderManager.loadFromStorage(reminderStorage.getRemindersData());
         KatReminderFeature.init(MOD_ID);
@@ -80,7 +80,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
     }
 
     private void saveReminders() {
-        synchronized (saveLock) {
+        if (remindersSaved.compareAndSet(false, true)) {
             RemindersFileData data = reminderManager.saveToStorage();
             reminderStorage.setRemindersData(data);
             reminderStorage.save();
