@@ -1,7 +1,12 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.katreminder;
 
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
+
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -44,6 +49,7 @@ public class KatUpgradeReminderManager {
 
     private PendingUpgrade pendingUpgrade;
     private long lastSecondUpdateMs;
+    private boolean pendingBrokenFileNotice;
 
     public KatUpgradeReminderManager(Path storagePath, BooleanSupplier inHubSupplier) {
         this.storagePath = storagePath;
@@ -63,6 +69,10 @@ public class KatUpgradeReminderManager {
                 if (reminderData == null || reminderData.pet == null || reminderData.rarity == null) continue;
                 activeReminders.add(new KatUpgradeReminder(reminderData.pet, reminderData.rarity, reminderData.readyAtMs));
             }
+        } catch (JsonSyntaxException e) {
+            recoverFromBrokenFile(e);
+        } catch (JsonParseException e) {
+            recoverFromBrokenFile(e);
         } catch (IOException e) {
             activeReminders.clear();
             SkyblockEnhancements.LOGGER.error("Failed to load Kat reminders", e);
@@ -121,6 +131,11 @@ public class KatUpgradeReminderManager {
     }
 
     public void onClientTick(Minecraft client) {
+        if (pendingBrokenFileNotice && client.player != null) {
+            sendBrokenFileMessage(client);
+            pendingBrokenFileNotice = false;
+        }
+
         if (!SkyblockEnhancementsConfig.setKatReminderForPetUpgrades) return;
         if (client.player == null) return;
 
@@ -247,6 +262,36 @@ public class KatUpgradeReminderManager {
 
     private void reset() {
         pendingUpgrade = null;
+    }
+
+    private void recoverFromBrokenFile(Exception parseException) {
+        activeReminders.clear();
+        backupBrokenFile();
+        save();
+        pendingBrokenFileNotice = true;
+        SkyblockEnhancements.LOGGER.error("Kat reminders file is invalid JSON and was reset", parseException);
+    }
+
+    private void backupBrokenFile() {
+        Path backupPath = storagePath.resolveSibling(storagePath.getFileName() + ".broken");
+        try {
+            Files.copy(storagePath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException backupException) {
+            SkyblockEnhancements.LOGGER.error("Failed to back up broken Kat reminders file", backupException);
+        }
+    }
+
+    private void sendBrokenFileMessage(Minecraft client) {
+        MutableComponent message = Component.literal("[KatReminder]").withStyle(ChatFormatting.AQUA)
+                .append(Component.literal(" ").withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal("Your ").withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal("KatReminder File ").withStyle(ChatFormatting.AQUA))
+                .append(Component.literal("was ").withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal("broken").withStyle(ChatFormatting.RED))
+                .append(Component.literal(". We've created a fresh one for you and backed up your old file.").withStyle(ChatFormatting.YELLOW));
+
+        assert client.player != null;
+        client.player.displayClientMessage(message, false);
     }
 
     private String normalizeRarity(String rawRarity) {
