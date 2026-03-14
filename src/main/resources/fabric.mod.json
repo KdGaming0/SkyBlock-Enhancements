@@ -8,11 +8,11 @@
     "Kd_Gaming1"
   ],
   "contact": {
-    "homepage": "https://github.com/KdGaming0/SkyBlock-Enhancements",
+    "homepage": "https://modrinth.com/mod/skyblock-enhancements",
     "sources": "https://github.com/KdGaming0/SkyBlock-Enhancements"
   },
   "license": "PolyForm Shield License 1.0.0",
-  "icon": "assets/template/icon.png",
+  "icon": "assets/skyblock_enhancements/icon.png",
   "environment": "*",
   "entrypoints": {
     "client": [
