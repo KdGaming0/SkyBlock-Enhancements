@@ -3,6 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements;
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
 import com.github.kd_gaming1.skyblockenhancements.feature.ItemGlowManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminderFeature;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
@@ -27,6 +28,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.Util;
 //?}
 
+import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +59,9 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
         MissingEnchants.init();
         ItemGlowManager.init();
+        Fullbright.init();
+
+        ClientTickEvents.END_CLIENT_TICK.register(Fullbright::onTick);
 
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> CompletableFuture.runAsync(() -> {
             try {
