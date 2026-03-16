@@ -60,5 +60,13 @@
 
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation": "Disable command confirmation",
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation.tooltip": "Disables the command confirmation dialog that appears when executing certain commands.",
-  "skyblock_enhancements.midnightconfig.disableCommandConfirmation.label.tooltip": "Disables the command confirmation dialog that appears when executing certain commands."
+  "skyblock_enhancements.midnightconfig.disableCommandConfirmation.label.tooltip": "Disables the command confirmation dialog that appears when executing certain commands.",
+
+  "midnightconfig.general_enhancements.enableFullbright": "Enable Fullbright",
+  "midnightconfig.general_enhancements.enableFullbright.tooltip": "Makes the world fully bright regardless of light level.",
+  "midnightconfig.general_enhancements.fullbrightStrength": "Fullbright Strength",
+  "midnightconfig.general_enhancements.fullbrightStrength.tooltip": "How bright fullbright makes the world. Higher = brighter.",
+
+  "key.category.skyblock_enhancements.general": "Skyblock Enhancements",
+  "key.skyblock_enhancements.fullbright": "Toogle Fullbright"
 }

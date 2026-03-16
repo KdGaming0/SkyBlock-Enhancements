@@ -1,0 +1,72 @@
+{
+  "skyblock_enhancements.midnightconfig.title": "Skyblock-forbetringar",
+
+  "skyblock_enhancements.midnightconfig.category.skyblock_enhancements": "Skyblock-forbetringar",
+  "skyblock_enhancements.midnightconfig.category.general_enhancements": "Generelle forbetringar",
+
+  "skyblock_enhancements.midnightconfig.text": "Generelle Skyblock-funksjonar",
+
+  "skyblock_enhancements.midnightconfig.showMissingEnchantments": "Vis manglande fortryllingar",
+  "skyblock_enhancements.midnightconfig.showMissingEnchantments.tooltip": "Viser manglande fortryllingar i infoboksen til ein gjenstand.",
+  "skyblock_enhancements.midnightconfig.showMissingEnchantments.label.tooltip": "Viser manglande fortryllingar i infoboksen til ein gjenstand.",
+
+  "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments": "Vis ikkje-maksimerte fortryllingar",
+  "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments.tooltip": "Viser fortryllingar som ikkje er på sitt maksimale nivå i infoboksen til ein gjenstand.",
+
+  "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades": "Set Kat-påminning for kjæledyroppgraderingar",
+  "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.tooltip": "Opprettar automatisk ei påminning når Kat byrjar å oppgradere kjæledyret ditt, slik at du får varsel når det er klart til å hentast.",
+  "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.label.tooltip": "Opprettar automatisk ei påminning når Kat byrjar å oppgradere kjæledyret ditt.",
+
+  "skyblock_enhancements.midnightconfig.showWhenPressingShift": "Vis berre manglande fortryllingar når du trykkjer Shift",
+  "skyblock_enhancements.midnightconfig.showWhenPressingShift.tooltip": "Viser berre manglande fortryllingar når du trykkjer Shift.\nOm du slår av dette, vil manglande fortryllingar alltid vere synlege.",
+
+  "skyblock_enhancements.midnightconfig.enterToConfirmSign": "Trykk Enter for å stadfeste skilt \n(trykk Shift + Enter for ny linje)",
+  "skyblock_enhancements.midnightconfig.enterToConfirmSign.tooltip": "Trykk Enter for å fullføre redigering av skilt på Hypixel-inndataskilt (AH og BZ). \nShift pluss Enter lagar alltid ei ny linje som i vanleg Minecraft.",
+  "skyblock_enhancements.midnightconfig.enterToConfirmSign.label.tooltip": "Trykk Enter for å fullføre redigering av skilt. Shift pluss Enter legg framleis til ei ny linje.",
+
+  "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns": "Bruk Enter-stadfesting på alle skilt",
+  "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns.tooltip": "Ignorerer sjekken for Hypixel-inndataskilt og brukar Enter for å stadfeste på alle skiltredigerarar. Shift pluss Enter lagar alltid ei ny linje.",
+
+  "skyblock_enhancements.midnightconfig.enableItemGlowOutline": "Aktiver glødande omriss på gjenstandar",
+  "skyblock_enhancements.midnightconfig.enableItemGlowOutline.tooltip": "Viser eit glødande omriss på gjenstandar som ligg på bakken nær deg.",
+
+  "skyblock_enhancements.midnightconfig.showThroughWalls": "Vis glød gjennom veggar",
+  "skyblock_enhancements.midnightconfig.showThroughWalls.tooltip": "Viser det glødande omrisset sjølv om gjenstanden er bak ein blokk.",
+
+  "skyblock_enhancements.midnightconfig.defaultGlowColor": "Standard glødefarge",
+  "skyblock_enhancements.midnightconfig.defaultGlowColor.tooltip": "Standardfarge for det glødande omrisset på gjenstandar. Bruk heksadesimalformat som #RRGGBB.",
+
+  "skyblock_enhancements.midnightconfig.reminderSoundText": "Lydinnstillingar for påminningar",
+
+  "skyblock_enhancements.midnightconfig.enableReminderSound": "Aktiver påminningslyd",
+  "skyblock_enhancements.midnightconfig.enableReminderSound.tooltip": "Spel av ein lyd når ei påminning blir utløyst.",
+
+  "skyblock_enhancements.midnightconfig.reminderSound": "Type påminningslyd",
+  "skyblock_enhancements.midnightconfig.reminderSound.tooltip": "Vel kva lyd som skal spelast av for påminningar.\nKlikk for å bla gjennom tilgjengelege lydar.",
+
+  "skyblock_enhancements.midnightconfig.reminderSoundVolume": "Volum for påminningslyd",
+  "skyblock_enhancements.midnightconfig.reminderSoundVolume.tooltip": "Juster volumet på påminningslydar.\nOmråde: 0.0 (stille) til 2.0 (veldig høgt)",
+
+  "skyblock_enhancements.midnightconfig.reminderSoundPitch": "Tonehøgd for påminningslyd",
+  "skyblock_enhancements.midnightconfig.reminderSoundPitch.tooltip": "Juster tonehøgda på påminningslydar.\nOmråde: 0.5 (låg) til 2.0 (høg)\nStandard: 1.0 (normal)",
+
+  "skyblock_enhancements.midnightconfig.text2": "Generelle forbetringar",
+
+  "skyblock_enhancements.midnightconfig.noDoubleSneak": "Hindre dobbeltsniking",
+  "skyblock_enhancements.midnightconfig.noDoubleSneak.tooltip": "Hindrar at sniking blir slått av og på to gonger på grunn av pakkar for stillingsoppdatering.",
+
+  "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring": "Deaktiver åtvaring om ressurs-pakke-kompatibilitet",
+  "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring.tooltip": "Deaktiverer åtvaringa om ressurs-pakke-kompatibilitet.",
+
+  "skyblock_enhancements.midnightconfig.disableCommandConfirmation": "Deaktiver kommandostadfesting",
+  "skyblock_enhancements.midnightconfig.disableCommandConfirmation.tooltip": "Deaktiverer dialogboksen for kommandostadfesting som dukkar opp når ein utfører visse kommandoar.",
+  "skyblock_enhancements.midnightconfig.disableCommandConfirmation.label.tooltip": "Deaktiverer dialogboksen for kommandostadfesting som dukkar opp når ein utfører visse kommandoar.",
+
+  "midnightconfig.general_enhancements.enableFullbright": "Aktiver full lysstyrke",
+  "midnightconfig.general_enhancements.enableFullbright.tooltip": "Gjer verda heilt lys uavhengig av lysnivå.",
+  "midnightconfig.general_enhancements.fullbrightStrength": "Styrke på full lysstyrke",
+  "midnightconfig.general_enhancements.fullbrightStrength.tooltip": "Kor lys full lysstyrke gjer verda. Høgare = lysare.",
+
+  "key.category.skyblock_enhancements.general": "Skyblock-forbetringar",
+  "key.skyblock_enhancements.fullbright": "Slå av/på full lysstyrke"
+}
