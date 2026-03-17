@@ -10,8 +10,10 @@
   "client": [
     "ClientPacketListenerMixin",
     "ClientPlayNetworkHandlerMixin",
+    "GammaMixin",
     "PackCompatibilityMixin",
     "SignEnterToConfirmMixin",
+    "UnitDoubleMixin",
     "access.AbstractSignEditScreenAccessor",
     "itemglow.EntityRendererMixin",
     "itemglow.EntityRenderStateMixin",

@@ -12,9 +12,10 @@ import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStora
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.NeuRepoCache;
-
 import eu.midnightdust.lib.config.MidnightConfig;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.azureaaron.hmapi.network.HypixelNetworking;
 import net.azureaaron.hmapi.network.packet.v1.s2c.LocationUpdateS2CPacket;
 import net.fabricmc.api.ClientModInitializer;
@@ -22,29 +23,19 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-//? if >=1.21.11 {
-/*import net.minecraft.util.Util;
- *///?} else {
 import net.minecraft.Util;
-//?}
-
-import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SkyblockEnhancements implements ClientModInitializer {
     public static final String MOD_ID = "skyblock_enhancements";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private final NeuRepoCache cache = new NeuRepoCache();
-    private final ReminderStorage reminderStorage = new ReminderStorage(
-            FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("reminders.json"));
+    private final ReminderStorage reminderStorage =
+            new ReminderStorage(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("reminders.json"));
     private final ReminderManager reminderManager = new ReminderManager();
 
-    /** Guards against saving reminders more than once per lifecycle event pair. */
     private final AtomicBoolean remindersSaved = new AtomicBoolean(false);
 
     @Override
@@ -63,28 +54,39 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(Fullbright::onTick);
 
-        ClientLifecycleEvents.CLIENT_STARTED.register(client -> CompletableFuture.runAsync(() -> {
-            try {
-                cache.downloadAndSave("constants/enchants.json");
-            } catch (Exception e) {
-                LOGGER.error("Failed to download enchants data", e);
-            }
-        }));
+        ClientLifecycleEvents.CLIENT_STARTED.register(
+                client ->
+                        CompletableFuture.runAsync(
+                                () -> {
+                                    try {
+                                        cache.downloadAndSave("constants/enchants.json");
+                                    } catch (Exception e) {
+                                        LOGGER.error("Failed to download enchants data", e);
+                                    }
+                                }));
 
         Commands.register();
-        ReminderCommand.register(reminderManager);
 
         reminderStorage.load();
         reminderManager.loadFromStorage(reminderStorage.getRemindersData());
         KatReminderFeature.init(MOD_ID);
 
+        ReminderCommand.register(reminderManager, rm -> forceSaveReminders());
+
         ClientTickEvents.END_CLIENT_TICK.register(reminderManager::onClientTick);
 
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> saveReminders());
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> saveReminders());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> saveRemindersOnce());
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> saveRemindersOnce());
     }
 
-    private void saveReminders() {
+    private void forceSaveReminders() {
+        RemindersFileData data = reminderManager.saveToStorage();
+        reminderStorage.setRemindersData(data);
+        reminderStorage.save();
+        remindersSaved.set(false);
+    }
+
+    private void saveRemindersOnce() {
         if (remindersSaved.compareAndSet(false, true)) {
             RemindersFileData data = reminderManager.saveToStorage();
             reminderStorage.setRemindersData(data);
