@@ -24,10 +24,10 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 //? if >=1.21.11 {
-/*import net.minecraft.util.Util;
- *///?} else {
-import net.minecraft.Util;
-//?}
+import net.minecraft.util.Util;
+ //?} else {
+/*import net.minecraft.Util;
+*///?}
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

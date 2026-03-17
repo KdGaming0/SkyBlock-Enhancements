@@ -44,7 +44,7 @@ dependencies {
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
     modRuntimeOnly("maven.modrinth:modmenu:${property("deps.modmenu_version")}")
-    modRuntimeOnly("maven.modrinth:architectury-api:18.0.8+fabric")
+    modRuntimeOnly("maven.modrinth:architectury-api:${property("deps.architectury_api_version")}")
 
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -83,6 +83,7 @@ tasks {
         inputs.property("fabric_api", project.property("deps.fabric_api"))
         inputs.property("hm_api", project.property("deps.hm_api_version"))
         inputs.property("fabricloader", project.property("deps.fabric_loader"))
+        inputs.property("architectury_api", project.property("deps.architectury_api_version"))
 
         val props = mapOf(
             "id" to project.property("mod.id"),
@@ -92,7 +93,8 @@ tasks {
             "ui_lib" to project.property("deps.uilib_version"),
             "fabric_api" to project.property("deps.fabric_api"),
             "hm_api" to project.property("deps.hm_api_version"),
-            "fabricloader" to project.property("deps.fabric_loader")
+            "fabricloader" to project.property("deps.fabric_loader"),
+            "architectury_api" to project.property("deps.architectury_api_version")
         )
 
         filesMatching("fabric.mod.json") { expand(props) }

@@ -5,10 +5,10 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 //? if >=1.21.11 {
-/*import net.minecraft.resources.Identifier;
- *///?} else {
-import net.minecraft.resources.ResourceLocation;
-//?}
+import net.minecraft.resources.Identifier;
+ //?} else {
+/*import net.minecraft.resources.ResourceLocation;
+*///?}
 import org.lwjgl.glfw.GLFW;
 
 public class Fullbright {
@@ -17,10 +17,10 @@ public class Fullbright {
 
     public static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(
             //? if >=1.21.11 {
-            /*Identifier.fromNamespaceAndPath("skyblock_enhancements", "general")
-             *///?} else {
-            ResourceLocation.fromNamespaceAndPath("skyblock_enhancements", "general")
-            //?}
+            Identifier.fromNamespaceAndPath("skyblock_enhancements", "general")
+             //?} else {
+            /*ResourceLocation.fromNamespaceAndPath("skyblock_enhancements", "general")
+            *///?}
     );
 
     public static void init() {

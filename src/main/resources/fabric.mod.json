@@ -26,6 +26,6 @@
     "fabricloader": ">=${fabricloader}",
     "fabric-api": ">=${fabric_api}",
     "minecraft": "${minecraft}",
-    "uilib": ">=${uilib_version}"
+    "uilib": ">=${ui_lib}"
   }
 }
