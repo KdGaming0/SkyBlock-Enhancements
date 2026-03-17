@@ -1,4 +1,10 @@
-## Reminder GUI
+## Change log for 0.7.1
+
+- chore: add uilib dependency to fabric.mod.json
+
+## Change log for 0.7
+
+### Reminder GUI
 A new interactive screen to manage all your reminders without touching the chat console.
 * **Dual-Tab Interface:** Easily switch between your active reminder list and a visual "Create" form.
 * **Visual Management:** Each entry shows a live countdown, name, and status badge (Real Time vs. Play Time).
@@ -27,11 +33,11 @@ A new output type that plays the alert sound with no chat or title message.
 **Remove-all confirmation**
 `/remindme remove all` now shows a `[confirm]` button before deleting anything.
 
-## Improvements
+### Improvements
 
 - **Late Notifications:** If a real-time reminder fires while you are offline or lagging, the chat message notes exactly how late it was (e.g., "fired 12m late").
 
-## New Feature
+### New Feature
 
 **Fullbright**
 - Added a dedicated Key Binding to toggle Fullbright on and off.
