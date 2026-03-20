@@ -62,11 +62,17 @@
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation.tooltip": "Deaktiverer dialogboksen for kommandostadfesting som dukkar opp når ein utfører visse kommandoar.",
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation.label.tooltip": "Deaktiverer dialogboksen for kommandostadfesting som dukkar opp når ein utfører visse kommandoar.",
 
-  "midnightconfig.general_enhancements.enableFullbright": "Aktiver full lysstyrke",
-  "midnightconfig.general_enhancements.enableFullbright.tooltip": "Gjer verda heilt lys uavhengig av lysnivå.",
-  "midnightconfig.general_enhancements.fullbrightStrength": "Styrke på full lysstyrke",
-  "midnightconfig.general_enhancements.fullbrightStrength.tooltip": "Kor lys full lysstyrke gjer verda. Høgare = lysare.",
+  "skyblock_enhancements.midnightconfig.hideItemFrames": "Gøym gjenstandsrammer",
+  "skyblock_enhancements.midnightconfig.hideItemFrames.tooltip": "Gøymer gjenstandsramma når ho inneheld ein gjenstand, slik at berre gjenstanden er synleg.",
+
+  "skyblock_enhancements.midnightconfig.fullbrightText": "Innstillingar for fullt lys",
+
+  "skyblock_enhancements.midnightconfig.enableFullbright": "Slå på fullt lys",
+  "skyblock_enhancements.midnightconfig.enableFullbright.tooltip": "Gjer verda heilt lys uavhengig av lysnivå.",
+
+  "skyblock_enhancements.midnightconfig.fullbrightStrength": "Styrke på fullt lys",
+  "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "Kor lyst fullt lys gjer verda. Høgare = lysare.",
 
   "key.category.skyblock_enhancements.general": "Skyblock-forbetringar",
-  "key.skyblock_enhancements.fullbright": "Slå av/på full lysstyrke"
+  "key.skyblock_enhancements.fullbright": "Veksle fullt lys"
 }

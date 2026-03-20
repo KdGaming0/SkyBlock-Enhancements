@@ -74,6 +74,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = GENERAL_ENHANCEMENTS)
     public static boolean disableCommandConfirmation = true;
 
+    @Entry(category = GENERAL_ENHANCEMENTS)
+    public static boolean hideItemFrames = true;
+
     @Comment(category = GENERAL_ENHANCEMENTS)
     public static Comment fullbrightText;
 
