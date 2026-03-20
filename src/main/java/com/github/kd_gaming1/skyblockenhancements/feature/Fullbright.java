@@ -7,7 +7,11 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+//? if >=1.21.11 {
 import net.minecraft.resources.Identifier;
+        //?} else {
+/*import net.minecraft.resources.ResourceLocation;
+ *///?}
 import org.lwjgl.glfw.GLFW;
 
 public class Fullbright {
@@ -16,7 +20,12 @@ public class Fullbright {
 
     private static final KeyMapping.Category CATEGORY =
             KeyMapping.Category.register(
-                    Identifier.fromNamespaceAndPath("skyblock_enhancements", "general"));
+                    //? if >=1.21.11 {
+                    Identifier.fromNamespaceAndPath("skyblock_enhancements", "general")
+                    //?} else {
+                    /*ResourceLocation.fromNamespaceAndPath("skyblock_enhancements", "general")
+                     *///?}
+            );
 
     public static void init() {
         toggleKey =
