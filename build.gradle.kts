@@ -140,6 +140,9 @@ publishMods {
         requires {
             slug = "P7dR8mSH"
         }
+        requires {
+            slug = "2C0marwF" // Modern UI mVUS
+        }
         optional {
             slug = "mOgUt4GM" // ModMenu
         }
