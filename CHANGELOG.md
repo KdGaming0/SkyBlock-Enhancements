@@ -1,3 +1,3 @@
-## Change log for 0.8.2
+## Changelog for 0.8.3
 
-- Fullbright now overrides night vision when enabled
+- Improvements to the Fullbright implementation (Made by Mobyr). Thanks for the help.

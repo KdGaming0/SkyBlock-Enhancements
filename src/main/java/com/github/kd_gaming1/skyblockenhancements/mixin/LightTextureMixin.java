@@ -27,7 +27,7 @@ public class LightTextureMixin {
 
         // Append FullbrightIntensity as the new 8th float, before the vec3s
         float intensity = SkyblockEnhancementsConfig.enableFullbright
-                ? (float) SkyblockEnhancementsConfig.fullbrightStrength / 15.0F
+                ? (float) SkyblockEnhancementsConfig.fullbrightStrength / 100.0F
                 : 0.0F;
 
         return result.putFloat(intensity);
