@@ -8,6 +8,7 @@ layout(std140) uniform LightmapInfo {
     float DarknessScale;
     float DarkenWorldFactor;
     float BrightnessFactor;
+    float FullbrightIntensity;
     vec3 SkyLightColor;
     vec3 AmbientColor;
 } lightmapInfo;
@@ -59,16 +60,9 @@ void main() {
     }
 
     color = clamp(color, 0.0, 1.0);
+    color = mix(color, notGamma(color), lightmapInfo.BrightnessFactor);
 
-    vec3 vanillaGammaColor = mix(color, notGamma(color), clamp(lightmapInfo.BrightnessFactor, 0.0, 1.0));
-
-    if (lightmapInfo.BrightnessFactor <= 1.5) {
-        color = vanillaGammaColor;
-    } else {
-        float fullbrightStrength = clamp(lightmapInfo.BrightnessFactor - 2.0, 0.0, 1.0);
-        vec3 fullbrightColor = color + (vec3(1.0) - color) * fullbrightStrength;
-        color = mix(color, fullbrightColor, fullbrightStrength);
-    }
+    color = mix(color, vec3(1.0), lightmapInfo.FullbrightIntensity);
 
     color = mix(color, vec3(0.75), 0.04);
     fragColor = vec4(color, 1.0);
