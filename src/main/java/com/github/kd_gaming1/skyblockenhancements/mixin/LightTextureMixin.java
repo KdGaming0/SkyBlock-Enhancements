@@ -11,15 +11,15 @@ public class LightTextureMixin {
 
     @ModifyArg(
             method = "updateLightTexture",
-            at =
-            @At(
+            at = @At(
                     value = "INVOKE",
-                    target =
-                            "Lcom/mojang/blaze3d/buffers/Std140Builder;putFloat(F)Lcom/mojang/blaze3d/buffers/Std140Builder;",
+                    target = "Lcom/mojang/blaze3d/buffers/Std140Builder;putFloat(F)Lcom/mojang/blaze3d/buffers/Std140Builder;",
                     ordinal = 6),
             index = 0)
-    private float overrideBrightnessFactor(float original) {
-        if (!SkyblockEnhancementsConfig.enableFullbright) return original;
-        return Math.max(original, (float) SkyblockEnhancementsConfig.fullbrightStrength);
+    private float overrideBrightnessFactor(float vanillaBrightnessFactor) {
+        if (!SkyblockEnhancementsConfig.enableFullbright) return vanillaBrightnessFactor;
+
+        float strength01 = (float) SkyblockEnhancementsConfig.fullbrightStrength / 15.0F;
+        return 2.0F + strength01;
     }
 }
