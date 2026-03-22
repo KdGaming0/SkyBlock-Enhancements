@@ -49,6 +49,8 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.5.3")!!)!!)
 }
 
 loom {
