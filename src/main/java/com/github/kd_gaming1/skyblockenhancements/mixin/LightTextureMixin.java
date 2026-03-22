@@ -1,15 +1,19 @@
 package com.github.kd_gaming1.skyblockenhancements.mixin;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.access.LightTextureAccessor;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import net.minecraft.client.renderer.LightTexture;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(LightTexture.class)
-public class LightTextureMixin {
+public class LightTextureMixin implements LightTextureAccessor {
+    @Shadow
+    private boolean updateLightTexture;
 
     @WrapOperation(
             method = "updateLightTexture",
@@ -31,5 +35,10 @@ public class LightTextureMixin {
                 : 0.0F;
 
         return result.putFloat(intensity);
+    }
+
+    @Override
+    public void skyblockenhancements$markDirty() {
+        this.updateLightTexture = true;
     }
 }

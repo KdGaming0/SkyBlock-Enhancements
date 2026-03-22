@@ -1,6 +1,9 @@
 package com.github.kd_gaming1.skyblockenhancements.config;
 
+import com.github.kd_gaming1.skyblockenhancements.access.LightTextureAccessor;
 import eu.midnightdust.lib.config.MidnightConfig;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
 
 public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static final String SKYBLOCK_ENHANCEMENTS = "skyblock_enhancements";
@@ -85,4 +88,15 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
 
     @Entry(category = GENERAL_ENHANCEMENTS, isSlider = true, min = 0, max = 100)
     public static double fullbrightStrength = 100.0;
+
+    @Override
+    public void writeChanges() {
+        super.writeChanges();
+        // force update lightmap to fix lightmap not updating
+        // when badoptimisations light caching is enabled
+        LightTexture lt = Minecraft.getInstance().gameRenderer.lightTexture();
+        if (lt instanceof LightTextureAccessor accessor) {
+            accessor.skyblockenhancements$markDirty();
+        }
+    }
 }

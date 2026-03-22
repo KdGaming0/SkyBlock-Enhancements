@@ -12,6 +12,7 @@
     "ClientPlayNetworkHandlerMixin",
     "HideItemFrameMixin",
     "LightTextureMixin",
+    "EntryInfoMixin",
     "PackCompatibilityMixin",
     "SignEnterToConfirmMixin",
     "access.AbstractSignEditScreenAccessor",
