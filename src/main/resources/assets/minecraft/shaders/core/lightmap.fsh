@@ -46,11 +46,11 @@ void main() {
         color = mix(color, darkened_color, lightmapInfo.DarkenWorldFactor);
     }
 
-    if (lightmapInfo.NightVisionFactor > 0.0) {
+    if (lightmapInfo.NightVisionFactor > 0.0 && lightmapInfo.BrightnessFactor <= 1.5) {
         float max_component = max(color.r, max(color.g, color.b));
         if (max_component > 0.0 && max_component < 1.0) {
-            vec3 bright_color = color / max_component;
-            color = mix(color, bright_color, lightmapInfo.NightVisionFactor);
+             vec3 bright_color = color / max_component;
+             color = mix(color, bright_color, lightmapInfo.NightVisionFactor);
         }
     }
 

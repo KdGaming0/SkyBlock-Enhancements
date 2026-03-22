@@ -1,4 +1,3 @@
-## Change log for 0.8.1
+## Change log for 0.8.2
 
-- Improved fullbright by reworking the implementation to use a shader-based approach, resulting in smoother brightness.
-- Thanks to Mobyr for suggesting the new shader-based fullbright implementation
+- Fullbright now overrides night vision when enabled
