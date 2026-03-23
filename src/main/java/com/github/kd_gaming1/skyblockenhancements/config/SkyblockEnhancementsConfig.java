@@ -94,7 +94,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
         super.writeChanges();
         // force update lightmap to fix lightmap not updating
         // when badoptimisations light caching is enabled
-        LightTexture lt = Minecraft.getInstance().gameRenderer.lightTexture();
+        var mc = Minecraft.getInstance();
+        if (mc.gameRenderer == null) return;
+        LightTexture lt = mc.gameRenderer.lightTexture();
         if (lt instanceof LightTextureAccessor accessor) {
             accessor.skyblockenhancements$markDirty();
         }

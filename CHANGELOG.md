@@ -1,3 +1,3 @@
-## Changelog for 0.8.3
+## Changelog for 0.8.5
 
-- Improvements to the Fullbright implementation (Made by Mobyr). Thanks for the help.
+- Fixed a crash when the config has not yet been created.
