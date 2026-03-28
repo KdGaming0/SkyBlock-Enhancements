@@ -10,9 +10,10 @@
   "client": [
     "ClientPacketListenerMixin",
     "ClientPlayNetworkHandlerMixin",
+    "EntryInfoMixin",
     "HideItemFrameMixin",
     "LightTextureMixin",
-    "EntryInfoMixin",
+    "OptionInstanceMixin",
     "PackCompatibilityMixin",
     "SignEnterToConfirmMixin",
     "access.AbstractSignEditScreenAccessor",

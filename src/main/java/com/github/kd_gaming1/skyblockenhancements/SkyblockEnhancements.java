@@ -11,6 +11,7 @@ import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManag
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
+import com.github.kd_gaming1.skyblockenhancements.util.IrisCompat;
 import com.github.kd_gaming1.skyblockenhancements.util.NeuRepoCache;
 import eu.midnightdust.lib.config.MidnightConfig;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -57,6 +58,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
         Fullbright.init();
 
         ClientTickEvents.END_CLIENT_TICK.register(Fullbright::onTick);
+        ClientTickEvents.END_CLIENT_TICK.register(client -> IrisCompat.tick());
 
         ClientLifecycleEvents.CLIENT_STARTED.register(
                 client ->

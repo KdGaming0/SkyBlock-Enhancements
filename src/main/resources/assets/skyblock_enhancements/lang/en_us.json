@@ -70,6 +70,9 @@
   "skyblock_enhancements.midnightconfig.enableFullbright": "Enable Fullbright",
   "skyblock_enhancements.midnightconfig.enableFullbright.tooltip": "Makes the world fully bright regardless of light level.",
 
+  "skyblock_enhancements.midnightconfig.fullbrightUseGamma": "Use Gamma Mode",
+  "skyblock_enhancements.midnightconfig.fullbrightUseGamma.tooltip": "Forces fullbright to use the gamma override instead of the custom shader. The mod will automatically fall back to this when Iris shaders are active.",
+
   "skyblock_enhancements.midnightconfig.fullbrightStrength": "Fullbright Strength",
   "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "How bright fullbright makes the world. Higher = brighter.",
 

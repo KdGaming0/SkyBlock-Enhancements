@@ -70,6 +70,9 @@
   "skyblock_enhancements.midnightconfig.enableFullbright": "Slå på fullt lys",
   "skyblock_enhancements.midnightconfig.enableFullbright.tooltip": "Gjer verda heilt lys uavhengig av lysnivå.",
 
+  "skyblock_enhancements.midnightconfig.fullbrightUseGamma": "Bruk gammamodus",
+  "skyblock_enhancements.midnightconfig.fullbrightUseGamma.tooltip": "Tvingar fullbright til å bruke gamma-overstyring i staden for den tilpassa shaderen. Modden vil automatisk falle tilbake på dette når Iris-shaderar er aktive.",
+
   "skyblock_enhancements.midnightconfig.fullbrightStrength": "Styrke på fullt lys",
   "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "Kor lyst fullt lys gjer verda. Høgare = lysare.",
 

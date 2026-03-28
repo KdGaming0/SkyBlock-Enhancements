@@ -1,3 +1,3 @@
-## Changelog for 0.8.5
+## Changelog for 0.8.6
 
-- Fixed a crash when the config has not yet been created.
+- Fullbright now works with some shaders

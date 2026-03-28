@@ -86,6 +86,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = GENERAL_ENHANCEMENTS)
     public static boolean enableFullbright = true;
 
+    @Entry(category = GENERAL_ENHANCEMENTS)
+    public static boolean fullbrightUseGamma = false;
+
     @Entry(category = GENERAL_ENHANCEMENTS, isSlider = true, min = 0, max = 100)
     public static double fullbrightStrength = 100.0;
 
