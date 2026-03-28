@@ -1,3 +1,3 @@
-## Changelog for 0.8.6
+## Changelog for 0.8.7
 
-- Fullbright now works with some shaders
+- Fixed NO Double Sneak causing the sneak animation to be disabled on other players.
