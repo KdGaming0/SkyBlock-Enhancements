@@ -7,7 +7,11 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
+//? if >=1.21.11 {
 import net.minecraft.resources.Identifier;
+ //?} else {
+/*import net.minecraft.resources.ResourceLocation;
+*///?}
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2fStack;
 import org.spongepowered.asm.mixin.Final;
@@ -29,12 +33,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GuiGraphics.class)
 public abstract class TooltipScrollGuiGraphicsMixin {
 
-    @Shadow
-    @Final
-    private Matrix3x2fStack pose;
+    @Shadow @Final private Matrix3x2fStack pose;
 
-    @Unique
-    private boolean skyblockenhancements$pushed;
+    @Unique private boolean skyblockenhancements$pushed;
 
     @Inject(method = "renderTooltip", at = @At("HEAD"))
     private void onTooltipHead(
@@ -43,15 +44,15 @@ public abstract class TooltipScrollGuiGraphicsMixin {
             int x,
             int y,
             ClientTooltipPositioner positioner,
+            //? if >=1.21.11 {
             @Nullable Identifier texture,
+             //?} else {
+            /*@Nullable ResourceLocation texture,
+            *///?}
             CallbackInfo ci) {
         skyblockenhancements$pushed = false;
+        if (!SkyblockEnhancementsConfig.enableTooltipScroll) return;
 
-        if (!SkyblockEnhancementsConfig.enableTooltipScroll) {
-            return;
-        }
-
-        // When Modern UI's tooltip is active, this method is never called, so no guard needed.
         // Track tooltip content — resets scroll when the hovered item changes.
         TooltipScrollState.trackTooltip(components);
         TooltipScrollState.update();
@@ -72,7 +73,11 @@ public abstract class TooltipScrollGuiGraphicsMixin {
             int x,
             int y,
             ClientTooltipPositioner positioner,
+            //? if >=1.21.11 {
             @Nullable Identifier texture,
+             //?} else {
+            /*@Nullable ResourceLocation texture,
+            *///?}
             CallbackInfo ci) {
         if (skyblockenhancements$pushed) {
             pose.popMatrix();
