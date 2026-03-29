@@ -45,6 +45,7 @@ dependencies {
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
     modRuntimeOnly("maven.modrinth:modmenu:${property("deps.modmenu_version")}")
     modRuntimeOnly("maven.modrinth:architectury-api:${property("deps.architectury_api_version")}")
+    modCompileOnly("maven.modrinth:modernui-mc-mvus:${property("deps.modernui_version")}")
 
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -141,7 +142,7 @@ publishMods {
             slug = "P7dR8mSH"
         }
         requires {
-            slug = "2C0marwF" // Modern UI mVUS
+            slug = "2C0marwF" // UI Lib
         }
         optional {
             slug = "mOgUt4GM" // ModMenu

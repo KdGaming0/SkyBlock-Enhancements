@@ -2,6 +2,7 @@
   "required": true,
   "package": "com.github.kd_gaming1.skyblockenhancements.mixin",
   "compatibilityLevel": "JAVA_17",
+  "plugin": "com.github.kd_gaming1.skyblockenhancements.mixin.SkyblockEnhancementsMixinPlugin",
   "mixins": [
   ],
   "injectors": {
@@ -19,6 +20,9 @@
     "access.AbstractSignEditScreenAccessor",
     "itemglow.EntityRendererMixin",
     "itemglow.EntityRenderStateMixin",
-    "itemglow.LevelRendererMixin"
+    "itemglow.LevelRendererMixin",
+    "tooltipscroll.TooltipScrollMouseMixin",
+    "tooltipscroll.TooltipScrollGuiGraphicsMixin",
+    "tooltipscroll.TooltipScrollModernUIMixin"
   ]
 }

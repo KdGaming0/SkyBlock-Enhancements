@@ -1,3 +1,4 @@
-## Changelog for 0.8.7
+## Changelog for 0.9.0
 
-- Fixed NO Double Sneak causing the sneak animation to be disabled on other players.
+### Added
+- Tooltip Scroll (Works with ModernUI)

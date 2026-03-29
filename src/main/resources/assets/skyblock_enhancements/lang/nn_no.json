@@ -77,5 +77,19 @@
   "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "Kor lyst fullt lys gjer verda. Høgare = lysare.",
 
   "key.category.skyblock_enhancements.general": "Skyblock-forbetringar",
-  "key.skyblock_enhancements.fullbright": "Veksle fullt lys"
+  "key.skyblock_enhancements.fullbright": "Veksle fullt lys",
+
+  "skyblock_enhancements.midnightconfig.tooltipScrollText": "Innstillingar for verktøytips-rulling",
+
+  "skyblock_enhancements.midnightconfig.enableTooltipScroll": "Aktiver verktøytips-rulling",
+  "skyblock_enhancements.midnightconfig.enableTooltipScroll.tooltip": "Rull lange verktøytips med musehjulet. Fungerer med både vanleg og Modern UI verktøytips.",
+
+  "skyblock_enhancements.midnightconfig.tooltipScrollSpeed": "Rullefart for verktøytips",
+  "skyblock_enhancements.midnightconfig.tooltipScrollSpeed.tooltip": "Kor raskt verktøytipset flyttar seg per musehjulstrinn.",
+
+  "skyblock_enhancements.midnightconfig.invertTooltipScroll": "Inverter verktøytips-rulling",
+  "skyblock_enhancements.midnightconfig.invertTooltipScroll.tooltip": "Inverterer den vertikale rulleretninga for verktøytips.",
+
+  "skyblock_enhancements.midnightconfig.enableHorizontalScroll": "Aktiver horisontal rulling",
+  "skyblock_enhancements.midnightconfig.enableHorizontalScroll.tooltip": "Hald venstre Shift og rull for å flytte verktøytips horisontalt."
 }

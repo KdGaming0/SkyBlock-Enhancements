@@ -92,6 +92,21 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = GENERAL_ENHANCEMENTS, isSlider = true, min = 0, max = 100)
     public static double fullbrightStrength = 100.0;
 
+    @Comment(category = GENERAL_ENHANCEMENTS)
+    public static Comment tooltipScrollText;
+
+    @Entry(category = GENERAL_ENHANCEMENTS)
+    public static boolean enableTooltipScroll = true;
+
+    @Entry(category = GENERAL_ENHANCEMENTS, isSlider = true, min = 1, max = 30)
+    public static int tooltipScrollSpeed = 10;
+
+    @Entry(category = GENERAL_ENHANCEMENTS)
+    public static boolean invertTooltipScroll = false;
+
+    @Entry(category = GENERAL_ENHANCEMENTS)
+    public static boolean enableHorizontalScroll = true;
+
     @Override
     public void writeChanges() {
         super.writeChanges();

@@ -27,5 +27,8 @@
     "fabric-api": ">=${fabric_api}",
     "minecraft": "${minecraft}",
     "uilib": ">=${ui_lib}"
+  },
+  "suggests": {
+    "modernui": "*"
   }
 }
