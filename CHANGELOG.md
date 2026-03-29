@@ -1,4 +1,4 @@
-## Changelog for 0.9.0
+## Changelog for 0.9.1
 
-### Added
-- Tooltip Scroll (Works with ModernUI)
+### fix
+- Horizontal scroll when shift is pressed is on by default

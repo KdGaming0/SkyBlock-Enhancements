@@ -105,7 +105,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static boolean invertTooltipScroll = false;
 
     @Entry(category = GENERAL_ENHANCEMENTS)
-    public static boolean enableHorizontalScroll = true;
+    public static boolean enableHorizontalScroll = false;
 
     @Override
     public void writeChanges() {
