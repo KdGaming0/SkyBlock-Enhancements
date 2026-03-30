@@ -13,6 +13,9 @@
   "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments": "Vis ikkje-maksimerte fortryllingar",
   "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments.tooltip": "Viser fortryllingar som ikkje er på sitt maksimale nivå i infoboksen til ein gjenstand.",
 
+  "skyblock_enhancements.midnightconfig.preventWeaponPlacement": "Hindra utplassering av våpen",
+  "skyblock_enhancements.midnightconfig.preventWeaponPlacement.tooltip": "Hindrar at Skyblock-sverd (t.d. Spirit Sceptre) vert plasserte som blokker, samstundes som det framleis er mogleg å bruka evnene deira.",
+
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades": "Set Kat-påminning for kjæledyroppgraderingar",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.tooltip": "Opprettar automatisk ei påminning når Kat byrjar å oppgradere kjæledyret ditt, slik at du får varsel når det er klart til å hentast.",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.label.tooltip": "Opprettar automatisk ei påminning når Kat byrjar å oppgradere kjæledyret ditt.",

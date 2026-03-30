@@ -19,6 +19,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static boolean showNotMaxedEnchantments = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean preventWeaponPlacement = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean setKatReminderForPetUpgrades = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)

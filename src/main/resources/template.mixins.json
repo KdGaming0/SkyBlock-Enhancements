@@ -17,6 +17,7 @@
     "OptionInstanceMixin",
     "PackCompatibilityMixin",
     "SignEnterToConfirmMixin",
+    "PreventWeaponPlacementMixin",
     "access.AbstractSignEditScreenAccessor",
     "itemglow.EntityRendererMixin",
     "itemglow.EntityRenderStateMixin",

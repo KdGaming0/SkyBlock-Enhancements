@@ -142,7 +142,7 @@ publishMods {
             slug = "P7dR8mSH"
         }
         requires {
-            slug = "2C0marwF" // UI Lib
+            slug = "AOEDs9Al" // UI Lib
         }
         optional {
             slug = "mOgUt4GM" // ModMenu
