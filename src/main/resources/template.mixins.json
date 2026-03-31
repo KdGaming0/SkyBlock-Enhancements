@@ -24,6 +24,14 @@
     "itemglow.LevelRendererMixin",
     "tooltipscroll.TooltipScrollMouseMixin",
     "tooltipscroll.TooltipScrollGuiGraphicsMixin",
-    "tooltipscroll.TooltipScrollModernUIMixin"
+    "tooltipscroll.TooltipScrollModernUIMixin",
+    "chat.ChatHistoryMixin",
+    "chat.CompactChatMixin",
+    "chat.ChatRenderingMixin",
+    "chat.ChatLineRendererMixin",
+    "chat.ChatTabFilterMixin",
+    "chat.ChatTabScreenMixin",
+    "chat.ChatAnimationMixin",
+    "chat.ChatScreenAnimationMixin"
   ]
 }

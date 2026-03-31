@@ -2,6 +2,7 @@
   "skyblock_enhancements.midnightconfig.title": "Skyblock-forbetringar",
 
   "skyblock_enhancements.midnightconfig.category.skyblock_enhancements": "Skyblock-forbetringar",
+  "skyblock_enhancements.midnightconfig.category.chat_enhancements": "Prateforbetringar",
   "skyblock_enhancements.midnightconfig.category.general_enhancements": "Generelle forbetringar",
 
   "skyblock_enhancements.midnightconfig.text": "Generelle Skyblock-funksjonar",
@@ -52,6 +53,28 @@
 
   "skyblock_enhancements.midnightconfig.reminderSoundPitch": "Tonehøgd for påminningslyd",
   "skyblock_enhancements.midnightconfig.reminderSoundPitch.tooltip": "Juster tonehøgda på påminningslydar.\nOmråde: 0.5 (låg) til 2.0 (høg)\nStandard: 1.0 (normal)",
+
+  "skyblock_enhancements.midnightconfig.chatEnhancementsText": "Prateforbetringar",
+  "skyblock_enhancements.midnightconfig.extendedChatHistory": "Utvida pratehistorikk",
+  "skyblock_enhancements.midnightconfig.extendedChatHistory.tooltip": "Aukar det maksimale talet på pratemeldingar som vert lagra i historikken utover dei vanlege 100.",
+  "skyblock_enhancements.midnightconfig.chatHistorySize": "Storleik på pratehistorikk",
+  "skyblock_enhancements.midnightconfig.chatHistorySize.tooltip": "Maks tal på pratemeldingar som vert lagra i historikken.\nOmfang: 100–2048. Standard: 1024.",
+  "skyblock_enhancements.midnightconfig.compactDuplicateMessages": "Kompakt duplikatmeldingar",
+  "skyblock_enhancements.midnightconfig.compactDuplicateMessages.tooltip": "Fjernar dupliserte pratemeldingar og viser ein teljar som (×3) i staden.",
+  "skyblock_enhancements.midnightconfig.onlyCompactConsecutive": "Berre komprimera påfølgjande",
+  "skyblock_enhancements.midnightconfig.onlyCompactConsecutive.tooltip": "Når aktivert, komprimerer berre meldingar som kjem rett etter kvarandre.\nNår deaktivert, komprimerer alle duplikat uavhengig av plassering.",
+  "skyblock_enhancements.midnightconfig.centerHypixelText": "Sentrer Hypixel-tekst",
+  "skyblock_enhancements.midnightconfig.centerHypixelText.tooltip": "Sentrerer mellomromsputta tekst frå Hypixel korrekt ved alle pratebreidder.\nBerre aktiv på Hypixel.",
+  "skyblock_enhancements.midnightconfig.smoothSeparators": "Jamne skiljelinjer",
+  "skyblock_enhancements.midnightconfig.smoothSeparators.tooltip": "Erstattar bindestrek-baserte skiljelinjer (t.d. -----SkyBlock-----) med jamne sentrerte linjer.\nBerre aktiv på Hypixel.",
+  "skyblock_enhancements.midnightconfig.enableChatTabs": "Aktiver pratefaner",
+  "skyblock_enhancements.midnightconfig.enableChatTabs.tooltip": "Legg til kanalfaner (Alle, Party, Guild, PM, Co-op) over prateinndata.\nBerre aktiv på Hypixel.",
+  "skyblock_enhancements.midnightconfig.enableChatAnimation": "Aktiver prateanimasjon",
+  "skyblock_enhancements.midnightconfig.enableChatAnimation.tooltip": "Legg til ein jamn glide-opp-animasjon når nye meldingar kjem og når prateinndata opnast.",
+  "skyblock_enhancements.midnightconfig.chatAnimationDurationMs": "Animasjonslengde (ms)",
+  "skyblock_enhancements.midnightconfig.chatAnimationDurationMs.tooltip": "Kor lang tid prateanimasjonen tek i millisekund.\nOmfang: 50–500. Standard: 150.",
+  "skyblock_enhancements.midnightconfig.enableChatHeads": "Aktiver pratehuvud",
+  "skyblock_enhancements.midnightconfig.enableChatHeads.tooltip": "Viser eit lite spelaransikt ved sida av pratemeldingar frå kjende spelarar.\nKrev at avsendaren er i spelarlista til noverande server.",
 
   "skyblock_enhancements.midnightconfig.text2": "Generelle forbetringar",
 

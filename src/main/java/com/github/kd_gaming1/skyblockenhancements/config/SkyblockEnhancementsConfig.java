@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.LightTexture;
 
 public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static final String SKYBLOCK_ENHANCEMENTS = "skyblock_enhancements";
+    public static final String CHAT_ENHANCEMENTS = "chat_enhancements";
     public static final String GENERAL_ENHANCEMENTS = "general_enhancements";
 
     @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
@@ -67,6 +68,39 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
         PLING,
         SUCCESS
     }
+
+    @Comment(category = CHAT_ENHANCEMENTS, centered = true)
+    public static Comment chatEnhancementsText;
+
+    @Entry(category = CHAT_ENHANCEMENTS)
+    public static boolean extendedChatHistory = true;
+
+    @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 100, max = 2048)
+    public static int chatHistorySize = 1024;
+
+    @Entry(category = CHAT_ENHANCEMENTS)
+    public static boolean compactDuplicateMessages = true;
+
+    @Entry(category = CHAT_ENHANCEMENTS)
+    public static boolean onlyCompactConsecutive = false;
+
+    @Entry(category = CHAT_ENHANCEMENTS)
+    public static boolean centerHypixelText = true;
+
+    @Entry(category = CHAT_ENHANCEMENTS)
+    public static boolean smoothSeparators = true;
+
+    @Entry(category = CHAT_ENHANCEMENTS)
+    public static boolean enableChatTabs = true;
+
+    @Entry(category = CHAT_ENHANCEMENTS)
+    public static boolean enableChatAnimation = false;
+
+    @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 50, max = 500)
+    public static int chatAnimationDurationMs = 150;
+
+    @Entry(category = CHAT_ENHANCEMENTS)
+    public static boolean enableChatHeads = false;
 
     @Comment(category = GENERAL_ENHANCEMENTS, centered = true)
     public static Comment text2;

@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Prevents Skyblock swords (e.g. Spirit Sceptre, which is a Wither Rose) from being placed as
+ * Prevents Skyblock swords (e.g. Spirit Sceptre, which is a Flower) from being placed as
  * blocks. Returning {@link InteractionResult#PASS} skips the block placement while still allowing
  * the game to fall through to {@code Item.use}, which sends the right-click packet to the server
  * and triggers the weapon's ability.

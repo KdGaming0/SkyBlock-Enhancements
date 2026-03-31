@@ -3,6 +3,7 @@
 
   "skyblock_enhancements.midnightconfig.category.skyblock_enhancements": "Skyblock Enhancements",
   "skyblock_enhancements.midnightconfig.category.general_enhancements": "General Enhancements",
+  "skyblock_enhancements.midnightconfig.category.chat_enhancements": "Chat Enhancements",
 
   "skyblock_enhancements.midnightconfig.text": "General Skyblock Features",
 
@@ -52,6 +53,28 @@
 
   "skyblock_enhancements.midnightconfig.reminderSoundPitch": "Reminder Sound Pitch",
   "skyblock_enhancements.midnightconfig.reminderSoundPitch.tooltip": "Adjust the pitch of reminder sounds.\nRange: 0.5 (low) to 2.0 (high)\nDefault: 1.0 (normal)",
+
+  "skyblock_enhancements.midnightconfig.chatEnhancementsText": "Chat Enhancements",
+  "skyblock_enhancements.midnightconfig.extendedChatHistory": "Extended Chat History",
+  "skyblock_enhancements.midnightconfig.extendedChatHistory.tooltip": "Increases the maximum number of chat messages kept in history beyond the default 100.",
+  "skyblock_enhancements.midnightconfig.chatHistorySize": "Chat History Size",
+  "skyblock_enhancements.midnightconfig.chatHistorySize.tooltip": "Maximum number of chat messages stored in history.\nRange: 100–2048. Default: 1024.",
+  "skyblock_enhancements.midnightconfig.compactDuplicateMessages": "Compact Duplicate Messages",
+  "skyblock_enhancements.midnightconfig.compactDuplicateMessages.tooltip": "Removes duplicate chat messages and shows a counter like (×3) instead.",
+  "skyblock_enhancements.midnightconfig.onlyCompactConsecutive": "Only Compact Consecutive",
+  "skyblock_enhancements.midnightconfig.onlyCompactConsecutive.tooltip": "When enabled, only compacts messages that appear consecutively.\nWhen disabled, compacts all duplicates regardless of position.",
+  "skyblock_enhancements.midnightconfig.centerHypixelText": "Center Hypixel Text",
+  "skyblock_enhancements.midnightconfig.centerHypixelText.tooltip": "Properly centers space-padded text from Hypixel at any chat width.\nOnly active while on Hypixel.",
+  "skyblock_enhancements.midnightconfig.smoothSeparators": "Smooth Separators",
+  "skyblock_enhancements.midnightconfig.smoothSeparators.tooltip": "Replaces dash-based separator lines (e.g. -----SkyBlock-----) with smooth centered lines.\nOnly active while on Hypixel.",
+  "skyblock_enhancements.midnightconfig.enableChatTabs": "Enable Chat Tabs",
+  "skyblock_enhancements.midnightconfig.enableChatTabs.tooltip": "Adds channel tabs (All, Party, Guild, PM, Co-op) above the chat input.\nOnly active while on Hypixel.",
+  "skyblock_enhancements.midnightconfig.enableChatAnimation": "Enable Chat Animation",
+  "skyblock_enhancements.midnightconfig.enableChatAnimation.tooltip": "Adds a smooth slide-up animation when new messages arrive and when the chat input opens.",
+  "skyblock_enhancements.midnightconfig.chatAnimationDurationMs": "Animation Duration (ms)",
+  "skyblock_enhancements.midnightconfig.chatAnimationDurationMs.tooltip": "How long the chat animation takes in milliseconds.\nRange: 50–500. Default: 150.",
+  "skyblock_enhancements.midnightconfig.enableChatHeads": "Enable Chat Heads",
+  "skyblock_enhancements.midnightconfig.enableChatHeads.tooltip": "Shows a small player face next to chat messages from known players.\nRequires the sender to be in the current server's player list.",
 
   "skyblock_enhancements.midnightconfig.text2": "General Enhancements",
 
