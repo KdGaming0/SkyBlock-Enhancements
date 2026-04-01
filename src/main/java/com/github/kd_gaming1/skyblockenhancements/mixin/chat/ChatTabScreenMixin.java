@@ -36,13 +36,16 @@ public abstract class ChatTabScreenMixin extends Screen {
         ChatComponent chat = mc.gui.getChat();
         int btnSize = 20;
         int spacing = 2;
-        int startX = 5;
+        int startX = 4; // Matching the typical chat input box starting X
 
-        int chatHeight = ChatComponent.getHeight(mc.options.chatHeightFocused().get());
-        int y = this.height - chatHeight - 40 - btnSize - 5;
+        // The input box height is typically 12, bottom padded by 2.
+        // Putting it right over the input bar.
+        int y = this.height - 14 - btnSize;
 
         for (ChatTab tab : ChatTab.values()) {
-            int x = startX + tab.ordinal() * (btnSize + spacing);
+            // Adjust width automatically for labels longer than 1-2 chars (like "Coop")
+            int width = Math.max(btnSize, mc.font.width(tab.label()) + 8);
+
             Button button =
                     Button.builder(
                                     Component.literal(tab.label()),
@@ -50,11 +53,21 @@ public abstract class ChatTabScreenMixin extends Screen {
                                         ChatTabState.setActiveTab(tab);
                                         chat.rescaleChat();
                                         mc.schedule(() -> setFocused(input));
+
+                                        // Execute mode change command
+                                        if (tab.command() != null && !tab.command().isEmpty() && mc.player != null) {
+                                            if (tab.command().startsWith("/")) {
+                                                mc.player.connection.sendCommand(tab.command().substring(1));
+                                            } else {
+                                                mc.player.connection.sendChat(tab.command());
+                                            }
+                                        }
                                     })
-                            .bounds(x, y, btnSize, btnSize)
+                            .bounds(startX, y, width, btnSize)
                             .build();
 
             addRenderableWidget(button);
+            startX += width + spacing;
         }
     }
 }

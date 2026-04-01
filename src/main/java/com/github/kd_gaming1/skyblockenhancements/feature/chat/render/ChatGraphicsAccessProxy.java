@@ -7,6 +7,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.util.FormattedCharSequence;
 import org.joml.Matrix3x2f;
+import org.jspecify.annotations.NonNull;
 
 import java.util.function.Consumer;
 
@@ -23,7 +24,7 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
     }
 
     @Override
-    public void updatePose(Consumer<Matrix3x2f> updater) {
+    public void updatePose(@NonNull Consumer<Matrix3x2f> updater) {
         delegate.updatePose(updater);
     }
 
@@ -33,7 +34,7 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
     }
 
     @Override
-    public boolean handleMessage(int textTop, float opacity, FormattedCharSequence message) {
+    public boolean handleMessage(int textTop, float opacity, @NonNull FormattedCharSequence message) {
         Font font = chatAccess.sbe$getFont();
         GuiGraphics graphics = chatAccess.sbe$getGraphics();
         if (font == null || graphics == null) {
@@ -52,12 +53,12 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
     }
 
     @Override
-    public void handleTag(int x0, int y0, int x1, int y1, float opacity, GuiMessageTag tag) {
-        delegate.handleTag(x0, y0, x1, y1, opacity, tag);
+    public void handleTag(int x0, int y0, int x1, int y1, float opacity, @NonNull GuiMessageTag tag) {
+        // Intentionally left blank to disable the colored indicator bar on the left
     }
 
     @Override
-    public void handleTagIcon(int left, int bottom, boolean forceVisible, GuiMessageTag tag, GuiMessageTag.Icon icon) {
+    public void handleTagIcon(int left, int bottom, boolean forceVisible, @NonNull GuiMessageTag tag, GuiMessageTag.@NonNull Icon icon) {
         delegate.handleTagIcon(left, bottom, forceVisible, tag, icon);
     }
 }
