@@ -11,8 +11,14 @@ following open-source projects. We gratefully acknowledge their authors.
 **License:** MIT
 **Source:** <https://github.com/caoimhebyrne/compact-chat>
 
-The compact duplicate messages feature adapts ideas and patterns from
-compact-chat. The MIT license text is reproduced below.
+The compact duplicate messages feature adapts the general approach and
+mixin patterns from compact-chat (duck interface for message list
+access, high-priority mixin on `addMessage`). The implementation was
+then substantially rewritten and extended with Hypixel-specific
+separator handling, configurable consecutive-only mode, and integration
+with the mod's custom rendering pipeline.
+
+The MIT license text is reproduced below.
 
 > MIT License
 >
@@ -37,50 +43,3 @@ compact-chat. The MIT license text is reproduced below.
 > ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 > CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 > SOFTWARE.
-
----
-
-## BetterHypixelChat
-
-**Author:** viciscat
-**License:** GPL-3.0
-**Source:** <https://modrinth.com/mod/betterhypixelchat>
-
-The centered text and smooth separator features are **inspired by**
-BetterHypixelChat. No source code was copied — all implementations are
-original. Credit is given for the feature concept and design idea.
-
----
-
-## ChatAnimation
-
-**Author:** Ezzenix
-**License:** CC-BY-NC-SA 4.0
-**Source:** <https://github.com/Ezzenix/ChatAnimation>
-
-The smooth chat animation feature is **inspired by** ChatAnimation. No
-source code was copied — all implementations are original. Credit is
-given for the feature concept and design idea.
-
----
-
-## hypixel-chat-tabs
-
-**Author:** yellowbirb
-**Source:** <https://modrinth.com/mod/hypixel-chat-tabs>
-
-The chat tabs feature is **inspired by** hypixel-chat-tabs. No source
-code was copied — all implementations are original. Credit is given for
-the feature concept.
-
----
-
-## Chat Heads
-
-**Author:** dzwdz
-**License:** LGPL-3.0
-**Source:** <https://github.com/dzwdz/chat_heads>
-
-The chat heads feature is **inspired by** Chat Heads. No source code
-was copied — all implementations are original. Credit is given for the
-feature concept and design idea.

@@ -24,8 +24,7 @@ public enum ChatTab {
                             || s.equals("The party was disbanded because all invites expired and the party was empty")
                             || s.equals("You are now in the PARTY channel")
                             || s.equals("You must be in a party to join the party channel!")
-                            || s.equals("You're already in this channel!")
-                            || s.contains("-----------------------------")),
+                            || s.equals("You're already in this channel!")),
     GUILD(
             "G",
             "/chat g",
@@ -34,8 +33,7 @@ public enum ChatTab {
                             || s.startsWith("G > ")
                             || s.equals("You are now in the GUILD channel")
                             || s.equals("You must be in a guild to join the guild channel!")
-                            || s.equals("You're already in this channel!")
-                            || s.contains("-----------------------------")),
+                            || s.equals("You're already in this channel!")),
     PM(
             "PM",
             "",

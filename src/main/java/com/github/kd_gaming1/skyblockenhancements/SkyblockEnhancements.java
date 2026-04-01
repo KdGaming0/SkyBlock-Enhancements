@@ -5,6 +5,7 @@ import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
 import com.github.kd_gaming1.skyblockenhancements.feature.ItemGlowManager;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs.ChatTabState;
 import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminderFeature;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
@@ -51,7 +52,10 @@ public class SkyblockEnhancements implements ClientModInitializer {
                 Util.make(new Object2IntOpenHashMap<>(), map -> map.put(LocationUpdateS2CPacket.ID, 1)));
 
         HypixelLocationState.register();
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> HypixelLocationState.reset());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            HypixelLocationState.reset();
+            ChatTabState.reset();
+        });
 
         MissingEnchants.init();
         ItemGlowManager.init();

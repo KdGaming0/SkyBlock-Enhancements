@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatTextHelper;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -9,8 +10,10 @@ import net.minecraft.network.chat.Component;
 public final class ChatTabState {
 
     private static ChatTab activeTab = ChatTab.ALL;
+    private static ChatTab lastContentTab = null;
 
-    private ChatTabState() {}
+    private ChatTabState() {
+    }
 
     public static ChatTab getActiveTab() {
         return activeTab;
@@ -18,6 +21,7 @@ public final class ChatTabState {
 
     public static void setActiveTab(ChatTab tab) {
         activeTab = tab;
+        lastContentTab = null;
     }
 
     /**
@@ -30,6 +34,28 @@ public final class ChatTabState {
         if (activeTab == ChatTab.ALL) return true;
 
         String plain = ChatFormatting.stripFormatting(message.getString());
-        return activeTab.matches(plain.trim());
+        plain = ChatTextHelper.stripCompactSuffix(plain).trim();
+
+        // Separators belong to whichever tab the surrounding content belongs to
+        if (ChatTextHelper.isFullSeparator(plain) || ChatTextHelper.isCenteredSeparator(plain)) {
+            return lastContentTab == null || lastContentTab == activeTab;
+        }
+
+        boolean matches = activeTab.matches(plain);
+        if (matches) lastContentTab = activeTab;
+        else {
+            // Find which tab owns this message
+            for (ChatTab tab : ChatTab.values()) {
+                if (tab != ChatTab.ALL && tab.matches(plain)) {
+                    lastContentTab = tab;
+                    break;
+                }
+            }
+        }
+        return matches;
+    }
+
+    public static void reset() {
+        lastContentTab = null;
     }
 }

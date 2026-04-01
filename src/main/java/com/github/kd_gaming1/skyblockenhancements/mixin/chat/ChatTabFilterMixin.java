@@ -17,4 +17,11 @@ public class ChatTabFilterMixin {
             original.call(message);
         }
     }
+
+    @WrapMethod(method = "addMessageToQueue")
+    private void sbe$filterRawByTab(GuiMessage message, Operation<Void> original) {
+        if (ChatTabState.shouldShow(message.content())) {
+            original.call(message);
+        }
+    }
 }

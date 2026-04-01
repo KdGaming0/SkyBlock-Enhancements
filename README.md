@@ -7,10 +7,33 @@
 
 ## ✨ Features
 
-- **Missing Enchants**: Easily identify what enchantments are missing from your gear directly in the tooltip.
-    - *Configurable*: Option to only show when holding `Shift`.
-- **Command Confirmation Disabler**: Hides the "Command execution requires confirmation" prompts.
-- **In-Game Config**: Customize the mod entirely via the MidnightConfig menu.
+### Skyblock Enhancements
+- **Missing Enchants**: Identify missing and non-maxed enchantments directly in item tooltips.
+  - *Configurable*: Option to only show when holding `Shift`.
+- **Prevent Weapon Placement**: Stops weapons like Spirit Sceptre from being placed accidentally.
+- **Enter to Confirm Signs**: Press Enter to confirm Hypixel input signs (optionally all signs).
+- **Kat Pet Upgrade Reminders**: Set reminders for pet upgrades at Kat, with configurable sound alerts.
+- **Item Glow Outline**: Adds a customizable glow outline to items, with optional see-through-walls support.
+
+### Chat Enhancements
+- **Compact Duplicate Messages**: Merges repeated chat messages into a single line with an occurrence counter (×N).
+  - Option to only compact consecutive duplicates.
+- **Centered Hypixel Text**: Properly centers space-padded Hypixel messages in the chat window.
+- **Smooth Separators**: Replaces dash/line separator characters with clean horizontal lines.
+- **Chat Tabs**: Adds Hypixel channel tab buttons (All, Party, Guild, PM, Co-op) above the chat input.
+- **Extended Chat History**: Increases the chat history limit from 100 to a configurable value (up to 2048).
+- **Chat Animation**: Smooth slide-up animation when new messages arrive and when the chat screen opens.
+
+### General Enhancements
+- **Fullbright**: Configurable fullbright with keybind toggle (G key), adjustable strength, and Iris shader compatibility.
+- **No Double Sneak**: Prevents accidental double-sneak.
+- **Tooltip Scroll**: Scroll long tooltips vertically (and horizontally with Shift), with configurable speed and direction.
+- **Hide Item Frames**: Hides item frame entities.
+- **Disable Resource Pack Compatibility Warning**: Removes the compatibility warning when loading resource packs.
+- **Command Confirmation Disabler**: Hides "Command execution requires confirmation" prompts.
+
+### Configuration
+- **In-Game Config**: Customize all features via the MidnightConfig menu or with `/skyblockenhancements config`.
 
 ## 📥 Downloads
 
@@ -40,11 +63,11 @@ Use code **SBE** at checkout for **25% off** your first purchase.
 
 [**🎮 Get 25% Off with Bisect Hosting**](https://bisecthosting.com/SBE)
 
-_## 🛠️ Installation_
+## 🛠️ Installation
 
 1. Install **Minecraft** with the **Fabric Loader**.
 2. Download the latest `.jar` file from [Modrinth](https://modrinth.com/mod/skyblock-enhancements).
-3. Ensure you have the **Fabric API** installed in your `mods` folder.
+3. Ensure you have the **Fabric API** and **UI Lib** installed in your `mods` folder.
 4. Drag and drop the `SkyBlock Enhancements` `.jar` file into your `.minecraft/mods` folder.
 5. Launch the game!
 
