@@ -26,7 +26,8 @@ public abstract class ChatAnimationMixin {
 
     @Shadow private int chatScrollbarPos;
 
-    @Shadow abstract int getLineHeight();
+    @Shadow
+    protected abstract int getLineHeight();
 
     @Unique private long sbe$lastMessageTime;
 
@@ -34,14 +35,10 @@ public abstract class ChatAnimationMixin {
     private float sbe$displacement() {
         if (!SkyblockEnhancementsConfig.enableChatAnimation || chatScrollbarPos != 0) return 0f;
 
-        float duration = SkyblockEnhancementsConfig.chatAnimationDurationMs;
-        float maxOffset = getLineHeight() * 0.8f;
-        long elapsed = System.currentTimeMillis() - sbe$lastMessageTime;
-        float progress = Math.min(elapsed / duration, 1f);
-
-        // Ease-out quadratic for a smooth deceleration.
-        float eased = 1f - (1f - progress) * (1f - progress);
-        return maxOffset * (1f - eased);
+        float elapsed = System.currentTimeMillis() - sbe$lastMessageTime;
+        float progress = Math.min(elapsed / SkyblockEnhancementsConfig.chatAnimationDurationMs, 1f);
+        float eased = 1f - (1f - progress) * (1f - progress); // ease-out quadratic
+        return getLineHeight() * 0.8f * (1f - eased);
     }
 
     @WrapOperation(
@@ -66,9 +63,7 @@ public abstract class ChatAnimationMixin {
             graphics.pose().pushMatrix();
             graphics.pose().translate(0, dy);
         }
-
         original.call(instance, access, i, j, bl);
-
         if (dy != 0) {
             graphics.pose().popMatrix();
         }

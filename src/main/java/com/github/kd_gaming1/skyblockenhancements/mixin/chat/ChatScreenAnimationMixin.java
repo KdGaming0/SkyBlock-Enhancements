@@ -35,11 +35,8 @@ public class ChatScreenAnimationMixin {
 
         float duration = Math.min(SkyblockEnhancementsConfig.chatAnimationDurationMs * 2.5f, 500f);
         float elapsed = Math.min(System.currentTimeMillis() - sbe$openTime, duration);
-        float progress = elapsed / duration;
-
-        // Cubic ease-out.
-        float t = 1f - progress;
-        float eased = 1f - t * t * t;
+        float t = 1f - elapsed / duration;
+        float eased = 1f - t * t * t; // cubic ease-out
         float scale = (float) mc.getWindow().getGuiScale();
         return (1f - eased) * 8f * (scale / 2f);
     }
@@ -49,10 +46,14 @@ public class ChatScreenAnimationMixin {
             at =
             @At(
                     value = "INVOKE",
-                    target =
-                            "Lnet/minecraft/client/gui/GuiGraphics;fill(IIIII)V"))
+                    target = "Lnet/minecraft/client/gui/GuiGraphics;fill(IIIII)V"))
     private void sbe$animateBackground(
-            GuiGraphics graphics, int x1, int y1, int x2, int y2, int color,
+            GuiGraphics graphics,
+            int x1,
+            int y1,
+            int x2,
+            int y2,
+            int color,
             Operation<Void> original) {
         float dy = sbe$barDisplacement();
         if (dy != 0) {
@@ -74,7 +75,11 @@ public class ChatScreenAnimationMixin {
                             "Lnet/minecraft/client/gui/screens/Screen;"
                                     + "render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"))
     private void sbe$animateWidgets(
-            ChatScreen instance, GuiGraphics graphics, int mouseX, int mouseY, float partialTick,
+            ChatScreen instance,
+            GuiGraphics graphics,
+            int mouseX,
+            int mouseY,
+            float partialTick,
             Operation<Void> original) {
         float dy = sbe$barDisplacement();
         if (dy != 0) {

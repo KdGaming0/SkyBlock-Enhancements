@@ -39,8 +39,7 @@ public enum ChatTab {
     PM(
             "PM",
             "",
-            s ->
-                    s.startsWith("To ") || s.startsWith("From ") || s.startsWith("Friend > ")),
+            s -> s.startsWith("To ") || s.startsWith("From ") || s.startsWith("Friend > ")),
     COOP(
             "Coop",
             "/chat skyblock-coop",

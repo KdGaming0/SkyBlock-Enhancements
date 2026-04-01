@@ -5,9 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
 
-/**
- * Renders a chat line centered horizontally within the chat area.
- */
+/** Renders a chat line centered horizontally within the chat area. */
 public final class CenteredTextRenderer implements CustomChatRenderer {
 
     public static final CenteredTextRenderer INSTANCE = new CenteredTextRenderer();
@@ -23,11 +21,7 @@ public final class CenteredTextRenderer implements CustomChatRenderer {
             int textY,
             int lineWidth,
             float alpha) {
-
-        int textWidth = font.width(text);
-        int x = lineX + (lineWidth - textWidth) / 2;
-        int color = ARGB.color(ARGB.as8BitChannel(alpha), 0xFFFFFF);
-
-        graphics.drawString(font, text, x, textY, color, true);
+        int x = lineX + (lineWidth - font.width(text)) / 2;
+        graphics.drawString(font, text, x, textY, ARGB.color(ARGB.as8BitChannel(alpha), 0xFFFFFF), true);
     }
 }

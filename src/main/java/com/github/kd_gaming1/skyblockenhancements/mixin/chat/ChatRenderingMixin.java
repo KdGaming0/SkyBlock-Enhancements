@@ -4,7 +4,6 @@ import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.CenteredTextRenderer;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatGraphicsAccessProxy;
-import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatRenderUtil;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatTextHelper;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.CustomChatRenderer;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.SeparatorRenderer;
@@ -33,7 +32,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ChatComponent.class)
@@ -42,116 +40,121 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
     @Shadow @Final private List<GuiMessage.Line> trimmedMessages;
     @Shadow @Final private List<GuiMessage> allMessages;
 
-    @Shadow protected abstract int getWidth();
-    @Shadow protected abstract double getScale();
-    @Shadow protected abstract void refreshTrimmedMessages();
+    @Shadow
+    protected abstract int getWidth();
+
+    @Shadow
+    protected abstract double getScale();
+
+    @Shadow
+    protected abstract void refreshTrimmedMessages();
 
     @Unique
     private final Map<FormattedCharSequence, CustomChatRenderer> sbe$renderers =
             new Reference2ObjectOpenHashMap<>();
 
-    @Unique private GuiGraphics sbe$graphics;
-    @Unique private Font sbe$font;
+    // --- SBEChatAccess implementation ---
 
-    @Override public List<GuiMessage> sbe$getAllMessages() { return allMessages; }
-    @Override public void sbe$refreshMessages() { refreshTrimmedMessages(); }
-    @Override public int sbe$getScaledWidth() { return Mth.floor(getWidth() / getScale()); }
+    @Override
+    public List<GuiMessage> sbe$getAllMessages() {
+        return allMessages;
+    }
+
+    @Override
+    public void sbe$refreshMessages() {
+        refreshTrimmedMessages();
+    }
+
+    @Override
+    public int sbe$getScaledWidth() {
+        return Mth.floor(getWidth() / getScale());
+    }
 
     @Override
     public @Nullable CustomChatRenderer sbe$getRenderer(FormattedCharSequence content) {
         return sbe$renderers.get(content);
     }
 
-    @Override public @Nullable GuiGraphics sbe$getGraphics() { return sbe$graphics; }
-    @Override public @Nullable Font sbe$getFont() { return sbe$font; }
+    // --- Render proxy injection ---
 
-    @ModifyVariable(
-            method = "render(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V",
-            at = @At("HEAD"),
-            argsOnly = true)
-    private ChatComponent.ChatGraphicsAccess sbe$proxyGraphicsAccess(ChatComponent.ChatGraphicsAccess original) {
-        return new ChatGraphicsAccessProxy(original, this);
+    @WrapOperation(
+            method =
+                    "render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/gui/Font;IIIZZ)V",
+            at =
+            @At(
+                    value = "INVOKE",
+                    target =
+                            "Lnet/minecraft/client/gui/components/ChatComponent;"
+                                    + "render(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"))
+    private void sbe$proxyGraphicsAccess(
+            ChatComponent instance,
+            ChatComponent.ChatGraphicsAccess access,
+            int i,
+            int j,
+            boolean bl,
+            Operation<Void> original,
+            @Local(argsOnly = true) GuiGraphics graphics,
+            @Local(argsOnly = true) Font font) {
+        original.call(
+                instance, new ChatGraphicsAccessProxy(access, this, graphics, font), i, j, bl);
     }
 
-    @Inject(
-            method = "render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/gui/Font;IIIZZ)V",
-            at = @At("HEAD"))
-    private void sbe$captureRenderContext(
-            GuiGraphics graphics, Font font, int tickCount,
-            int mouseX, int mouseY, boolean focused, boolean changeCursor,
-            CallbackInfo ci) {
-        sbe$graphics = graphics;
-        sbe$font = font;
-        ChatRenderUtil.activeChatAccess = this;
-    }
-
-    @Inject(
-            method = "render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/gui/Font;IIIZZ)V",
-            at = @At("TAIL"))
-    private void sbe$clearRenderContext(CallbackInfo ci) {
-        sbe$graphics = null;
-        sbe$font = null;
-        ChatRenderUtil.activeChatAccess = null;
-    }
+    // --- Line processing ---
 
     @WrapOperation(
             method = "addMessageToDisplayQueue",
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/GuiMessage;splitLines(Lnet/minecraft/client/gui/Font;I)Ljava/util/List;"))
+            at =
+            @At(
+                    value = "INVOKE",
+                    target =
+                            "Lnet/minecraft/client/GuiMessage;splitLines(Lnet/minecraft/client/gui/Font;I)Ljava/util/List;"))
     private List<FormattedCharSequence> sbe$processLines(
-            GuiMessage instance, Font font, int width,
+            GuiMessage instance,
+            Font font,
+            int width,
             Operation<List<FormattedCharSequence>> original,
             @Share("sbe_renderers") LocalRef<List<CustomChatRenderer>> renderersRef,
             @Local(argsOnly = true) GuiMessage message) {
 
         if (!HypixelLocationState.isOnHypixel()) {
-            List<FormattedCharSequence> lines = original.call(instance, font, width);
             renderersRef.set(null);
-            return lines;
+            return original.call(instance, font, width);
         }
 
-        // Bypasses initial word wrapping by giving max width. We just get \n separated lines.
+        // Bypass initial word wrapping to get \n-separated raw lines.
         List<FormattedCharSequence> rawLines = original.call(instance, font, Integer.MAX_VALUE);
-
         List<FormattedCharSequence> finalLines = new ArrayList<>();
         List<CustomChatRenderer> renderers = new ArrayList<>();
 
         boolean enableCenter = SkyblockEnhancementsConfig.centerHypixelText;
         boolean enableSeparators = SkyblockEnhancementsConfig.smoothSeparators;
 
-        for (FormattedCharSequence rawSequence : rawLines) {
-            String rawStr = ChatTextHelper.getString(rawSequence);
+        for (FormattedCharSequence rawSeq : rawLines) {
+            String rawStr = ChatTextHelper.getString(rawSeq);
             String trimmedStr = rawStr.trim();
 
             if (enableSeparators && ChatTextHelper.isFullSeparator(trimmedStr)) {
-                CustomChatRenderer renderer = new SeparatorRenderer(ChatTextHelper.extractColor(rawSequence), null);
-                // Separators don't need word wrapping, just trim and add
-                finalLines.add(ChatTextHelper.trim(rawSequence));
-                renderers.add(renderer);
-            }
-            else if (enableSeparators && ChatTextHelper.isCenteredSeparator(trimmedStr)) {
-                CustomChatRenderer renderer = new SeparatorRenderer(ChatTextHelper.extractColor(rawSequence), ChatTextHelper.extractMiddleText(trimmedStr));
-                finalLines.add(ChatTextHelper.trim(rawSequence));
-                renderers.add(renderer);
-            }
-            else if (enableCenter && ChatTextHelper.isCenteredText(font, rawStr, trimmedStr)) {
-                CustomChatRenderer renderer = CenteredTextRenderer.INSTANCE;
-                FormattedCharSequence trimmedSeq = ChatTextHelper.trim(rawSequence);
+                finalLines.add(ChatTextHelper.trim(rawSeq));
+                renderers.add(
+                        new SeparatorRenderer(ChatTextHelper.extractColor(rawSeq), null));
 
-                // Convert to component to allow Minecraft to word-wrap the fully TRIMMED text
-                Component trimmedComp = ChatTextHelper.toComponent(trimmedSeq);
-                List<FormattedCharSequence> wrapped = Minecraft.getInstance().font.split(trimmedComp, width);
+            } else if (enableSeparators && ChatTextHelper.isCenteredSeparator(trimmedStr)) {
+                finalLines.add(ChatTextHelper.trim(rawSeq));
+                renderers.add(
+                        new SeparatorRenderer(
+                                ChatTextHelper.extractColor(rawSeq),
+                                ChatTextHelper.extractMiddleText(trimmedStr)));
 
-                for (FormattedCharSequence w : wrapped) {
+            } else if (enableCenter && ChatTextHelper.isCenteredText(font, rawStr, trimmedStr)) {
+                Component trimmedComp = ChatTextHelper.toComponent(ChatTextHelper.trim(rawSeq));
+                for (FormattedCharSequence w : Minecraft.getInstance().font.split(trimmedComp, width)) {
                     finalLines.add(w);
-                    renderers.add(renderer);
+                    renderers.add(CenteredTextRenderer.INSTANCE);
                 }
-            }
-            else {
-                // Normal text. Re-wrap it correctly to the actual chat width
-                Component normalComp = ChatTextHelper.toComponent(rawSequence);
-                List<FormattedCharSequence> wrapped = Minecraft.getInstance().font.split(normalComp, width);
-                for (FormattedCharSequence w : wrapped) {
+
+            } else {
+                Component normalComp = ChatTextHelper.toComponent(rawSeq);
+                for (FormattedCharSequence w : Minecraft.getInstance().font.split(normalComp, width)) {
                     finalLines.add(w);
                     renderers.add(null);
                 }
@@ -164,7 +167,9 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
 
     @Inject(
             method = "addMessageToDisplayQueue",
-            at = @At(value = "INVOKE",
+            at =
+            @At(
+                    value = "INVOKE",
                     target = "Ljava/util/List;addFirst(Ljava/lang/Object;)V",
                     shift = At.Shift.AFTER))
     private void sbe$storeRenderer(
@@ -172,25 +177,23 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
             @Share("sbe_renderers") LocalRef<List<CustomChatRenderer>> renderersRef,
             @Local(ordinal = 1) int i,
             @Local(argsOnly = true) GuiMessage message) {
-
-        FormattedCharSequence key = trimmedMessages.getFirst().content();
-
         List<CustomChatRenderer> renderers = renderersRef.get();
-        if (renderers != null && i < renderers.size()) {
-            CustomChatRenderer renderer = renderers.get(i);
-            if (renderer != null) {
-                sbe$renderers.put(key, renderer);
-            }
+        if (renderers == null || i >= renderers.size()) return;
+
+        CustomChatRenderer renderer = renderers.get(i);
+        if (renderer != null) {
+            sbe$renderers.put(trimmedMessages.getFirst().content(), renderer);
         }
     }
 
     @WrapOperation(
             method = "addMessageToDisplayQueue",
-            at = @At(value = "INVOKE",
+            at =
+            @At(
+                    value = "INVOKE",
                     target = "Ljava/util/List;removeLast()Ljava/lang/Object;"))
     private <E> E sbe$cleanupEvicted(List<E> instance, Operation<E> original) {
-        FormattedCharSequence key = ((GuiMessage.Line) instance.getLast()).content();
-        sbe$renderers.remove(key);
+        sbe$renderers.remove(((GuiMessage.Line) instance.getLast()).content());
         return original.call(instance);
     }
 

@@ -29,12 +29,7 @@ public final class ChatTabState {
         if (!HypixelLocationState.isOnHypixel()) return true;
         if (activeTab == ChatTab.ALL) return true;
 
-        String plain = stripFormatting(message.getString()).trim();
-        return activeTab.matches(plain);
-    }
-
-    /** Strips section-sign formatting codes from a string. */
-    private static String stripFormatting(String s) {
-        return ChatFormatting.stripFormatting(s);
+        String plain = ChatFormatting.stripFormatting(message.getString());
+        return activeTab.matches(plain.trim());
     }
 }

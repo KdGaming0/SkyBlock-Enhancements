@@ -7,11 +7,11 @@ import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Renders a separator line: centered text flanked by smooth horizontal lines.
- *
- * <p>If there is no middle text (all dashes), a single line is drawn across the full width.
+ * Renders a separator line: centered text flanked by smooth horizontal lines. If there is no middle
+ * text (all dashes), a single line is drawn across the full width.
  */
-public record SeparatorRenderer(int lineColor, @Nullable String middleText) implements CustomChatRenderer {
+public record SeparatorRenderer(int lineColor, @Nullable String middleText)
+        implements CustomChatRenderer {
 
     private static final int LINE_THICKNESS = 1;
     private static final int TEXT_PADDING = 4;
@@ -27,35 +27,32 @@ public record SeparatorRenderer(int lineColor, @Nullable String middleText) impl
             float alpha) {
         int alphaInt = ARGB.as8BitChannel(alpha);
         int color = ARGB.color(alphaInt, lineColor);
-        int shadowColor = ARGB.scaleRGB(ARGB.color(alphaInt, lineColor), 0.25f);
+        int shadow = ARGB.scaleRGB(ARGB.color(alphaInt, lineColor), 0.25f);
         int lineY = textY + (font.lineHeight - LINE_THICKNESS) / 2;
+        int right = lineX + lineWidth;
 
         if (middleText == null || middleText.isEmpty()) {
-            // Full-width separator line.
-            graphics.fill(lineX + 1, lineY + 1, lineX + lineWidth - 1, lineY + LINE_THICKNESS + 1, shadowColor);
-            graphics.fill(lineX, lineY, lineX + lineWidth - 2, lineY + LINE_THICKNESS, color);
+            graphics.fill(lineX + 1, lineY + 1, right - 1, lineY + LINE_THICKNESS + 1, shadow);
+            graphics.fill(lineX, lineY, right - 2, lineY + LINE_THICKNESS, color);
             return;
         }
 
-        // Draw centered text.
         int textWidth = font.width(middleText);
         int textX = lineX + (lineWidth - textWidth) / 2;
-        int textColor = ARGB.color(alphaInt, 0xFFFFFF);
-        graphics.drawString(font, middleText, textX, textY, textColor, true);
+        graphics.drawString(font, middleText, textX, textY, ARGB.color(alphaInt, 0xFFFFFF), true);
 
         // Left line.
         int leftEnd = textX - TEXT_PADDING;
         if (leftEnd > lineX + 2) {
-            graphics.fill(lineX + 2, lineY + 1, leftEnd, lineY + LINE_THICKNESS + 1, shadowColor);
+            graphics.fill(lineX + 2, lineY + 1, leftEnd, lineY + LINE_THICKNESS + 1, shadow);
             graphics.fill(lineX + 1, lineY, leftEnd - 1, lineY + LINE_THICKNESS, color);
         }
 
         // Right line.
         int rightStart = textX + textWidth + TEXT_PADDING;
-        int rightEnd = lineX + lineWidth;
-        if (rightStart < rightEnd - 2) {
-            graphics.fill(rightStart + 1, lineY + 1, rightEnd - 1, lineY + LINE_THICKNESS + 1, shadowColor);
-            graphics.fill(rightStart, lineY, rightEnd - 2, lineY + LINE_THICKNESS, color);
+        if (rightStart < right - 2) {
+            graphics.fill(rightStart + 1, lineY + 1, right - 1, lineY + LINE_THICKNESS + 1, shadow);
+            graphics.fill(rightStart, lineY, right - 2, lineY + LINE_THICKNESS, color);
         }
     }
 }

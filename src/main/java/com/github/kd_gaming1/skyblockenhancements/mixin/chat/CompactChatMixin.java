@@ -2,19 +2,14 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
 
 import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.CompactMessageHandler;
-import net.minecraft.client.GuiMessage;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.network.chat.Component;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.List;
 
 /**
  * Compacts duplicate chat messages by appending an occurrence counter (×N).
@@ -23,10 +18,6 @@ import java.util.List;
  */
 @Mixin(value = ChatComponent.class, priority = Integer.MAX_VALUE)
 public abstract class CompactChatMixin {
-
-    @Shadow @Final private List<GuiMessage> allMessages;
-
-    @Shadow protected abstract void refreshTrimmedMessages();
 
     @Unique private CompactMessageHandler sbe$compactHandler;
 

@@ -29,24 +29,19 @@ public abstract class ChatTabScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void sbe$addTabButtons(CallbackInfo ci) {
-        if (!SkyblockEnhancementsConfig.enableChatTabs) return;
-        if (!HypixelLocationState.isOnHypixel()) return;
+        if (!SkyblockEnhancementsConfig.enableChatTabs || !HypixelLocationState.isOnHypixel()) return;
 
         Minecraft mc = Minecraft.getInstance();
         ChatComponent chat = mc.gui.getChat();
         int btnSize = 20;
         int spacing = 2;
-        int startX = 4; // Matching the typical chat input box starting X
-
-        // The input box height is typically 12, bottom padded by 2.
-        // Putting it right over the input bar.
+        int x = 4;
         int y = this.height - 14 - btnSize;
 
         for (ChatTab tab : ChatTab.values()) {
-            // Adjust width automatically for labels longer than 1-2 chars (like "Coop")
-            int width = Math.max(btnSize, mc.font.width(tab.label()) + 8);
+            int w = Math.max(btnSize, mc.font.width(tab.label()) + 8);
 
-            Button button =
+            addRenderableWidget(
                     Button.builder(
                                     Component.literal(tab.label()),
                                     btn -> {
@@ -54,20 +49,19 @@ public abstract class ChatTabScreenMixin extends Screen {
                                         chat.rescaleChat();
                                         mc.schedule(() -> setFocused(input));
 
-                                        // Execute mode change command
-                                        if (tab.command() != null && !tab.command().isEmpty() && mc.player != null) {
-                                            if (tab.command().startsWith("/")) {
-                                                mc.player.connection.sendCommand(tab.command().substring(1));
+                                        String cmd = tab.command();
+                                        if (cmd != null && !cmd.isEmpty() && mc.player != null) {
+                                            if (cmd.startsWith("/")) {
+                                                mc.player.connection.sendCommand(cmd.substring(1));
                                             } else {
-                                                mc.player.connection.sendChat(tab.command());
+                                                mc.player.connection.sendChat(cmd);
                                             }
                                         }
                                     })
-                            .bounds(startX, y, width, btnSize)
-                            .build();
+                            .bounds(x, y, w, btnSize)
+                            .build());
 
-            addRenderableWidget(button);
-            startX += width + spacing;
+            x += w + spacing;
         }
     }
 }
