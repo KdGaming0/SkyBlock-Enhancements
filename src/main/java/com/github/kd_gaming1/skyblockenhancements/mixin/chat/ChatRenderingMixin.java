@@ -19,9 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.GuiMessage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
@@ -102,43 +104,62 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
             @Share("sbe_renderers") LocalRef<List<CustomChatRenderer>> renderersRef,
             @Local(argsOnly = true) GuiMessage message) {
 
-        boolean onHypixel = HypixelLocationState.isOnHypixel();
-
-        List<FormattedCharSequence> lines = original.call(instance, font, width);
-
-        if (!onHypixel) {
+        if (!HypixelLocationState.isOnHypixel()) {
+            List<FormattedCharSequence> lines = original.call(instance, font, width);
             renderersRef.set(null);
             return lines;
         }
 
-        List<CustomChatRenderer> renderers = new ArrayList<>(lines.size());
+        // Bypasses initial word wrapping by giving max width. We just get \n separated lines.
+        List<FormattedCharSequence> rawLines = original.call(instance, font, Integer.MAX_VALUE);
+
+        List<FormattedCharSequence> finalLines = new ArrayList<>();
+        List<CustomChatRenderer> renderers = new ArrayList<>();
+
         boolean enableCenter = SkyblockEnhancementsConfig.centerHypixelText;
         boolean enableSeparators = SkyblockEnhancementsConfig.smoothSeparators;
 
-        String fullString = message.content().getString();
-        String trimmedString = fullString.trim();
+        for (FormattedCharSequence rawSequence : rawLines) {
+            String rawStr = ChatTextHelper.getString(rawSequence);
+            String trimmedStr = rawStr.trim();
 
-        for (int idx = 0; idx < lines.size(); idx++) {
-            CustomChatRenderer renderer = null;
+            if (enableSeparators && ChatTextHelper.isFullSeparator(trimmedStr)) {
+                CustomChatRenderer renderer = new SeparatorRenderer(ChatTextHelper.extractColor(rawSequence), null);
+                // Separators don't need word wrapping, just trim and add
+                finalLines.add(ChatTextHelper.trim(rawSequence));
+                renderers.add(renderer);
+            }
+            else if (enableSeparators && ChatTextHelper.isCenteredSeparator(trimmedStr)) {
+                CustomChatRenderer renderer = new SeparatorRenderer(ChatTextHelper.extractColor(rawSequence), ChatTextHelper.extractMiddleText(trimmedStr));
+                finalLines.add(ChatTextHelper.trim(rawSequence));
+                renderers.add(renderer);
+            }
+            else if (enableCenter && ChatTextHelper.isCenteredText(font, rawStr, trimmedStr)) {
+                CustomChatRenderer renderer = CenteredTextRenderer.INSTANCE;
+                FormattedCharSequence trimmedSeq = ChatTextHelper.trim(rawSequence);
 
-            if (enableSeparators && ChatTextHelper.isFullSeparator(trimmedString)) {
-                int color = ChatTextHelper.extractColor(message.content());
-                renderer = new SeparatorRenderer(color, null);
-            }
-            else if (enableSeparators && ChatTextHelper.isCenteredSeparator(trimmedString)) {
-                int color = ChatTextHelper.extractColor(message.content());
-                String middle = ChatTextHelper.extractMiddleText(fullString);
-                renderer = new SeparatorRenderer(color, middle);
-            }
-            else if (enableCenter && ChatTextHelper.isCenteredText(font, fullString, trimmedString, sbe$getScaledWidth())) {
-                renderer = CenteredTextRenderer.INSTANCE;
-            }
+                // Convert to component to allow Minecraft to word-wrap the fully TRIMMED text
+                Component trimmedComp = ChatTextHelper.toComponent(trimmedSeq);
+                List<FormattedCharSequence> wrapped = Minecraft.getInstance().font.split(trimmedComp, width);
 
-            renderers.add(renderer);
+                for (FormattedCharSequence w : wrapped) {
+                    finalLines.add(w);
+                    renderers.add(renderer);
+                }
+            }
+            else {
+                // Normal text. Re-wrap it correctly to the actual chat width
+                Component normalComp = ChatTextHelper.toComponent(rawSequence);
+                List<FormattedCharSequence> wrapped = Minecraft.getInstance().font.split(normalComp, width);
+                for (FormattedCharSequence w : wrapped) {
+                    finalLines.add(w);
+                    renderers.add(null);
+                }
+            }
         }
 
         renderersRef.set(renderers);
-        return lines;
+        return finalLines;
     }
 
     @Inject(

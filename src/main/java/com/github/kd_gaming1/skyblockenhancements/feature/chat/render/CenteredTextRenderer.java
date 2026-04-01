@@ -7,8 +7,6 @@ import net.minecraft.util.FormattedCharSequence;
 
 /**
  * Renders a chat line centered horizontally within the chat area.
- *
- * <p>Inspired by BetterHypixelChat by viciscat (GPLv3). This is an original implementation.
  */
 public final class CenteredTextRenderer implements CustomChatRenderer {
 
@@ -25,9 +23,11 @@ public final class CenteredTextRenderer implements CustomChatRenderer {
             int textY,
             int lineWidth,
             float alpha) {
+
         int textWidth = font.width(text);
         int x = lineX + (lineWidth - textWidth) / 2;
         int color = ARGB.color(ARGB.as8BitChannel(alpha), 0xFFFFFF);
+
         graphics.drawString(font, text, x, textY, color, true);
     }
 }
