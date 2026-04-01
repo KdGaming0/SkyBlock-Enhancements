@@ -2,8 +2,9 @@ package com.github.kd_gaming1.skyblockenhancements.feature.chat;
 
 import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatTextHelper;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.GuiMessage;
@@ -15,8 +16,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Tracks duplicate chat messages and compacts them into a single line with an occurrence counter
  * (e.g. {@code (×3)}).
- *
- * <p>Adapted from compact-chat by Caoimhe Byrne (MIT License). See THIRD_PARTY_LICENSES.md.
  */
 public final class CompactMessageHandler {
 
@@ -40,7 +39,13 @@ public final class CompactMessageHandler {
         if (!SkyblockEnhancementsConfig.compactDuplicateMessages) return message;
 
         String raw = stripCountSuffix(message.getString());
-        if (raw.isBlank()) return message;
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) return message;
+
+        // Skip compacting for separator lines, they will be handled when their main text is compacted
+        if (ChatTextHelper.isFullSeparator(trimmed) || ChatTextHelper.isCenteredSeparator(trimmed)) {
+            return message;
+        }
 
         if (SkyblockEnhancementsConfig.onlyCompactConsecutive && !raw.equals(previousMessage)) {
             previousMessage = raw;
@@ -52,13 +57,30 @@ public final class CompactMessageHandler {
         int count = occurrences.merge(raw, 1, Integer::sum);
         if (count <= 1) return message;
 
-        // Remove the previous duplicate from allMessages.
-        Iterator<GuiMessage> it = chatAccess.sbe$getAllMessages().iterator();
-        while (it.hasNext()) {
-            GuiMessage existing = it.next();
+        // Find and remove the previous duplicate and its adjacent orphaned separator lines
+        List<GuiMessage> msgs = chatAccess.sbe$getAllMessages();
+        for (int i = 0; i < msgs.size(); i++) {
+            GuiMessage existing = msgs.get(i);
             String existingRaw = stripCountSuffix(existing.content().getString());
+
             if (existingRaw.equals(raw)) {
-                it.remove();
+                // Remove the old duplicate text
+                msgs.remove(i);
+
+                if (i < msgs.size()) {
+                    String olderStr = msgs.get(i).content().getString().trim();
+                    if (ChatTextHelper.isFullSeparator(olderStr) || ChatTextHelper.isCenteredSeparator(olderStr)) {
+                        msgs.remove(i);
+                    }
+                }
+
+                if (i - 1 >= 0 && i - 1 < msgs.size()) {
+                    String newerStr = msgs.get(i - 1).content().getString().trim();
+                    if (ChatTextHelper.isFullSeparator(newerStr) || ChatTextHelper.isCenteredSeparator(newerStr)) {
+                        msgs.remove(i - 1);
+                    }
+                }
+
                 chatAccess.sbe$refreshMessages();
                 break;
             }

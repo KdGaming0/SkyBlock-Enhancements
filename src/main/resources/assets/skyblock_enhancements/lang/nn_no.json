@@ -73,8 +73,6 @@
   "skyblock_enhancements.midnightconfig.enableChatAnimation.tooltip": "Legg til ein jamn glide-opp-animasjon når nye meldingar kjem og når prateinndata opnast.",
   "skyblock_enhancements.midnightconfig.chatAnimationDurationMs": "Animasjonslengde (ms)",
   "skyblock_enhancements.midnightconfig.chatAnimationDurationMs.tooltip": "Kor lang tid prateanimasjonen tek i millisekund.\nOmfang: 50–500. Standard: 150.",
-  "skyblock_enhancements.midnightconfig.enableChatHeads": "Aktiver pratehuvud",
-  "skyblock_enhancements.midnightconfig.enableChatHeads.tooltip": "Viser eit lite spelaransikt ved sida av pratemeldingar frå kjende spelarar.\nKrev at avsendaren er i spelarlista til noverande server.",
 
   "skyblock_enhancements.midnightconfig.text2": "Generelle forbetringar",
 

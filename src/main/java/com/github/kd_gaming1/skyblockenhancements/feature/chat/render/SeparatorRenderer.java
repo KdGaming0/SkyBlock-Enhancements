@@ -10,11 +10,8 @@ import org.jetbrains.annotations.Nullable;
  * Renders a separator line: centered text flanked by smooth horizontal lines.
  *
  * <p>If there is no middle text (all dashes), a single line is drawn across the full width.
- *
- * <p>Inspired by BetterHypixelChat by viciscat (GPLv3). This is an original implementation.
  */
-public record SeparatorRenderer(int lineColor, @Nullable String middleText)
-        implements CustomChatRenderer {
+public record SeparatorRenderer(int lineColor, @Nullable String middleText) implements CustomChatRenderer {
 
     private static final int LINE_THICKNESS = 1;
     private static final int TEXT_PADDING = 4;
@@ -35,8 +32,7 @@ public record SeparatorRenderer(int lineColor, @Nullable String middleText)
 
         if (middleText == null || middleText.isEmpty()) {
             // Full-width separator line.
-            graphics.fill(lineX + 1, lineY + 1, lineX + lineWidth - 1, lineY + LINE_THICKNESS + 1,
-                    shadowColor);
+            graphics.fill(lineX + 1, lineY + 1, lineX + lineWidth - 1, lineY + LINE_THICKNESS + 1, shadowColor);
             graphics.fill(lineX, lineY, lineX + lineWidth - 2, lineY + LINE_THICKNESS, color);
             return;
         }
@@ -58,8 +54,7 @@ public record SeparatorRenderer(int lineColor, @Nullable String middleText)
         int rightStart = textX + textWidth + TEXT_PADDING;
         int rightEnd = lineX + lineWidth;
         if (rightStart < rightEnd - 2) {
-            graphics.fill(rightStart + 1, lineY + 1, rightEnd - 1, lineY + LINE_THICKNESS + 1,
-                    shadowColor);
+            graphics.fill(rightStart + 1, lineY + 1, rightEnd - 1, lineY + LINE_THICKNESS + 1, shadowColor);
             graphics.fill(rightStart, lineY, rightEnd - 2, lineY + LINE_THICKNESS, color);
         }
     }

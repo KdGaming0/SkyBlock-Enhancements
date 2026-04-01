@@ -73,8 +73,6 @@
   "skyblock_enhancements.midnightconfig.enableChatAnimation.tooltip": "Adds a smooth slide-up animation when new messages arrive and when the chat input opens.",
   "skyblock_enhancements.midnightconfig.chatAnimationDurationMs": "Animation Duration (ms)",
   "skyblock_enhancements.midnightconfig.chatAnimationDurationMs.tooltip": "How long the chat animation takes in milliseconds.\nRange: 50–500. Default: 150.",
-  "skyblock_enhancements.midnightconfig.enableChatHeads": "Enable Chat Heads",
-  "skyblock_enhancements.midnightconfig.enableChatHeads.tooltip": "Shows a small player face next to chat messages from known players.\nRequires the sender to be in the current server's player list.",
 
   "skyblock_enhancements.midnightconfig.text2": "General Enhancements",
 

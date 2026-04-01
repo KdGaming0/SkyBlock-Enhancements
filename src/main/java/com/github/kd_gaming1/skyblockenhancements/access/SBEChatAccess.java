@@ -20,18 +20,6 @@ public interface SBEChatAccess {
     /** Look up a custom renderer by the line's FormattedCharSequence content. */
     @Nullable CustomChatRenderer sbe$getRenderer(FormattedCharSequence content);
 
-    /**
-     * Returns a non-null marker if this content sequence should have a chat head drawn.
-     * Keyed by the same FormattedCharSequence instance stored in the GuiMessage.Line.
-     */
-    @Nullable String sbe$getHeadPlayer(FormattedCharSequence content);
-
-    /**
-     * Returns the player name whose head should be drawn for this content, or {@code null}.
-     * Replaces the old addedTime-based lookup.
-     */
-    @Nullable String sbe$getHeadPlayerName(FormattedCharSequence content);
-
     /** Captured during render — valid only inside the render call. */
     @Nullable GuiGraphics sbe$getGraphics();
 

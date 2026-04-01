@@ -99,9 +99,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 50, max = 500)
     public static int chatAnimationDurationMs = 150;
 
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean enableChatHeads = false;
-
     @Comment(category = GENERAL_ENHANCEMENTS, centered = true)
     public static Comment text2;
 

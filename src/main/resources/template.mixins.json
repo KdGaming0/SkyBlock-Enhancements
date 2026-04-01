@@ -28,7 +28,6 @@
     "chat.ChatHistoryMixin",
     "chat.CompactChatMixin",
     "chat.ChatRenderingMixin",
-    "chat.ChatLineRendererMixin",
     "chat.ChatTabFilterMixin",
     "chat.ChatTabScreenMixin",
     "chat.ChatAnimationMixin",

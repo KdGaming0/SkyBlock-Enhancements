@@ -5,13 +5,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.ARGB;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * Utilities for analysing Hypixel chat text to detect centered lines and separator patterns.
- *
- * <p>Inspired by BetterHypixelChat by viciscat (GPLv3). This is an original implementation — no
- * code was copied.
+ * Utilities for analysing Hypixel chat text to detect centered lines and separators.
  */
 public final class ChatTextHelper {
 
@@ -23,9 +19,7 @@ public final class ChatTextHelper {
     private ChatTextHelper() {}
 
     /**
-     * Returns {@code true} if the line appears to be space-padded centered text. Hypixel pads lines
-     * with leading/trailing spaces to visually center them at the default chat width. This breaks at
-     * different widths or fonts.
+     * Returns {@code true} if the line appears to be space-padded centered text.
      */
     public static boolean isCenteredText(Font font, String raw, String trimmed, int chatWidth) {
         if (!raw.startsWith(" ") || trimmed.isEmpty()) return false;
@@ -36,36 +30,9 @@ public final class ChatTextHelper {
         int trimmedWidth = font.width(trimmed);
         if (trimmedWidth >= chatWidth) return false;
 
-        // Check if the leading whitespace roughly centers the text at the default width.
         int expectedLeadingPx = (HYPIXEL_DEFAULT_WIDTH - trimmedWidth) / 2;
         int actualLeadingPx = font.width(raw.substring(0, leadingSpaces));
         return Math.abs(expectedLeadingPx - actualLeadingPx) <= CENTER_TOLERANCE;
-    }
-
-    /**
-     * Returns {@code true} if the line is a dash-separated title like {@code -----SkyBlock-----}.
-     * The dashes must appear on both sides and the text in the middle must be narrow enough to be
-     * decorative rather than content.
-     */
-    public static boolean isSeparatorLine(Font font, String raw, String trimmed) {
-        if (!trimmed.startsWith("-") || !trimmed.endsWith("-")) return false;
-        if (trimmed.length() < 5) return false;
-
-        int firstNonDash = indexOfFirstNot(trimmed, '-');
-        int lastNonDash = lastIndexOfFirstNot(trimmed, '-');
-        // All dashes — still a separator (plain line).
-        if (firstNonDash < 0) return true;
-        // Dashes on both sides with text in the middle.
-        return firstNonDash > 2 && (trimmed.length() - 1 - lastNonDash) > 2;
-    }
-
-    /** Extracts the middle text from a separator line, or {@code null} if it is all dashes. */
-    @Nullable
-    public static String extractSeparatorMiddle(String trimmed) {
-        int first = indexOfFirstNot(trimmed, '-');
-        int last = lastIndexOfFirstNot(trimmed, '-');
-        if (first < 0 || last < first) return null;
-        return trimmed.substring(first, last + 1).trim();
     }
 
     /** Extracts the first text color from a {@link Component}, defaulting to white. */
@@ -81,25 +48,52 @@ public final class ChatTextHelper {
         return 0xFFFFFFFF;
     }
 
-    // --- simple string helpers ---
+    /** Checks if the string consists entirely of dash-like characters. */
+    public static boolean isFullSeparator(String trimmed) {
+        if (trimmed.length() < 5) return false;
+        for (int i = 0; i < trimmed.length(); i++) {
+            char c = trimmed.charAt(i);
+            if (c != '-' && c != '—' && c != '=') return false;
+        }
+        return true;
+    }
+
+    /** Checks if the string starts and ends with dashes but has text in the middle. */
+    public static boolean isCenteredSeparator(String trimmed) {
+        if (trimmed.length() < 10) return false;
+        if (!trimmed.startsWith("-") || !trimmed.endsWith("-")) return false;
+
+        for (int i = 0; i < trimmed.length(); i++) {
+            char c = trimmed.charAt(i);
+            if (c != '-' && c != '—' && c != '=' && c != ' ') return true;
+        }
+        return false;
+    }
+
+    /** Extracts the actual text out of a centered separator (e.g. "--- SkyBlock ---" -> "SkyBlock"). */
+    public static String extractMiddleText(String fullString) {
+        String trimmed = fullString.trim();
+        int start = 0;
+        while (start < trimmed.length() && isDashOrSpace(trimmed.charAt(start))) {
+            start++;
+        }
+        int end = trimmed.length() - 1;
+        while (end >= 0 && isDashOrSpace(trimmed.charAt(end))) {
+            end--;
+        }
+        if (start <= end) {
+            return trimmed.substring(start, end + 1);
+        }
+        return "";
+    }
+
+    private static boolean isDashOrSpace(char c) {
+        return c == '-' || c == '—' || c == '=' || c == ' ';
+    }
 
     private static int indexOfFirstNonSpace(String s) {
         for (int i = 0; i < s.length(); i++) {
             if (s.charAt(i) != ' ') return i;
-        }
-        return -1;
-    }
-
-    private static int indexOfFirstNot(String s, char c) {
-        for (int i = 0; i < s.length(); i++) {
-            if (s.charAt(i) != c) return i;
-        }
-        return -1;
-    }
-
-    private static int lastIndexOfFirstNot(String s, char c) {
-        for (int i = s.length() - 1; i >= 0; i--) {
-            if (s.charAt(i) != c) return i;
         }
         return -1;
     }
