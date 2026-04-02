@@ -2,6 +2,8 @@ package com.github.kd_gaming1.skyblockenhancements;
 
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRrvClientPlugin;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
 import com.github.kd_gaming1.skyblockenhancements.feature.ItemGlowManager;
@@ -11,6 +13,8 @@ import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.Missin
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
+import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.IrisCompat;
 import com.github.kd_gaming1.skyblockenhancements.util.NeuRepoCache;
@@ -27,9 +31,9 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 //? if >=1.21.11 {
 import net.minecraft.util.Util;
- //?} else {
+        //?} else {
 /*import net.minecraft.Util;
-*///?}
+ *///?}
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +48,16 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
     private final AtomicBoolean remindersSaved = new AtomicBoolean(false);
 
+    private volatile CompletableFuture<Void> repoFuture = CompletableFuture.completedFuture(null);
+    private final NeuRepoDownloader repoDownloader = new NeuRepoDownloader();
+    private long lastRefreshCheckTick = 0;
+
+    private static SkyblockEnhancements instance;
+
     @Override
     public void onInitializeClient() {
+        instance = this;
+
         MidnightConfig.init(MOD_ID, SkyblockEnhancementsConfig.class);
 
         HypixelNetworking.registerToEvents(
@@ -74,6 +86,29 @@ public class SkyblockEnhancements implements ClientModInitializer {
                                         LOGGER.error("Failed to download enchants data", e);
                                     }
                                 }));
+        if (RrvCompat.isActive()) {
+            ClientLifecycleEvents.CLIENT_STARTED.register(
+                    client -> {
+                        repoFuture = repoDownloader.downloadAsync();
+                        repoFuture.thenRun(SkyblockRrvClientPlugin::spoofRrvCache);
+                    });
+
+            // Periodic auto-refresh check (every ~5 min of ticks)
+            ClientTickEvents.END_CLIENT_TICK.register(
+                    client -> {
+                        if (++lastRefreshCheckTick < 6000) return; // ~5 min
+                        lastRefreshCheckTick = 0;
+                        if (repoDownloader.needsRefresh(
+                                SkyblockEnhancementsConfig.repoRefreshIntervalHours)) {
+                            ItemStackBuilder.clearCache();
+                            repoFuture = repoDownloader.refresh();
+                            repoFuture.thenRun(SkyblockRrvClientPlugin::spoofRrvCache);
+                            LOGGER.info("Auto-refreshing NEU repo data...");
+                            ItemStackBuilder.clearCache();
+                            repoDownloader.refresh().thenRun(SkyblockRrvClientPlugin::spoofRrvCache);
+                        }
+                    });
+        }
 
         Commands.register();
 
@@ -102,5 +137,17 @@ public class SkyblockEnhancements implements ClientModInitializer {
             reminderStorage.setRemindersData(data);
             reminderStorage.save();
         }
+    }
+
+    public NeuRepoDownloader getRepoDownloader() {
+        return repoDownloader;
+    }
+
+    public static SkyblockEnhancements getInstance() {
+        return instance;
+    }
+
+    public CompletableFuture<Void> getRepoFuture() {
+        return repoFuture;
     }
 }

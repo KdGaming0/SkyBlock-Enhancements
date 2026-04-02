@@ -17,6 +17,12 @@
   "entrypoints": {
     "client": [
       "com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements"
+    ],
+    "rrv": [
+      "com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRrvPlugin"
+    ],
+    "rrv_client": [
+      "com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRrvClientPlugin"
     ]
   },
   "mixins": [
@@ -29,6 +35,7 @@
     "uilib": ">=${ui_lib}"
   },
   "suggests": {
-    "modernui": "*"
+    "modernui": "*",
+    "rrv": "*"
   }
 }

@@ -69,6 +69,12 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
         SUCCESS
     }
 
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean enableRecipeViewer = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 168)
+    public static int repoRefreshIntervalHours = 24;
+
     @Comment(category = CHAT_ENHANCEMENTS, centered = true)
     public static Comment chatEnhancementsText;
 

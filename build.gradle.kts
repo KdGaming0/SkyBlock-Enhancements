@@ -26,6 +26,19 @@ repositories {
             includeGroup("net.azureaaron")
         }
     }
+    repositories {
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "Cassian's Maven"
+                    url = uri("https://maven.cassian.cc")
+                }
+            }
+            filter {
+                includeGroupAndSubgroups("cc.cassian")
+            }
+        }
+    }
 }
 
 dependencies {
@@ -45,7 +58,9 @@ dependencies {
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
     modRuntimeOnly("maven.modrinth:modmenu:${property("deps.modmenu_version")}")
     modRuntimeOnly("maven.modrinth:architectury-api:${property("deps.architectury_api_version")}")
+    modRuntimeOnly("cc.cassian.rrv:reliable-recipe-viewer-fabric:${project.property("deps.rrv_version")}")
     modCompileOnly("maven.modrinth:modernui-mc-mvus:${property("deps.modernui_version")}")
+    modCompileOnly("cc.cassian.rrv:reliable-recipe-viewer-fabric:${project.property("deps.rrv_version")}")
 
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")

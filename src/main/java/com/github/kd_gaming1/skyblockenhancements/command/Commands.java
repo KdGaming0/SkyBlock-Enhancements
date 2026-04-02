@@ -1,7 +1,11 @@
 package com.github.kd_gaming1.skyblockenhancements.command;
 
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
+import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader;
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 import com.github.kd_gaming1.skyblockenhancements.util.NeuRepoCache;
 import com.mojang.brigadier.context.CommandContext;
@@ -14,6 +18,8 @@ import net.minecraft.network.chat.Component;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 public class Commands {
+    private static NeuRepoDownloader repoDownloader;
+
     public static void register() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(literal("skyblockenhancements")
                 .executes(Commands::executeOpenConfig)
@@ -61,6 +67,17 @@ public class Commands {
         JsonLookup.clearCache();
         MissingEnchants.invalidateRepoDataCaches();
 
+        if (RrvCompat.isActive()) {
+            ctx.getSource().sendFeedback(
+                    Component.literal("§a[SBE] Refreshing NEU item repo..."));
+            ItemStackBuilder.clearCache();
+            repoDownloader.refresh().thenRun(() -> {
+                ctx.getSource().sendFeedback(
+                        Component.literal("§a[SBE] Item repo refreshed ("
+                                + NeuItemRegistry.getAll().size() + " items)"));
+            });
+        }
+
         ctx.getSource().sendFeedback(Component.literal("§a[Skyblock Enhancements] Repository data refreshed successfully!"));
         return 1;
     }
@@ -77,7 +94,7 @@ public class Commands {
      * Sends an error message to the player.
      */
     private static void sendError(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendError(Component.literal("§c[Skyblock Enhancements]] " + "You must be in-game to open the config menu."));
+        ctx.getSource().sendError(Component.literal("§c[Skyblock Enhancements] " + "You must be in-game to open the config menu."));
     }
 
 
