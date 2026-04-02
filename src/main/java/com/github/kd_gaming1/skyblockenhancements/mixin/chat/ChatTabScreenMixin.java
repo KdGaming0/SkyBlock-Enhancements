@@ -1,13 +1,15 @@
 package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
 
+import com.daqem.uilib.gui.widget.CustomButtonWidget;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs.ChatTab;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs.ChatTabSprites;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs.ChatTabState;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -29,39 +31,47 @@ public abstract class ChatTabScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void sbe$addTabButtons(CallbackInfo ci) {
-        if (!SkyblockEnhancementsConfig.enableChatTabs || !HypixelLocationState.isOnHypixel()) return;
+        boolean sbe$tabsActive = SkyblockEnhancementsConfig.enableChatTabs && HypixelLocationState.isOnHypixel();
+        if (!sbe$tabsActive) return;
 
         Minecraft mc = Minecraft.getInstance();
         ChatComponent chat = mc.gui.getChat();
-        int btnSize = 20;
-        int spacing = 2;
-        int x = 4;
-        int y = this.height - 14 - btnSize;
+        int sbe$tabBarHeight = 15;
+        int spacing = 1;
+        int x = 2;
+        int sbe$tabBarY = this.height - 14 - sbe$tabBarHeight;
 
         for (ChatTab tab : ChatTab.values()) {
-            int w = Math.max(btnSize, mc.font.width(tab.label()) + 8);
+            int w = Math.max(sbe$tabBarHeight, mc.font.width(tab.label()) + 10);
+            boolean active = ChatTabState.getActiveTab() == tab;
+            WidgetSprites sprites = active ? ChatTabSprites.ACTIVE : ChatTabSprites.INACTIVE;
 
             addRenderableWidget(
-                    Button.builder(
-                                    Component.literal(tab.label()),
-                                    btn -> {
-                                        ChatTabState.setActiveTab(tab);
-                                        chat.rescaleChat();
-                                        mc.schedule(() -> setFocused(input));
+                    new CustomButtonWidget(
+                            x,
+                            sbe$tabBarY,
+                            w,
+                            sbe$tabBarHeight,
+                            Component.literal(tab.label()),
+                            sprites,
+                            btn -> {
+                                ChatTabState.setActiveTab(tab);
+                                chat.rescaleChat();
+                                rebuildWidgets();
+                                mc.schedule(() -> setFocused(input));
 
-                                        String cmd = tab.command();
-                                        if (cmd != null && !cmd.isEmpty() && mc.player != null) {
-                                            if (cmd.startsWith("/")) {
-                                                mc.player.connection.sendCommand(cmd.substring(1));
-                                            } else {
-                                                mc.player.connection.sendChat(cmd);
-                                            }
-                                        }
-                                    })
-                            .bounds(x, y, w, btnSize)
-                            .build());
+                                String cmd = tab.command();
+                                if (cmd != null && !cmd.isEmpty() && mc.player != null) {
+                                    if (cmd.startsWith("/")) {
+                                        mc.player.connection.sendCommand(cmd.substring(1));
+                                    } else {
+                                        mc.player.connection.sendChat(cmd);
+                                    }
+                                }
+                            }));
 
             x += w + spacing;
         }
+        int sbe$tabBarRight = x;
     }
 }
