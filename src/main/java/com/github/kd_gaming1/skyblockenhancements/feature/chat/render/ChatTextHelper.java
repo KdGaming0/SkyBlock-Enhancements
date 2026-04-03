@@ -156,11 +156,11 @@ public final class ChatTextHelper {
     }
 
     private static boolean isSeparatorChar(char c) {
-        return c == '-' || c == '—' || c == '=';
+        return c == '-' || c == '—' || c == '=' || c == '▬';
     }
 
     private static boolean isDashOrSpace(char c) {
-        return c == '-' || c == '—' || c == '=' || c == ' ';
+        return c == '-' || c == '—' || c == '=' || c == '▬' || c == ' ';
     }
 
     private static int indexOfFirstNonSpace(String s) {
