@@ -5,9 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Lightweight representation of a single NEU repo item. Stored in-memory and serialized to
- * the consolidated cache. No Minecraft types — those are created lazily by {@link
- * ItemStackBuilder}.
+ * Lightweight representation of a single NEU repo item. Stored in-memory and serialized to the
+ * consolidated cache. No Minecraft types — those are created lazily by {@link ItemStackBuilder}.
  */
 public class NeuItem {
 
@@ -20,6 +19,13 @@ public class NeuItem {
     public String skullTexture;
     public int leatherColor = -1;
 
+    /**
+     * Modern item ID parsed from the companion {@code .snbt} file, if present (e.g. {@code
+     * "minecraft:cod"}). Takes priority over {@link #itemId} + {@link #damage} in {@link
+     * ItemStackBuilder} since SNBT files reflect the actual 1.21 item.
+     */
+    public String snbtItemId;
+
     /** Legacy 3×3 crafting recipe (keys A1–C3, values "INTERNAL_NAME:count" or ""). */
     public Map<String, String> recipe;
 
@@ -30,8 +36,7 @@ public class NeuItem {
         if (recipe != null && !recipe.isEmpty()) return true;
         if (recipes == null) return false;
         return recipes.stream()
-                .anyMatch(
-                        r -> r.has("type") && "crafting".equals(r.get("type").getAsString()));
+                .anyMatch(r -> r.has("type") && "crafting".equals(r.get("type").getAsString()));
     }
 
     public boolean hasForgeRecipe() {

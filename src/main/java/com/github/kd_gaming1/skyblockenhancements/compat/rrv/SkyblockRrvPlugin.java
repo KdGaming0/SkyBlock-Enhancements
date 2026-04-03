@@ -82,7 +82,7 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
                     switch (type) {
                         case "crafting" -> parseCrafting(recipe, item);
                         case "forge" -> parseForge(recipe, item);
-                        case "npc_shop" -> parseNpcShop(recipe);
+                        case "npc_shop" -> parseNpcShop(recipe, item);
                         case "trade" -> parseTrade(recipe);
                         case "drops" -> parseDrops(recipe);
                         case "katgrade" -> parseKatgrade(recipe);
@@ -125,7 +125,7 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
     }
 
     // ── NPC Shop ────────────────────────────────────────────────────────────────
-    private ReliableServerRecipe parseNpcShop(JsonObject recipe) {
+    private ReliableServerRecipe parseNpcShop(JsonObject recipe, NeuItem item) {
         JsonArray costArr = recipe.has("cost") ? recipe.getAsJsonArray("cost") : null;
         String resultRef = jsonStr(recipe, "result");
         if (costArr == null || resultRef == null) return null;
@@ -136,7 +136,7 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
         }
 
         SlotContent result = parseSlotRef(resultRef);
-        return new SkyblockNpcShopServerRecipe(costs, result);
+        return new SkyblockNpcShopServerRecipe(costs, result, item.internalName);
     }
 
     // ── Trade ───────────────────────────────────────────────────────────────────

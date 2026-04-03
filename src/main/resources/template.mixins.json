@@ -18,6 +18,7 @@
     "PackCompatibilityMixin",
     "SignEnterToConfirmMixin",
     "PreventWeaponPlacementMixin",
+    "RecipeViewFallbackMixin",
     "access.AbstractSignEditScreenAccessor",
     "itemglow.EntityRendererMixin",
     "itemglow.EntityRenderStateMixin",

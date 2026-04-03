@@ -5,11 +5,13 @@ import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Client-side display wrapper for a SkyBlock crafting recipe. Binds 9 input slots and 1 output
@@ -33,13 +35,9 @@ public class SkyblockCraftingClientRecipe implements ReliableClientRecipe {
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
         for (int i = 0; i < 9; i++) {
-            if (inputs[i] != null) {
-                ctx.bindSlot(i, inputs[i]);
-            }
+            if (inputs[i] != null) ctx.bindSlot(i, inputs[i]);
         }
-        if (output != null) {
-            ctx.bindSlot(9, output);
-        }
+        if (output != null) ctx.bindSlot(9, output);
     }
 
     @Override
@@ -57,6 +55,16 @@ public class SkyblockCraftingClientRecipe implements ReliableClientRecipe {
     }
 
     @Override
+    public boolean redirectsAsResult(ItemStack stack) {
+        return SkyblockRecipeUtil.matchesAny(stack, getResults());
+    }
+
+    @Override
+    public boolean redirectsAsIngredient(ItemStack stack) {
+        return SkyblockRecipeUtil.matchesAny(stack, getIngredients());
+    }
+
+    @Override
     public void renderRecipe(
             RecipeViewScreen screen,
             RecipePosition pos,
@@ -64,13 +72,6 @@ public class SkyblockCraftingClientRecipe implements ReliableClientRecipe {
             int mouseX,
             int mouseY,
             float partialTicks) {
-        // Draw "→" arrow between the grid and the output slot
-        gfx.drawString(
-                Minecraft.getInstance().font,
-                Component.literal("→"),
-                62,
-                22,
-                0xFF404040,
-                false);
+        gfx.drawString(Minecraft.getInstance().font, Component.literal("→"), 62, 22, 0xFF404040, false);
     }
 }

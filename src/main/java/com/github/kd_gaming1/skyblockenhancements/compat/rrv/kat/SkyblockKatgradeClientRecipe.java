@@ -5,13 +5,14 @@ import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeClientRecipe;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeClientRecipe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /** Client display for Kat pet upgrade recipes. */
 public class SkyblockKatgradeClientRecipe implements ReliableClientRecipe {
@@ -40,9 +41,8 @@ public class SkyblockKatgradeClientRecipe implements ReliableClientRecipe {
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
         if (input != null) ctx.bindSlot(0, input);
         for (int i = 0; i < materials.length && i < 4; i++) {
-            if (materials[i] != null) {
+            if (materials[i] != null)
                 ctx.bindOptionalSlot(i + 1, materials[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
-            }
         }
         if (output != null) ctx.bindSlot(5, output);
     }
@@ -63,6 +63,16 @@ public class SkyblockKatgradeClientRecipe implements ReliableClientRecipe {
     }
 
     @Override
+    public boolean redirectsAsResult(ItemStack stack) {
+        return SkyblockRecipeUtil.matchesAny(stack, getResults());
+    }
+
+    @Override
+    public boolean redirectsAsIngredient(ItemStack stack) {
+        return SkyblockRecipeUtil.matchesAny(stack, getIngredients());
+    }
+
+    @Override
     public void renderRecipe(
             RecipeViewScreen screen,
             RecipePosition pos,
@@ -71,15 +81,12 @@ public class SkyblockKatgradeClientRecipe implements ReliableClientRecipe {
             int mouseY,
             float partialTicks) {
         var font = Minecraft.getInstance().font;
-        // Arrows
         gfx.drawString(font, Component.literal("→"), 22, 22, 0xFF404040, false);
         gfx.drawString(font, Component.literal("→"), 80, 22, 0xFF404040, false);
-        // Coins
         if (coins > 0) {
             gfx.drawString(
                     font, Component.literal("§6" + formatCoins(coins) + " coins"), 2, 46, 0xFFAA8800, false);
         }
-        // Time
         if (timeSeconds > 0) {
             gfx.drawString(
                     font,

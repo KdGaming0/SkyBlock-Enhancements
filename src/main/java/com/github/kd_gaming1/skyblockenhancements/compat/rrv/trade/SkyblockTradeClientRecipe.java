@@ -5,10 +5,12 @@ import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /** Client display for trade recipes. */
 public class SkyblockTradeClientRecipe implements ReliableClientRecipe {
@@ -43,6 +45,16 @@ public class SkyblockTradeClientRecipe implements ReliableClientRecipe {
     }
 
     @Override
+    public boolean redirectsAsResult(ItemStack stack) {
+        return SkyblockRecipeUtil.matchesAny(stack, getResults());
+    }
+
+    @Override
+    public boolean redirectsAsIngredient(ItemStack stack) {
+        return SkyblockRecipeUtil.matchesAny(stack, getIngredients());
+    }
+
+    @Override
     public void renderRecipe(
             RecipeViewScreen screen,
             RecipePosition pos,
@@ -50,7 +62,6 @@ public class SkyblockTradeClientRecipe implements ReliableClientRecipe {
             int mouseX,
             int mouseY,
             float partialTicks) {
-        gfx.drawString(
-                Minecraft.getInstance().font, Component.literal("→"), 28, 13, 0xFF404040, false);
+        gfx.drawString(Minecraft.getInstance().font, Component.literal("→"), 28, 13, 0xFF404040, false);
     }
 }

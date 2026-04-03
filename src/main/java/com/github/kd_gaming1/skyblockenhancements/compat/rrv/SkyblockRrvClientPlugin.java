@@ -51,7 +51,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
 
         ItemView.addClientRecipeWrapper(
                 SkyblockNpcShopServerRecipe.TYPE,
-                r -> List.of(new SkyblockNpcShopClientRecipe(r.getCosts(), r.getResult())));
+                r -> List.of(new SkyblockNpcShopClientRecipe(r.getCosts(), r.getResult(), r.getNpcId())));
 
         ItemView.addClientRecipeWrapper(
                 SkyblockTradeServerRecipe.TYPE,

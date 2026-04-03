@@ -5,11 +5,13 @@ import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /** Client display for forge recipes with duration info. */
 public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
@@ -32,13 +34,10 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
         for (int i = 0; i < inputs.length && i < 6; i++) {
-            if (inputs[i] != null) {
+            if (inputs[i] != null)
                 ctx.bindOptionalSlot(i, inputs[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
-            }
         }
-        if (output != null) {
-            ctx.bindSlot(6, output);
-        }
+        if (output != null) ctx.bindSlot(6, output);
     }
 
     @Override
@@ -56,6 +55,16 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
     }
 
     @Override
+    public boolean redirectsAsResult(ItemStack stack) {
+        return SkyblockRecipeUtil.matchesAny(stack, getResults());
+    }
+
+    @Override
+    public boolean redirectsAsIngredient(ItemStack stack) {
+        return SkyblockRecipeUtil.matchesAny(stack, getIngredients());
+    }
+
+    @Override
     public void renderRecipe(
             RecipeViewScreen screen,
             RecipePosition pos,
@@ -64,9 +73,7 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
             int mouseY,
             float partialTicks) {
         var font = Minecraft.getInstance().font;
-        // Arrow
         gfx.drawString(font, Component.literal("→"), 68, 22, 0xFF404040, false);
-        // Duration
         if (durationSeconds > 0) {
             gfx.drawString(
                     font, Component.literal("§7" + formatDuration(durationSeconds)), 2, 46, 0xFF808080, false);
@@ -79,9 +86,7 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
             int m = (seconds % 3600) / 60;
             return m > 0 ? h + "h " + m + "m" : h + "h";
         }
-        if (seconds >= 60) {
-            return (seconds / 60) + "m";
-        }
+        if (seconds >= 60) return (seconds / 60) + "m";
         return seconds + "s";
     }
 }

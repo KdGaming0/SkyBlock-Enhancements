@@ -7,22 +7,25 @@ import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 
-/** Server-side NPC shop recipe: cost items → 1 result. */
+/** Server-side NPC shop recipe: cost items → 1 result, tagged with the owning NPC's internal ID. */
 public class SkyblockNpcShopServerRecipe implements ReliableServerRecipe {
 
     public static final ReliableServerRecipeType<SkyblockNpcShopServerRecipe> TYPE =
             ReliableServerRecipeType.register(
                     Identifier.fromNamespaceAndPath("skyblock_enhancements", "skyblock_npc_shop"),
-                    () -> new SkyblockNpcShopServerRecipe(new SlotContent[0], null));
+                    () -> new SkyblockNpcShopServerRecipe(new SlotContent[0], null, ""));
 
     private static final int MAX_COSTS = 5;
 
     private SlotContent[] costs;
     private SlotContent result;
+    /** Internal name of the NPC item that owns this shop (e.g. {@code "ADVENTURER_NPC"}). */
+    private String npcId;
 
-    public SkyblockNpcShopServerRecipe(SlotContent[] costs, SlotContent result) {
+    public SkyblockNpcShopServerRecipe(SlotContent[] costs, SlotContent result, String npcId) {
         this.costs = costs;
         this.result = result;
+        this.npcId = npcId != null ? npcId : "";
     }
 
     @Override
@@ -36,6 +39,7 @@ public class SkyblockNpcShopServerRecipe implements ReliableServerRecipe {
         if (result != null && !result.isEmpty()) {
             tag.put("out", TagUtil.encodeItemStackOnServer(result.getValidContents().getFirst()));
         }
+        tag.putString("npc", npcId);
     }
 
     @Override
@@ -48,6 +52,7 @@ public class SkyblockNpcShopServerRecipe implements ReliableServerRecipe {
         }
         CompoundTag outTag = tag.getCompoundOrEmpty("out");
         result = outTag.isEmpty() ? null : SlotContent.of(TagUtil.decodeItemStackOnClient(outTag));
+        npcId = tag.getStringOr("npc", "");
     }
 
     @Override
@@ -61,5 +66,9 @@ public class SkyblockNpcShopServerRecipe implements ReliableServerRecipe {
 
     public SlotContent getResult() {
         return result;
+    }
+
+    public String getNpcId() {
+        return npcId;
     }
 }

@@ -32,17 +32,17 @@ import java.util.zip.ZipInputStream;
 import net.fabricmc.loader.api.FabricLoader;
 
 /**
- * Downloads the NotEnoughUpdates-REPO as a ZIP archive, stream-parses {@code items/*.json}
- * entries in-memory (never extracting to disk), and caches the result as a single consolidated
- * JSON file.
+ * Downloads the NotEnoughUpdates-REPO as a ZIP archive, stream-parses {@code items/*.json} and
+ * {@code items/*.snbt} entries in-memory (never extracting to disk), and caches the result as a
+ * single consolidated JSON file.
  *
- * <p>Uses the GitHub Git Refs API to fetch the latest commit SHA before downloading, allowing
- * fast no-op checks on subsequent launches when the repo hasn't changed.
+ * <p>Uses the GitHub Git Refs API to fetch the latest commit SHA before downloading, allowing fast
+ * no-op checks on subsequent launches when the repo hasn't changed.
  */
 public class NeuRepoDownloader {
 
     /** Bump this whenever the NeuItem schema or parsing logic changes. */
-    private static final int CACHE_VERSION = 3;
+    private static final int CACHE_VERSION = 4;
 
     private static final String REPO_ZIP_URL =
             "https://codeload.github.com/NotEnoughUpdates/NotEnoughUpdates-REPO/zip/refs/heads/master";
@@ -51,12 +51,17 @@ public class NeuRepoDownloader {
             "https://api.github.com/repos/NotEnoughUpdates/NotEnoughUpdates-REPO/git/refs/heads/master";
 
     private static final Gson GSON = new GsonBuilder().create();
-    private static final Pattern ITEM_MODEL_PATTERN =
-            Pattern.compile("ItemModel:\"([^\"]+)\"");
-    private static final Pattern TEXTURE_VALUE_PATTERN =
-            Pattern.compile("Value:\"([^\"]+)\"");
+    private static final Pattern ITEM_MODEL_PATTERN = Pattern.compile("ItemModel:\"([^\"]+)\"");
+    private static final Pattern TEXTURE_VALUE_PATTERN = Pattern.compile("Value:\"([^\"]+)\"");
     private static final Pattern DISPLAY_COLOR_PATTERN =
             Pattern.compile("display:\\{.*?color:(\\d+)");
+    /**
+     * Matches the top-level {@code id: "minecraft:..."} field in a .snbt file.
+     * The id is always a direct child of the root object (one level of indentation).
+     */
+    private static final Pattern SNBT_ID_PATTERN =
+            Pattern.compile("^\\s*id:\\s*\"(minecraft:[^\"]+)\"", Pattern.MULTILINE);
+
     private static final HttpClient HTTP =
             HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(10))
@@ -68,8 +73,7 @@ public class NeuRepoDownloader {
     private final Path metaFile;
 
     public NeuRepoDownloader() {
-        this.cacheDir =
-                FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("repo");
+        this.cacheDir = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("repo");
         this.cacheFile = cacheDir.resolve("items-cache.json");
         this.metaFile = cacheDir.resolve("repo-meta.json");
     }
@@ -153,44 +157,77 @@ public class NeuRepoDownloader {
                         .build();
 
         HttpResponse<InputStream> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofInputStream());
-
         int status = resp.statusCode();
         if (status < 200 || status >= 300) {
             throw new IOException("HTTP " + status + " downloading repo ZIP");
         }
 
         Map<String, NeuItem> items = new HashMap<>(5000);
-        try (ZipInputStream zis =
-                     new ZipInputStream(new BufferedInputStream(resp.body()))) {
+        // Collect snbt overrides separately; apply after all JSONs are parsed.
+        Map<String, String> snbtIds = new HashMap<>();
+
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(resp.body()))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 if (entry.isDirectory()) continue;
                 String name = entry.getName();
+                if (name.contains("..")) continue; // zip-slip protection
 
-                // Zip-slip protection
-                if (name.contains("..")) continue;
+                // items/<NAME>.json
+                int itemsIdx = name.indexOf("/items/");
+                if (itemsIdx >= 0 && name.endsWith(".json")) {
+                    String fileName = name.substring(itemsIdx + 7);
+                    if (!fileName.contains("/")) {
+                        String internalName = fileName.substring(0, fileName.length() - 5);
+                        String content = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
+                        try {
+                            NeuItem item = parseItemJson(internalName, content);
+                            if (item != null) items.put(internalName, item);
+                        } catch (JsonSyntaxException e) {
+                            LOGGER.debug("Skipping malformed item JSON: {}", internalName);
+                        }
+                    }
+                    zis.closeEntry();
+                    continue;
+                }
 
-                // Only items/*.json  (path inside ZIP: <root>/items/NAME.json)
-                int idx = name.indexOf("/items/");
-                if (idx < 0 || !name.endsWith(".json")) continue;
-
-                String fileName = name.substring(idx + 7);
-                if (fileName.contains("/")) continue; // skip subdirectories
-
-                String internalName = fileName.substring(0, fileName.length() - 5);
-                String json = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
-
-                try {
-                    NeuItem item = parseItemJson(internalName, json);
-                    if (item != null) items.put(internalName, item);
-                } catch (JsonSyntaxException e) {
-                    LOGGER.debug("Skipping malformed item JSON: {}", internalName);
+                // itemsOverlay/<dataVersion>/<NAME>.snbt
+                int overlayIdx = name.indexOf("/itemsOverlay/");
+                if (overlayIdx >= 0 && name.endsWith(".snbt")) {
+                    String afterOverlay = name.substring(overlayIdx + 14); // strip ".../itemsOverlay/"
+                    // afterOverlay = "<version>/<NAME>.snbt" — exactly one slash separating them
+                    int slash = afterOverlay.indexOf('/');
+                    if (slash >= 0 && afterOverlay.indexOf('/', slash + 1) < 0) {
+                        String fileName = afterOverlay.substring(slash + 1);
+                        String internalName = fileName.substring(0, fileName.length() - 5);
+                        String content = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
+                        String snbtId = parseSnbtId(content);
+                        if (snbtId != null) snbtIds.put(internalName, snbtId);
+                    }
                 }
 
                 zis.closeEntry();
             }
         }
+
+        // Apply snbt item ID overrides
+        snbtIds.forEach((id, modernId) -> {
+            NeuItem item = items.get(id);
+            if (item != null) item.snbtItemId = modernId;
+        });
+
         return items;
+    }
+
+    // ── SNBT parsing ────────────────────────────────────────────────────────────
+
+    /**
+     * Extracts the top-level {@code id} from a .snbt file. Only returns values starting with
+     * {@code "minecraft:"} to avoid picking up nested id fields (e.g. inside custom_data).
+     */
+    private static String parseSnbtId(String snbt) {
+        Matcher m = SNBT_ID_PATTERN.matcher(snbt);
+        return m.find() ? m.group(1) : null;
     }
 
     // ── JSON → NeuItem ──────────────────────────────────────────────────────────
@@ -223,13 +260,8 @@ public class NeuRepoDownloader {
             // Extract the skull texture
             Matcher texMatcher = TEXTURE_VALUE_PATTERN.matcher(nbtStr);
             if (texMatcher.find()) {
-                // Strip invalid characters that might cause decoder exceptions
                 String b64 = texMatcher.group(1).replaceAll("[^A-Za-z0-9+/=]", "");
-
-                // Fix invalid padding length to prevent "incorrect ending byte" crashes
-                while (b64.length() % 4 != 0) {
-                    b64 += "=";
-                }
+                while (b64.length() % 4 != 0) b64 += "=";
                 item.skullTexture = b64;
             }
 
@@ -240,7 +272,7 @@ public class NeuRepoDownloader {
             }
         }
 
-        // Legacy crafting recipe  (A1–C3)
+        // Legacy crafting recipe (A1–C3)
         if (json.has("recipe") && json.get("recipe").isJsonObject()) {
             item.recipe = new LinkedHashMap<>();
             for (var e : json.getAsJsonObject("recipe").entrySet()) {
@@ -266,16 +298,15 @@ public class NeuRepoDownloader {
             String content = Files.readString(cacheFile, StandardCharsets.UTF_8);
             JsonObject cache = GSON.fromJson(content, JsonObject.class);
 
-            // Invalidate cache if the format version doesn't match
             int version = cache.has("cacheVersion") ? cache.get("cacheVersion").getAsInt() : 0;
             if (version < CACHE_VERSION) {
-                LOGGER.info("Cache version {} is outdated (current: {}), will re-download", version, CACHE_VERSION);
+                LOGGER.info(
+                        "Cache version {} is outdated (current: {}), will re-download", version, CACHE_VERSION);
                 Files.deleteIfExists(metaFile);
                 return;
             }
 
             JsonObject itemsObj = cache.getAsJsonObject("items");
-
             NeuItemRegistry.clear();
             for (var entry : itemsObj.entrySet()) {
                 NeuItem item = GSON.fromJson(entry.getValue(), NeuItem.class);
@@ -297,13 +328,13 @@ public class NeuRepoDownloader {
             items.forEach((k, v) -> itemsObj.add(k, GSON.toJsonTree(v)));
             cache.add("items", itemsObj);
             Files.writeString(cacheFile, GSON.toJson(cache), StandardCharsets.UTF_8);
-
             saveMeta(sha);
             LOGGER.info("Saved items cache ({} items, version {})", items.size(), CACHE_VERSION);
         } catch (Exception e) {
             LOGGER.error("Failed to save items cache", e);
         }
     }
+
     // ── Meta (SHA + timestamp) ──────────────────────────────────────────────────
 
     private void saveMeta(String sha) throws IOException {
