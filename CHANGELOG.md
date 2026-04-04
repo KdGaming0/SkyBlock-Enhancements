@@ -10,7 +10,12 @@
   - **SkyBlock Trade**: Displays simple 1:1 trade recipes.
   - **Kat Pet Upgrade**: Displays Kat pet upgrade recipes showing the input pet, up to 4 material slots, coin cost, upgrade time, and the resulting pet.
   - **SkyBlock Wiki**: Fallback card for items with wiki URLs but no other recipe data — keeps every item clickable in the recipe viewer.
+  - **Search Calculator**: Evaluate math expressions directly in the RRV search bar with real-time "ghost text" results.
+    - Supports basic operators (+, -, *, /, %), exponentiation (^), and parentheses.
+    - SkyBlock Suffixes: Understands magnitude abbreviations (k, m, b, t) and the stack suffix (st) for bulk calculations (e.g., 1st * 25k).
+    - Advanced Math: Support for scientific notation (e.g., 1.5e6) and functions like sqrt(), abs(), floor(), ceil(), and round().
   - All recipe types include an optional **Wiki** button that opens the item's page on the SkyBlock wiki.
+  - Category filtering decides to only search and see items for a specific category, like armor or weapons.
   - Recipe data is sourced live from the **NEU repository**, downloaded and cached on first launch and refreshed automatically when the repo updates.
   - Cache is stored locally and checked against the latest GitHub commit SHA to avoid unnecessary re-downloads.
   - Use `/skyblockenhancements refresh repoData` to manually force a cache refresh.

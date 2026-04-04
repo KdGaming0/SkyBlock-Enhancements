@@ -1,9 +1,14 @@
-# ☁️ SkyBlock Enhancements
+<div align="center">
 
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)
-![License](https://img.shields.io/badge/License-PolyForm%20Shield-5D6D7E?style=for-the-badge)
+![Header](https://cdn.modrinth.com/data/cached_images/ea1d22fd7a048f2952455c521f1f3ee106ed156b.webp)
 
-**SkyBlock Enhancements** is a Minecraft mod designed to improve your **Hypixel SkyBlock** experience with quality-of-life features and utilities.
+[![Download on Modrinth](https://raw.githubusercontent.com/intergrav/devins-badges/c7fd18efdadd1c3f12ae56b49afd834640d2d797/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/mod/skyblock-enhancements)
+[![Requires Fabric API](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/requires/fabric-api_vector.svg)](https://modrinth.com/mod/fabric-api)
+[![Modrinth Downloads](https://img.shields.io/modrinth/dt/skyblock-enhancements?color=00AF5C&label=downloads&logo=modrinth)](https://modrinth.com/mod/skyblock-enhancements)
+
+**Small but meaningful quality-of-life improvements for Hypixel SkyBlock — the tweaks that bigger mods don't cover.**
+
+</div>
 
 ## ✨ Features
 
@@ -20,6 +25,11 @@ Recipe data is sourced from the **NEU repository**, downloaded and cached on fir
 - **SkyBlock Trade**: Simple 1:1 trade recipes.
 - **Kat Pet Upgrade**: Kat upgrade recipes showing the input pet, materials, coin cost, upgrade time, and resulting pet.
 - **SkyBlock Wiki**: Fallback card for items with wiki URLs but no other recipe data, keeping every item clickable in the viewer.
+- **Search Calculator**: Evaluate math expressions directly in the RRV search bar with real-time "ghost text" results.
+  - Supports basic operators (+, -, *, /, %), exponentiation (^), and parentheses.
+  - SkyBlock Suffixes: Understands magnitude abbreviations (k, m, b, t) and the stack suffix (st) for bulk calculations (e.g., 1st * 25k).
+  - Advanced Math: Support for scientific notation (e.g., 1.5e6) and functions like sqrt(), abs(), floor(), ceil(), and round().
+- Category filtering decides to only search and see items for a specific category, like armor or weapons.
 - All recipe types include a **Wiki** button that opens the item's page on the SkyBlock wiki.
 
 ### Skyblock Enhancements
