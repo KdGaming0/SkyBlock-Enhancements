@@ -7,11 +7,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
-//? if >=1.21.11 {
 import net.minecraft.resources.Identifier;
- //?} else {
-/*import net.minecraft.resources.ResourceLocation;
-*///?}
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2fStack;
 import org.spongepowered.asm.mixin.Final;
@@ -44,11 +40,7 @@ public abstract class TooltipScrollGuiGraphicsMixin {
             int x,
             int y,
             ClientTooltipPositioner positioner,
-            //? if >=1.21.11 {
             @Nullable Identifier texture,
-             //?} else {
-            /*@Nullable ResourceLocation texture,
-            *///?}
             CallbackInfo ci) {
         skyblockenhancements$pushed = false;
         if (!SkyblockEnhancementsConfig.enableTooltipScroll) return;
@@ -73,11 +65,7 @@ public abstract class TooltipScrollGuiGraphicsMixin {
             int x,
             int y,
             ClientTooltipPositioner positioner,
-            //? if >=1.21.11 {
             @Nullable Identifier texture,
-             //?} else {
-            /*@Nullable ResourceLocation texture,
-            *///?}
             CallbackInfo ci) {
         if (skyblockenhancements$pushed) {
             pose.popMatrix();

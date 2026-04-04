@@ -7,7 +7,6 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRrvClientPl
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
 import com.github.kd_gaming1.skyblockenhancements.feature.ItemGlowManager;
-import com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs.ChatTabState;
 import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminderFeature;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
@@ -29,11 +28,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-//? if >=1.21.11 {
 import net.minecraft.util.Util;
-        //?} else {
-/*import net.minecraft.Util;
- *///?}
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
