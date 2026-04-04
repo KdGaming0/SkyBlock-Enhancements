@@ -1,4 +1,4 @@
-package com.github.kd_gaming1.skyblockenhancements.mixin;
+package com.github.kd_gaming1.skyblockenhancements.mixin.rrv;
 
 import cc.cassian.rrv.api.ActionType;
 import cc.cassian.rrv.api.recipe.ReliableClientRecipe;

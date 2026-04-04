@@ -124,6 +124,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = GENERAL_ENHANCEMENTS)
     public static boolean hideItemFrames = true;
 
+    @Entry(category = GENERAL_ENHANCEMENTS)
+    public static boolean hideTextureErrors = false;
+
     @Comment(category = GENERAL_ENHANCEMENTS)
     public static Comment fullbrightText;
 

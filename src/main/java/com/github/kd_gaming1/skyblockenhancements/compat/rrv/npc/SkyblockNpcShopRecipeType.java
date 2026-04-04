@@ -38,7 +38,7 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
 
     @Override
     public int getDisplayHeight() {
-        return 56;
+        return 66;
     }
 
     @Override
@@ -54,9 +54,9 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
     @Override
     public void placeSlots(RecipeViewMenu.SlotDefinition def) {
         for (int i = 0; i < 5; i++) {
-            def.addItemSlot(i, i * SLOT, 11);
+            def.addItemSlot(i, i * SLOT, 21);
         }
-        def.addItemSlot(5, 102, 11);
+        def.addItemSlot(5, 102, 21);
     }
 
     @Override

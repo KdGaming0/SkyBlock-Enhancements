@@ -12,6 +12,7 @@ import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.Missin
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
+import com.github.kd_gaming1.skyblockenhancements.feature.filter.LogFilterRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
@@ -63,6 +64,8 @@ public class SkyblockEnhancements implements ClientModInitializer {
         instance = this;
 
         MidnightConfig.init(MOD_ID, SkyblockEnhancementsConfig.class);
+
+        LogFilterRegistry.register();
 
         // Subscribe to Hypixel location packets so we can track which island the player is on.
         HypixelNetworking.registerToEvents(

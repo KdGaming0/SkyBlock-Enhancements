@@ -27,6 +27,7 @@ public class SkyblockNpcShopClientRecipe implements ReliableClientRecipe {
     private final SlotContent[] costs;
     private final SlotContent result;
     private final String npcId;
+    private final String npcDisplayName;
     private final String[] wikiUrls;
 
     /**
@@ -41,7 +42,7 @@ public class SkyblockNpcShopClientRecipe implements ReliableClientRecipe {
         this.costs = costs;
         this.result = result;
         this.npcId = npcId != null ? npcId : "";
-        String npcDisplayName1 = npcDisplayName != null ? npcDisplayName : "";
+        this.npcDisplayName = npcDisplayName != null ? npcDisplayName : "";
         this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
     }
 
@@ -92,8 +93,13 @@ public class SkyblockNpcShopClientRecipe implements ReliableClientRecipe {
     public void renderRecipe(
             RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
             int mouseX, int mouseY, float partialTicks) {
-        gfx.drawString(
-                Minecraft.getInstance().font, Component.literal("→"), 91, 15, 0xFF404040, false);
+        var font = Minecraft.getInstance().font;
+
+        if (!npcDisplayName.isEmpty()) {
+            gfx.drawString(font, Component.literal(npcDisplayName), 0, 0, 0xFFFFFFFF, true);
+        }
+
+        gfx.drawString(font, Component.literal("→"), 91, 25, 0xFF404040, false);
 
         if (!buttonsStillInScreen(screen)) {
             addedButtons.clear();
@@ -107,7 +113,7 @@ public class SkyblockNpcShopClientRecipe implements ReliableClientRecipe {
     }
 
     private void addButtons(RecipeViewScreen screen, RecipePosition pos) {
-        int btnY = pos.top() + 42;
+        int btnY = pos.top() + 52;
         int leftX = pos.left();
 
         // "NPC Info" button — navigates to this NPC's info card if one exists.

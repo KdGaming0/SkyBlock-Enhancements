@@ -3,6 +3,9 @@ package com.github.kd_gaming1.skyblockenhancements.repo;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRrvClientPlugin;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -53,6 +56,22 @@ public final class NeuItemRegistry {
         ITEMS.clear();
         NPC_BY_DISPLAY_NAME.clear();
         loaded = false;
+        // Invalidate the RRV spoof cache so it regenerates from the new repo data.
+        invalidateRrvCache();
+    }
+
+    /**
+     * Guarded call to avoid a hard dependency on RRV classes when the mod isn't present.
+     * Uses the same presence check that gates all other RRV integration.
+     */
+    private static void invalidateRrvCache() {
+        try {
+            if (RrvCompat.isRrvPresent()) {
+                SkyblockRrvClientPlugin.invalidateCache();
+            }
+        } catch (NoClassDefFoundError ignored) {
+            // RRV not on the classpath — nothing to invalidate.
+        }
     }
 
     public static void markLoaded() {
