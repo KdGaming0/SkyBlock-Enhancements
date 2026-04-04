@@ -7,6 +7,21 @@
 
 ## ✨ Features
 
+### Recipe Viewer Integration
+> Requires the [Reliable Recipe Viewer (RRV)](https://modrinth.com/mod/rrv) mod.
+
+Recipe data is sourced from the **NEU repository**, downloaded and cached on first launch. Use `/skyblockenhancements refresh repoData` to manually force a refresh.
+
+- **SkyBlock Crafting**: 3×3 crafting grid recipes for SkyBlock items.
+- **SkyBlock Forge**: Forge recipes with ingredient slots, output item, and a human-readable duration (e.g. "2h 30m").
+- **SkyBlock NPC Shop**: NPC shop recipes showing up to 5 cost items and a result. Includes an "NPC Info" button linking to the NPC's info card.
+- **SkyBlock NPC Info**: Info cards for every NPC — head, island, coordinates, lore, and a "⬈ Navigate" button for [SkyHanni](https://modrinth.com/mod/skyhanni) users.
+- **SkyBlock Mob Drops**: Mob drop tables in a 4×3 grid with per-item drop chance tooltips.
+- **SkyBlock Trade**: Simple 1:1 trade recipes.
+- **Kat Pet Upgrade**: Kat upgrade recipes showing the input pet, materials, coin cost, upgrade time, and resulting pet.
+- **SkyBlock Wiki**: Fallback card for items with wiki URLs but no other recipe data, keeping every item clickable in the viewer.
+- All recipe types include a **Wiki** button that opens the item's page on the SkyBlock wiki.
+
 ### Skyblock Enhancements
 - **Missing Enchants**: Identify missing and non-maxed enchantments directly in item tooltips.
   - *Configurable*: Option to only show when holding `Shift`.
@@ -68,8 +83,9 @@ Use code **SBE** at checkout for **25% off** your first purchase.
 1. Install **Minecraft** with the **Fabric Loader**.
 2. Download the latest `.jar` file from [Modrinth](https://modrinth.com/mod/skyblock-enhancements).
 3. Ensure you have the **Fabric API** and **UI Lib** installed in your `mods` folder.
-4. Drag and drop the `SkyBlock Enhancements` `.jar` file into your `.minecraft/mods` folder.
-5. Launch the game!
+4. Optionally install [RRV](https://modrinth.com/mod/rrv) to enable the recipe viewer integration.
+5. Drag and drop the `SkyBlock Enhancements` `.jar` file into your `.minecraft/mods` folder.
+6. Launch the game!
 
 ## 💻 Commands
 
