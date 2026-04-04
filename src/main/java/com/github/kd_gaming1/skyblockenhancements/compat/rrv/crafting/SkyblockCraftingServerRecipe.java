@@ -4,27 +4,29 @@ import cc.cassian.rrv.api.TagUtil;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 
 /**
- * Server-side representation of a 3×3 SkyBlock crafting recipe. Handles serialization to/from
- * NBT for RRV's internal server→client sync.
+ * Server-side 3×3 SkyBlock crafting recipe. Handles NBT serialization for
+ * RRV's internal server→client sync.
  */
 public class SkyblockCraftingServerRecipe implements ReliableServerRecipe {
 
     public static final ReliableServerRecipeType<SkyblockCraftingServerRecipe> TYPE =
             ReliableServerRecipeType.register(
-                    Identifier.fromNamespaceAndPath(
-                            "skyblock_enhancements", "skyblock_crafting"),
-                    () -> new SkyblockCraftingServerRecipe(new SlotContent[9], null));
+                    Identifier.fromNamespaceAndPath("skyblock_enhancements", "skyblock_crafting"),
+                    () -> new SkyblockCraftingServerRecipe(new SlotContent[9], null, new String[0]));
 
-    private SlotContent[] inputs; // length 9
+    private SlotContent[] inputs;
     private SlotContent output;
+    private String[] wikiUrls;
 
-    public SkyblockCraftingServerRecipe(SlotContent[] inputs, SlotContent output) {
+    public SkyblockCraftingServerRecipe(SlotContent[] inputs, SlotContent output, String[] wikiUrls) {
         this.inputs = inputs;
         this.output = output;
+        this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
     }
 
     @Override
@@ -37,6 +39,7 @@ public class SkyblockCraftingServerRecipe implements ReliableServerRecipe {
         if (output != null && !output.isEmpty()) {
             tag.put("out", TagUtil.encodeItemStackOnServer(output.getValidContents().getFirst()));
         }
+        SkyblockRecipeUtil.writeWikiUrls(tag, wikiUrls);
     }
 
     @Override
@@ -52,6 +55,7 @@ public class SkyblockCraftingServerRecipe implements ReliableServerRecipe {
         if (!outTag.isEmpty()) {
             output = SlotContent.of(TagUtil.decodeItemStackOnClient(outTag));
         }
+        wikiUrls = SkyblockRecipeUtil.readWikiUrls(tag);
     }
 
     @Override
@@ -59,11 +63,7 @@ public class SkyblockCraftingServerRecipe implements ReliableServerRecipe {
         return TYPE;
     }
 
-    public SlotContent[] getInputs() {
-        return inputs;
-    }
-
-    public SlotContent getOutput() {
-        return output;
-    }
+    public SlotContent[] getInputs() { return inputs; }
+    public SlotContent getOutput() { return output; }
+    public String[] getWikiUrls() { return wikiUrls; }
 }

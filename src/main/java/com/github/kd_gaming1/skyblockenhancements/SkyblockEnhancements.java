@@ -38,14 +38,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SkyblockEnhancements implements ClientModInitializer {
+
     public static final String MOD_ID = "skyblock_enhancements";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+    /** Ticks between repo staleness checks (~5 minutes at 20 TPS). */
+    private static final int REFRESH_CHECK_INTERVAL_TICKS = 6000;
+
     private final NeuRepoCache cache = new NeuRepoCache();
     private final ReminderStorage reminderStorage =
-            new ReminderStorage(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("reminders.json"));
+            new ReminderStorage(
+                    FabricLoader.getInstance()
+                            .getConfigDir()
+                            .resolve(MOD_ID)
+                            .resolve("reminders.json"));
     private final ReminderManager reminderManager = new ReminderManager();
 
+    /** Guards against double-saving reminders on disconnect + shutdown. */
     private final AtomicBoolean remindersSaved = new AtomicBoolean(false);
 
     private volatile CompletableFuture<Void> repoFuture = CompletableFuture.completedFuture(null);
@@ -60,6 +69,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
         MidnightConfig.init(MOD_ID, SkyblockEnhancementsConfig.class);
 
+        // Subscribe to Hypixel location packets so we can track which island the player is on.
         HypixelNetworking.registerToEvents(
                 Util.make(new Object2IntOpenHashMap<>(), map -> map.put(LocationUpdateS2CPacket.ID, 1)));
 
@@ -76,42 +86,50 @@ public class SkyblockEnhancements implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(Fullbright::onTick);
         ClientTickEvents.END_CLIENT_TICK.register(client -> IrisCompat.tick());
 
+        // Enchant data is independent of RRV — always fetch on startup.
         ClientLifecycleEvents.CLIENT_STARTED.register(
-                client ->
-                        CompletableFuture.runAsync(
-                                () -> {
-                                    try {
-                                        cache.downloadAndSave("constants/enchants.json");
-                                    } catch (Exception e) {
-                                        LOGGER.error("Failed to download enchants data", e);
-                                    }
-                                }));
-        if (RrvCompat.isActive()) {
-            ClientLifecycleEvents.CLIENT_STARTED.register(
-                    client -> {
-                        repoFuture = repoDownloader.downloadAsync();
-                        repoFuture.thenRun(SkyblockRrvClientPlugin::spoofRrvCache);
-                    });
+                client -> CompletableFuture.runAsync(() -> {
+                    try {
+                        cache.downloadAndSave("constants/enchants.json");
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to download enchants data", e);
+                    }
+                }));
 
-            // Periodic auto-refresh check (every ~5 min of ticks)
-            ClientTickEvents.END_CLIENT_TICK.register(
-                    client -> {
-                        if (++lastRefreshCheckTick < 6000) return; // ~5 min
-                        lastRefreshCheckTick = 0;
-                        if (repoDownloader.needsRefresh(
-                                SkyblockEnhancementsConfig.repoRefreshIntervalHours)) {
-                            ItemStackBuilder.clearCache();
-                            repoFuture = repoDownloader.refresh();
-                            repoFuture.thenRun(SkyblockRrvClientPlugin::spoofRrvCache);
-                            LOGGER.info("Auto-refreshing NEU repo data...");
-                            ItemStackBuilder.clearCache();
-                            repoDownloader.refresh().thenRun(SkyblockRrvClientPlugin::spoofRrvCache);
-                        }
-                    });
-        }
+        initRecipeViewer();
+        initReminders();
+    }
 
+    /** Sets up the NEU repo download pipeline and periodic refresh when RRV is available. */
+    private void initRecipeViewer() {
         Commands.register();
 
+        if (!RrvCompat.isActive()) return;
+
+        // Kick off the initial repo download and feed results into RRV's cache.
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+            repoFuture = repoDownloader.downloadAsync();
+            repoFuture.thenRun(SkyblockRrvClientPlugin::spoofRrvCache);
+        });
+
+        // Poll every ~5 minutes to see if the cached repo data has gone stale.
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (++lastRefreshCheckTick < REFRESH_CHECK_INTERVAL_TICKS) return;
+            lastRefreshCheckTick = 0;
+
+            if (!repoDownloader.needsRefresh(SkyblockEnhancementsConfig.repoRefreshIntervalHours)) {
+                return;
+            }
+
+            LOGGER.info("Auto-refreshing NEU repo data...");
+            ItemStackBuilder.clearCache();
+            repoFuture = repoDownloader.refresh();
+            repoFuture.thenRun(SkyblockRrvClientPlugin::spoofRrvCache);
+        });
+    }
+
+    /** Loads persisted reminders, registers the /reminder command, and hooks save events. */
+    private void initReminders() {
         reminderStorage.load();
         reminderManager.loadFromStorage(reminderStorage.getRemindersData());
         KatReminderFeature.init(MOD_ID);
@@ -120,10 +138,12 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(reminderManager::onClientTick);
 
+        // Persist reminders on disconnect and shutdown — whichever fires first wins.
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> saveRemindersOnce());
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> saveRemindersOnce());
     }
 
+    /** Immediately persists reminders and resets the "already saved" guard. */
     private void forceSaveReminders() {
         RemindersFileData data = reminderManager.saveToStorage();
         reminderStorage.setRemindersData(data);
@@ -131,6 +151,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
         remindersSaved.set(false);
     }
 
+    /** Persists reminders exactly once per session via CAS guard. */
     private void saveRemindersOnce() {
         if (remindersSaved.compareAndSet(false, true)) {
             RemindersFileData data = reminderManager.saveToStorage();

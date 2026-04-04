@@ -4,6 +4,7 @@ import cc.cassian.rrv.api.TagUtil;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 
@@ -13,18 +14,21 @@ public class SkyblockForgeServerRecipe implements ReliableServerRecipe {
     public static final ReliableServerRecipeType<SkyblockForgeServerRecipe> TYPE =
             ReliableServerRecipeType.register(
                     Identifier.fromNamespaceAndPath("skyblock_enhancements", "skyblock_forge"),
-                    () -> new SkyblockForgeServerRecipe(new SlotContent[0], null, 0));
+                    () -> new SkyblockForgeServerRecipe(new SlotContent[0], null, 0, new String[0]));
 
     private static final int MAX_INPUTS = 6;
 
     private SlotContent[] inputs;
     private SlotContent output;
     private int durationSeconds;
+    private String[] wikiUrls;
 
-    public SkyblockForgeServerRecipe(SlotContent[] inputs, SlotContent output, int durationSeconds) {
+    public SkyblockForgeServerRecipe(
+            SlotContent[] inputs, SlotContent output, int durationSeconds, String[] wikiUrls) {
         this.inputs = inputs;
         this.output = output;
         this.durationSeconds = durationSeconds;
+        this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
     }
 
     @Override
@@ -39,6 +43,7 @@ public class SkyblockForgeServerRecipe implements ReliableServerRecipe {
             tag.put("out", TagUtil.encodeItemStackOnServer(output.getValidContents().getFirst()));
         }
         tag.putInt("dur", durationSeconds);
+        SkyblockRecipeUtil.writeWikiUrls(tag, wikiUrls);
     }
 
     @Override
@@ -52,6 +57,7 @@ public class SkyblockForgeServerRecipe implements ReliableServerRecipe {
         CompoundTag outTag = tag.getCompoundOrEmpty("out");
         output = outTag.isEmpty() ? null : SlotContent.of(TagUtil.decodeItemStackOnClient(outTag));
         durationSeconds = tag.getIntOr("dur", 0);
+        wikiUrls = SkyblockRecipeUtil.readWikiUrls(tag);
     }
 
     @Override
@@ -59,15 +65,8 @@ public class SkyblockForgeServerRecipe implements ReliableServerRecipe {
         return TYPE;
     }
 
-    public SlotContent[] getInputs() {
-        return inputs;
-    }
-
-    public SlotContent getOutput() {
-        return output;
-    }
-
-    public int getDurationSeconds() {
-        return durationSeconds;
-    }
+    public SlotContent[] getInputs() { return inputs; }
+    public SlotContent getOutput() { return output; }
+    public int getDurationSeconds() { return durationSeconds; }
+    public String[] getWikiUrls() { return wikiUrls; }
 }

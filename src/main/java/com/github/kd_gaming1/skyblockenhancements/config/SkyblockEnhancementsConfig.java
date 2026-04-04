@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 
 public class SkyblockEnhancementsConfig extends MidnightConfig {
+
     public static final String SKYBLOCK_ENHANCEMENTS = "skyblock_enhancements";
     public static final String CHAT_ENHANCEMENTS = "chat_enhancements";
     public static final String GENERAL_ENHANCEMENTS = "general_enhancements";
@@ -74,6 +75,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 168)
     public static int repoRefreshIntervalHours = 24;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean enableRecipeDiagnostics = false;
 
     @Comment(category = CHAT_ENHANCEMENTS, centered = true)
     public static Comment chatEnhancementsText;
@@ -150,8 +154,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Override
     public void writeChanges() {
         super.writeChanges();
-        // force update lightmap to fix lightmap not updating
-        // when badoptimisations light caching is enabled
+        // BadOptimizations caches the lightmap aggressively — force a rebuild so fullbright changes take effect immediately.
         var mc = Minecraft.getInstance();
         if (mc.gameRenderer == null) return;
         LightTexture lt = mc.gameRenderer.lightTexture();

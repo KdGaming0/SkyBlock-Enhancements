@@ -27,7 +27,7 @@ public class SkyblockForgeRecipeType implements ReliableClientRecipeType {
 
     @Override
     public int getDisplayHeight() {
-        return 54;
+        return 68;
     }
 
     @Override
@@ -42,13 +42,11 @@ public class SkyblockForgeRecipeType implements ReliableClientRecipeType {
 
     @Override
     public void placeSlots(RecipeViewMenu.SlotDefinition def) {
-        // 2 rows × 3 columns input grid
         for (int row = 0; row < 2; row++) {
             for (int col = 0; col < 3; col++) {
                 def.addItemSlot(row * 3 + col, col * SLOT, row * SLOT + 9);
             }
         }
-        // Output slot
         def.addItemSlot(6, 96, 18);
     }
 

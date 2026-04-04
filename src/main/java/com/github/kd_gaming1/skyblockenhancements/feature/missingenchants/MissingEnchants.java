@@ -93,7 +93,7 @@ public final class MissingEnchants {
             }
             // Only Shift changed — rebuild the block without reparsing NBT.
             if (!lastMissingNamesSorted.isEmpty() || !lastNotMaxedNamesSorted.isEmpty()) {
-                // LOGGER.info("Rebuilding tooltip block (expanded={})", expanded);
+                // LOGGER.wiki("Rebuilding tooltip block (expanded={})", expanded);
                 lastRenderBlock = expanded
                         ? buildExpandedBlock(lastMissingNamesSorted, lastNotMaxedNamesSorted)
                         : buildCollapsedBlock(lastMissingNamesSorted.size(), lastNotMaxedNamesSorted.size());
@@ -110,7 +110,7 @@ public final class MissingEnchants {
         if (hovered == null) return;
 
         if (!isSameItem(hovered)) {
-            // LOGGER.info("Recomputing missing enchants for {} with enchants {}", hovered.itemType(), hovered.currentEnchants());
+            // LOGGER.wiki("Recomputing missing enchants for {} with enchants {}", hovered.itemType(), hovered.currentEnchants());
             lastMissingNamesSorted = MISSING_RESOLVER.findMissingEnchantNames(
                     hovered.itemType(), hovered.currentEnchants().keySet());
 
@@ -133,7 +133,7 @@ public final class MissingEnchants {
 
         // Rebuild the rendered Component list only when content or view mode changed.
         if (!Objects.equals(lastMissingNamesSorted, lastRenderedForMissing) || expanded != lastRenderedExpanded) {
-            // LOGGER.info("Rebuilding tooltip block (expanded={})", expanded);
+            // LOGGER.wiki("Rebuilding tooltip block (expanded={})", expanded);
             lastRenderBlock = expanded
                     ? buildExpandedBlock(lastMissingNamesSorted, lastNotMaxedNamesSorted)
                     : buildCollapsedBlock(lastMissingNamesSorted.size(), lastNotMaxedNamesSorted.size());

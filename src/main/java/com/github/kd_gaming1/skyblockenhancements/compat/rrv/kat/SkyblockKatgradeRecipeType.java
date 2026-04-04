@@ -9,8 +9,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 /**
- * Kat pet upgrade: input pet (slot 0) + up to 4 material items (slots 1–4) → output pet (slot 5).
- * Coins and time rendered as text.
+ * Kat pet upgrade layout: input pet (slot 0) + up to 4 materials (slots 1–4) → output pet (slot 5).
+ * Coins and duration rendered as text by the client recipe.
  */
 public class SkyblockKatgradeRecipeType implements ReliableClientRecipeType {
 
@@ -30,7 +30,7 @@ public class SkyblockKatgradeRecipeType implements ReliableClientRecipeType {
 
     @Override
     public int getDisplayHeight() {
-        return 54;
+        return 68;
     }
 
     @Override
@@ -45,14 +45,11 @@ public class SkyblockKatgradeRecipeType implements ReliableClientRecipeType {
 
     @Override
     public void placeSlots(RecipeViewMenu.SlotDefinition def) {
-        // Input pet
         def.addItemSlot(0, 0, 18);
-        // Up to 4 material slots (2×2 grid)
         def.addItemSlot(1, 36, 9);
         def.addItemSlot(2, 54, 9);
         def.addItemSlot(3, 36, 27);
         def.addItemSlot(4, 54, 27);
-        // Output pet
         def.addItemSlot(5, 118, 18);
     }
 
@@ -64,10 +61,5 @@ public class SkyblockKatgradeRecipeType implements ReliableClientRecipeType {
     @Override
     public ItemStack getIcon() {
         return new ItemStack(Items.BONE);
-    }
-
-    @Override
-    public List<ItemStack> getCraftReferences() {
-        return List.of();
     }
 }

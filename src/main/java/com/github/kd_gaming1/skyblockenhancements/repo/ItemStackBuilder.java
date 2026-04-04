@@ -37,7 +37,7 @@ public final class ItemStackBuilder {
     private static final Map<String, Supplier<ItemStack>> VIRTUAL_ITEMS =
             Map.of(
                     "SKYBLOCK_COIN",
-                    () -> named(Items.GOLD_NUGGET, "§6Coins"));
+                    ItemStackBuilder::named);
 
     private ItemStackBuilder() {}
 
@@ -81,9 +81,9 @@ public final class ItemStackBuilder {
 
     // ── Internal ────────────────────────────────────────────────────────────────
 
-    private static ItemStack named(Item item, String name) {
-        ItemStack stack = new ItemStack(item);
-        stack.set(DataComponents.CUSTOM_NAME, Component.literal(name));
+    private static ItemStack named() {
+        ItemStack stack = new ItemStack(Items.GOLD_NUGGET);
+        stack.set(DataComponents.CUSTOM_NAME, Component.literal("§6Coins"));
         return stack;
     }
 
@@ -188,7 +188,6 @@ public final class ItemStackBuilder {
                 case 12 -> "minecraft:light_blue_banner";
                 case 13 -> "minecraft:magenta_banner";
                 case 14 -> "minecraft:orange_banner";
-                case 15 -> "minecraft:white_banner";
                 default -> "minecraft:white_banner";
             };
             // ── Simple renames ──────────────────────────────────────────────────────

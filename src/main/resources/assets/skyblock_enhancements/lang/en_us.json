@@ -115,5 +115,14 @@
   "skyblock_enhancements.midnightconfig.invertTooltipScroll.tooltip": "Inverts the vertical scroll direction for tooltips.",
 
   "skyblock_enhancements.midnightconfig.enableHorizontalScroll": "Enable Horizontal Scroll",
-  "skyblock_enhancements.midnightconfig.enableHorizontalScroll.tooltip": "Hold Left Shift and scroll to move tooltips horizontally."
+  "skyblock_enhancements.midnightconfig.enableHorizontalScroll.tooltip": "Hold Left Shift and scroll to move tooltips horizontally.",
+
+  "skyblock_enhancements.midnightconfig.enableRecipeViewer": "Enable Recipe Viewer Integration",
+  "skyblock_enhancements.midnightconfig.enableRecipeViewer.tooltip": "Enables integration with Reliable Recipe Viewer (RRV) to show SkyBlock recipes.\nRequires RRV to be installed.",
+
+  "skyblock_enhancements.midnightconfig.repoRefreshIntervalHours": "Repo Refresh Interval (hours)",
+  "skyblock_enhancements.midnightconfig.repoRefreshIntervalHours.tooltip": "How often the NEU repo data is automatically refreshed.\nRange: 1–168 hours. Default: 24.",
+
+  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics": "Enable Recipe Diagnostics",
+  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Logs a detailed breakdown of all recipe types found in the NEU repo on startup.\nUseful for development, not needed for normal use."
 }

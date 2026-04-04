@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * Lightweight representation of a single NEU repo item. Stored in-memory and serialized to the
- * consolidated cache. No Minecraft types — those are created lazily by {@link ItemStackBuilder}.
+ * consolidated cache. Free of Minecraft types — those are created lazily by {@link ItemStackBuilder}.
  */
 public class NeuItem {
 
@@ -20,9 +20,9 @@ public class NeuItem {
     public int leatherColor = -1;
 
     /**
-     * Modern item ID parsed from the companion {@code .snbt} file, if present (e.g. {@code
-     * "minecraft:cod"}). Takes priority over {@link #itemId} + {@link #damage} in {@link
-     * ItemStackBuilder} since SNBT files reflect the actual 1.21 item.
+     * Modern item ID from the companion {@code .snbt} file (e.g. {@code "minecraft:cod"}).
+     * Takes priority over {@link #itemId} + {@link #damage} because SNBT files reflect the
+     * actual 1.21 item, not a legacy numeric ID.
      */
     public String snbtItemId;
 
@@ -32,16 +32,64 @@ public class NeuItem {
     /** Modern recipes array, stored as raw JSON for extensibility across recipe types. */
     public List<JsonObject> recipes;
 
+    // ── NPC location data (only present on _NPC items) ──────────────────────────
+
+    /** Internal island identifier, e.g. {@code "crimson_isle"}, {@code "hub"}. */
+    public String island;
+
+    public int x;
+    public int y;
+    public int z;
+
+    /**
+     * When {@code "WIKI_URL"}, the {@link #info} list contains clickable wiki URLs
+     * (fandom first, then the official Hypixel wiki).
+     */
+    public String infoType;
+
+    /** External links for this item. Populated when {@link #infoType} is {@code "WIKI_URL"}. */
+    public List<String> info;
+
+    // ── Recipe queries ───────────────────────────────────────────────────────────
+
     public boolean hasCraftingRecipe() {
         if (recipe != null && !recipe.isEmpty()) return true;
-        if (recipes == null) return false;
-        return recipes.stream()
-                .anyMatch(r -> r.has("type") && "crafting".equals(r.get("type").getAsString()));
+        return hasRecipeOfType("crafting");
     }
 
     public boolean hasForgeRecipe() {
+        return hasRecipeOfType("forge");
+    }
+
+    public boolean hasNpcShopRecipes() {
+        return hasRecipeOfType("npc_shop");
+    }
+
+    /**
+     * Returns {@code true} if this item has any recipe data at all — a legacy crafting grid
+     * or at least one entry in the modern recipes array.
+     */
+    public boolean hasAnyRecipe() {
+        if (recipe != null && !recipe.isEmpty()) return true;
+        return recipes != null && !recipes.isEmpty();
+    }
+
+    public boolean hasWikiUrls() {
+        return "WIKI_URL".equals(infoType) && info != null && !info.isEmpty();
+    }
+
+    // ── Internal ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Scans the modern recipes array for at least one entry matching the given type string.
+     */
+    private boolean hasRecipeOfType(String type) {
         if (recipes == null) return false;
-        return recipes.stream()
-                .anyMatch(r -> r.has("type") && "forge".equals(r.get("type").getAsString()));
+        for (JsonObject r : recipes) {
+            if (r.has("type") && type.equals(r.get("type").getAsString())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

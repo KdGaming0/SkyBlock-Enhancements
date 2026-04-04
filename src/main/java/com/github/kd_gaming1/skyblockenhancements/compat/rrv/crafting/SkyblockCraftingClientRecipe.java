@@ -10,21 +10,25 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
-/**
- * Client-side display wrapper for a SkyBlock crafting recipe. Binds 9 input slots and 1 output
- * slot, and renders an arrow between the grid and the result.
- */
+/** Client-side display for a 3×3 SkyBlock crafting recipe with optional wiki button. */
 public class SkyblockCraftingClientRecipe implements ReliableClientRecipe {
 
     private final SlotContent[] inputs;
     private final SlotContent output;
+    private final String[] wikiUrls;
 
-    public SkyblockCraftingClientRecipe(SlotContent[] inputs, SlotContent output) {
+    /** Tracks the wiki button so we re-add it only when the screen clears its widgets. */
+    private Button wikiButton;
+
+    public SkyblockCraftingClientRecipe(
+            SlotContent[] inputs, SlotContent output, String[] wikiUrls) {
         this.inputs = inputs;
         this.output = output;
+        this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
     }
 
     @Override
@@ -66,12 +70,14 @@ public class SkyblockCraftingClientRecipe implements ReliableClientRecipe {
 
     @Override
     public void renderRecipe(
-            RecipeViewScreen screen,
-            RecipePosition pos,
-            GuiGraphics gfx,
-            int mouseX,
-            int mouseY,
-            float partialTicks) {
-        gfx.drawString(Minecraft.getInstance().font, Component.literal("→"), 62, 22, 0xFF404040, false);
+            RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
+            int mouseX, int mouseY, float partialTicks) {
+        gfx.drawString(
+                Minecraft.getInstance().font, Component.literal("→"), 62, 22, 0xFF404040, false);
+
+        if (wikiButton == null || !screen.children().contains(wikiButton)) {
+            wikiButton = SkyblockRecipeUtil.addWikiButton(
+                    screen, wikiUrls, pos.left(), pos.top() + 56);
+        }
     }
 }

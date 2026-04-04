@@ -1,24 +1,18 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.crafting;
 
-
-import java.util.List;
-
 import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
+import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-/**
- * Defines the 3×3 SkyBlock crafting grid recipe type for RRV. Layout: 9 input slots in a 3×3
- * grid on the left, 1 output slot on the right.
- */
+/** 3×3 SkyBlock crafting grid: 9 input slots + 1 output slot. */
 public class SkyblockCraftingRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockCraftingRecipeType INSTANCE = new SkyblockCraftingRecipeType();
 
-    // Slot layout constants (pixels, relative to recipe area)
     private static final int SLOT = 18;
     private static final int OUTPUT_X = 94;
     private static final int OUTPUT_Y = 18;
@@ -35,30 +29,26 @@ public class SkyblockCraftingRecipeType implements ReliableClientRecipeType {
 
     @Override
     public int getDisplayHeight() {
-        return 54;
+        return 68;
     }
 
     @Override
     public Identifier getGuiTexture() {
-        // null = no background texture; slots render with MC's default slot texture.
-        // Replace with a custom texture later for a polished look.
         return null;
     }
 
     @Override
     public int getSlotCount() {
-        return 10; // 9 inputs + 1 output
+        return 10;
     }
 
     @Override
     public void placeSlots(RecipeViewMenu.SlotDefinition def) {
-        // 3×3 crafting grid
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 def.addItemSlot(row * 3 + col, col * SLOT, row * SLOT);
             }
         }
-        // Output
         def.addItemSlot(9, OUTPUT_X, OUTPUT_Y);
     }
 

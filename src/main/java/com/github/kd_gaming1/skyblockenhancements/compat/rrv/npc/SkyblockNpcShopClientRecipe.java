@@ -1,5 +1,6 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc;
 
+import cc.cassian.rrv.api.ActionType;
 import cc.cassian.rrv.api.recipe.ReliableClientRecipe;
 import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
@@ -10,21 +11,38 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
-/** Client display for NPC shop recipes. */
+/**
+ * Client display for NPC shop recipes. Shows up to 5 cost items → 1 result, plus buttons
+ * for "NPC Info" (navigates to the NPC's info card) and "Wiki" (opens browser).
+ */
 public class SkyblockNpcShopClientRecipe implements ReliableClientRecipe {
 
     private final SlotContent[] costs;
     private final SlotContent result;
-    /** Internal name of the owning NPC (e.g. {@code "ADVENTURER_NPC"}). Used for craft-reference filtering. */
     private final String npcId;
+    private final String[] wikiUrls;
 
-    public SkyblockNpcShopClientRecipe(SlotContent[] costs, SlotContent result, String npcId) {
+    /**
+     * Tracks buttons currently added to the screen. When {@code clearRecipeWidgets()} removes
+     * them (e.g. page navigation), the children check fails and triggers re-creation.
+     */
+    private final List<Button> addedButtons = new ArrayList<>();
+
+    public SkyblockNpcShopClientRecipe(
+            SlotContent[] costs, SlotContent result, String npcId, String npcDisplayName,
+            String[] wikiUrls) {
         this.costs = costs;
         this.result = result;
         this.npcId = npcId != null ? npcId : "";
+        String npcDisplayName1 = npcDisplayName != null ? npcDisplayName : "";
+        this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
     }
 
     public String getNpcId() {
@@ -39,8 +57,9 @@ public class SkyblockNpcShopClientRecipe implements ReliableClientRecipe {
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
         for (int i = 0; i < costs.length && i < 5; i++) {
-            if (costs[i] != null)
+            if (costs[i] != null) {
                 ctx.bindOptionalSlot(i, costs[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
+            }
         }
         if (result != null) ctx.bindSlot(5, result);
     }
@@ -71,12 +90,69 @@ public class SkyblockNpcShopClientRecipe implements ReliableClientRecipe {
 
     @Override
     public void renderRecipe(
-            RecipeViewScreen screen,
-            RecipePosition pos,
-            GuiGraphics gfx,
-            int mouseX,
-            int mouseY,
-            float partialTicks) {
-        gfx.drawString(Minecraft.getInstance().font, Component.literal("→"), 91, 15, 0xFF404040, false);
+            RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
+            int mouseX, int mouseY, float partialTicks) {
+        gfx.drawString(
+                Minecraft.getInstance().font, Component.literal("→"), 91, 15, 0xFF404040, false);
+
+        if (!buttonsStillInScreen(screen)) {
+            addedButtons.clear();
+            addButtons(screen, pos);
+        }
+    }
+
+    private boolean buttonsStillInScreen(RecipeViewScreen screen) {
+        if (addedButtons.isEmpty()) return false;
+        return SkyblockRecipeUtil.containsAllByIdentity(screen.children(), addedButtons);
+    }
+
+    private void addButtons(RecipeViewScreen screen, RecipePosition pos) {
+        int btnY = pos.top() + 42;
+        int leftX = pos.left();
+
+        // "NPC Info" button — navigates to this NPC's info card if one exists.
+        SkyblockNpcInfoClientRecipe infoRecipe = SkyblockNpcInfoRegistry.get(npcId);
+        if (infoRecipe != null) {
+            Button infoBtn = Button.builder(
+                            Component.literal("NPC Info"),
+                            b -> openNpcInfo(infoRecipe))
+                    .pos(leftX, btnY)
+                    .size(56, 12)
+                    .build();
+            screen.addRecipeWidget(infoBtn);
+            addedButtons.add(infoBtn);
+        }
+
+        Button wikiBtn = SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, leftX + 62, btnY);
+        if (wikiBtn != null) {
+            addedButtons.add(wikiBtn);
+        }
+    }
+
+    /** Opens the NPC info recipe in a new RecipeViewScreen, preserving view history. */
+    @SuppressWarnings("DuplicatedCode")
+    private static void openNpcInfo(SkyblockNpcInfoClientRecipe infoRecipe) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) return;
+
+        Screen current = Minecraft.getInstance().screen;
+        Screen parent = current;
+        ArrayList<RecipeViewScreen> viewHistory = new ArrayList<>();
+        if (current instanceof RecipeViewScreen viewScreen) {
+            parent = viewScreen.getMenu().getParentScreen();
+            viewHistory = viewScreen.getMenu().getViewHistory();
+        }
+
+        int containerId = parent instanceof AbstractContainerScreen<?> cs
+                ? cs.getMenu().containerId : 0;
+
+        Minecraft.getInstance().setScreen(
+                new RecipeViewScreen(
+                        new RecipeViewMenu(
+                                parent, containerId, player.getInventory(),
+                                List.of(infoRecipe), ItemStack.EMPTY,
+                                ActionType.ANY, viewHistory),
+                        player.getInventory(),
+                        Component.empty()));
     }
 }

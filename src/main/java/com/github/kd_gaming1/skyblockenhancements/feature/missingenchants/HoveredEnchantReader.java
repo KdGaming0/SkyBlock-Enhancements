@@ -64,7 +64,7 @@ final class HoveredEnchantReader {
     }
 
     private Map<String, Integer> extractEnchantIds(CustomData customData) {
-        // LOGGER.info("Parsing enchants from NBT");
+        // LOGGER.wiki("Parsing enchants from NBT");
         CompoundTag tag = customData.copyTag();
 
         return tag.getCompound("enchantments").map(enchantments -> {

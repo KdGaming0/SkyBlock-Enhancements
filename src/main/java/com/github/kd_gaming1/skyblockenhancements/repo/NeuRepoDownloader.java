@@ -42,7 +42,7 @@ import net.fabricmc.loader.api.FabricLoader;
 public class NeuRepoDownloader {
 
     /** Bump this whenever the NeuItem schema or parsing logic changes. */
-    private static final int CACHE_VERSION = 4;
+    private static final int CACHE_VERSION = 6;
 
     private static final String REPO_ZIP_URL =
             "https://codeload.github.com/NotEnoughUpdates/NotEnoughUpdates-REPO/zip/refs/heads/master";
@@ -182,7 +182,7 @@ public class NeuRepoDownloader {
                         String content = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
                         try {
                             NeuItem item = parseItemJson(internalName, content);
-                            if (item != null) items.put(internalName, item);
+                            items.put(internalName, item);
                         } catch (JsonSyntaxException e) {
                             LOGGER.debug("Skipping malformed item JSON: {}", internalName);
                         }
@@ -260,9 +260,9 @@ public class NeuRepoDownloader {
             // Extract the skull texture
             Matcher texMatcher = TEXTURE_VALUE_PATTERN.matcher(nbtStr);
             if (texMatcher.find()) {
-                String b64 = texMatcher.group(1).replaceAll("[^A-Za-z0-9+/=]", "");
-                while (b64.length() % 4 != 0) b64 += "=";
-                item.skullTexture = b64;
+                StringBuilder b64 = new StringBuilder(texMatcher.group(1).replaceAll("[^A-Za-z0-9+/=]", ""));
+                while (b64.length() % 4 != 0) b64.append("=");
+                item.skullTexture = b64.toString();
             }
 
             // Extract leather armor color
@@ -270,6 +270,22 @@ public class NeuRepoDownloader {
             if (colorMatcher.find()) {
                 item.leatherColor = Integer.parseInt(colorMatcher.group(1));
             }
+        }
+
+        // ── NPC location & external links ────────────────────────────────────────
+        item.island = str(json, "island", "");
+        item.x = json.has("x") ? json.get("x").getAsInt() : 0;
+        item.y = json.has("y") ? json.get("y").getAsInt() : 0;
+        item.z = json.has("z") ? json.get("z").getAsInt() : 0;
+        item.infoType = str(json, "infoType", "");
+
+        if (json.has("info") && json.get("info").isJsonArray()) {
+            item.info = new ArrayList<>();
+            for (JsonElement e : json.getAsJsonArray("info")) {
+                item.info.add(e.getAsString());
+            }
+        } else {
+            item.info = List.of();
         }
 
         // Legacy crafting recipe (A1–C3)

@@ -46,7 +46,7 @@ final class MissingEnchantResolver {
     }
 
     List<String> findMissingEnchantNames(String itemType, Set<String> currentEnchants) {
-        // LOGGER.info("Resolving missing enchants for {}", itemType);
+        // LOGGER.wiki("Resolving missing enchants for {}", itemType);
         if (!loadPoolsIfNeeded()) return List.of();
 
         List<String> possibleEnchants = lookup.getEnchants(itemType, enchantsJsonPath);

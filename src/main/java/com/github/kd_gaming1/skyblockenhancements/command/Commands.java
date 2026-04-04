@@ -1,11 +1,12 @@
 package com.github.kd_gaming1.skyblockenhancements.command;
 
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
 import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader;
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 import com.github.kd_gaming1.skyblockenhancements.util.NeuRepoCache;
 import com.mojang.brigadier.context.CommandContext;
@@ -15,35 +16,37 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
-
 public class Commands {
-    private static NeuRepoDownloader repoDownloader;
+
+    private static final String PREFIX = "§a[Skyblock Enhancements] ";
+    private static final String PREFIX_ERROR = "§c[Skyblock Enhancements] ";
+
+    private Commands() {}
 
     public static void register() {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(literal("skyblockenhancements")
-                .executes(Commands::executeOpenConfig)
-                .then(literal("config")
-                        .executes(Commands::executeOpenConfig))
-                .then(literal("refresh")
-                        .then(literal("repoData")
-                            .executes(Commands::executeRefreshRepoData)))
-        ));
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
+                dispatcher.register(literal("skyblockenhancements")
+                        .executes(Commands::executeOpenConfig)
+                        .then(literal("config")
+                                .executes(Commands::executeOpenConfig))
+                        .then(literal("refresh")
+                                .then(literal("repoData")
+                                        .executes(Commands::executeRefreshRepoData)))));
     }
 
     /**
-     * Opens the configuration menu.
-     * Uses client.send() to delay opening until after the chat closes.
+     * Opens the MidnightConfig GUI. Scheduled to the next tick so the chat screen
+     * closes before the config screen opens — otherwise Minecraft drops the screen immediately.
      */
     private static int executeOpenConfig(CommandContext<FabricClientCommandSource> ctx) {
         Minecraft client = Minecraft.getInstance();
 
         if (client.player == null) {
-            sendError(ctx);
+            ctx.getSource().sendError(
+                    Component.literal(PREFIX_ERROR + "You must be in-game to open the config menu."));
             return 0;
         }
 
-        // Schedule GUI opening on the next tick (after chat closes)
         client.schedule(() -> {
             try {
                 client.setScreen(MidnightConfig.getScreen(client.screen, SkyblockEnhancements.MOD_ID));
@@ -52,50 +55,31 @@ public class Commands {
             }
         });
 
-        sendSuccess(ctx);
+        ctx.getSource().sendFeedback(Component.literal(PREFIX + "Opening configuration menu..."));
         return 1;
     }
 
     private static int executeRefreshRepoData(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("§e[Skyblock Enhancements] Refreshing repository data..."));
+        ctx.getSource().sendFeedback(
+                Component.literal("§e[Skyblock Enhancements] Refreshing repository data..."));
 
         NeuRepoCache cache = new NeuRepoCache();
-
-        // Refresh the enchants data file (add new line for new files)
         cache.refresh("constants/enchants.json");
 
         JsonLookup.clearCache();
         MissingEnchants.invalidateRepoDataCaches();
 
         if (RrvCompat.isActive()) {
-            ctx.getSource().sendFeedback(
-                    Component.literal("§a[SBE] Refreshing NEU item repo..."));
+            ctx.getSource().sendFeedback(Component.literal(PREFIX + "Refreshing NEU item repo..."));
             ItemStackBuilder.clearCache();
-            repoDownloader.refresh().thenRun(() -> {
-                ctx.getSource().sendFeedback(
-                        Component.literal("§a[SBE] Item repo refreshed ("
-                                + NeuItemRegistry.getAll().size() + " items)"));
-            });
+            SkyblockEnhancements.getInstance().getRepoDownloader().refresh().thenRun(() ->
+                    ctx.getSource().sendFeedback(
+                            Component.literal(PREFIX + "Item repo refreshed ("
+                                    + NeuItemRegistry.getAll().size() + " items)")));
         }
 
-        ctx.getSource().sendFeedback(Component.literal("§a[Skyblock Enhancements] Repository data refreshed successfully!"));
+        ctx.getSource().sendFeedback(
+                Component.literal(PREFIX + "Repository data refreshed successfully!"));
         return 1;
     }
-
-
-    /**
-     * Sends a success message to the player.
-     */
-    private static void sendSuccess(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(Component.literal("§a[Skyblock Enhancements] " + "Opening configuration menu..."));
-    }
-
-    /**
-     * Sends an error message to the player.
-     */
-    private static void sendError(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendError(Component.literal("§c[Skyblock Enhancements] " + "You must be in-game to open the config menu."));
-    }
-
-
 }

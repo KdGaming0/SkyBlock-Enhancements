@@ -9,18 +9,22 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
-/** Client display for trade recipes. */
+/** Client display for 1:1 trade recipes with wiki button. */
 public class SkyblockTradeClientRecipe implements ReliableClientRecipe {
 
     private final SlotContent cost;
     private final SlotContent result;
+    private final String[] wikiUrls;
+    private Button wikiButton;
 
-    public SkyblockTradeClientRecipe(SlotContent cost, SlotContent result) {
+    public SkyblockTradeClientRecipe(SlotContent cost, SlotContent result, String[] wikiUrls) {
         this.cost = cost;
         this.result = result;
+        this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
     }
 
     @Override
@@ -56,12 +60,14 @@ public class SkyblockTradeClientRecipe implements ReliableClientRecipe {
 
     @Override
     public void renderRecipe(
-            RecipeViewScreen screen,
-            RecipePosition pos,
-            GuiGraphics gfx,
-            int mouseX,
-            int mouseY,
-            float partialTicks) {
-        gfx.drawString(Minecraft.getInstance().font, Component.literal("→"), 28, 13, 0xFF404040, false);
+            RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
+            int mouseX, int mouseY, float partialTicks) {
+        gfx.drawString(
+                Minecraft.getInstance().font, Component.literal("→"), 28, 13, 0xFF404040, false);
+
+        if (wikiButton == null || !screen.children().contains(wikiButton)) {
+            wikiButton = SkyblockRecipeUtil.addWikiButton(
+                    screen, wikiUrls, pos.left(), pos.top() + 36);
+        }
     }
 }

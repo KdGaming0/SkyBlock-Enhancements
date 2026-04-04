@@ -8,7 +8,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-/** Up to 12 drop slots in a 4×3 grid with mob info rendered as text above. */
+/** Up to 12 drop slots in a 4×3 grid with mob name rendered as text above. */
 public class SkyblockDropsRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockDropsRecipeType INSTANCE = new SkyblockDropsRecipeType();
@@ -29,7 +29,7 @@ public class SkyblockDropsRecipeType implements ReliableClientRecipeType {
 
     @Override
     public int getDisplayHeight() {
-        return 12 + ROWS * SLOT;
+        return 12 + ROWS * SLOT + 14;
     }
 
     @Override
@@ -59,10 +59,5 @@ public class SkyblockDropsRecipeType implements ReliableClientRecipeType {
     @Override
     public ItemStack getIcon() {
         return new ItemStack(Items.DIAMOND_SWORD);
-    }
-
-    @Override
-    public List<ItemStack> getCraftReferences() {
-        return List.of();
     }
 }

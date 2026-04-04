@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -22,14 +23,18 @@ public class SkyblockKatgradeClientRecipe implements ReliableClientRecipe {
     private final SlotContent[] materials;
     private final long coins;
     private final int timeSeconds;
+    private final String[] wikiUrls;
+    private Button wikiButton;
 
     public SkyblockKatgradeClientRecipe(
-            SlotContent input, SlotContent output, SlotContent[] materials, long coins, int timeSeconds) {
+            SlotContent input, SlotContent output, SlotContent[] materials, long coins,
+            int timeSeconds, String[] wikiUrls) {
         this.input = input;
         this.output = output;
         this.materials = materials;
         this.coins = coins;
         this.timeSeconds = timeSeconds;
+        this.wikiUrls = wikiUrls != null ? wikiUrls : new String[0];
     }
 
     @Override
@@ -95,6 +100,11 @@ public class SkyblockKatgradeClientRecipe implements ReliableClientRecipe {
                     46,
                     0xFF808080,
                     false);
+        }
+
+        if (wikiButton == null || !screen.children().contains(wikiButton)) {
+            wikiButton = SkyblockRecipeUtil.addWikiButton(
+                    screen, wikiUrls, pos.left(), pos.top() + 56);
         }
     }
 
