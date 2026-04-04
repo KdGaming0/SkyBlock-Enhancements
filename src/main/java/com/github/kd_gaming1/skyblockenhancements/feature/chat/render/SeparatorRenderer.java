@@ -10,7 +10,11 @@ import org.jetbrains.annotations.Nullable;
  * Renders a separator line: centered text flanked by smooth horizontal lines. If there is no middle
  * text (all dashes), a single line is drawn across the full width.
  */
-public record SeparatorRenderer(int lineColor, @Nullable String middleText) implements CustomChatRenderer {
+public record SeparatorRenderer(int lineColor, @Nullable String middleText)
+        implements CustomChatRenderer {
+
+    /** The Hypixel block-separator character that warrants a 2px line. */
+    private static final int BLOCK_CHAR = '▬';
 
     private static final int TEXT_PADDING = 4;
 
@@ -24,7 +28,8 @@ public record SeparatorRenderer(int lineColor, @Nullable String middleText) impl
             int lineWidth,
             float alpha) {
 
-        int lineThickness = ChatTextHelper.getString(text).contains("▬") ? 2 : 1;
+        // Check for the block character via codepoint iteration to avoid allocating a String.
+        int lineThickness = containsBlockChar(text) ? 2 : 1;
 
         int alphaInt = ARGB.as8BitChannel(alpha);
         int color = ARGB.color(alphaInt, lineColor);
@@ -42,18 +47,34 @@ public record SeparatorRenderer(int lineColor, @Nullable String middleText) impl
         int textX = lineX + (lineWidth - textWidth) / 2;
         graphics.drawString(font, middleText, textX, textY, ARGB.color(alphaInt, 0xFFFFFF), true);
 
-        // Left line.
+        // Left arm.
         int leftEnd = textX - TEXT_PADDING;
         if (leftEnd > lineX + 2) {
             graphics.fill(lineX + 2, lineY + 1, leftEnd, lineY + lineThickness + 1, shadow);
             graphics.fill(lineX + 1, lineY, leftEnd - 1, lineY + lineThickness, color);
         }
 
-        // Right line.
+        // Right arm.
         int rightStart = textX + textWidth + TEXT_PADDING;
         if (rightStart < right - 2) {
             graphics.fill(rightStart + 1, lineY + 1, right - 1, lineY + lineThickness + 1, shadow);
             graphics.fill(rightStart, lineY, right - 2, lineY + lineThickness, color);
         }
+    }
+
+    /**
+     * Returns {@code true} if the sequence contains {@link #BLOCK_CHAR}, short-circuiting on the
+     * first match. Avoids the String allocation that {@code getString().contains()} would require.
+     */
+    private static boolean containsBlockChar(FormattedCharSequence text) {
+        boolean[] found = {false};
+        text.accept((index, style, cp) -> {
+            if (cp == BLOCK_CHAR) {
+                found[0] = true;
+                return false; // stop iteration early
+            }
+            return true;
+        });
+        return found[0];
     }
 }

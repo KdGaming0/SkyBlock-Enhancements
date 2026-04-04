@@ -3,17 +3,23 @@ package com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatTextHelper;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
+import java.util.List;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.GuiMessage;
 import net.minecraft.network.chat.Component;
 
-/** Holds the currently active {@link ChatTab} and filters messages accordingly. */
+/**
+ * Determines which chat messages are visible under the active {@link ChatTab}.
+ *
+ * <p>Separator lines (full or centred dash lines) are shown only when at least one of their
+ * immediate non-separator neighbours belongs to the active tab. This works correctly regardless
+ * of the iteration order of the caller.
+ */
 public final class ChatTabState {
 
     private static ChatTab activeTab = ChatTab.ALL;
-    private static ChatTab lastContentTab = null;
 
-    private ChatTabState() {
-    }
+    private ChatTabState() {}
 
     public static ChatTab getActiveTab() {
         return activeTab;
@@ -21,41 +27,78 @@ public final class ChatTabState {
 
     public static void setActiveTab(ChatTab tab) {
         activeTab = tab;
-        lastContentTab = null;
     }
 
     /**
-     * Returns {@code true} if the given message should be displayed under the current tab. Always
-     * returns {@code true} when tabs are disabled or the player is not on Hypixel.
+     * Returns {@code true} if {@code message} should be shown under the current tab.
+     *
+     * <p>For separator lines, {@code allMessages} is used to find the nearest non-separator
+     * neighbours so the decision is context-aware in both directions.
+     *
+     * @param message the message being evaluated
+     * @param allMessages the full, ordered raw-message history (newest first)
+     * @param indexInHistory the position of {@code message} inside {@code allMessages}, or {@code -1}
+     *     if this is a newly arrived message not yet in the list
      */
-    public static boolean shouldShow(Component message) {
+    public static boolean shouldShow(
+            Component message, List<GuiMessage> allMessages, int indexInHistory) {
         if (!SkyblockEnhancementsConfig.enableChatTabs) return true;
         if (!HypixelLocationState.isOnHypixel()) return true;
         if (activeTab == ChatTab.ALL) return true;
 
-        String plain = ChatFormatting.stripFormatting(message.getString());
-        plain = ChatTextHelper.stripCompactSuffix(plain).trim();
+        String plain = plainText(message);
 
-        // Separators belong to whichever tab the surrounding content belongs to
-        if (ChatTextHelper.isFullSeparator(plain) || ChatTextHelper.isCenteredSeparator(plain)) {
-            return lastContentTab == null || lastContentTab == activeTab;
+        if (isSeparator(plain)) {
+            return separatorBelongsToActiveTab(allMessages, indexInHistory);
         }
 
-        boolean matches = activeTab.matches(plain);
-        if (matches) lastContentTab = activeTab;
-        else {
-            // Find which tab owns this message
-            for (ChatTab tab : ChatTab.values()) {
-                if (tab != ChatTab.ALL && tab.matches(plain)) {
-                    lastContentTab = tab;
-                    break;
-                }
-            }
-        }
-        return matches;
+        return activeTab.matches(plain);
     }
 
-    public static void reset() {
-        lastContentTab = null;
+    // Separator helpers
+
+    /**
+     * Scans outward from {@code index} in both directions and returns {@code true} if the nearest
+     * non-separator message on either side belongs to the active tab.
+     */
+    private static boolean separatorBelongsToActiveTab(
+            List<GuiMessage> allMessages, int index) {
+        if (index < 0) {
+            // Newly arrived message: no neighbours yet — show it optimistically.
+            // It will be re-evaluated correctly on the next refreshTrimmedMessages pass.
+            return true;
+        }
+        return matchesActiveTab(nearestContent(allMessages, index, -1))
+                || matchesActiveTab(nearestContent(allMessages, index, +1));
+    }
+
+    /**
+     * Walks from {@code startIndex} in direction {@code step} (+1 or -1) and returns the first
+     * non-separator message content, or {@code null} if the boundary is reached first.
+     */
+    private static Component nearestContent(
+            List<GuiMessage> allMessages, int startIndex, int step) {
+        for (int i = startIndex + step; i >= 0 && i < allMessages.size(); i += step) {
+            String plain = plainText(allMessages.get(i).content());
+            if (!isSeparator(plain)) {
+                return allMessages.get(i).content();
+            }
+        }
+        return null;
+    }
+
+    private static boolean matchesActiveTab(Component message) {
+        if (message == null) return false;
+        return activeTab.matches(plainText(message));
+    }
+
+    // Text helpers
+    private static String plainText(Component message) {
+        String plain = ChatFormatting.stripFormatting(message.getString());
+        return ChatTextHelper.stripCompactSuffix(plain).trim();
+    }
+
+    private static boolean isSeparator(String plain) {
+        return ChatTextHelper.isFullSeparator(plain) || ChatTextHelper.isCenteredSeparator(plain);
     }
 }

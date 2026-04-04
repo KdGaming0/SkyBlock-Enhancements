@@ -5,6 +5,10 @@ import java.util.function.Predicate;
 /**
  * Hypixel chat channel tabs. Each tab defines a filter predicate that matches messages belonging to
  * that channel.
+ *
+ * <p>Generic status messages like "You're already in this channel!" are intentionally excluded from
+ * individual tab filters because they are identical across channels and would cause messages to leak
+ * into unrelated tabs. They remain visible in the ALL tab.
  */
 public enum ChatTab {
     ALL("A", "/chat a", s -> true),
@@ -21,19 +25,19 @@ public enum ChatTab {
                             || s.endsWith("has left the party.")
                             || s.endsWith("has been removed from the party.")
                             || s.startsWith("The party was transferred to ")
-                            || s.equals("The party was disbanded because all invites expired and the party was empty")
+                            || s.equals(
+                            "The party was disbanded because all invites expired and the"
+                                    + " party was empty")
                             || s.equals("You are now in the PARTY channel")
-                            || s.equals("You must be in a party to join the party channel!")
-                            || s.equals("You're already in this channel!")),
+                            || s.equals(
+                            "You must be in a party to join the party channel!")),
     GUILD(
             "G",
             "/chat g",
             s ->
                     s.startsWith("Guild > ")
                             || s.startsWith("G > ")
-                            || s.equals("You are now in the GUILD channel")
-                            || s.equals("You must be in a guild to join the guild channel!")
-                            || s.equals("You're already in this channel!")),
+                            || s.equals("You are now in the GUILD channel")),
     PM(
             "PM",
             "",
@@ -43,9 +47,7 @@ public enum ChatTab {
             "/chat skyblock-coop",
             s ->
                     s.startsWith("Co-op > ")
-                            || s.equals("You are now in the SKYBLOCK CO-OP channel")
-                            || s.equals("You're already in this channel!")
-                            || s.contains("-----------------------------"));
+                            || s.equals("You are now in the SKYBLOCK CO-OP channel"));
 
     private final String label;
     private final String command;

@@ -24,6 +24,7 @@ public final class CompactMessageHandler {
     private static final int MAX_TRACKED = 512;
 
     private final SBEChatAccess chatAccess;
+
     private final Map<String, Integer> occurrences =
             new LinkedHashMap<>(64, 0.75f, true) {
                 @Override
@@ -31,6 +32,7 @@ public final class CompactMessageHandler {
                     return size() > MAX_TRACKED;
                 }
             };
+
     private @Nullable String previousMessage;
 
     public CompactMessageHandler(SBEChatAccess chatAccess) {
@@ -39,17 +41,18 @@ public final class CompactMessageHandler {
 
     /**
      * Processes an incoming message. If it is a duplicate, removes the previous occurrence and
-     * returns a copy with an {@code (×N)} suffix.
+     * returns a copy with a {@code (×N)} suffix.
      */
     public Component process(Component message) {
         if (!SkyblockEnhancementsConfig.compactDuplicateMessages) return message;
 
-        String raw = stripCountSuffix(message.getString());
+        // ChatTextHelper.stripCompactSuffix validates digit-only counts, unlike a bare lastIndexOf.
+        String raw = ChatTextHelper.stripCompactSuffix(message.getString());
         String trimmed = raw.trim();
         if (trimmed.isEmpty()) return message;
 
-        // Skip separator lines — they compact with their parent message.
-        if (ChatTextHelper.isFullSeparator(trimmed) || ChatTextHelper.isCenteredSeparator(trimmed)) {
+        // Separator lines are always kept as-is; they compact with their surrounding content.
+        if (isSeparator(trimmed)) {
             return message;
         }
 
@@ -76,36 +79,59 @@ public final class CompactMessageHandler {
         previousMessage = null;
     }
 
+    /**
+     * Removes the first occurrence of {@code raw} from the raw-message history, then cleans up any
+     * separator lines that became orphaned as a result.
+     *
+     * <p>A separator is orphaned when it no longer has a non-separator neighbour on at least one
+     * side.
+     */
     private void removePreviousDuplicate(String raw) {
         List<GuiMessage> msgs = chatAccess.sbe$getAllMessages();
         for (int i = 0; i < msgs.size(); i++) {
-            if (!stripCountSuffix(msgs.get(i).content().getString()).equals(raw)) continue;
-
+            if (!ChatTextHelper.stripCompactSuffix(msgs.get(i).content().getString()).equals(raw)) {
+                continue;
+            }
             msgs.remove(i);
-
-            // Remove orphaned separator below (now at index i after shift).
-            if (i < msgs.size() && isSeparator(msgs.get(i).content().getString().trim())) {
-                msgs.remove(i);
-            }
-
-            // Remove orphaned separator above (now at i-1 after possible shift).
-            int above = i - 1;
-            if (above >= 0 && above < msgs.size()
-                    && isSeparator(msgs.get(above).content().getString().trim())) {
-                msgs.remove(above);
-            }
-
+            removeOrphanedSeparators(msgs, i);
             chatAccess.sbe$refreshMessages();
             return;
         }
     }
 
-    private static boolean isSeparator(String trimmed) {
-        return ChatTextHelper.isFullSeparator(trimmed) || ChatTextHelper.isCenteredSeparator(trimmed);
+    /**
+     * After a message at {@code removedIndex} was removed, checks the neighbours at that position
+     * for orphaned separators. Removals are done highest-index-first to keep indices stable.
+     */
+    private static void removeOrphanedSeparators(List<GuiMessage> msgs, int belowIdx) {
+        boolean removeBelow = belowIdx < msgs.size() && isOrphanedSeparator(msgs, belowIdx);
+
+        int aboveIdx = belowIdx - 1;
+        boolean removeAbove = aboveIdx >= 0 && isOrphanedSeparator(msgs, aboveIdx);
+
+        if (removeBelow) msgs.remove(belowIdx);
+        if (removeAbove && aboveIdx < msgs.size()) msgs.remove(aboveIdx);
     }
 
-    private static String stripCountSuffix(String s) {
-        int idx = s.lastIndexOf(COUNT_PREFIX);
-        return idx > 0 ? s.substring(0, idx) : s;
+    /**
+     * Returns {@code true} if the message at {@code index} is a separator with no non-separator
+     * neighbour on at least one side.
+     */
+    private static boolean isOrphanedSeparator(List<GuiMessage> msgs, int index) {
+        if (!isSeparator(plainText(msgs.get(index)))) return false;
+
+        boolean hasContentAbove = index > 0 && !isSeparator(plainText(msgs.get(index - 1)));
+        boolean hasContentBelow =
+                index < msgs.size() - 1 && !isSeparator(plainText(msgs.get(index + 1)));
+
+        return !hasContentAbove || !hasContentBelow;
+    }
+
+    private static String plainText(GuiMessage msg) {
+        return ChatFormatting.stripFormatting(msg.content().getString()).trim();
+    }
+
+    private static boolean isSeparator(String trimmed) {
+        return ChatTextHelper.isFullSeparator(trimmed) || ChatTextHelper.isCenteredSeparator(trimmed);
     }
 }

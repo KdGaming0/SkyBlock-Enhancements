@@ -35,7 +35,7 @@ Recipe data is sourced from the **NEU repository**, downloaded and cached on fir
   - Option to only compact consecutive duplicates.
 - **Centered Hypixel Text**: Properly centers space-padded Hypixel messages in the chat window.
 - **Smooth Separators**: Replaces dash/line separator characters with clean horizontal lines.
-- **Chat Tabs**: Adds Hypixel channel tab buttons (All, Party, Guild, PM, Co-op) above the chat input.
+- **Chat Tabs**: Adds Hypixel channel tab buttons (All, Party, Guild, PM, Co-op) above the chat input. (Button textures were made by [Bentcheesee](https://modrinth.com/user/Bentcheesee). Huge thanks!)
 - **Extended Chat History**: Increases the chat history limit from 100 to a configurable value (up to 2048).
 - **Chat Animation**: Smooth slide-up animation when new messages arrive and when the chat screen opens.
 

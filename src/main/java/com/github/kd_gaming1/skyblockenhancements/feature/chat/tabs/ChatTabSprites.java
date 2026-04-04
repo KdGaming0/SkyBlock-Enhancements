@@ -20,7 +20,7 @@ public final class ChatTabSprites {
             new WidgetSprites(
                     Identifier.fromNamespaceAndPath(MOD_ID, "chat/button_toggled"),
                     Identifier.fromNamespaceAndPath(MOD_ID, "chat/button_disabled"),
-                    Identifier.fromNamespaceAndPath(MOD_ID, "chat/button_toggled_highlightedpng"));
+                    Identifier.fromNamespaceAndPath(MOD_ID, "chat/button_toggled_highlighted"));
 
     private ChatTabSprites() {}
 }

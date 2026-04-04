@@ -20,7 +20,7 @@
   - Option to only compact consecutive duplicates.
 - **Centered Hypixel Text**: Space-padded Hypixel messages are now properly centered in the chat window.
 - **Smooth Separators**: Dash/line separator characters are replaced with clean horizontal lines, with support for centered separator text.
-- **Chat Tabs**: Hypixel channel tab buttons (All, Party, Guild, PM, Co-op) above the chat input for quick channel switching.
+- **Chat Tabs**: Hypixel channel tab buttons (All, Party, Guild, PM, Co-op) above the chat input for quick channel switching. (Button textures were made by [Bentcheesee](https://modrinth.com/user/Bentcheesee). Huge thanks!)
 - **Extended Chat History**: Chat history limit is now configurable up to 2048 messages (default: 1024).
 - **Chat Animation**: Smooth slide-up animation for new messages and the chat input bar.
 - New "Chat Enhancements" category in the config menu for all chat-related settings.

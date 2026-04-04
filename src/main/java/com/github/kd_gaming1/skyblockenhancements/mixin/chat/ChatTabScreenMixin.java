@@ -31,7 +31,8 @@ public abstract class ChatTabScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void sbe$addTabButtons(CallbackInfo ci) {
-        boolean sbe$tabsActive = SkyblockEnhancementsConfig.enableChatTabs && HypixelLocationState.isOnHypixel();
+        boolean sbe$tabsActive =
+                SkyblockEnhancementsConfig.enableChatTabs && HypixelLocationState.isOnHypixel();
         if (!sbe$tabsActive) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -55,10 +56,15 @@ public abstract class ChatTabScreenMixin extends Screen {
                             Component.literal(tab.label()),
                             sprites,
                             btn -> {
+                                boolean wasAlreadyActive = ChatTabState.getActiveTab() == tab;
                                 ChatTabState.setActiveTab(tab);
                                 chat.rescaleChat();
                                 rebuildWidgets();
                                 mc.schedule(() -> setFocused(input));
+
+                                // Only send the channel command when switching to a new tab.
+                                // Re-clicking the active tab just refreshes the view.
+                                if (wasAlreadyActive) return;
 
                                 String cmd = tab.command();
                                 if (cmd != null && !cmd.isEmpty() && mc.player != null) {
@@ -72,6 +78,5 @@ public abstract class ChatTabScreenMixin extends Screen {
 
             x += w + spacing;
         }
-        int sbe$tabBarRight = x;
     }
 }

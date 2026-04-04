@@ -76,7 +76,6 @@ public class SkyblockEnhancements implements ClientModInitializer {
         HypixelLocationState.register();
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             HypixelLocationState.reset();
-            ChatTabState.reset();
         });
 
         MissingEnchants.init();
