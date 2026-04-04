@@ -9,7 +9,7 @@ import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.crafting.SkyblockCraftingServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.drops.SkyblockDropsServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatgradeServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatUpgradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcShopServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTradeServerRecipe;
@@ -245,7 +245,7 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
         long coins = recipe.has("coins") ? recipe.get("coins").getAsLong() : 0;
         int time = recipe.has("time") ? recipe.get("time").getAsInt() : 0;
 
-        return new SkyblockKatgradeServerRecipe(
+        return new SkyblockKatUpgradeServerRecipe(
                 input, output, materials, coins, time, extractWikiUrls(item));
     }
 

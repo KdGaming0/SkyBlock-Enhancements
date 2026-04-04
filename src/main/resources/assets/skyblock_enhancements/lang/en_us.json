@@ -89,6 +89,9 @@
   "skyblock_enhancements.midnightconfig.hideItemFrames": "Hide Item Frames",
   "skyblock_enhancements.midnightconfig.hideItemFrames.tooltip": "Hides the item frame when it contains an item, leaving only the item visible.",
 
+  "skyblock_enhancements.midnightconfig.hideTextureErrors": "Hide texture error messages in logs",
+  "skyblock_enhancements.midnightconfig.hideTextureErrors.tooltip": "Hide texture error messages produced when Mojang fails to verify skin textures",
+
   "skyblock_enhancements.midnightconfig.fullbrightText": "Fullbright Settings",
 
   "skyblock_enhancements.midnightconfig.enableFullbright": "Enable Fullbright",

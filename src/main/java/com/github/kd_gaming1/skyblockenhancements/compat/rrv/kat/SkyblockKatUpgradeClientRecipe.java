@@ -16,7 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 /** Client display for Kat pet upgrade recipes. */
-public class SkyblockKatgradeClientRecipe implements ReliableClientRecipe {
+public class SkyblockKatUpgradeClientRecipe implements ReliableClientRecipe {
 
     private final SlotContent input;
     private final SlotContent output;
@@ -26,7 +26,7 @@ public class SkyblockKatgradeClientRecipe implements ReliableClientRecipe {
     private final String[] wikiUrls;
     private Button wikiButton;
 
-    public SkyblockKatgradeClientRecipe(
+    public SkyblockKatUpgradeClientRecipe(
             SlotContent input, SlotContent output, SlotContent[] materials, long coins,
             int timeSeconds, String[] wikiUrls) {
         this.input = input;
@@ -39,7 +39,7 @@ public class SkyblockKatgradeClientRecipe implements ReliableClientRecipe {
 
     @Override
     public ReliableClientRecipeType getViewType() {
-        return SkyblockKatgradeRecipeType.INSTANCE;
+        return SkyblockKatUpgradeRecipeType.INSTANCE;
     }
 
     @Override

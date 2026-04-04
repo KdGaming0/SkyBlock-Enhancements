@@ -2,7 +2,6 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat;
 
 import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
-import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -12,9 +11,9 @@ import net.minecraft.world.item.Items;
  * Kat pet upgrade layout: input pet (slot 0) + up to 4 materials (slots 1–4) → output pet (slot 5).
  * Coins and duration rendered as text by the client recipe.
  */
-public class SkyblockKatgradeRecipeType implements ReliableClientRecipeType {
+public class SkyblockKatUpgradeRecipeType implements ReliableClientRecipeType {
 
-    public static final SkyblockKatgradeRecipeType INSTANCE = new SkyblockKatgradeRecipeType();
+    public static final SkyblockKatUpgradeRecipeType INSTANCE = new SkyblockKatUpgradeRecipeType();
 
     private static final int SLOT = 18;
 

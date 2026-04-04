@@ -89,6 +89,9 @@
   "skyblock_enhancements.midnightconfig.hideItemFrames": "Skjul gjenstandsrammer",
   "skyblock_enhancements.midnightconfig.hideItemFrames.tooltip": "Skjuler gjenstandsramma når ho inneheld ein gjenstand, slik at berre gjenstanden er synleg.",
 
+  "skyblock_enhancements.midnightconfig.hideTextureErrors": "Gøym feilmeldingar for teksturar i loggane",
+  "skyblock_enhancements.midnightconfig.hideTextureErrors.tooltip": "Gøym feilmeldingar for teksturar som oppstår når Mojang ikkje klarer å verifisere hudteksturar",
+
   "skyblock_enhancements.midnightconfig.fullbrightText": "Innstillingar for fullt lys (Fullbright)",
 
   "skyblock_enhancements.midnightconfig.enableFullbright": "Slå på fullt lys",

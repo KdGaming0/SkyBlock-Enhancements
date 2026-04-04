@@ -16,8 +16,8 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.drops.SkyblockDrops
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.drops.SkyblockDropsServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatgradeClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatgradeServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatUpgradeClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatUpgradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoRegistry;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoServerRecipe;
@@ -132,8 +132,8 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
                         r.getCombatXp(), r.getWikiUrls())));
 
         ItemView.addClientRecipeWrapper(
-                SkyblockKatgradeServerRecipe.TYPE,
-                r -> List.of(new SkyblockKatgradeClientRecipe(
+                SkyblockKatUpgradeServerRecipe.TYPE,
+                r -> List.of(new SkyblockKatUpgradeClientRecipe(
                         r.getInput(), r.getOutput(), r.getMaterials(), r.getCoins(),
                         r.getTimeSeconds(), r.getWikiUrls())));
 

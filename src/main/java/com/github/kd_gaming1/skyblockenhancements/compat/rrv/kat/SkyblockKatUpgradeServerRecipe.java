@@ -10,12 +10,12 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.Identifier;
 
 /** Server-side Kat pet upgrade recipe: input pet + materials + coins → output pet. */
-public class SkyblockKatgradeServerRecipe implements ReliableServerRecipe {
+public class SkyblockKatUpgradeServerRecipe implements ReliableServerRecipe {
 
-    public static final ReliableServerRecipeType<SkyblockKatgradeServerRecipe> TYPE =
+    public static final ReliableServerRecipeType<SkyblockKatUpgradeServerRecipe> TYPE =
             ReliableServerRecipeType.register(
                     Identifier.fromNamespaceAndPath("skyblock_enhancements", "skyblock_katgrade"),
-                    () -> new SkyblockKatgradeServerRecipe(
+                    () -> new SkyblockKatUpgradeServerRecipe(
                             null, null, new SlotContent[0], 0, 0, new String[0]));
 
     private static final int MAX_ITEMS = 4;
@@ -27,7 +27,7 @@ public class SkyblockKatgradeServerRecipe implements ReliableServerRecipe {
     private int timeSeconds;
     private String[] wikiUrls;
 
-    public SkyblockKatgradeServerRecipe(
+    public SkyblockKatUpgradeServerRecipe(
             SlotContent input, SlotContent output, SlotContent[] materials, long coins,
             int timeSeconds, String[] wikiUrls) {
         this.input = input;

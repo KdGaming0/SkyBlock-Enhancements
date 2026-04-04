@@ -20,6 +20,13 @@ public class NeuItem {
     public int leatherColor = -1;
 
     /**
+     * Filter category resolved from the last lore line (e.g. {@code ARMOR}, {@code WEAPON}).
+     * {@code null} for items that don't fit any defined category bucket. Populated at parse
+     * time by {@link SkyblockItemCategory#fromNeuItem(NeuItem)} and persisted in the cache.
+     */
+    public transient SkyblockItemCategory category;
+
+    /**
      * Modern item ID from the companion {@code .snbt} file (e.g. {@code "minecraft:cod"}).
      * Takes priority over {@link #itemId} + {@link #damage} because SNBT files reflect the
      * actual 1.21 item, not a legacy numeric ID.

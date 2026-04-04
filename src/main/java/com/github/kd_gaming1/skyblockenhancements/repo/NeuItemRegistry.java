@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockCategoryFilter;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRrvClientPlugin;
 import net.minecraft.network.chat.Component;
 
@@ -58,6 +59,8 @@ public final class NeuItemRegistry {
         loaded = false;
         // Invalidate the RRV spoof cache so it regenerates from the new repo data.
         invalidateRrvCache();
+        // Invalidate the category filter's display-name index so it rebuilds from new data.
+        invalidateCategoryIndex();
     }
 
     /**
@@ -68,6 +71,20 @@ public final class NeuItemRegistry {
         try {
             if (RrvCompat.isRrvPresent()) {
                 SkyblockRrvClientPlugin.invalidateCache();
+            }
+        } catch (NoClassDefFoundError ignored) {
+            // RRV not on the classpath — nothing to invalidate.
+        }
+    }
+
+    /**
+     * Drops the category filter's display-name → NeuItem index. Guarded the same way as
+     * {@link #invalidateRrvCache()} to avoid class-loading issues when RRV is absent.
+     */
+    private static void invalidateCategoryIndex() {
+        try {
+            if (RrvCompat.isRrvPresent()) {
+                SkyblockCategoryFilter.invalidateIndex();
             }
         } catch (NoClassDefFoundError ignored) {
             // RRV not on the classpath — nothing to invalidate.
