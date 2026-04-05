@@ -3,10 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import java.net.URI;
-import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Set;
 
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -118,14 +115,16 @@ public final class SkyblockRecipeUtil {
             List<? extends GuiEventListener> expected) {
         if (expected.isEmpty()) return true;
 
-        Set<GuiEventListener> remaining =
-                Collections.newSetFromMap(new IdentityHashMap<>());
-        remaining.addAll(expected);
-
-        for (GuiEventListener child : children) {
-            remaining.remove(child);
-            if (remaining.isEmpty()) return true;
+        for (GuiEventListener exp : expected) {
+            boolean found = false;
+            for (GuiEventListener child : children) {
+                if (child == exp) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return false;
         }
-        return false;
+        return true;
     }
 }

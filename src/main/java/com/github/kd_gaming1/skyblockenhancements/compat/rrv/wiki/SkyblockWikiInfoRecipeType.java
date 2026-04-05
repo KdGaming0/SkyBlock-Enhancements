@@ -12,6 +12,8 @@ public class SkyblockWikiInfoRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockWikiInfoRecipeType INSTANCE = new SkyblockWikiInfoRecipeType();
 
+    private final ItemStack icon = new ItemStack(Items.KNOWLEDGE_BOOK);
+
     @Override
     public Component getDisplayName() {
         return Component.literal("SkyBlock Wiki");
@@ -49,6 +51,6 @@ public class SkyblockWikiInfoRecipeType implements ReliableClientRecipeType {
 
     @Override
     public ItemStack getIcon() {
-        return new ItemStack(Items.KNOWLEDGE_BOOK);
+        return icon;
     }
 }

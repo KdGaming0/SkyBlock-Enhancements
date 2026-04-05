@@ -4,33 +4,22 @@ import cc.cassian.rrv.common.overlay.OverlayManager;
 import com.github.kd_gaming1.skyblockenhancements.repo.SkyblockItemCategory;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Creates a compact row of category-filter toggle buttons for the RRV item list overlay.
+ * Creates a row of icon-only category-filter toggle buttons for the RRV item list overlay.
  *
- * <p>Active state is stored in {@link SkyblockCategoryState}; no search-bar text is modified.
- * Clicking a button toggles the category and calls
- * {@link OverlayManager#updateOverlaysAndWidgets()}, which re-runs the query pipeline and
- * refreshes the buttons with updated styling — all in a single call.
+ * <p>Active state is stored in {@link SkyblockCategoryState}. Clicking a button toggles the
+ * category and triggers {@link OverlayManager#updateOverlaysAndWidgets()}, which re-runs the
+ * query pipeline and re-creates these buttons with updated toggled state.
  */
 public final class SkyblockCategoryButtons {
 
-    /** Pixel height of each compact button. */
-    private static final int BTN_HEIGHT = 12;
+    /** Pixel size (width = height) of each square icon button. */
+    private static final int BTN_SIZE = 16;
 
-    /** Horizontal gap between adjacent buttons. */
-    private static final int BTN_GAP = 1;
-
-    /** Horizontal label padding (each side). */
-    private static final int LABEL_PAD = 3;
-
-    /** Minimum button width in pixels. */
-    private static final int MIN_WIDTH = 14;
+    /** Horizontal gap between adjacent buttons in pixels. */
+    private static final int BTN_GAP = 2;
 
     private static final SkyblockItemCategory[] CATEGORIES = {
             SkyblockItemCategory.ARMOR,
@@ -43,83 +32,58 @@ public final class SkyblockCategoryButtons {
             SkyblockItemCategory.MATERIAL,
     };
 
-    private static final String[] LABELS = {
-            "Armor", "Wep", "Tool", "Acc", "Pet", "Equip", "Cos", "Mat"
+    /**
+     * Base sprite names — must exactly match the file names under
+     * {@code assets/skyblock_enhancements/textures/gui/sprites/item_list/}
+     * (without the {@code .png} extension or any state suffix).
+     */
+    private static final String[] SPRITE_NAMES = {
+            "armour",
+            "weaponry",
+            "tools",
+            "accessories",
+            "pets",
+            "equipment",
+            "cosmetics",
+            "materials",
     };
 
     private SkyblockCategoryButtons() {}
 
     /**
-     * Builds and positions the toggle buttons centered above the search bar.
+     * Builds and positions icon buttons centered above the search bar.
      *
-     * @param searchBarX     left edge of the search bar
-     * @param searchBarY     top edge of the search bar
-     * @param searchBarWidth width of the search bar
-     * @return buttons ready to be added as renderables
+     * @param searchBarX     left edge of the search bar in screen pixels
+     * @param searchBarY     top edge of the search bar in screen pixels
+     * @param searchBarWidth width of the search bar in pixels
+     * @return buttons ready to be registered as renderables
      */
-    public static List<Button> create(int searchBarX, int searchBarY, int searchBarWidth) {
-        int[] widths = computeWidths(searchBarWidth);
-        int totalWidth = sum(widths) + BTN_GAP * (widths.length - 1);
+    public static List<CategoryIconButton> create(
+            int searchBarX, int searchBarY, int searchBarWidth) {
 
+        int count = CATEGORIES.length;
+        int totalWidth = count * BTN_SIZE + (count - 1) * BTN_GAP;
         int startX = searchBarX + (searchBarWidth - totalWidth) / 2;
-        int btnY = searchBarY - BTN_HEIGHT - 2;
+        int btnY = searchBarY - BTN_SIZE - 2;
 
         @Nullable SkyblockItemCategory active = SkyblockCategoryState.getActiveCategory();
-        List<Button> buttons = new ArrayList<>(CATEGORIES.length);
+        List<CategoryIconButton> buttons = new ArrayList<>(count);
 
         int x = startX;
-        for (int i = 0; i < CATEGORIES.length; i++) {
+        for (int i = 0; i < count; i++) {
             SkyblockItemCategory category = CATEGORIES[i];
-            boolean isActive = category == active;
-
-            MutableComponent label = Component.literal((isActive ? "§a" : "§7") + LABELS[i]);
-
-            Button btn =
-                    Button.builder(label, b -> onToggle(category))
-                            .pos(x, btnY)
-                            .size(widths[i], BTN_HEIGHT)
-                            .build();
-
+            CategoryIconButton btn = new CategoryIconButton(
+                    x, btnY, BTN_SIZE,
+                    SPRITE_NAMES[i],
+                    category == active,
+                    b -> onToggle(category));
             buttons.add(btn);
-            x += widths[i] + BTN_GAP;
+            x += BTN_SIZE + BTN_GAP;
         }
 
         return buttons;
     }
 
-    // ── Private helpers ─────────────────────────────────────────────────────────
-
-    /**
-     * Computes per-button widths, shrinking uniformly if the row would overflow the search bar.
-     */
-    private static int[] computeWidths(int searchBarWidth) {
-        var font = Minecraft.getInstance().font;
-        int[] widths = new int[LABELS.length];
-        for (int i = 0; i < LABELS.length; i++) {
-            widths[i] = Math.max(MIN_WIDTH, font.width(LABELS[i]) + LABEL_PAD * 2);
-        }
-
-        // If total row is too wide, trim each button by 2 px (down to the minimum).
-        if (sum(widths) + BTN_GAP * (widths.length - 1) > searchBarWidth) {
-            for (int i = 0; i < widths.length; i++) {
-                widths[i] = Math.max(MIN_WIDTH, widths[i] - 2);
-            }
-        }
-
-        return widths;
-    }
-
-    private static int sum(int[] values) {
-        int total = 0;
-        for (int v : values) total += v;
-        return total;
-    }
-
-    /**
-     * Toggles the category state then calls
-     * {@link OverlayManager#updateOverlaysAndWidgets()}, which internally re-runs
-     * {@code updateQuery} and refreshes all overlay widgets (including these buttons).
-     */
     private static void onToggle(SkyblockItemCategory category) {
         SkyblockCategoryState.toggle(category);
         OverlayManager.INSTANCE.updateOverlaysAndWidgets();

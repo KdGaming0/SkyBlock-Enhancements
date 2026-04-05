@@ -19,9 +19,11 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForge
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatUpgradeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatUpgradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoRecipeType;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoRegistry;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcShopClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcShopRecipeType;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcShopServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTradeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTradeServerRecipe;
@@ -35,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +74,9 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
         cachedItems = null;
         cachedGrouped = null;
         injected = false;
+        SkyblockNpcShopRecipeType.INSTANCE.clearCache();
+        SkyblockNpcInfoRecipeType.INSTANCE.clearCache();
+        FullStackListCache.invalidate();
     }
 
     @Override
@@ -148,8 +154,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
     /**
      * Injects SkyBlock items and recipes into RRV's internal cache. On the first call (or after
      * {@link #invalidateCache()}), generates data from the NEU repo and injects it. Subsequent
-     * calls are no-ops since RRV doesn't clear its cache on lobby switches — our data is still
-     * there.
+     * calls are no-ops since RRV doesn't clear its cache on lobby switches.
      */
     public static void spoofRrvCache() {
         if (!NeuItemRegistry.isLoaded()) return;
@@ -160,15 +165,20 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
 
         SkyblockNpcInfoRegistry.clear();
         ensureCachePopulated();
-        injectIntoRrv(cachedItems, cachedGrouped);
-        injected = true;
 
-        assert cachedItems != null;
-        assert cachedGrouped != null;
-        LOGGER.info(
-                "Spoofed RRV cache with {} items and {} recipes.",
-                cachedItems.size(),
-                cachedGrouped.values().stream().mapToInt(List::size).sum());
+        Minecraft.getInstance().execute(() -> {
+            if (injected) return;
+
+            injectIntoRrv(cachedItems, cachedGrouped);
+            injected = true;
+
+            assert cachedItems != null;
+            assert cachedGrouped != null;
+            LOGGER.info(
+                    "Spoofed RRV cache with {} items and {} recipes.",
+                    cachedItems.size(),
+                    cachedGrouped.values().stream().mapToInt(List::size).sum());
+        });
     }
 
     /**

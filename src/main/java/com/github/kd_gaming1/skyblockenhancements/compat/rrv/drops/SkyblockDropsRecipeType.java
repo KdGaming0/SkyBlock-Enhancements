@@ -2,7 +2,6 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv.drops;
 
 import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
-import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -16,6 +15,8 @@ public class SkyblockDropsRecipeType implements ReliableClientRecipeType {
     private static final int SLOT = 18;
     private static final int COLS = 4;
     private static final int ROWS = 3;
+
+    private final ItemStack icon = new ItemStack(Items.DIAMOND_SWORD);
 
     @Override
     public Component getDisplayName() {
@@ -58,6 +59,6 @@ public class SkyblockDropsRecipeType implements ReliableClientRecipeType {
 
     @Override
     public ItemStack getIcon() {
-        return new ItemStack(Items.DIAMOND_SWORD);
+        return icon;
     }
 }

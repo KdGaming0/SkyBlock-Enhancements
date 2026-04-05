@@ -17,6 +17,9 @@ public class SkyblockCraftingRecipeType implements ReliableClientRecipeType {
     private static final int OUTPUT_X = 94;
     private static final int OUTPUT_Y = 18;
 
+    private final ItemStack icon = new ItemStack(Items.CRAFTING_TABLE);
+    private final List<ItemStack> craftReferences = List.of(icon);
+
     @Override
     public Component getDisplayName() {
         return Component.literal("SkyBlock Crafting");
@@ -59,11 +62,11 @@ public class SkyblockCraftingRecipeType implements ReliableClientRecipeType {
 
     @Override
     public ItemStack getIcon() {
-        return new ItemStack(Items.CRAFTING_TABLE);
+        return icon;
     }
 
     @Override
     public List<ItemStack> getCraftReferences() {
-        return List.of(new ItemStack(Items.CRAFTING_TABLE));
+        return craftReferences;
     }
 }

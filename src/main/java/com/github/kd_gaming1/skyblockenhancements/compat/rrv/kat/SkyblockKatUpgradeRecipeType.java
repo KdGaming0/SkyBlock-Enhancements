@@ -17,6 +17,8 @@ public class SkyblockKatUpgradeRecipeType implements ReliableClientRecipeType {
 
     private static final int SLOT = 18;
 
+    private final ItemStack icon = new ItemStack(Items.BONE);
+
     @Override
     public Component getDisplayName() {
         return Component.literal("Kat Pet Upgrade");
@@ -59,6 +61,6 @@ public class SkyblockKatUpgradeRecipeType implements ReliableClientRecipeType {
 
     @Override
     public ItemStack getIcon() {
-        return new ItemStack(Items.BONE);
+        return icon;
     }
 }

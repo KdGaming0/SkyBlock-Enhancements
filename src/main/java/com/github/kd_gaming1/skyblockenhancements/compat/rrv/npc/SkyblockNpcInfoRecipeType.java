@@ -23,6 +23,9 @@ public class SkyblockNpcInfoRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockNpcInfoRecipeType INSTANCE = new SkyblockNpcInfoRecipeType();
 
+    private final ItemStack icon = new ItemStack(Items.PLAYER_HEAD);
+    private List<ItemStack> cachedReferences = null;
+
     @Override
     public Component getDisplayName() {
         return Component.literal("SkyBlock NPC");
@@ -60,7 +63,11 @@ public class SkyblockNpcInfoRecipeType implements ReliableClientRecipeType {
 
     @Override
     public ItemStack getIcon() {
-        return new ItemStack(Items.PLAYER_HEAD);
+        return icon;
+    }
+
+    public void clearCache() {
+        cachedReferences = null;
     }
 
     /**
@@ -70,6 +77,7 @@ public class SkyblockNpcInfoRecipeType implements ReliableClientRecipeType {
     @Override
     public List<ItemStack> getCraftReferences() {
         if (!NeuItemRegistry.isLoaded()) return List.of();
+        if (cachedReferences != null) return cachedReferences;
 
         List<ItemStack> npcs = new ArrayList<>();
         for (NeuItem item : NeuItemRegistry.getAll().values()) {
@@ -78,6 +86,7 @@ public class SkyblockNpcInfoRecipeType implements ReliableClientRecipeType {
                 if (!stack.isEmpty()) npcs.add(stack);
             }
         }
+        cachedReferences = npcs;
         return npcs;
     }
 

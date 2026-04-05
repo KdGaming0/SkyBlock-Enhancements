@@ -2,7 +2,6 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade;
 
 import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
-import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -12,6 +11,8 @@ import net.minecraft.world.item.Items;
 public class SkyblockTradeRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockTradeRecipeType INSTANCE = new SkyblockTradeRecipeType();
+
+    private final ItemStack icon = new ItemStack(Items.VILLAGER_SPAWN_EGG);
 
     @Override
     public Component getDisplayName() {
@@ -51,6 +52,6 @@ public class SkyblockTradeRecipeType implements ReliableClientRecipeType {
 
     @Override
     public ItemStack getIcon() {
-        return new ItemStack(Items.VILLAGER_SPAWN_EGG);
+        return icon;
     }
 }

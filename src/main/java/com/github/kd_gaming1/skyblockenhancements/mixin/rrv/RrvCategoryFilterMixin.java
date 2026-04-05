@@ -4,12 +4,8 @@ import cc.cassian.rrv.common.overlay.AbstractRrvOverlay.ScreenContext;
 import cc.cassian.rrv.common.overlay.itemlist.AbstractRrvItemListOverlay;
 import cc.cassian.rrv.common.overlay.itemlist.view.ItemViewOverlay;
 import cc.cassian.rrv.common.overlay.itemlist.view.SearchBar;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockCategoryButtons;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockCategoryFilter;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockCategoryState;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.*;
 import com.github.kd_gaming1.skyblockenhancements.repo.SkyblockItemCategory;
-import net.minecraft.client.gui.components.Button;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -58,7 +54,7 @@ public abstract class RrvCategoryFilterMixin {
     private void sbe$addCategoryButtons(ScreenContext ctx, CallbackInfo ci) {
         if (!RrvCompat.isActive() || searchbar == null) return;
 
-        for (Button btn :
+        for (CategoryIconButton btn :
                 SkyblockCategoryButtons.create(
                         searchbar.getX(), searchbar.getY(), searchbar.getWidth())) {
             ctx.addRenderable(btn);

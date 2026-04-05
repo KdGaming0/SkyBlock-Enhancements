@@ -25,6 +25,7 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
     public static final SkyblockNpcShopRecipeType INSTANCE = new SkyblockNpcShopRecipeType();
 
     private static final int SLOT = 18;
+    private List<ItemStack> cachedReferences = null;
 
     @Override
     public Component getDisplayName() {
@@ -69,6 +70,10 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
         return new ItemStack(Items.EMERALD);
     }
 
+    public void clearCache() {
+        cachedReferences = null;
+    }
+
     /**
      * Only NPCs that actually have shop recipes serve as craft references — prevents
      * non-shop NPCs from appearing in the sidebar with zero matching recipes.
@@ -76,6 +81,7 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
     @Override
     public List<ItemStack> getCraftReferences() {
         if (!NeuItemRegistry.isLoaded()) return List.of();
+        if (cachedReferences != null) return cachedReferences;
 
         List<ItemStack> npcs = new ArrayList<>();
         for (NeuItem item : NeuItemRegistry.getAll().values()) {
@@ -84,6 +90,7 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
                 if (!stack.isEmpty()) npcs.add(stack);
             }
         }
+        cachedReferences = npcs;
         return npcs;
     }
 

@@ -15,6 +15,9 @@ public class SkyblockForgeRecipeType implements ReliableClientRecipeType {
 
     private static final int SLOT = 18;
 
+    private final ItemStack icon = new ItemStack(Items.ANVIL);
+    private final List<ItemStack> craftReferences = List.of(icon);
+
     @Override
     public Component getDisplayName() {
         return Component.literal("SkyBlock Forge");
@@ -57,11 +60,11 @@ public class SkyblockForgeRecipeType implements ReliableClientRecipeType {
 
     @Override
     public ItemStack getIcon() {
-        return new ItemStack(Items.ANVIL);
+        return icon;
     }
 
     @Override
     public List<ItemStack> getCraftReferences() {
-        return List.of(new ItemStack(Items.ANVIL));
+        return craftReferences;
     }
 }
