@@ -39,6 +39,7 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
 
     @Shadow @Final private List<GuiMessage.Line> trimmedMessages;
     @Shadow @Final private List<GuiMessage> allMessages;
+    @Shadow private int chatScrollbarPos;
 
     @Shadow
     protected abstract int getWidth();
@@ -58,6 +59,16 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
     @Override
     public List<GuiMessage> sbe$getAllMessages() {
         return allMessages;
+    }
+
+    @Override
+    public List<GuiMessage.Line> sbe$getTrimmedMessages() {
+        return trimmedMessages;
+    }
+
+    @Override
+    public int sbe$getChatScrollbarPos() {
+        return chatScrollbarPos;
     }
 
     @Override

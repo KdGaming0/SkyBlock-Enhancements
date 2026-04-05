@@ -11,6 +11,10 @@ public interface SBEChatAccess {
 
     List<GuiMessage> sbe$getAllMessages();
 
+    List<GuiMessage.Line> sbe$getTrimmedMessages();
+
+    int sbe$getChatScrollbarPos();
+
     void sbe$refreshMessages();
 
     int sbe$getScaledWidth();

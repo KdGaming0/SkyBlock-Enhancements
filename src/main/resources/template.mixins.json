@@ -20,6 +20,7 @@
     "SignEnterToConfirmMixin",
     "access.AbstractSignEditScreenAccessor",
     "chat.ChatAnimationMixin",
+    "chat.ChatContextMenuMixin",
     "chat.ChatHistoryMixin",
     "chat.ChatRenderingMixin",
     "chat.ChatScreenAnimationMixin",
