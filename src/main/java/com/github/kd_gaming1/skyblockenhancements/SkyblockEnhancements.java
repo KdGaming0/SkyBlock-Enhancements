@@ -9,6 +9,8 @@ import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
 import com.github.kd_gaming1.skyblockenhancements.feature.ItemGlowManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminderFeature;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
+import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceDataFetcher;
+import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceTooltipEnhancement;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
@@ -39,7 +41,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     /** Ticks between repo staleness checks (~5 minutes at 20 TPS). */
-    private static final int REFRESH_CHECK_INTERVAL_TICKS = 6000;
+    private static final int REFRESH_CHECK_INTERVAL_TICKS = 12000;
 
     private final NeuRepoCache cache = new NeuRepoCache();
     private final ReminderStorage reminderStorage =
@@ -79,9 +81,12 @@ public class SkyblockEnhancements implements ClientModInitializer {
         MissingEnchants.init();
         ItemGlowManager.init();
         Fullbright.init();
+        PriceTooltipEnhancement.init();
+        PriceDataFetcher.init();
 
         ClientTickEvents.END_CLIENT_TICK.register(Fullbright::onTick);
         ClientTickEvents.END_CLIENT_TICK.register(client -> IrisCompat.tick());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> PriceDataFetcher.tick());
 
         // Enchant data is independent of RRV — always fetch on startup.
         ClientLifecycleEvents.CLIENT_STARTED.register(

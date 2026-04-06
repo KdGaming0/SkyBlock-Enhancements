@@ -80,6 +80,16 @@
   "skyblock_enhancements.midnightconfig.chatAnimationDurationMs": "Animation Duration (ms)",
   "skyblock_enhancements.midnightconfig.chatAnimationDurationMs.tooltip": "How long the chat animation takes in milliseconds.\nRange: 50–500. Default: 150.",
 
+  "skyblock_enhancements.midnightconfig.category.tooltip_enhancements": "Tooltip Enhancements",
+
+  "skyblock_enhancements.midnightconfig.tooltipEnhancementsText": "Tooltip Enhancements",
+
+  "skyblock_enhancements.midnightconfig.enablePriceTooltips": "Show Price Tooltips",
+  "skyblock_enhancements.midnightconfig.enablePriceTooltips.tooltip": "Shows AH Lowest BIN and Bazaar prices in item tooltips while on SkyBlock.",
+
+  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes": "Price Refresh Interval (minutes)",
+  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes.tooltip": "How often price data is refreshed from the API.\nRange: 1–30 minutes. Default: 5.",
+
   "skyblock_enhancements.midnightconfig.text2": "General Enhancements",
 
   "skyblock_enhancements.midnightconfig.noDoubleSneak": "Prevent double sneak",

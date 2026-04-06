@@ -9,6 +9,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
 
     public static final String SKYBLOCK_ENHANCEMENTS = "skyblock_enhancements";
     public static final String CHAT_ENHANCEMENTS = "chat_enhancements";
+    public static final String TOOLTIP_ENHANCEMENTS = "tooltip_enhancements";
     public static final String GENERAL_ENHANCEMENTS = "general_enhancements";
 
     @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
@@ -117,6 +118,15 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
 
     @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 50, max = 500)
     public static int chatAnimationDurationMs = 150;
+
+    @Comment(category = TOOLTIP_ENHANCEMENTS, centered = true)
+    public static Comment tooltipEnhancementsText;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean enablePriceTooltips = false;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS, isSlider = true, min = 5, max = 60)
+    public static int priceRefreshIntervalMinutes = 15;
 
     @Comment(category = GENERAL_ENHANCEMENTS, centered = true)
     public static Comment text2;

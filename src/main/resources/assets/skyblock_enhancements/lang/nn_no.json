@@ -80,6 +80,16 @@
   "skyblock_enhancements.midnightconfig.chatAnimationDurationMs": "Animasjonslengd (ms)",
   "skyblock_enhancements.midnightconfig.chatAnimationDurationMs.tooltip": "Kor lang tid chatanimasjonen tek i millisekund.\nOmfang: 50–500. Standard: 150.",
 
+  "skyblock_enhancements.midnightconfig.category.tooltip_enhancements": "Verktøytips-forbetringar",
+
+  "skyblock_enhancements.midnightconfig.tooltipEnhancementsText": "Verktøytips-forbetringar",
+
+  "skyblock_enhancements.midnightconfig.enablePriceTooltips": "Vis prisverktøytips",
+  "skyblock_enhancements.midnightconfig.enablePriceTooltips.tooltip": "Viser lågaste AH BIN og Bazaar-prisar i verktøytips for gjenstandar medan du er på SkyBlock.",
+
+  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes": "Oppdateringsintervall for prisar (minutt)",
+  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes.tooltip": "Kor ofte prisdata blir oppdatert frå API-et.\nOmfang: 1–30 minutt. Standard: 5.",
+
   "skyblock_enhancements.midnightconfig.text2": "Generelle forbetringar",
 
   "skyblock_enhancements.midnightconfig.noDoubleSneak": "Hindre dobbeltsniking",
