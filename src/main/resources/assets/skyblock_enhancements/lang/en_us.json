@@ -107,9 +107,6 @@
   "skyblock_enhancements.midnightconfig.fullbrightStrength": "Fullbright Strength",
   "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "How bright fullbright makes the world. Higher = brighter.",
 
-  "key.category.skyblock_enhancements.general": "Skyblock Enhancements",
-  "key.skyblock_enhancements.fullbright": "Toggle Fullbright",
-
   "skyblock_enhancements.midnightconfig.tooltipScrollText": "Tooltip Scroll Settings",
 
   "skyblock_enhancements.midnightconfig.enableTooltipScroll": "Enable Tooltip Scroll",
@@ -131,5 +128,8 @@
   "skyblock_enhancements.midnightconfig.repoRefreshIntervalHours.tooltip": "How often the NEU repo data is automatically refreshed.\nRange: 1–168 hours. Default: 24.",
 
   "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics": "Enable Recipe Diagnostics",
-  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Logs a detailed breakdown of all recipe types found in the NEU repo on startup.\nUseful for development, not needed for normal use."
+  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Logs a detailed breakdown of all recipe types found in the NEU repo on startup.\nUseful for development, not needed for normal use.",
+
+  "key.category.skyblock_enhancements.general": "Skyblock Enhancements",
+  "key.skyblock_enhancements.fullbright": "Toggle Fullbright"
 }

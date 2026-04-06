@@ -100,13 +100,23 @@ public class SkyblockEnhancements implements ClientModInitializer {
     /** Sets up the NEU repo download pipeline and periodic refresh when RRV is available. */
     private void initRecipeViewer() {
         Commands.register();
-
         if (!RrvCompat.isActive()) return;
 
         // Kick off the initial repo download and feed results into RRV's cache.
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+            LOGGER.info("Starting initial NEU repo download...");
+            long startTime = System.currentTimeMillis();
+
             repoFuture = repoDownloader.downloadAsync();
-            repoFuture.thenRun(SkyblockRrvClientPlugin::spoofRrvCache);
+
+            repoFuture.thenRun(() -> {
+                SkyblockRrvClientPlugin.spoofRrvCache();
+                long duration = System.currentTimeMillis() - startTime;
+                LOGGER.info("NEU repo data synchronized with RRV in {}ms.", duration);
+            }).exceptionally(ex -> {
+                LOGGER.error("Failed to sync NEU repo with RRV!", ex);
+                return null;
+            });
         });
 
         // Poll every ~5 minutes to see if the cached repo data has gone stale.

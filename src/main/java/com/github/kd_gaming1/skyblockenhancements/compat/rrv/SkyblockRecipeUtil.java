@@ -4,6 +4,7 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -12,9 +13,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 
 /** Shared widget, matching, and NBT logic for all SkyBlock recipe types. */
 public final class SkyblockRecipeUtil {
@@ -24,31 +25,30 @@ public final class SkyblockRecipeUtil {
     // ── Item matching ────────────────────────────────────────────────────────────
 
     /**
-     * Returns {@code true} if {@code query} matches any stack in the given slots.
-     *
-     * <p>SkyBlock items share vanilla item types (e.g. all custom swords are {@code diamond_sword}),
-     * so we compare by {@code CUSTOM_NAME} first — that's unique per SkyBlock item. The
-     * {@code ITEM_MODEL} fallback covers vanilla items that don't have custom names.
+     * Returns {@code true} if {@code query} matches any stack in the given slots by comparing
+     * the Skyblock internal ID from {@code custom_data.id}.
      */
     public static boolean matchesAny(ItemStack query, List<SlotContent> slots) {
-        var qName = query.get(DataComponents.CUSTOM_NAME);
-        Identifier qModel = query.get(DataComponents.ITEM_MODEL);
+        String queryId = extractSkyblockId(query);
+        if (queryId == null) return false;
 
         for (SlotContent slot : slots) {
             for (ItemStack candidate : slot.getValidContents()) {
-                var cName = candidate.get(DataComponents.CUSTOM_NAME);
-
-                if (qName != null && cName != null) {
-                    if (qName.equals(cName)) return true;
-                    continue;
-                }
-
-                if (qName == null && cName == null && qModel != null) {
-                    if (qModel.equals(candidate.get(DataComponents.ITEM_MODEL))) return true;
-                }
+                if (queryId.equals(extractSkyblockId(candidate))) return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Extracts the Skyblock internal ID (e.g. {@code "ASPECT_OF_THE_END"}) from a stack's
+     * {@code custom_data.id} field. Returns {@code null} if not present.
+     */
+    public static String extractSkyblockId(ItemStack stack) {
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+        if (customData == null) return null;
+        Optional<String> id = customData.copyTag().getString("id");
+        return id.orElse(null);
     }
 
     // ── Wiki button ──────────────────────────────────────────────────────────────

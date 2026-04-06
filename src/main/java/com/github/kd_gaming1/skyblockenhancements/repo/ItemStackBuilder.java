@@ -16,8 +16,10 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.component.ResolvableProfile;
@@ -71,6 +73,9 @@ public final class ItemStackBuilder {
         // Unknown item — show barrier with the ID as name
         ItemStack fallback = new ItemStack(Items.BARRIER, count);
         fallback.set(DataComponents.CUSTOM_NAME, Component.literal("§c" + neuId));
+        CompoundTag tag = new CompoundTag();
+        tag.putString("id", neuId);
+        fallback.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         return fallback;
     }
 
@@ -84,6 +89,9 @@ public final class ItemStackBuilder {
     private static ItemStack named() {
         ItemStack stack = new ItemStack(Items.GOLD_NUGGET);
         stack.set(DataComponents.CUSTOM_NAME, Component.literal("§6Coins"));
+        CompoundTag tag = new CompoundTag();
+        tag.putString("id", "SKYBLOCK_COIN");
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         return stack;
     }
 
@@ -92,6 +100,10 @@ public final class ItemStackBuilder {
         ItemStack stack = new ItemStack(baseItem);
 
         stack.set(DataComponents.CUSTOM_NAME, Component.literal(item.displayName));
+
+        CompoundTag customTag = new CompoundTag();
+        customTag.putString("id", item.internalName);
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(customTag));
 
         if (item.lore != null && !item.lore.isEmpty()) {
             List<Component> lines = item.lore.stream().<Component>map(Component::literal).toList();

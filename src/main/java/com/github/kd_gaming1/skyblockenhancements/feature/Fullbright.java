@@ -13,11 +13,7 @@ import org.lwjgl.glfw.GLFW;
 public class Fullbright {
 
     private static KeyMapping toggleKey;
-
-    private static final KeyMapping.Category CATEGORY =
-            KeyMapping.Category.register(
-                    Identifier.fromNamespaceAndPath("skyblock_enhancements", "general")
-            );
+    private static final KeyMapping.Category CATEGORY = KeybindCategories.GENERAL;
 
     public static void init() {
         toggleKey =

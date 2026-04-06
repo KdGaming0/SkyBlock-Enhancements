@@ -1,5 +1,6 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.missingenchants;
 
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
@@ -81,6 +82,8 @@ public final class MissingEnchants {
     private static void onTooltip(ItemStack stack, Item.TooltipContext ctx, TooltipFlag flag, List<Component> tooltipLines) {
         if (!SkyblockEnhancementsConfig.showMissingEnchantments) return;
         if (!HypixelLocationState.isOnHypixel()) return;
+        // Skip items hovered in the RRV item-list overlay
+        if (RrvCompat.isOverlayTooltip()) return;
 
         boolean expanded = !SkyblockEnhancementsConfig.showWhenPressingShift || Minecraft.getInstance().hasShiftDown();
 
@@ -247,7 +250,7 @@ public final class MissingEnchants {
 
         int anchor = lastRomanLine >= 0 ? lastRomanLine
                 : lastEnchantLine >= 0 ? lastEnchantLine
-                : tooltipLines.size() - 1;
+                  : tooltipLines.size() - 1;
 
         int base = Math.min(anchor + 1, tooltipLines.size());
 

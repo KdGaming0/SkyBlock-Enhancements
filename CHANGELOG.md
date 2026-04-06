@@ -3,8 +3,6 @@
 ### Improvements
 
 - **RRV Ingestion**
-  - Improved search calc
-  - Hide Skyblock quick-nav buttons when in the recipe viewer
-  - Fixed crash
-  - Maybe fixed performance issues
-  - Added custom button textures for categories. Huge thanks to [Bentcheesee](https://modrinth.com/user/Bentcheesee) again.
+  - Improved performance
+  - Centered the recipe viewer in the middle of the screen
+  - Fixed pressing R and U over an item in the inventory not showing the recipe or usage.

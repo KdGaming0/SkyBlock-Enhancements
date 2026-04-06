@@ -107,7 +107,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static boolean enableChatContextMenu = true;
 
     @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean rightClickChatCopies = true;
+    public static boolean rightClickChatCopies = false;
 
     @Entry(category = CHAT_ENHANCEMENTS)
     public static boolean enableChatAnimation = false;
