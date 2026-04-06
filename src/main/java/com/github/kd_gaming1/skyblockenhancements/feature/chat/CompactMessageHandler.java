@@ -16,6 +16,17 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Tracks duplicate chat messages and compacts them into a single line with an occurrence counter
  * (e.g. {@code (×3)}).
+ *
+ * <p>Three compaction modes are supported (evaluated in order of priority):
+ * <ol>
+ *   <li><b>Consecutive-only</b> ({@code onlyCompactConsecutive}): only collapses a message if it
+ *       repeats immediately after itself. Any intervening message resets the streak and counter.
+ *   <li><b>Time-window</b> ({@code compactWithinTimeWindowMinutes > 0}): collapses repeats that
+ *       arrive within a configurable rolling window. Messages outside the window start a fresh
+ *       streak.
+ *   <li><b>Unlimited</b>: the original behaviour — collapse every duplicate regardless of position
+ *       or age.
+ * </ol>
  */
 public final class CompactMessageHandler {
 
@@ -23,12 +34,26 @@ public final class CompactMessageHandler {
     private static final String COUNT_PREFIX = " (×";
     private static final int MAX_TRACKED = 512;
 
+    /** Holds the compaction state for a single unique message text. */
+    private static final class Entry {
+        int count;
+        long firstSeenMs;
+        boolean consecutiveEligible;
+
+        Entry(long nowMs) {
+            this.count = 1;
+            this.firstSeenMs = nowMs;
+            this.consecutiveEligible = true;
+        }
+    }
+
     private final SBEChatAccess chatAccess;
 
-    private final Map<String, Integer> occurrences =
+    // LRU map so the eldest entries are evicted automatically once we exceed MAX_TRACKED.
+    private final Map<String, Entry> entries =
             new LinkedHashMap<>(64, 0.75f, true) {
                 @Override
-                protected boolean removeEldestEntry(Map.Entry<String, Integer> eldest) {
+                protected boolean removeEldestEntry(Map.Entry<String, Entry> eldest) {
                     return size() > MAX_TRACKED;
                 }
             };
@@ -40,51 +65,80 @@ public final class CompactMessageHandler {
     }
 
     /**
-     * Processes an incoming message. If it is a duplicate, removes the previous occurrence and
-     * returns a copy with a {@code (×N)} suffix.
+     * Processes an incoming message. If it qualifies as a compactable duplicate, removes the
+     * previous occurrence from history and returns a copy with a {@code (×N)} suffix.
      */
     public Component process(Component message) {
         if (!SkyblockEnhancementsConfig.compactDuplicateMessages) return message;
 
-        // ChatTextHelper.stripCompactSuffix validates digit-only counts, unlike a bare lastIndexOf.
         String raw = ChatTextHelper.stripCompactSuffix(message.getString());
         String trimmed = raw.trim();
-        if (trimmed.isEmpty()) return message;
+        if (trimmed.isEmpty() || isSeparator(trimmed)) return message;
 
-        // Separator lines are always kept as-is; they compact with their surrounding content.
-        if (isSeparator(trimmed)) {
-            return message;
-        }
-
-        if (SkyblockEnhancementsConfig.onlyCompactConsecutive && !raw.equals(previousMessage)) {
-            previousMessage = raw;
-            occurrences.putIfAbsent(raw, 1);
-            return message;
-        }
+        long nowMs = System.currentTimeMillis();
+        boolean isConsecutive = raw.equals(previousMessage);
         previousMessage = raw;
 
-        int count = occurrences.merge(raw, 1, Integer::sum);
-        if (count <= 1) return message;
+        Entry entry = entries.get(raw);
 
+        if (entry == null) {
+            // First time we see this message — record it and return as-is.
+            entries.put(raw, new Entry(nowMs));
+            return message;
+        }
+
+        if (!isEligibleForCompaction(entry, isConsecutive, nowMs)) {
+            // Streak broken or window expired — reset and treat as a fresh first occurrence.
+            entries.put(raw, new Entry(nowMs));
+            return message;
+        }
+
+        // Eligible duplicate: increment and compact.
+        entry.count++;
         removePreviousDuplicate(raw);
 
         MutableComponent result = message.copy();
-        result.append(Component.literal(COUNT_PREFIX + count + ")").setStyle(COUNT_STYLE));
+        result.append(Component.literal(COUNT_PREFIX + entry.count + ")").setStyle(COUNT_STYLE));
         return result;
     }
 
     /** Clears all tracked state (called on chat clear). */
     public void clear() {
-        occurrences.clear();
+        entries.clear();
         previousMessage = null;
     }
 
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
     /**
-     * Removes the first occurrence of {@code raw} from the raw-message history, then cleans up any
-     * separator lines that became orphaned as a result.
+     * Returns {@code true} if {@code entry} should be collapsed with the incoming duplicate.
      *
-     * <p>A separator is orphaned when it no longer has a non-separator neighbour on at least one
-     * side.
+     * <p>Priority:
+     * <ol>
+     *   <li>Consecutive-only mode: the message must have arrived immediately after itself.
+     *   <li>Time-window mode: the first occurrence must be within the configured window.
+     *   <li>Otherwise: always eligible.
+     * </ol>
+     */
+    private static boolean isEligibleForCompaction(Entry entry, boolean isConsecutive, long nowMs) {
+        if (SkyblockEnhancementsConfig.onlyCompactConsecutive) {
+            return isConsecutive;
+        }
+
+        int windowMinutes = SkyblockEnhancementsConfig.compactTimeWindowMinutes;
+        if (windowMinutes > 0) {
+            long windowMs = (long) windowMinutes * 60_000L;
+            return (nowMs - entry.firstSeenMs) <= windowMs;
+        }
+
+        return true;
+    }
+
+    /**
+     * Removes the most-recent prior occurrence of {@code raw} from the raw-message history, then
+     * cleans up any separator lines that became orphaned as a result.
      */
     private void removePreviousDuplicate(String raw) {
         List<GuiMessage> msgs = chatAccess.sbe$getAllMessages();

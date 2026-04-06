@@ -94,6 +94,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = CHAT_ENHANCEMENTS)
     public static boolean onlyCompactConsecutive = false;
 
+    @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 0, max = 60)
+    public static int compactTimeWindowMinutes = 10;
+
     @Entry(category = CHAT_ENHANCEMENTS)
     public static boolean centerHypixelText = true;
 

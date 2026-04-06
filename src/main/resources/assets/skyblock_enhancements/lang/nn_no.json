@@ -63,6 +63,8 @@
   "skyblock_enhancements.midnightconfig.compactDuplicateMessages.tooltip": "Fjernar like chatmeldingar og viser ein teljar som (×3) i staden.",
   "skyblock_enhancements.midnightconfig.onlyCompactConsecutive": "Kompaktér berre påfølgjande",
   "skyblock_enhancements.midnightconfig.onlyCompactConsecutive.tooltip": "Når dette er på, blir berre meldingar som kjem rett etter kvarandre kompakte.\nNår det er av, blir alle like meldingar kompakte uansett posisjon.",
+  "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes": "Tidsvindu for kompaktering (minutt)",
+  "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes.tooltip": "Kompaktér berre like meldingar som kjem innan dette mange minutt etter den første førekomsten.\nSet til 0 for å slå av (kompaktér alle duplikat uansett alder).\nIgnorert når «Kompaktér berre påfølgjande» er på.",
   "skyblock_enhancements.midnightconfig.centerHypixelText": "Midtstill Hypixel-tekst",
   "skyblock_enhancements.midnightconfig.centerHypixelText.tooltip": "Midtstiller mellomrom-fylt tekst frå Hypixel riktig ved alle chatbreidder.\nBerre aktivt når du er på Hypixel.",
   "skyblock_enhancements.midnightconfig.smoothSeparators": "Mjukare skiljeteikn",

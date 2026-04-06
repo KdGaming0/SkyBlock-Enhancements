@@ -12,12 +12,14 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Adds Hypixel channel tab buttons above the chat input field. */
 @Mixin(ChatScreen.class)
@@ -31,28 +33,28 @@ public abstract class ChatTabScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void sbe$addTabButtons(CallbackInfo ci) {
-        boolean sbe$tabsActive =
-                SkyblockEnhancementsConfig.enableChatTabs && HypixelLocationState.isOnHypixel();
-        if (!sbe$tabsActive) return;
+        if (!SkyblockEnhancementsConfig.enableChatTabs || !HypixelLocationState.isOnHypixel()) {
+            return;
+        }
 
         Minecraft mc = Minecraft.getInstance();
         ChatComponent chat = mc.gui.getChat();
-        int sbe$tabBarHeight = 15;
+        int tabHeight = 15;
         int spacing = 1;
         int x = 2;
-        int sbe$tabBarY = this.height - 14 - sbe$tabBarHeight;
+        int tabY = this.height - 14 - tabHeight;
 
         for (ChatTab tab : ChatTab.values()) {
-            int w = Math.max(sbe$tabBarHeight, mc.font.width(tab.label()) + 10);
+            int w = Math.max(tabHeight, mc.font.width(tab.label()) + 10);
             boolean active = ChatTabState.getActiveTab() == tab;
             WidgetSprites sprites = active ? ChatTabSprites.ACTIVE : ChatTabSprites.INACTIVE;
 
-            addRenderableWidget(
+            CustomButtonWidget button =
                     new CustomButtonWidget(
                             x,
-                            sbe$tabBarY,
+                            tabY,
                             w,
-                            sbe$tabBarHeight,
+                            tabHeight,
                             Component.literal(tab.label()),
                             sprites,
                             btn -> {
@@ -62,8 +64,6 @@ public abstract class ChatTabScreenMixin extends Screen {
                                 rebuildWidgets();
                                 mc.schedule(() -> setFocused(input));
 
-                                // Only send the channel command when switching to a new tab.
-                                // Re-clicking the active tab just refreshes the view.
                                 if (wasAlreadyActive) return;
 
                                 String cmd = tab.command();
@@ -74,9 +74,20 @@ public abstract class ChatTabScreenMixin extends Screen {
                                         mc.player.connection.sendChat(cmd);
                                     }
                                 }
-                            }));
+                            });
 
+            button.setTabOrderGroup(Integer.MAX_VALUE);
+
+            addRenderableWidget(button);
             x += w + spacing;
+        }
+    }
+
+    @Inject(method = "keyPressed", at = @At("RETURN"))
+    private void sbe$restoreInputFocusAfterHistoryNav(KeyEvent keyEvent, CallbackInfoReturnable<Boolean> cir) {
+        int key = keyEvent.key();
+        if ((key == 264 || key == 265) && getFocused() != input) {
+            setFocused(input);
         }
     }
 }

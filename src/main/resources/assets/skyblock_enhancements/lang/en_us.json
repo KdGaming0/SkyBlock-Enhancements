@@ -63,6 +63,8 @@
   "skyblock_enhancements.midnightconfig.compactDuplicateMessages.tooltip": "Removes duplicate chat messages and shows a counter like (×3) instead.",
   "skyblock_enhancements.midnightconfig.onlyCompactConsecutive": "Only Compact Consecutive",
   "skyblock_enhancements.midnightconfig.onlyCompactConsecutive.tooltip": "When enabled, only compacts messages that appear consecutively.\nWhen disabled, compacts all duplicates regardless of position.",
+  "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes": "Compact Time Window (minutes)",
+  "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes.tooltip": "Only compact duplicate messages that arrive within this many minutes of the first occurrence.\nSet to 0 to disable (compact all duplicates regardless of age).\nIgnored when 'Only Compact Consecutive' is enabled.",
   "skyblock_enhancements.midnightconfig.centerHypixelText": "Center Hypixel Text",
   "skyblock_enhancements.midnightconfig.centerHypixelText.tooltip": "Properly centers space-padded text from Hypixel at any chat width.\nOnly active while on Hypixel.",
   "skyblock_enhancements.midnightconfig.smoothSeparators": "Smooth Separators",
