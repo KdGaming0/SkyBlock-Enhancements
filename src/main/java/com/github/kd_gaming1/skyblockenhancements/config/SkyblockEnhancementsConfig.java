@@ -114,6 +114,12 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static boolean rightClickChatCopies = false;
 
     @Entry(category = CHAT_ENHANCEMENTS)
+    public static boolean enableChatSearch = true;
+
+    @Entry(category = CHAT_ENHANCEMENTS)
+    public static boolean alwaysShowChatSearch = false;
+
+    @Entry(category = CHAT_ENHANCEMENTS)
     public static boolean enableChatAnimation = false;
 
     @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 50, max = 500)

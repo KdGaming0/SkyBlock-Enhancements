@@ -2,6 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
 
 import com.daqem.uilib.gui.widget.CustomButtonWidget;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.search.ChatSearchLayout;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs.ChatTab;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs.ChatTabSprites;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs.ChatTabState;
@@ -42,7 +43,7 @@ public abstract class ChatTabScreenMixin extends Screen {
         int tabHeight = 15;
         int spacing = 1;
         int x = 2;
-        int tabY = this.height - 14 - tabHeight;
+        int tabY = this.height - 14 - tabHeight - ChatSearchLayout.extraOffset();
 
         for (ChatTab tab : ChatTab.values()) {
             int w = Math.max(tabHeight, mc.font.width(tab.label()) + 10);
