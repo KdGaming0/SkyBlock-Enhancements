@@ -4,6 +4,7 @@ import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
 import java.util.function.Consumer;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.GuiMessageTag;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ChatComponent;
@@ -56,16 +57,18 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
     @Override
     public void fill(int x0, int y0, int x1, int y1, int color) {
         delegate.fill(x0, y0, x1, y1, color);
-
-        currentEntryTop = y0;
-        currentEntryBottom = y1;
     }
 
     @Override
-    public boolean handleMessage(
-            int textTop, float opacity, @NonNull FormattedCharSequence message) {
-
+    public boolean handleMessage(int textTop, float opacity, @NonNull FormattedCharSequence message) {
         currentLine = resolveCurrentLine(message);
+
+        double lineSpacing = Minecraft.getInstance().options.chatLineSpacing().get();
+        int entryHeight = (int)(9.0 * (lineSpacing + 1.0));
+        int entryBottomToMessageY = (int)Math.round(8.0 * (lineSpacing + 1.0) - 4.0 * lineSpacing);
+        currentEntryBottom = textTop + entryBottomToMessageY;
+        currentEntryTop = currentEntryBottom - entryHeight;
+
         CustomChatRenderer renderer = chatAccess.sbe$getRenderer(message);
 
         boolean hovered;
