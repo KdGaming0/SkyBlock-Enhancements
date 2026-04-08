@@ -45,7 +45,6 @@
     "rrv.RrvSearchCalculatorMixin",
     "rrv.VisitorHelperRecipeViewMixin",
     "tooltipscroll.TooltipScrollGuiGraphicsMixin",
-    "tooltipscroll.TooltipScrollModernUIMixin",
     "tooltipscroll.TooltipScrollMouseMixin"
   ]
 }

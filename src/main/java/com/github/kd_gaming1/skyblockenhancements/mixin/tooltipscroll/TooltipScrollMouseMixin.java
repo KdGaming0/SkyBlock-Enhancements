@@ -11,32 +11,27 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Captures mouse scroll events and feeds {@link TooltipScrollState} (both axes).
+ * Captures mouse scroll events and feeds them into {@link TooltipScrollState}.
  *
- * <p>The scroll offset is applied via matrix translation in the {@code GuiGraphics} mixin,
- * which works for both vanilla and Modern UI tooltips. Modern UI's internal scroll system
- * is suppressed every frame by the render mixin so it doesn't conflict.
- *
- * <p>Holding Left Shift switches to horizontal scrolling.
+ * <p>Holding Left Shift redirects vertical scroll to the horizontal axis.</p>
  */
 @Mixin(MouseHandler.class)
 public class TooltipScrollMouseMixin {
 
     @Inject(method = "onScroll(JDD)V", at = @At("HEAD"))
     private void onScrollWheel(long window, double xOffset, double yOffset, CallbackInfo ci) {
-        if (!SkyblockEnhancementsConfig.enableTooltipScroll || yOffset == 0) {
-            return;
-        }
+        if (!SkyblockEnhancementsConfig.enableTooltipScroll || yOffset == 0) return;
 
         double effective = SkyblockEnhancementsConfig.invertTooltipScroll ? -yOffset : yOffset;
         int speed = SkyblockEnhancementsConfig.tooltipScrollSpeed;
 
-        boolean horizontal = SkyblockEnhancementsConfig.enableHorizontalScroll
-                && GLFW.glfwGetKey(
-                Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_KEY_LEFT_SHIFT)
-                == GLFW.GLFW_PRESS;
+        boolean shiftHeld = GLFW.glfwGetKey(
+                Minecraft.getInstance().getWindow().handle(),
+                GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS;
 
-        if (horizontal) {
+        boolean goHorizontal = SkyblockEnhancementsConfig.enableHorizontalScroll && shiftHeld;
+
+        if (goHorizontal) {
             TooltipScrollState.scrollX(effective * speed);
         } else {
             TooltipScrollState.scrollY(effective * speed);

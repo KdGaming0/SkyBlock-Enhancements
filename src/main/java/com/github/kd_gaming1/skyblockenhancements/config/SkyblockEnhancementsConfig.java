@@ -174,6 +174,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = GENERAL_ENHANCEMENTS)
     public static boolean enableTooltipScroll = true;
 
+    @Entry(category = GENERAL_ENHANCEMENTS)
+    public static boolean anchorTooltipToTop = true;
+
     @Entry(category = GENERAL_ENHANCEMENTS, isSlider = true, min = 1, max = 30)
     public static int tooltipScrollSpeed = 10;
 

@@ -1,5 +1,5 @@
-## Changelog for 0.11.3
+## Changelog for 0.11.4
 
-### Fixes
-- **Chat Enhancements**
-  - Fixed copy feedback outline
+### Improvements
+- **Tooltip Enhancements**
+  - Tooltip starts at the top
