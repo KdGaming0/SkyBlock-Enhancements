@@ -107,3 +107,5 @@ Access the mod's features using the following commands:
 | `/skyblockenhancements` | Open the main configuration menu. |
 | `/skyblockenhancements config` | Alternate way to open the configuration menu. |
 | `/skyblockenhancements refresh repoData` | Manually refresh the internal data repository cache. |
+
+> Previously licensed under Polyform Shield, now MIT as of 08.04.2026
