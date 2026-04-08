@@ -14,7 +14,11 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Resolves which {@link GuiMessage} the cursor is hovering over and converts {@link Component}
- * content to plain or {@code §}-formatted strings.
+ * content to plain or {@code &}-formatted strings.
+ *
+ * <p>Resolution uses the line-to-message mapping maintained by {@link SBEChatAccess} for O(1)
+ * lookup, avoiding the old fragile {@code addedTime}-matching approach where multiple messages
+ * sharing the same tick could cause incorrect resolution.
  */
 public final class ChatMessageResolver {
 
@@ -46,7 +50,16 @@ public final class ChatMessageResolver {
         int trimmedIndex = lineIndex + access.sbe$getChatScrollbarPos();
         if (trimmedIndex < 0 || trimmedIndex >= trimmed.size()) return null;
 
-        int targetTime = trimmed.get(trimmedIndex).addedTime();
+        GuiMessage.Line line = trimmed.get(trimmedIndex);
+
+        GuiMessage parent = access.sbe$getParentMessage(line);
+        if (parent != null) {
+            return parent;
+        }
+
+        // Fallback: if the mapping is missing (shouldn't happen normally), use addedTime.
+        // This preserves backwards compatibility during edge cases like mid-refresh state.
+        int targetTime = line.addedTime();
         for (GuiMessage msg : access.sbe$getAllMessages()) {
             if (msg.addedTime() == targetTime) {
                 return msg;

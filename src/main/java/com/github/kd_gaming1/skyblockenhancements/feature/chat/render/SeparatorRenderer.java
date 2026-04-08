@@ -63,6 +63,22 @@ public record SeparatorRenderer(int lineColor, @Nullable String middleText)
     }
 
     /**
+     * For pure separator lines (no middle text), returns {@code -1} to signal that no hit-testing
+     * is needed — there is no interactive text to click. For separators with centered middle text
+     * (e.g., "---- Friends (Page 1 of 2) >> ----"), returns the X offset where the middle text
+     * was drawn, so the proxy can align hit-testing with the rendered position.
+     */
+    @Override
+    public int getTextOffsetX(Font font, FormattedCharSequence text, int lineX, int lineWidth) {
+        if (middleText == null || middleText.isEmpty()) {
+            return -1;
+        }
+        // The middle text is centered within the line width — same formula as render().
+        int textWidth = font.width(middleText);
+        return (lineWidth - textWidth) / 2;
+    }
+
+    /**
      * Returns {@code true} if the sequence contains {@link #BLOCK_CHAR}, short-circuiting on the
      * first match. Avoids the String allocation that {@code getString().contains()} would require.
      */

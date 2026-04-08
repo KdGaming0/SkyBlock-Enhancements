@@ -17,6 +17,9 @@
   "skyblock_enhancements.midnightconfig.preventWeaponPlacement": "Prevent weapon placement",
   "skyblock_enhancements.midnightconfig.preventWeaponPlacement.tooltip": "Prevents Skyblock swords (e.g. Spirit Sceptre) from being placed as blocks while still allowing their abilities to activate.",
 
+  "skyblock_enhancements.midnightconfig.hideCheapCoins": "Hide Cheap Coins",
+  "skyblock_enhancements.midnightconfig.hideCheapCoins.tooltip": "Hides cheap coin ground drops (coin/coins player-head drops).",
+
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades": "Set Kat reminder for pet upgrades",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.tooltip": "Automatically create a reminder when Kat starts upgrading your pet so you get notified when it's ready to pick up.",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.label.tooltip": "Automatically create a reminder when Kat starts upgrading your pet.",
@@ -147,5 +150,20 @@
   "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Logs a detailed breakdown of all recipe types found in the NEU repo on startup.\nUseful for development, not needed for normal use.",
 
   "key.category.skyblock_enhancements.general": "Skyblock Enhancements",
-  "key.skyblock_enhancements.fullbright": "Toggle Fullbright"
+  "key.skyblock_enhancements.fullbright": "Toggle Fullbright",
+
+  "skyblock_enhancements.midnightconfig.category.dev_tools": "Dev Tools",
+  "skyblock_enhancements.midnightconfig.devToolsText": "Development Tools",
+
+  "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper": "Enable Ground Item Debug Helper",
+  "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper.tooltip": "Logs detailed info for ground item entities.",
+
+  "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby": "Debug Nearby Items Only",
+  "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby.tooltip": "If enabled, only logs items within the configured radius.",
+
+  "skyblock_enhancements.midnightconfig.groundItemDebugRadius": "Debug Radius",
+  "skyblock_enhancements.midnightconfig.groundItemDebugRadius.tooltip": "Radius around the player to scan when nearby-only mode is enabled.",
+
+  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks": "Debug Log Interval (ticks)",
+  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks.tooltip": "How often ground item debug logs are emitted."
 }

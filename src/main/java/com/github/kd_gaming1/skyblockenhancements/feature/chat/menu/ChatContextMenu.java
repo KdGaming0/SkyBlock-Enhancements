@@ -15,6 +15,11 @@ import org.jspecify.annotations.Nullable;
  * A lightweight overlay that appears on right-click over a chat message, offering copy and delete
  * actions. Buttons use UI Lib's {@link ButtonWidget} for consistent styling.
  *
+ * <p>When the menu is open, the targeted message is highlighted with a subtle outline in the chat
+ * display (via {@link SBEChatAccess#sbe$setSelectedMessage}). The outline persists while the menu
+ * is visible, giving the user clear feedback about which message will be affected before they
+ * choose an action. After a copy action, a "Copied!" toast is shown briefly.
+ *
  * <p>The menu is not a separate screen — it is drawn and event-handled by the {@code ChatScreen}
  * mixin that owns it.
  */
@@ -52,11 +57,19 @@ public final class ChatContextMenu {
         return targetMessage != null;
     }
 
+    /** Returns the message currently targeted by the open menu, or {@code null}. */
+    public @Nullable GuiMessage getTargetMessage() {
+        return targetMessage;
+    }
+
     /** Opens the menu at the given screen position for the specified message. */
     public void open(
             GuiMessage message, int screenX, int screenY, int screenWidth, int screenHeight) {
         close();
         targetMessage = message;
+
+        // Highlight the targeted message in the chat display.
+        setSelectedInChat(message);
 
         addEntry("Copy Text", this::copyRaw, "Copy the full message as plain text");
         addEntry("Copy Message", this::copyMessageBody, "Copy only the message body, without the sender prefix");
@@ -79,10 +92,13 @@ public final class ChatContextMenu {
         }
     }
 
-    /** Closes the menu and clears all state. */
+    /** Closes the menu and clears all state, including the selection highlight. */
     public void close() {
         targetMessage = null;
         entries.clear();
+
+        // Clear the outline highlight in the chat display.
+        setSelectedInChat(null);
     }
 
     /** Renders the menu background and buttons, then the copy toast if active. */
@@ -183,6 +199,18 @@ public final class ChatContextMenu {
     }
 
     // Helpers
+
+    /**
+     * Updates the selection highlight in the chat component. The outline is drawn by
+     * {@link com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatGraphicsAccessProxy}
+     * during the chat render pass.
+     */
+    private static void setSelectedInChat(@Nullable GuiMessage message) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.gui == null) return;
+        SBEChatAccess access = (SBEChatAccess) mc.gui.getChat();
+        access.sbe$setSelectedMessage(message);
+    }
 
     /**
      * Creates a button/action pair. The button is used only for rendering and hover detection.

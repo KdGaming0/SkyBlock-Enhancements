@@ -11,6 +11,7 @@ import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Util;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,9 +27,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * <p>The search bar sits directly above the vanilla chat input and uses the same borderless
  * EditBox style with a semi-transparent background drawn manually. The vanilla input remains
  * fully functional at all times — clicking it simply moves focus away from the search bar.
- *
- * <p>Escape behaviour: first press clears the query (if non-empty); second press closes the bar
- * (unless {@code alwaysShowChatSearch} is on, in which case the bar stays open but cleared).
  */
 @Mixin(ChatScreen.class)
 public abstract class ChatSearchScreenMixin extends Screen {
@@ -39,9 +37,13 @@ public abstract class ChatSearchScreenMixin extends Screen {
     @Unique private String sbe$pendingQuery;
 
     // Semi-transparent dark background, same style as the vanilla chat input fill.
-    // vanilla uses minecraft.options.getBackgroundColor(Integer.MIN_VALUE) which is ~0x90000000.
-    // We use a slightly lighter value so the bar feels less heavy.
     @Unique private static final int SBE_SEARCH_BG = 0x60000000;
+
+    // Hint overlay — shown for SBE_HINT_DURATION_MS after the screen opens,
+    // only when the search bar is not already active.
+    @Unique private static final long SBE_HINT_DURATION_MS = 4000L;
+    @Unique private static final long SBE_HINT_FADE_MS     =  600L;
+    @Unique private long sbe$hintShownAt = -1L;
 
     protected ChatSearchScreenMixin(Component title) {
         super(title);
@@ -53,6 +55,11 @@ public abstract class ChatSearchScreenMixin extends Screen {
     private void sbe$initSearchBar(CallbackInfo ci) {
         if (!SkyblockEnhancementsConfig.enableChatSearch) return;
 
+        // Show the hint whenever the screen (re)opens and search is not already active.
+        if (!ChatSearchState.isActive()) {
+            sbe$hintShownAt = Util.getMillis();
+        }
+
         // Auto-open when "always show" is configured
         if (SkyblockEnhancementsConfig.alwaysShowChatSearch && !ChatSearchState.isActive()) {
             ChatSearchState.setActive(true);
@@ -63,15 +70,15 @@ public abstract class ChatSearchScreenMixin extends Screen {
         Minecraft mc = Minecraft.getInstance();
         int y = ChatSearchLayout.searchBarY(height);
 
-        // Use plain vanilla EditBox with no border — identical look to the chat input itself.
         sbe$searchBox = new EditBox(
                 mc.font,
                 4, y, width - 8, ChatSearchLayout.SEARCH_BAR_HEIGHT,
                 Component.literal("Search chat..."));
+        sbe$searchBox.setHint(Component.literal("Search chat... (Ctrl+F)"));
         sbe$searchBox.setMaxLength(128);
         sbe$searchBox.setResponder(this::sbe$onQueryChanged);
-        sbe$searchBox.setBordered(false);       // removes EditBox's own opaque background
-        sbe$searchBox.setCanLoseFocus(true);    // allow clicking vanilla input to steal focus
+        sbe$searchBox.setBordered(false);
+        sbe$searchBox.setCanLoseFocus(true);
 
         // Restore query across widget rebuilds (resize, Ctrl+F toggle, etc.)
         if (sbe$pendingQuery != null) {
@@ -85,9 +92,10 @@ public abstract class ChatSearchScreenMixin extends Screen {
         if (ChatSearchState.isActive()) {
             input.setCanLoseFocus(true);
         }
-        if (!SkyblockEnhancementsConfig.alwaysShowChatSearch) {
-            mc.schedule(() -> setFocused(sbe$searchBox));
-        }
+
+        // Focus is set explicitly in sbe$openSearch() after rebuildWidgets() returns,
+        // so no deferred schedule is needed here for the Ctrl+F toggle path.
+        // The alwaysShowChatSearch path gets focus naturally since init runs at screen open.
     }
 
     @Inject(method = "removed", at = @At("HEAD"))
@@ -152,7 +160,45 @@ public abstract class ChatSearchScreenMixin extends Screen {
         graphics.fill(x2 - 1, y1,     x2, y2,     0xFFAAAAAA);
     }
 
-    /** Draw the match-count overlay after widgets (so it appears on top of the text). */
+    /**
+     * Draw a subtle "Press Ctrl+F to search" hint when the search bar is not open.
+     * Fades out over SBE_HINT_FADE_MS at the end of SBE_HINT_DURATION_MS.
+     */
+    @Inject(method = "render", at = @At("TAIL"))
+    private void sbe$renderSearchHint(GuiGraphics graphics, int mouseX, int mouseY, float delta,
+                                      CallbackInfo ci) {
+        if (!SkyblockEnhancementsConfig.enableChatSearch) return;
+        if (ChatSearchState.isActive() || sbe$hintShownAt < 0) return;
+
+        long elapsed = Util.getMillis() - sbe$hintShownAt;
+        if (elapsed >= SBE_HINT_DURATION_MS) return;
+
+        // Compute alpha: fully opaque for most of the duration, then fade to 0.
+        float alpha;
+        long fadeStart = SBE_HINT_DURATION_MS - SBE_HINT_FADE_MS;
+        if (elapsed < fadeStart) {
+            alpha = 1.0f;
+        } else {
+            alpha = 1.0f - (float)(elapsed - fadeStart) / SBE_HINT_FADE_MS;
+        }
+        int a = (int)(alpha * 0xFF) & 0xFF;
+
+        // Position: bottom-right corner just above the vanilla chat input.
+        int inputY = height - 14;
+        String hintText = "Ctrl+F to search";
+        int textWidth = font.width(hintText);
+        int x = width - textWidth - 6;
+        int y = inputY - font.lineHeight - 3;
+
+        graphics.fill(x - 3, y - 2, x + textWidth + 3, y + font.lineHeight + 2,
+                (a / 2) << 24);
+        int color = (a << 24) | 0x00AAAAAA;
+        graphics.drawString(font, hintText, x, y, color, false);
+    }
+
+    /**
+     * Draw the match-count overlay after widgets (so it appears on top of the text).
+     */
     @Inject(method = "render", at = @At("TAIL"))
     private void sbe$renderMatchCount(GuiGraphics graphics, int mouseX, int mouseY, float delta,
                                       CallbackInfo ci) {
@@ -161,9 +207,9 @@ public abstract class ChatSearchScreenMixin extends Screen {
 
         if (ChatSearchState.isFiltering()) {
             SBEChatAccess access = (SBEChatAccess) Minecraft.getInstance().gui.getChat();
-            int visible = access.sbe$getTrimmedMessages().size();
-            int total   = access.sbe$getAllMessages().size();
-            String info = visible + "/" + total;
+            int total = access.sbe$getAllMessages().size();
+            int matching = ChatSearchState.countMatching(access.sbe$getAllMessages());
+            String info = matching + "/" + total;
             int infoWidth = font.width(info);
             int infoX = sbe$searchBox.getX() + sbe$searchBox.getWidth() - infoWidth - 4;
             int infoY = ChatSearchLayout.searchBarY(height)
@@ -176,13 +222,25 @@ public abstract class ChatSearchScreenMixin extends Screen {
 
     @Unique
     private void sbe$toggleSearch() {
-        if (ChatSearchState.isActive() && !SkyblockEnhancementsConfig.alwaysShowChatSearch) {
-            sbe$closeSearch();
-        } else if (!ChatSearchState.isActive()) {
+        if (!ChatSearchState.isActive()) {
             sbe$openSearch();
-        } else {
-            if (sbe$searchBox != null) {
-                Minecraft.getInstance().schedule(() -> setFocused(sbe$searchBox));
+            return;
+        }
+        if (!SkyblockEnhancementsConfig.alwaysShowChatSearch) {
+            sbe$closeSearch();
+            return;
+        }
+        // Always-show mode: ping-pong focus between search box and chat input.
+        if (sbe$searchBox != null) {
+            boolean searchHasFocus = sbe$searchBox.isFocused();
+            if (searchHasFocus) {
+                setFocused(input);
+                input.setFocused(true);
+                sbe$searchBox.setFocused(false);
+            } else {
+                setFocused(sbe$searchBox);
+                sbe$searchBox.setFocused(true);
+                input.setFocused(false);
             }
         }
     }
@@ -192,6 +250,11 @@ public abstract class ChatSearchScreenMixin extends Screen {
         ChatSearchState.setActive(true);
         sbe$pendingQuery = "";
         rebuildWidgets();
+        if (sbe$searchBox != null) {
+            setFocused(sbe$searchBox);
+            sbe$searchBox.setFocused(true);
+            input.setFocused(false);
+        }
     }
 
     @Unique
@@ -202,7 +265,8 @@ public abstract class ChatSearchScreenMixin extends Screen {
         sbe$refreshChat();
         rebuildWidgets();
         input.setCanLoseFocus(false);
-        Minecraft.getInstance().schedule(() -> setFocused(input));
+        setFocused(input);
+        input.setFocused(true);
     }
 
     @Unique

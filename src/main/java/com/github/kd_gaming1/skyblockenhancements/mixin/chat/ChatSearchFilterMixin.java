@@ -10,11 +10,11 @@ import org.spongepowered.asm.mixin.Mixin;
 /**
  * Filters messages from the visible display queue when a search query is active.
  *
- * <p>This sits alongside {@link ChatTabFilterMixin} — both wrap {@code addMessageToDisplayQueue}.
- * Mixin applies them in declaration order within the same priority, so both filters compose
- * naturally: a message must pass the tab filter <em>and</em> the search filter to appear.
+ * <p>Uses explicit priority 1000 to ensure this runs after the tab filter (priority 900).
+ * The deterministic chain is: tab filter → search filter → display. A message must pass both
+ * filters to appear in the chat.
  */
-@Mixin(ChatComponent.class)
+@Mixin(value = ChatComponent.class, priority = 1000)
 public class ChatSearchFilterMixin {
 
     @WrapMethod(method = "addMessageToDisplayQueue")

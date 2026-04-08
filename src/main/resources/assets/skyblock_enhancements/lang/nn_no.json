@@ -17,6 +17,9 @@
   "skyblock_enhancements.midnightconfig.preventWeaponPlacement": "Hindre våpenplassering",
   "skyblock_enhancements.midnightconfig.preventWeaponPlacement.tooltip": "Hindrar at Skyblock-sverd (f.eks. Spirit Sceptre) blir plassert som blokker, men lèt evnene deira framleis aktiverast.",
 
+  "skyblock_enhancements.midnightconfig.hideCheapCoins": "Skjul billige myntar",
+  "skyblock_enhancements.midnightconfig.hideCheapCoins.tooltip": "Skjuler billige mynt-dropp på bakken (coin/coins spelarhovud-dropp).",
+
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades": "Set Kat-påminning for kjæledyroppgraderingar",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.tooltip": "Lag automatisk ei påminning når Kat byrjar å oppgradere kjæledyret ditt, slik at du får beskjed når det er klart til å hentast.",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.label.tooltip": "Lag automatisk ei påminning når Kat byrjar å oppgradere kjæledyret ditt.",
@@ -147,5 +150,20 @@
   "skyblock_enhancements.midnightconfig.repoRefreshIntervalHours.tooltip": "Kor ofte NEU repo-data blir oppdatert automatisk.\nOmfang: 1–168 timar. Standard: 24.",
 
   "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics": "Slå på oppskriftsdiagnostikk",
-  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Loggar ein detaljert oversikt over alle oppskriftstypar funne i NEU-repoet ved oppstart.\nNyttig for utvikling, ikkje nødvendig for vanleg bruk."
+  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Loggar ein detaljert oversikt over alle oppskriftstypar funne i NEU-repoet ved oppstart.\nNyttig for utvikling, ikkje nødvendig for vanleg bruk.",
+
+  "skyblock_enhancements.midnightconfig.category.dev_tools": "Utviklarverktøy",
+  "skyblock_enhancements.midnightconfig.devToolsText": "Utviklarverktøy",
+
+  "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper": "Slå på debughjelpar for bakke-gjenstandar",
+  "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper.tooltip": "Loggar detaljert informasjon om gjenstands-entitetar på bakken.",
+
+  "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby": "Debug berre nærliggande gjenstandar",
+  "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby.tooltip": "Når slått på, loggar berre gjenstandar innanfor sett radius.",
+
+  "skyblock_enhancements.midnightconfig.groundItemDebugRadius": "Debug-radius",
+  "skyblock_enhancements.midnightconfig.groundItemDebugRadius.tooltip": "Radius rundt spelaren som blir skanna når «berre nærliggande» er på.",
+
+  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks": "Intervall for debuglogg (ticks)",
+  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks.tooltip": "Kor ofte debugloggar for bakke-gjenstandar blir skrivne."
 }

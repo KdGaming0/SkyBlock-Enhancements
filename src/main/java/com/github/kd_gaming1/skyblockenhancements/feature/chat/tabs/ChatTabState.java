@@ -31,14 +31,6 @@ public final class ChatTabState {
 
     /**
      * Returns {@code true} if {@code message} should be shown under the current tab.
-     *
-     * <p>For separator lines, {@code allMessages} is used to find the nearest non-separator
-     * neighbours so the decision is context-aware in both directions.
-     *
-     * @param message the message being evaluated
-     * @param allMessages the full, ordered raw-message history (newest first)
-     * @param indexInHistory the position of {@code message} inside {@code allMessages}, or {@code -1}
-     *     if this is a newly arrived message not yet in the list
      */
     public static boolean shouldShow(
             Component message, List<GuiMessage> allMessages, int indexInHistory) {
@@ -58,15 +50,16 @@ public final class ChatTabState {
     // Separator helpers
 
     /**
-     * Scans outward from {@code index} in both directions and returns {@code true} if the nearest
-     * non-separator message on either side belongs to the active tab.
+     * Determines whether a separator should be shown under the active tab by scanning its
+     * nearest non-separator neighbours.
      */
     private static boolean separatorBelongsToActiveTab(
             List<GuiMessage> allMessages, int index) {
         if (index < 0) {
-            // Newly arrived message: no neighbours yet — show it optimistically.
-            // It will be re-evaluated correctly on the next refreshTrimmedMessages pass.
-            return true;
+            if (allMessages.isEmpty()) {
+                return true;
+            }
+            return matchesActiveTab(nearestContent(allMessages, -1, +1));
         }
         return matchesActiveTab(nearestContent(allMessages, index, -1))
                 || matchesActiveTab(nearestContent(allMessages, index, +1));

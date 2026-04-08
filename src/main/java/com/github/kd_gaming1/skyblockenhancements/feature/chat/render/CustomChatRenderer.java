@@ -29,4 +29,13 @@ public interface CustomChatRenderer {
             int textY,
             int lineWidth,
             float alpha);
+
+    /**
+     * Returns the horizontal offset (in scaled pixels) from the left edge of the chat area
+     * where the primary text content was drawn. Used by the graphics access proxy to align
+     * the delegate's hit-test region with the actual rendered position.
+     */
+    default int getTextOffsetX(Font font, FormattedCharSequence text, int lineX, int lineWidth) {
+        return 0;
+    }
 }

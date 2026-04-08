@@ -3,6 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
 import com.daqem.uilib.gui.widget.CustomButtonWidget;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.search.ChatSearchLayout;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.search.ChatSearchState;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs.ChatTab;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs.ChatTabSprites;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs.ChatTabState;
@@ -22,7 +23,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Adds Hypixel channel tab buttons above the chat input field. */
+/**
+ * Adds Hypixel channel tab buttons above the chat input field.
+ */
 @Mixin(ChatScreen.class)
 public abstract class ChatTabScreenMixin extends Screen {
 
@@ -63,7 +66,11 @@ public abstract class ChatTabScreenMixin extends Screen {
                                 ChatTabState.setActiveTab(tab);
                                 chat.rescaleChat();
                                 rebuildWidgets();
-                                mc.schedule(() -> setFocused(input));
+
+                                if (!ChatSearchState.isActive()
+                                        || SkyblockEnhancementsConfig.alwaysShowChatSearch) {
+                                    mc.schedule(() -> setFocused(input));
+                                }
 
                                 if (wasAlreadyActive) return;
 

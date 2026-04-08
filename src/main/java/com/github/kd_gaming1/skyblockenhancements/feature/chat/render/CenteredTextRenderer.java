@@ -24,4 +24,9 @@ public final class CenteredTextRenderer implements CustomChatRenderer {
         int x = lineX + (lineWidth - font.width(text)) / 2;
         graphics.drawString(font, text, x, textY, ARGB.color(ARGB.as8BitChannel(alpha), 0xFFFFFF), true);
     }
+
+    @Override
+    public int getTextOffsetX(Font font, FormattedCharSequence text, int lineX, int lineWidth) {
+        return (lineWidth - font.width(text)) / 2;
+    }
 }

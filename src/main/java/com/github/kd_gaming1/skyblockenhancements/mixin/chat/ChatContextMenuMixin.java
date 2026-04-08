@@ -1,5 +1,6 @@
 package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
 
+import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.menu.ChatContextMenu;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.menu.ChatMessageResolver;
@@ -67,10 +68,19 @@ public abstract class ChatContextMenuMixin extends Screen {
             }
 
             if (SkyblockEnhancementsConfig.rightClickChatCopies) {
+                // Direct copy mode: briefly flash the outline, copy, and show toast.
+                SBEChatAccess access =
+                        (SBEChatAccess) Minecraft.getInstance().gui.getChat();
+                access.sbe$setSelectedMessage(message);
+
                 String text = ChatMessageResolver.toRawText(message.content());
                 Minecraft.getInstance().keyboardHandler.setClipboard(text);
                 sbe$contextMenu.notifyCopied((int) x, (int) y);
+
+                // Schedule clearing the highlight after one frame so the user sees a brief flash.
+                Minecraft.getInstance().schedule(() -> access.sbe$setSelectedMessage(null));
             } else {
+                // Context menu mode: outline persists while menu is open.
                 sbe$contextMenu.open(message, (int) x, (int) y, this.width, this.height);
             }
             cir.setReturnValue(true);

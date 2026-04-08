@@ -11,6 +11,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static final String CHAT_ENHANCEMENTS = "chat_enhancements";
     public static final String TOOLTIP_ENHANCEMENTS = "tooltip_enhancements";
     public static final String GENERAL_ENHANCEMENTS = "general_enhancements";
+    public static final String DEV_TOOLS = "dev_tools";
 
     @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
     public static Comment text;
@@ -23,6 +24,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean preventWeaponPlacement = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean hideCheapCoins = false;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean setKatReminderForPetUpgrades = true;
@@ -178,6 +182,21 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
 
     @Entry(category = GENERAL_ENHANCEMENTS)
     public static boolean enableHorizontalScroll = false;
+
+    @Comment(category = DEV_TOOLS, centered = true)
+    public static Comment devToolsText;
+
+    @Entry(category = DEV_TOOLS)
+    public static boolean enableGroundItemDebugHelper = false;
+
+    @Entry(category = DEV_TOOLS)
+    public static boolean groundItemDebugOnlyNearby = true;
+
+    @Entry(category = DEV_TOOLS, isSlider = true, min = 4, max = 64)
+    public static int groundItemDebugRadius = 16;
+
+    @Entry(category = DEV_TOOLS, isSlider = true, min = 1, max = 200)
+    public static int groundItemDebugIntervalTicks = 20;
 
     @Override
     public void writeChanges() {

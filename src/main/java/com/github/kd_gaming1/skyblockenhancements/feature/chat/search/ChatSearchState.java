@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.chat.search;
 
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatTextHelper;
+import java.util.List;
 import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.GuiMessage;
@@ -75,6 +76,21 @@ public final class ChatSearchState {
     /** Convenience overload for {@link GuiMessage}. */
     public static boolean matches(GuiMessage message) {
         return matches(message.content());
+    }
+
+    /**
+     * Counts how many messages in the given list match the current search filter.
+     */
+    public static int countMatching(List<GuiMessage> allMessages) {
+        if (!isFiltering()) return allMessages.size();
+
+        int count = 0;
+        for (GuiMessage msg : allMessages) {
+            if (matches(msg)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**

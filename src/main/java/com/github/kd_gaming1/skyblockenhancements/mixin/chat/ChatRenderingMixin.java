@@ -15,6 +15,7 @@ import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.GuiMessage;
@@ -54,6 +55,26 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
     private final Map<FormattedCharSequence, CustomChatRenderer> sbe$renderers =
             new Reference2ObjectOpenHashMap<>();
 
+    /**
+     * Maps each display line back to the {@link GuiMessage} that produced it.
+     * Uses an {@link IdentityHashMap} because {@link GuiMessage.Line} is a record and we want
+     * to track the exact instance that was added to {@code trimmedMessages}, not any structurally
+     * equal line from a different message.
+     */
+    @Unique
+    private final Map<GuiMessage.Line, GuiMessage> sbe$lineToMessage = new IdentityHashMap<>();
+
+    /** The message currently highlighted by the context menu, or {@code null}. */
+    @Unique
+    private @Nullable GuiMessage sbe$selectedMessage;
+
+    /**
+     * Tracks the {@link GuiMessage} currently being processed by {@code addMessageToDisplayQueue}
+     * so that the {@code addFirst} injection can associate newly created lines with their parent.
+     */
+    @Unique
+    private @Nullable GuiMessage sbe$currentParent;
+
     // --- SBEChatAccess implementation ---
 
     @Override
@@ -86,6 +107,21 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
         return sbe$renderers.get(content);
     }
 
+    @Override
+    public @Nullable GuiMessage sbe$getParentMessage(GuiMessage.Line line) {
+        return sbe$lineToMessage.get(line);
+    }
+
+    @Override
+    public void sbe$setSelectedMessage(@Nullable GuiMessage message) {
+        sbe$selectedMessage = message;
+    }
+
+    @Override
+    public @Nullable GuiMessage sbe$getSelectedMessage() {
+        return sbe$selectedMessage;
+    }
+
     // --- Render proxy injection ---
 
     @WrapOperation(
@@ -110,7 +146,44 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
                 instance, new ChatGraphicsAccessProxy(access, this, graphics, font), i, j, bl);
     }
 
+    @WrapOperation(
+            method = "captureClickableText",
+            at =
+            @At(
+                    value = "INVOKE",
+                    target =
+                            "Lnet/minecraft/client/gui/components/ChatComponent;"
+                                    + "render(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"))
+    private void sbe$proxyClickableTextAccess(
+            ChatComponent instance,
+            ChatComponent.ChatGraphicsAccess access,
+            int screenHeight,
+            int ticks,
+            boolean isChatting,
+            Operation<Void> original) {
+        original.call(
+                instance,
+                new ChatGraphicsAccessProxy(access, this, null, Minecraft.getInstance().font),
+                screenHeight,
+                ticks,
+                isChatting);
+    }
+
     // --- Line processing ---
+
+    /**
+     * Captures the parent {@link GuiMessage} at the start of {@code addMessageToDisplayQueue}
+     * so that all lines created during this invocation can be associated with it.
+     */
+    @Inject(method = "addMessageToDisplayQueue", at = @At("HEAD"))
+    private void sbe$captureParent(GuiMessage message, CallbackInfo ci) {
+        sbe$currentParent = message;
+    }
+
+    @Inject(method = "addMessageToDisplayQueue", at = @At("TAIL"))
+    private void sbe$clearParent(GuiMessage message, CallbackInfo ci) {
+        sbe$currentParent = null;
+    }
 
     @WrapOperation(
             method = "addMessageToDisplayQueue",
@@ -188,12 +261,19 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
             @Share("sbe_renderers") LocalRef<List<CustomChatRenderer>> renderersRef,
             @Local(ordinal = 1) int i,
             @Local(argsOnly = true) GuiMessage message) {
+
+        // Map the newly added line back to its parent message.
+        GuiMessage.Line addedLine = trimmedMessages.getFirst();
+        if (sbe$currentParent != null) {
+            sbe$lineToMessage.put(addedLine, sbe$currentParent);
+        }
+
         List<CustomChatRenderer> renderers = renderersRef.get();
         if (renderers == null || i >= renderers.size()) return;
 
         CustomChatRenderer renderer = renderers.get(i);
         if (renderer != null) {
-            sbe$renderers.put(trimmedMessages.getFirst().content(), renderer);
+            sbe$renderers.put(addedLine.content(), renderer);
         }
     }
 
@@ -204,17 +284,24 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
                     value = "INVOKE",
                     target = "Ljava/util/List;removeLast()Ljava/lang/Object;"))
     private <E> E sbe$cleanupEvicted(List<E> instance, Operation<E> original) {
-        sbe$renderers.remove(((GuiMessage.Line) instance.getLast()).content());
+        GuiMessage.Line evicted = (GuiMessage.Line) instance.getLast();
+        sbe$renderers.remove(evicted.content());
+        sbe$lineToMessage.remove(evicted);
         return original.call(instance);
     }
 
     @Inject(method = "clearMessages", at = @At("HEAD"))
     private void sbe$clearAll(boolean clearHistory, CallbackInfo ci) {
         sbe$renderers.clear();
+        sbe$lineToMessage.clear();
+        sbe$selectedMessage = null;
     }
 
     @Inject(method = "refreshTrimmedMessages", at = @At("HEAD"))
     private void sbe$clearOnRefresh(CallbackInfo ci) {
         sbe$renderers.clear();
+        sbe$lineToMessage.clear();
+        // Intentionally preserve sbe$selectedMessage across refresh — the context menu may
+        // still be open and the message still exists in allMessages.
     }
 }
