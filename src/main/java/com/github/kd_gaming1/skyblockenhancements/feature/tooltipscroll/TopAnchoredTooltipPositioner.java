@@ -16,8 +16,8 @@ public final class TopAnchoredTooltipPositioner implements ClientTooltipPosition
     public static final TopAnchoredTooltipPositioner INSTANCE =
             new TopAnchoredTooltipPositioner();
 
+    /** Small gap so the tooltip doesn't touch the very top edge of the screen. */
     private static final int TOP_PADDING = 4;
-    private static final int TOOLTIP_VERTICAL_SURROUND = (9 + 3) * 2; // = 24
 
     private TopAnchoredTooltipPositioner() {}
 
@@ -30,14 +30,14 @@ public final class TopAnchoredTooltipPositioner implements ClientTooltipPosition
             int tooltipWidth,
             int tooltipHeight) {
 
+        // Let vanilla decide where it wants to place the tooltip.
         Vector2ic vanilla = DefaultTooltipPositioner.INSTANCE.positionTooltip(
                 screenWidth, screenHeight, mouseX, mouseY, tooltipWidth, tooltipHeight);
 
-        int renderedHeight = tooltipHeight + TOOLTIP_VERTICAL_SURROUND;
-        if (vanilla.y() + renderedHeight <= screenHeight) {
-            return vanilla;
+        if (vanilla.y() < TOP_PADDING) {
+            return new Vector2i(vanilla.x(), TOP_PADDING);
         }
 
-        return new Vector2i(vanilla.x(), TOP_PADDING);
+        return vanilla;
     }
 }

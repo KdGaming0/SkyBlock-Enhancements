@@ -11,159 +11,162 @@
   "skyblock_enhancements.midnightconfig.showMissingEnchantments.tooltip": "Vis manglande fortryllingar i verktøytipset til ein gjenstand.",
   "skyblock_enhancements.midnightconfig.showMissingEnchantments.label.tooltip": "Vis manglande fortryllingar i verktøytipset til ein gjenstand.",
 
-  "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments": "Vis ikkje-maksimerte fortryllingar",
+  "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments": "Vis ikkje-maksa fortryllingar",
   "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments.tooltip": "Vis fortryllingar som ikkje er på maksnivå i verktøytipset til ein gjenstand.",
 
-  "skyblock_enhancements.midnightconfig.preventWeaponPlacement": "Hindre våpenplassering",
-  "skyblock_enhancements.midnightconfig.preventWeaponPlacement.tooltip": "Hindrar at Skyblock-sverd (f.eks. Spirit Sceptre) blir plassert som blokker, men lèt evnene deira framleis aktiverast.",
+  "skyblock_enhancements.midnightconfig.preventWeaponPlacement": "Hindre plassering av våpen",
+  "skyblock_enhancements.midnightconfig.preventWeaponPlacement.tooltip": "Hindrar at Skyblock-sverd (f.eks. Spirit Sceptre) blir plasserte som blokker, men lèt deg framleis bruke evnene deira.",
 
   "skyblock_enhancements.midnightconfig.hideCheapCoins": "Skjul billige myntar",
-  "skyblock_enhancements.midnightconfig.hideCheapCoins.tooltip": "Skjuler billige mynt-dropp på bakken (coin/coins spelarhovud-dropp).",
+  "skyblock_enhancements.midnightconfig.hideCheapCoins.tooltip": "Skjuler billige myntar på bakken (myntar/spelarhovud).",
 
-  "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades": "Set Kat-påminning for kjæledyroppgraderingar",
+  "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades": "Sett Kat-påminning for kjæledyroppgraderingar",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.tooltip": "Lag automatisk ei påminning når Kat byrjar å oppgradere kjæledyret ditt, slik at du får beskjed når det er klart til å hentast.",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.label.tooltip": "Lag automatisk ei påminning når Kat byrjar å oppgradere kjæledyret ditt.",
 
-  "skyblock_enhancements.midnightconfig.showWhenPressingShift": "Vis berre manglande fortryllingar når du trykkjer Shift",
-  "skyblock_enhancements.midnightconfig.showWhenPressingShift.tooltip": "Vis berre manglande fortryllingar når du trykkjer Shift.\nSet du dette til usant, er manglande fortryllingar alltid synlege.",
+  "skyblock_enhancements.midnightconfig.showWhenPressingShift": "Berre vis manglande fortryllingar når du trykker Shift",
+  "skyblock_enhancements.midnightconfig.showWhenPressingShift.tooltip": "Berre vis manglande fortryllingar når du trykker Shift.\nViss du set denne til falsk, vil manglande fortryllingar alltid vere synlege.",
 
   "skyblock_enhancements.midnightconfig.enterToConfirmSign": "Enter for å stadfeste inndataskilt \n(trykk Shift + Enter for ny linje)",
-  "skyblock_enhancements.midnightconfig.enterToConfirmSign.tooltip": "Trykk Enter for å fullføre redigering av Hypixel-inndataskilt (AH og BZ). \nShift pluss Enter lagar alltid ei ny linje som i vanilla.",
+  "skyblock_enhancements.midnightconfig.enterToConfirmSign.tooltip": "Trykk Enter for å fullføre skiltredigering på Hypixel-inndataskilt (AH og BZ). \nShift pluss Enter lagar alltid ei ny linje, akkurat som i vanilla.",
   "skyblock_enhancements.midnightconfig.enterToConfirmSign.label.tooltip": "Trykk Enter for å fullføre skiltredigering. Shift pluss Enter legg framleis til ei ny linje.",
 
   "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns": "Bruk Enter-stadfesting på alle skilt",
-  "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns.tooltip": "Ignorerer Hypixel-sjekken for inndataskilt og brukar Enter for å stadfeste i alle skiltredigerarar. Shift pluss Enter lagar alltid ei ny linje.",
+  "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns.tooltip": "Ignorerer Hypixel sin inndataskiltsjekk og brukar Enter for å stadfeste på alle skiltredigerarar. Shift pluss Enter lagar alltid ei ny linje.",
 
-  "skyblock_enhancements.midnightconfig.enableItemGlowOutline": "Slå på glødeomriss for gjenstandar",
-  "skyblock_enhancements.midnightconfig.enableItemGlowOutline.tooltip": "Viser eit glødeomriss på gjenstandar som har droppa nær deg.",
+  "skyblock_enhancements.midnightconfig.enableItemGlowOutline": "Aktiver glødande omriss for gjenstandar",
+  "skyblock_enhancements.midnightconfig.enableItemGlowOutline.tooltip": "Viser eit glødande omriss på gjenstandar som ligg på bakken nær deg.",
 
   "skyblock_enhancements.midnightconfig.showThroughWalls": "Vis glød gjennom veggar",
-  "skyblock_enhancements.midnightconfig.showThroughWalls.tooltip": "Viser glødeomrisset sjølv om gjenstanden er bak ei blokk.",
+  "skyblock_enhancements.midnightconfig.showThroughWalls.tooltip": "Viser det glødande omrisset sjølv om gjenstanden er bak ei blokk.",
 
-  "skyblock_enhancements.midnightconfig.defaultGlowColor": "Standard glødefarge",
-  "skyblock_enhancements.midnightconfig.defaultGlowColor.tooltip": "Standardfarge for glødeomrisset til gjenstandar. Bruk hex-format som #RRGGBB.",
+  "skyblock_enhancements.midnightconfig.defaultGlowColor": "Standard glødfarge",
+  "skyblock_enhancements.midnightconfig.defaultGlowColor.tooltip": "Standardfarge for det glødande omrisset. Bruk hex-format som #RRGGBB.",
 
-  "skyblock_enhancements.midnightconfig.reminderSoundText": "Innstillingar for påminningslyd",
+  "skyblock_enhancements.midnightconfig.reminderSoundText": "Lydinnstillingar for påminningar",
 
-  "skyblock_enhancements.midnightconfig.enableReminderSound": "Slå på påminningslyd",
-  "skyblock_enhancements.midnightconfig.enableReminderSound.tooltip": "Spel ein lyd når ei påminning blir utløyst.",
+  "skyblock_enhancements.midnightconfig.enableReminderSound": "Aktiver lyd for påminning",
+  "skyblock_enhancements.midnightconfig.enableReminderSound.tooltip": "Spel av ein lyd når ei påminning blir utløyst.",
 
-  "skyblock_enhancements.midnightconfig.reminderSound": "Type påminningslyd",
+  "skyblock_enhancements.midnightconfig.reminderSound": "Lydtype for påminning",
   "skyblock_enhancements.midnightconfig.reminderSound.tooltip": "Vel kva lyd som skal spelast for påminningar.\nKlikk for å bla gjennom tilgjengelege lydar.",
 
-  "skyblock_enhancements.midnightconfig.reminderSoundVolume": "Volum for påminningslyd",
-  "skyblock_enhancements.midnightconfig.reminderSoundVolume.tooltip": "Juster volumet for påminningslydar.\nOmfang: 0.0 (stille) til 2.0 (veldig høgt)",
+  "skyblock_enhancements.midnightconfig.reminderSoundVolume": "Lydvolum for påminning",
+  "skyblock_enhancements.midnightconfig.reminderSoundVolume.tooltip": "Juster volumet for påminningslydar.\nOmråde: 0.0 (stille) til 2.0 (veldig høgt)",
 
   "skyblock_enhancements.midnightconfig.reminderSoundPitch": "Tonehøgd for påminningslyd",
-  "skyblock_enhancements.midnightconfig.reminderSoundPitch.tooltip": "Juster tonehøgda for påminningslydar.\nOmfang: 0.5 (mørk) til 2.0 (lys)\nStandard: 1.0 (normal)",
+  "skyblock_enhancements.midnightconfig.reminderSoundPitch.tooltip": "Juster tonehøgda for påminningslydar.\nOmråde: 0.5 (låg) til 2.0 (høg)\nStandard: 1.0 (normal)",
 
   "skyblock_enhancements.midnightconfig.chatEnhancementsText": "Chat-forbetringar",
   "skyblock_enhancements.midnightconfig.extendedChatHistory": "Utvida chathistorikk",
   "skyblock_enhancements.midnightconfig.extendedChatHistory.tooltip": "Aukar maks tal på chatmeldingar som blir haldne i historikken forbi standarden på 100.",
   "skyblock_enhancements.midnightconfig.chatHistorySize": "Storleik på chathistorikk",
-  "skyblock_enhancements.midnightconfig.chatHistorySize.tooltip": "Maks tal på chatmeldingar lagra i historikken.\nOmfang: 100–2048. Standard: 1024.",
-  "skyblock_enhancements.midnightconfig.compactDuplicateMessages": "Kompaktér like meldingar",
-  "skyblock_enhancements.midnightconfig.compactDuplicateMessages.tooltip": "Fjernar like chatmeldingar og viser ein teljar som (×3) i staden.",
+  "skyblock_enhancements.midnightconfig.chatHistorySize.tooltip": "Maksimalt tal på chatmeldingar lagra i historikken.\nOmråde: 100–2048. Standard: 1024.",
+  "skyblock_enhancements.midnightconfig.compactDuplicateMessages": "Kompaktér dupliserte meldingar",
+  "skyblock_enhancements.midnightconfig.compactDuplicateMessages.tooltip": "Fjernar dupliserte chatmeldingar og viser ein teljar som (×3) i staden.",
   "skyblock_enhancements.midnightconfig.onlyCompactConsecutive": "Kompaktér berre påfølgjande",
-  "skyblock_enhancements.midnightconfig.onlyCompactConsecutive.tooltip": "Når dette er på, blir berre meldingar som kjem rett etter kvarandre kompakte.\nNår det er av, blir alle like meldingar kompakte uansett posisjon.",
-  "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes": "Tidsvindu for kompaktering (minutt)",
-  "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes.tooltip": "Kompaktér berre like meldingar som kjem innan dette mange minutt etter den første førekomsten.\nSet til 0 for å slå av (kompaktér alle duplikat uansett alder).\nIgnorert når «Kompaktér berre påfølgjande» er på.",
-  "skyblock_enhancements.midnightconfig.centerHypixelText": "Midtstill Hypixel-tekst",
-  "skyblock_enhancements.midnightconfig.centerHypixelText.tooltip": "Midtstiller mellomrom-fylt tekst frå Hypixel riktig ved alle chatbreidder.\nBerre aktivt når du er på Hypixel.",
-  "skyblock_enhancements.midnightconfig.smoothSeparators": "Mjukare skiljeteikn",
-  "skyblock_enhancements.midnightconfig.smoothSeparators.tooltip": "Byter ut bindestrek-baserte skiljelinjer (f.eks. -----SkyBlock-----) med mjuke midtstilte linjer.\nBerre aktivt når du er på Hypixel.",
-  "skyblock_enhancements.midnightconfig.enableChatTabs": "Slå på chatfaner",
-  "skyblock_enhancements.midnightconfig.enableChatTabs.tooltip": "Legg til kanal-faner (All, Party, Guild, PM, Co-op) over chatinndataet.\nBerre aktivt når du er på Hypixel.",
-  "skyblock_enhancements.midnightconfig.enableChatContextMenu": "Slå på chat-kontekstmeny",
-  "skyblock_enhancements.midnightconfig.enableChatContextMenu.tooltip": "Høgreklikk på ei chatmelding viser ein kontekstmeny med val for å kopiere eller slette ho.",
+  "skyblock_enhancements.midnightconfig.onlyCompactConsecutive.tooltip": "Når aktivert, blir berre meldingar som kjem rett etter kvarandre komprimerte.\nNår deaktivert, blir alle duplikat komprimerte uansett posisjon.",
+  "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes": "Tidsvindu for komprimering (minutt)",
+  "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes.tooltip": "Berre komprimer dupliserte meldingar som kjem innanfor dette talet på minutt etter den første.\nSett til 0 for å deaktivere (komprimerer alle duplikat uavhengig av alder).\nBlir ignorert viss 'Kompaktér berre påfølgjande' er aktivert.",
+  "skyblock_enhancements.midnightconfig.centerHypixelText": "Sentrér Hypixel-tekst",
+  "skyblock_enhancements.midnightconfig.centerHypixelText.tooltip": "Sentrerer mellomrom-fylt tekst frå Hypixel skikkeleg, uavhengig av chat-breidde.\nBerre aktiv når du er på Hypixel.",
+  "skyblock_enhancements.midnightconfig.smoothSeparators": "Jamne skiljelinjer",
+  "skyblock_enhancements.midnightconfig.smoothSeparators.tooltip": "Byter ut bindestrek-baserte skiljelinjer (f.eks. -----SkyBlock-----) med jamne, sentrerte linjer.\nBerre aktiv når du er på Hypixel.",
+  "skyblock_enhancements.midnightconfig.enableChatTabs": "Aktiver chat-faner",
+  "skyblock_enhancements.midnightconfig.enableChatTabs.tooltip": "Legg til kanal-faner (Alle, Party, Laug, PM, Co-op) over chatinndatafeltet.\nBerre aktiv når du er på Hypixel.",
+  "skyblock_enhancements.midnightconfig.enableChatContextMenu": "Aktiver chat-kontekstmeny",
+  "skyblock_enhancements.midnightconfig.enableChatContextMenu.tooltip": "Høgreklikk på ei chatmelding viser ein meny med alternativ for å kopiere eller slette ho.",
   "skyblock_enhancements.midnightconfig.rightClickChatCopies": "Høgreklikk kopierer direkte",
-  "skyblock_enhancements.midnightconfig.rightClickChatCopies.tooltip": "Når dette er på, kopierer høgreklikk på ei chatmelding teksten direkte til utklippstavla i staden for å opne kontekstmenyen.",
-  "skyblock_enhancements.midnightconfig.enableChatSearch": "Slå på pratsøk (Ctrl+F)",
-  "skyblock_enhancements.midnightconfig.enableChatSearch.tooltip": "Trykk Ctrl+F i praten for å opne ei søkelinje som filtrerer meldingar.\nSkriv inn fleire ord for å krevje alle saman (OG-samsvar).",
-  "skyblock_enhancements.midnightconfig.alwaysShowChatSearch": "Alltid vis søkelinje",
-  "skyblock_enhancements.midnightconfig.alwaysShowChatSearch.tooltip": "Alltid vis søkelinja i praten, utan å måtte trykke Ctrl+F.\nLinja held fram med å vere synleg heile tida pratskjermen er open.",
-  "skyblock_enhancements.midnightconfig.enableChatAnimation": "Slå på chatanimasjon",
-  "skyblock_enhancements.midnightconfig.enableChatAnimation.tooltip": "Legg til ein mjuk skli-opp-animasjon når nye meldingar kjem og når chatinndataet opnast.",
+  "skyblock_enhancements.midnightconfig.rightClickChatCopies.tooltip": "Når aktivert, vil høgreklikk på ei chatmelding kopiere teksten hennar direkte til utklippstavla i staden for å opne menyen.",
+  "skyblock_enhancements.midnightconfig.enableChatSearch": "Aktiver chatsøk (Ctrl+F)",
+  "skyblock_enhancements.midnightconfig.enableChatSearch.tooltip": "Trykk Ctrl+F i chatten for å opne ei søkefelt som filtrerer meldingar.\nSkriv fleire ord for å krevje at alle er med (OG-matching).",
+  "skyblock_enhancements.midnightconfig.alwaysShowChatSearch": "Vis alltid søkefelt",
+  "skyblock_enhancements.midnightconfig.alwaysShowChatSearch.tooltip": "Viser alltid søkefeltet i chatten, utan at du treng å trykke Ctrl+F.\nFeltet er synleg heile tida mens chateskjermen er open.",
+  "skyblock_enhancements.midnightconfig.enableChatAnimation": "Aktiver chatanimasjon",
+  "skyblock_enhancements.midnightconfig.enableChatAnimation.tooltip": "Legg til ein glatt gli-opp-animasjon når det kjem nye meldingar og når chatinndatafeltet opnar seg.",
   "skyblock_enhancements.midnightconfig.chatAnimationDurationMs": "Animasjonslengd (ms)",
-  "skyblock_enhancements.midnightconfig.chatAnimationDurationMs.tooltip": "Kor lang tid chatanimasjonen tek i millisekund.\nOmfang: 50–500. Standard: 150.",
+  "skyblock_enhancements.midnightconfig.chatAnimationDurationMs.tooltip": "Kor lang tid chatanimasjonen tek i millisekund.\nOmråde: 50–500. Standard: 150.",
 
   "skyblock_enhancements.midnightconfig.category.tooltip_enhancements": "Verktøytips-forbetringar",
 
   "skyblock_enhancements.midnightconfig.tooltipEnhancementsText": "Verktøytips-forbetringar",
 
-  "skyblock_enhancements.midnightconfig.enablePriceTooltips": "Vis prisverktøytips",
-  "skyblock_enhancements.midnightconfig.enablePriceTooltips.tooltip": "Viser lågaste AH BIN og Bazaar-prisar i verktøytips for gjenstandar medan du er på SkyBlock.",
+  "skyblock_enhancements.midnightconfig.enablePriceTooltips": "Vis pris-verktøytips",
+  "skyblock_enhancements.midnightconfig.enablePriceTooltips.tooltip": "Viser rimelegaste BIN på AH og Bazaar-prisar i verktøytips mens du er på SkyBlock.",
 
-  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes": "Oppdateringsintervall for prisar (minutt)",
-  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes.tooltip": "Kor ofte prisdata blir oppdatert frå API-et.\nOmfang: 1–30 minutt. Standard: 5.",
+  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes": "Prisoppdateringsintervall (minutt)",
+  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes.tooltip": "Kor ofte prisdata blir oppdatert frå API-et.\nOmråde: 1–30 minutt. Standard: 5.",
+
+  "skyblock_enhancements.midnightconfig.tooltipScrollText": "Rulleinnstillingar for verktøytips",
+
+  "skyblock_enhancements.midnightconfig.enableTooltipScroll": "Aktiver rulling av verktøytips",
+  "skyblock_enhancements.midnightconfig.enableTooltipScroll.tooltip": "Rull lange verktøytips med musehjulet. Fungerer både med vanilla og Modern UI-verktøytips.",
+
+  "skyblock_enhancements.midnightconfig.anchorTooltipToTop": "Fest verktøytips på toppen",
+  "skyblock_enhancements.midnightconfig.anchorTooltipToTop.tooltip": "Når verktøytipset ikkje får plass på skjermen, start det øvst i staden for nedst.",
+
+  "skyblock_enhancements.midnightconfig.tooltipScrollSpeed": "Rullefart for verktøytips",
+  "skyblock_enhancements.midnightconfig.tooltipScrollSpeed.tooltip": "Kor raskt verktøytipset bevegar seg per hakk på musehjulet.",
+
+  "skyblock_enhancements.midnightconfig.invertTooltipScroll": "Inverter rulling for verktøytips",
+  "skyblock_enhancements.midnightconfig.invertTooltipScroll.tooltip": "Inverterer den vertikale rulleretninga for verktøytips.",
+
+  "skyblock_enhancements.midnightconfig.enableHorizontalScroll": "Aktiver horisontal rulling",
+  "skyblock_enhancements.midnightconfig.enableHorizontalScroll.tooltip": "Hald inne Venstre Shift og rull for å flytte verktøytips horisontalt.",
 
   "skyblock_enhancements.midnightconfig.text2": "Generelle forbetringar",
 
   "skyblock_enhancements.midnightconfig.noDoubleSneak": "Hindre dobbeltsniking",
-  "skyblock_enhancements.midnightconfig.noDoubleSneak.tooltip": "Hindrar sniking i å veksle to gonger på grunn av posituroppdateringspakkar.",
+  "skyblock_enhancements.midnightconfig.noDoubleSneak.tooltip": "Hindrar at sniking slår seg av og på to gonger på grunn av oppdateringspakkar for positur.",
 
-  "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring": "Slå av åtvaring for ressurspakke-kompatibilitet",
-  "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring.tooltip": "Slår av åtvaringa for kompatibilitet med ressurspakkar.",
+  "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring": "Deaktiver åtvaring om ressurspakke-kompatibilitet",
+  "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring.tooltip": "Deaktiverer åtvaringa om at ressurspakken kanskje ikkje er kompatibel.",
 
-  "skyblock_enhancements.midnightconfig.disableCommandConfirmation": "Slå av kommandostadfesting",
-  "skyblock_enhancements.midnightconfig.disableCommandConfirmation.tooltip": "Slår av kommandostadfestingsdialogen som dukkar opp når du køyrer visse kommandoar.",
-  "skyblock_enhancements.midnightconfig.disableCommandConfirmation.label.tooltip": "Slår av kommandostadfestingsdialogen som dukkar opp når du køyrer visse kommandoar.",
+  "skyblock_enhancements.midnightconfig.disableCommandConfirmation": "Deaktiver kommandostadfesting",
+  "skyblock_enhancements.midnightconfig.disableCommandConfirmation.tooltip": "Deaktiverer stadfestingsboksen som dukkar opp når du køyrer visse kommandoar.",
+  "skyblock_enhancements.midnightconfig.disableCommandConfirmation.label.tooltip": "Deaktiverer stadfestingsboksen som dukkar opp når du køyrer visse kommandoar.",
 
-  "skyblock_enhancements.midnightconfig.hideItemFrames": "Skjul gjenstandsrammer",
-  "skyblock_enhancements.midnightconfig.hideItemFrames.tooltip": "Skjuler gjenstandsramma når ho inneheld ein gjenstand, slik at berre gjenstanden er synleg.",
+  "skyblock_enhancements.midnightconfig.hideItemFrames": "Skjul gjenstandsrammer (Item Frames)",
+  "skyblock_enhancements.midnightconfig.hideItemFrames.tooltip": "Skjuler ramma når ho inneheld ein gjenstand, slik at berre gjenstanden er synleg.",
 
-  "skyblock_enhancements.midnightconfig.hideTextureErrors": "Gøym feilmeldingar for teksturar i loggane",
-  "skyblock_enhancements.midnightconfig.hideTextureErrors.tooltip": "Gøym feilmeldingar for teksturar som oppstår når Mojang ikkje klarer å verifisere hudteksturar",
+  "skyblock_enhancements.midnightconfig.hideTextureErrors": "Skjul feilmeldingar for teksturar i loggane",
+  "skyblock_enhancements.midnightconfig.hideTextureErrors.tooltip": "Skjuler teksturfeilmeldingar som kjem når Mojang ikkje klarer å verifisere skin-teksturar.",
 
-  "skyblock_enhancements.midnightconfig.fullbrightText": "Innstillingar for fullt lys (Fullbright)",
+  "skyblock_enhancements.midnightconfig.fullbrightText": "Fullbright-innstillingar",
 
-  "skyblock_enhancements.midnightconfig.enableFullbright": "Slå på fullt lys",
-  "skyblock_enhancements.midnightconfig.enableFullbright.tooltip": "Gjer verda heilt lys uansett lysnivå.",
+  "skyblock_enhancements.midnightconfig.enableFullbright": "Aktiver Fullbright",
+  "skyblock_enhancements.midnightconfig.enableFullbright.tooltip": "Gjer at verda er heilt opplyst uansett lysnivå.",
 
   "skyblock_enhancements.midnightconfig.fullbrightUseGamma": "Bruk gamma-modus",
-  "skyblock_enhancements.midnightconfig.fullbrightUseGamma.tooltip": "Tvingar fullt lys til å bruke gamma-overstyring i staden for tilpassa shader. Mod-en vil automatisk falle tilbake til dette når Iris-shadarar er aktive.",
+  "skyblock_enhancements.midnightconfig.fullbrightUseGamma.tooltip": "Tvingar fullbright til å overstyre gammaen i staden for å bruke den tilpassa shadaren. Moden vil automatisk falle tilbake til dette viss Iris-shaders er aktive.",
 
-  "skyblock_enhancements.midnightconfig.fullbrightStrength": "Styrke på fullt lys",
-  "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "Kor lyst fullt lys gjer verda. Høgare = lysare.",
+  "skyblock_enhancements.midnightconfig.fullbrightStrength": "Fullbright-styrke",
+  "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "Kor lys fullbright gjer verda. Høgare = lysare.",
 
-  "key.category.skyblock_enhancements.general": "Skyblock-forbetringar",
-  "key.skyblock_enhancements.fullbright": "Av/på fullt lys",
-
-  "skyblock_enhancements.midnightconfig.tooltipScrollText": "Innstillingar for rulling i verktøytips",
-
-  "skyblock_enhancements.midnightconfig.enableTooltipScroll": "Slå på rulling i verktøytips",
-  "skyblock_enhancements.midnightconfig.enableTooltipScroll.tooltip": "Rull lange verktøytips med musehjulet. Fungerer med både vanilla- og Modern UI-verktøytips.",
-
-  "skyblock_enhancements.midnightconfig.tooltipScrollSpeed": "Rullefart i verktøytips",
-  "skyblock_enhancements.midnightconfig.tooltipScrollSpeed.tooltip": "Kor fort verktøytipset flyttar seg per hakk på musehjulet.",
-
-  "skyblock_enhancements.midnightconfig.invertTooltipScroll": "Snu rulling i verktøytips på hovudet",
-  "skyblock_enhancements.midnightconfig.invertTooltipScroll.tooltip": "Snur den vertikale rulleretninga for verktøytips opp ned.",
-
-  "skyblock_enhancements.midnightconfig.enableHorizontalScroll": "Slå på horisontal rulling",
-  "skyblock_enhancements.midnightconfig.enableHorizontalScroll.tooltip": "Hald nede venstre Shift og rull for å flytte verktøytips horisontalt.",
-
-  "skyblock_enhancements.midnightconfig.enableRecipeViewer": "Slå på integrasjon for oppskriftsvisar",
-  "skyblock_enhancements.midnightconfig.enableRecipeViewer.tooltip": "Slår på integrasjon med Reliable Recipe Viewer (RRV) for å vise SkyBlock-oppskrifter.\nKrev at RRV er installert.",
+  "skyblock_enhancements.midnightconfig.enableRecipeViewer": "Aktiver integrasjon av oppskriftsvisar",
+  "skyblock_enhancements.midnightconfig.enableRecipeViewer.tooltip": "Aktiverer integrasjon med Reliable Recipe Viewer (RRV) for å vise SkyBlock-oppskrifter.\nKrev at RRV er installert.",
 
   "skyblock_enhancements.midnightconfig.repoRefreshIntervalHours": "Oppdateringsintervall for repo (timar)",
-  "skyblock_enhancements.midnightconfig.repoRefreshIntervalHours.tooltip": "Kor ofte NEU repo-data blir oppdatert automatisk.\nOmfang: 1–168 timar. Standard: 24.",
+  "skyblock_enhancements.midnightconfig.repoRefreshIntervalHours.tooltip": "Kor ofte NEU-repo-data automatisk blir oppdatert.\nOmråde: 1–168 timar. Standard: 24.",
 
-  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics": "Slå på oppskriftsdiagnostikk",
-  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Loggar ein detaljert oversikt over alle oppskriftstypar funne i NEU-repoet ved oppstart.\nNyttig for utvikling, ikkje nødvendig for vanleg bruk.",
+  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics": "Aktiver oppskriftsdiagnostikk",
+  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Loggfører ei detaljert oversikt over alle oppskriftstypar funne i NEU-repoen ved oppstart.\nNyttig for utvikling, trengst ikkje til vanleg bruk.",
+
+  "key.category.skyblock_enhancements.general": "Skyblock-forbetringar",
+  "key.skyblock_enhancements.fullbright": "Skru av/på Fullbright",
 
   "skyblock_enhancements.midnightconfig.category.dev_tools": "Utviklarverktøy",
   "skyblock_enhancements.midnightconfig.devToolsText": "Utviklarverktøy",
 
-  "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper": "Slå på debughjelpar for bakke-gjenstandar",
-  "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper.tooltip": "Loggar detaljert informasjon om gjenstands-entitetar på bakken.",
+  "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper": "Aktiver feilsøkingshjelpar for gjenstandar på bakken",
+  "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper.tooltip": "Loggfører detaljert info for gjenstandar som ligg på bakken.",
 
-  "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby": "Debug berre nærliggande gjenstandar",
-  "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby.tooltip": "Når slått på, loggar berre gjenstandar innanfor sett radius.",
+  "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby": "Feilsøk berre gjenstandar i nærleiken",
+  "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby.tooltip": "Viss aktivert, loggfører han berre gjenstandar innanfor den konfigurerte radiusen.",
 
-  "skyblock_enhancements.midnightconfig.groundItemDebugRadius": "Debug-radius",
-  "skyblock_enhancements.midnightconfig.groundItemDebugRadius.tooltip": "Radius rundt spelaren som blir skanna når «berre nærliggande» er på.",
+  "skyblock_enhancements.midnightconfig.groundItemDebugRadius": "Feilsøkingsradius",
+  "skyblock_enhancements.midnightconfig.groundItemDebugRadius.tooltip": "Radius rundt spelaren å skanne når berre-i-nærleiken-modus er aktivert.",
 
-  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks": "Intervall for debuglogg (ticks)",
-  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks.tooltip": "Kor ofte debugloggar for bakke-gjenstandar blir skrivne."
+  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks": "Loggintervall for feilsøking (ticks)",
+  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks.tooltip": "Kor ofte feilsøkingsloggar for gjenstandar på bakken blir sende ut."
 }

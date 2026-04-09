@@ -138,6 +138,24 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = TOOLTIP_ENHANCEMENTS, isSlider = true, min = 5, max = 60)
     public static int priceRefreshIntervalMinutes = 15;
 
+    @Comment(category = TOOLTIP_ENHANCEMENTS)
+    public static Comment tooltipScrollText;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean enableTooltipScroll = true;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean anchorTooltipToTop = true;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS, isSlider = true, min = 1, max = 30)
+    public static int tooltipScrollSpeed = 10;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean invertTooltipScroll = false;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean enableHorizontalScroll = false;
+
     @Comment(category = GENERAL_ENHANCEMENTS, centered = true)
     public static Comment text2;
 
@@ -167,24 +185,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
 
     @Entry(category = GENERAL_ENHANCEMENTS, isSlider = true, min = 0, max = 100)
     public static double fullbrightStrength = 100.0;
-
-    @Comment(category = GENERAL_ENHANCEMENTS)
-    public static Comment tooltipScrollText;
-
-    @Entry(category = GENERAL_ENHANCEMENTS)
-    public static boolean enableTooltipScroll = true;
-
-    @Entry(category = GENERAL_ENHANCEMENTS)
-    public static boolean anchorTooltipToTop = true;
-
-    @Entry(category = GENERAL_ENHANCEMENTS, isSlider = true, min = 1, max = 30)
-    public static int tooltipScrollSpeed = 10;
-
-    @Entry(category = GENERAL_ENHANCEMENTS)
-    public static boolean invertTooltipScroll = false;
-
-    @Entry(category = GENERAL_ENHANCEMENTS)
-    public static boolean enableHorizontalScroll = false;
 
     @Comment(category = DEV_TOOLS, centered = true)
     public static Comment devToolsText;

@@ -97,6 +97,23 @@
   "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes": "Price Refresh Interval (minutes)",
   "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes.tooltip": "How often price data is refreshed from the API.\nRange: 1–30 minutes. Default: 5.",
 
+  "skyblock_enhancements.midnightconfig.tooltipScrollText": "Tooltip Scroll Settings",
+
+  "skyblock_enhancements.midnightconfig.enableTooltipScroll": "Enable Tooltip Scroll",
+  "skyblock_enhancements.midnightconfig.enableTooltipScroll.tooltip": "Scroll long tooltips with the mouse wheel. Works with both vanilla and Modern UI tooltips.",
+
+  "skyblock_enhancements.midnightconfig.anchorTooltipToTop": "Anchor Tooltip at the top",
+  "skyblock_enhancements.midnightconfig.anchorTooltipToTop.tooltip": "When the tooltip don't fit on screen start it at the top instead of the bottom.",
+
+  "skyblock_enhancements.midnightconfig.tooltipScrollSpeed": "Tooltip Scroll Speed",
+  "skyblock_enhancements.midnightconfig.tooltipScrollSpeed.tooltip": "How fast the tooltip moves per scroll wheel notch.",
+
+  "skyblock_enhancements.midnightconfig.invertTooltipScroll": "Invert Tooltip Scroll",
+  "skyblock_enhancements.midnightconfig.invertTooltipScroll.tooltip": "Inverts the vertical scroll direction for tooltips.",
+
+  "skyblock_enhancements.midnightconfig.enableHorizontalScroll": "Enable Horizontal Scroll",
+  "skyblock_enhancements.midnightconfig.enableHorizontalScroll.tooltip": "Hold Left Shift and scroll to move tooltips horizontally.",
+
   "skyblock_enhancements.midnightconfig.text2": "General Enhancements",
 
   "skyblock_enhancements.midnightconfig.noDoubleSneak": "Prevent double sneak",
@@ -125,20 +142,6 @@
 
   "skyblock_enhancements.midnightconfig.fullbrightStrength": "Fullbright Strength",
   "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "How bright fullbright makes the world. Higher = brighter.",
-
-  "skyblock_enhancements.midnightconfig.tooltipScrollText": "Tooltip Scroll Settings",
-
-  "skyblock_enhancements.midnightconfig.enableTooltipScroll": "Enable Tooltip Scroll",
-  "skyblock_enhancements.midnightconfig.enableTooltipScroll.tooltip": "Scroll long tooltips with the mouse wheel. Works with both vanilla and Modern UI tooltips.",
-
-  "skyblock_enhancements.midnightconfig.tooltipScrollSpeed": "Tooltip Scroll Speed",
-  "skyblock_enhancements.midnightconfig.tooltipScrollSpeed.tooltip": "How fast the tooltip moves per scroll wheel notch.",
-
-  "skyblock_enhancements.midnightconfig.invertTooltipScroll": "Invert Tooltip Scroll",
-  "skyblock_enhancements.midnightconfig.invertTooltipScroll.tooltip": "Inverts the vertical scroll direction for tooltips.",
-
-  "skyblock_enhancements.midnightconfig.enableHorizontalScroll": "Enable Horizontal Scroll",
-  "skyblock_enhancements.midnightconfig.enableHorizontalScroll.tooltip": "Hold Left Shift and scroll to move tooltips horizontally.",
 
   "skyblock_enhancements.midnightconfig.enableRecipeViewer": "Enable Recipe Viewer Integration",
   "skyblock_enhancements.midnightconfig.enableRecipeViewer.tooltip": "Enables integration with Reliable Recipe Viewer (RRV) to show SkyBlock recipes.\nRequires RRV to be installed.",
