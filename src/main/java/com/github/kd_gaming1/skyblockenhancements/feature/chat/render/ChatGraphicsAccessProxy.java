@@ -20,9 +20,6 @@ import org.jspecify.annotations.Nullable;
  */
 public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess {
 
-    /** Semi-transparent white outline for the selected message. */
-    private static final int OUTLINE_COLOR = 0x40FFFFFF;
-
     private final ChatComponent.ChatGraphicsAccess delegate;
     private final SBEChatAccess chatAccess;
     private final GuiGraphics graphics;
@@ -37,6 +34,16 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
     /** Entry bounds captured from the background fill call, used for outline rendering. */
     private int currentEntryTop;
     private int currentEntryBottom;
+
+    /** Whether any line belonging to the selected message was seen this pass. */
+    private boolean outlineActive;
+
+    /** Accumulated vertical bounds across all lines of the selected message. */
+    private int outlineMinY = Integer.MAX_VALUE;
+    private int outlineMaxY = Integer.MIN_VALUE;
+
+    /** The opacity of the last selected-message line seen (used for the outline alpha). */
+    private float outlineOpacity;
 
     public ChatGraphicsAccessProxy(
             ChatComponent.ChatGraphicsAccess delegate,
@@ -107,7 +114,7 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
             hovered = delegate.handleMessage(textTop, opacity, message);
         }
 
-        renderSelectionOutline(opacity);
+        accumulateOutlineBounds(opacity);
         return hovered;
     }
 
@@ -129,31 +136,47 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
     // --- Selection outline ---
 
     /**
-     * Draws a subtle outline around the current entry if its parent message is the one
-     * selected by the context menu.
+     * Records the bounds of the current entry if it belongs to the selected message. The actual
+     * outline is drawn later by {@link #finishOutline()} so that all lines of a multi-line
+     * message are merged into a single continuous rectangle.
      */
-    private void renderSelectionOutline(float opacity) {
-        if (graphics == null) return;
-
+    private void accumulateOutlineBounds(float opacity) {
         GuiMessage selected = chatAccess.sbe$getSelectedMessage();
         if (selected == null || currentLine == null) return;
 
         GuiMessage parent = chatAccess.sbe$getParentMessage(currentLine);
         if (parent != selected) return;
 
+        outlineActive = true;
+        outlineOpacity = opacity;
+        outlineMinY = Math.min(outlineMinY, currentEntryTop);
+        outlineMaxY = Math.max(outlineMaxY, currentEntryBottom);
+    }
+
+    /**
+     * Draws a single merged outline around all visible lines of the selected message. Must be
+     * called once after the render pass completes (i.e. after all {@code handleMessage} calls).
+     */
+    public void finishOutline() {
+        if (graphics == null || !outlineActive) return;
+
         int scaledWidth = chatAccess.sbe$getScaledWidth();
-        int alpha = ARGB.as8BitChannel(opacity * 0.35f);
+        int alpha = ARGB.as8BitChannel(outlineOpacity * 0.35f);
         int color = ARGB.color(alpha, 0xFF, 0xFF, 0xFF);
 
         int x0 = -4;
         int x1 = scaledWidth + 4 + 4;
-        int y0 = currentEntryTop;
-        int y1 = currentEntryBottom;
+        int y0 = outlineMinY;
+        int y1 = outlineMaxY;
 
         graphics.fill(x0, y0, x1, y0 + 1, color);
         graphics.fill(x0, y1 - 1, x1, y1, color);
         graphics.fill(x0, y0, x0 + 1, y1, color);
         graphics.fill(x1 - 1, y0, x1, y1, color);
+
+        outlineActive = false;
+        outlineMinY = Integer.MAX_VALUE;
+        outlineMaxY = Integer.MIN_VALUE;
     }
 
     /**

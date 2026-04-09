@@ -142,8 +142,9 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
             Operation<Void> original,
             @Local(argsOnly = true) GuiGraphics graphics,
             @Local(argsOnly = true) Font font) {
-        original.call(
-                instance, new ChatGraphicsAccessProxy(access, this, graphics, font), i, j, bl);
+        ChatGraphicsAccessProxy proxy = new ChatGraphicsAccessProxy(access, this, graphics, font);
+        original.call(instance, proxy, i, j, bl);
+        proxy.finishOutline();
     }
 
     @WrapOperation(
