@@ -38,4 +38,6 @@
     Trade → Essence Upgrade → Kat Upgrade → Drops → Wiki
   - Added Essence Upgrade recipes — 3,500+ star upgrade recipes across 528 items and 9
     essence types (Wither, Dragon, Crimson, and more)
-> ⚠️ The item cache will re-download automatically on first launch after updating.
+
+**Fixes**
+- Fixed enhanced items in the item list not having enhanced glint

@@ -69,6 +69,12 @@ public class NeuItem {
      */
     public String parent;
 
+    /**
+     * Whether this item should render with an enchantment glint, as specified by
+     * {@code "minecraft:enchantment_glint_override": 1b} in the companion .snbt file.
+     */
+    public boolean enchantmentGlint = false;
+
     // ── Recipe queries ───────────────────────────────────────────────────────────
 
     public boolean hasCraftingRecipe() {

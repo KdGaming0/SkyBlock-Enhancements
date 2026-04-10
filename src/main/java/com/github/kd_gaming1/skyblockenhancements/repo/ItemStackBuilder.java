@@ -130,6 +130,10 @@ public final class ItemStackBuilder {
             stack.set(DataComponents.DYED_COLOR, new DyedItemColor(item.leatherColor));
         }
 
+        if (item.enchantmentGlint) {
+            stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        }
+
         return stack;
     }
 

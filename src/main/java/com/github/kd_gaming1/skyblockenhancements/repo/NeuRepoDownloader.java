@@ -43,7 +43,7 @@ import net.fabricmc.loader.api.FabricLoader;
 public class NeuRepoDownloader {
 
     /** Bump this whenever the NeuItem schema or parsing logic changes. */
-    private static final int CACHE_VERSION = 7;
+    private static final int CACHE_VERSION = 8;
 
     private static final String REPO_ZIP_URL =
             "https://codeload.github.com/NotEnoughUpdates/NotEnoughUpdates-REPO/zip/refs/heads/master";
@@ -54,14 +54,20 @@ public class NeuRepoDownloader {
     private static final Gson GSON = new GsonBuilder().create();
     private static final Pattern ITEM_MODEL_PATTERN = Pattern.compile("ItemModel:\"([^\"]+)\"");
     private static final Pattern TEXTURE_VALUE_PATTERN = Pattern.compile("Value:\"([^\"]+)\"");
-    private static final Pattern DISPLAY_COLOR_PATTERN =
-            Pattern.compile("display:\\{.*?color:(\\d+)");
+    private static final Pattern DISPLAY_COLOR_PATTERN = Pattern.compile("display:\\{.*?color:(\\d+)");
+
     /**
      * Matches the top-level {@code id: "minecraft:..."} field in a .snbt file.
      * The id is always a direct child of the root object (one level of indentation).
      */
     private static final Pattern SNBT_ID_PATTERN =
             Pattern.compile("^\\s*id:\\s*\"(minecraft:[^\"]+)\"", Pattern.MULTILINE);
+
+    /**
+     * Matches the enchantment_glint_override component when set to true (1b) in a .snbt file.
+     */
+    private static final Pattern SNBT_GLINT_PATTERN =
+            Pattern.compile("\"minecraft:enchantment_glint_override\"\\s*:\\s*1b");
 
     /**
      * Constants files to extract from the ZIP during stream-parsing. File names are relative
@@ -194,6 +200,7 @@ public class NeuRepoDownloader {
         Map<String, NeuItem> items = new HashMap<>(5000);
         // Collect snbt overrides separately; apply after all JSONs are parsed.
         Map<String, String> snbtIds = new HashMap<>();
+        Map<String, Boolean> snbtGlints = new HashMap<>();
         // Collect raw constants JSON for post-parse loading
         Map<String, JsonObject> constants = new HashMap<>();
 
@@ -231,8 +238,13 @@ public class NeuRepoDownloader {
                         String fileName = afterOverlay.substring(slash + 1);
                         String internalName = fileName.substring(0, fileName.length() - 5);
                         String content = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
+
                         String snbtId = parseSnbtId(content);
                         if (snbtId != null) snbtIds.put(internalName, snbtId);
+
+                        if (SNBT_GLINT_PATTERN.matcher(content).find()) {
+                            snbtGlints.put(internalName, true);
+                        }
                     }
                     zis.closeEntry();
                     continue;
@@ -260,6 +272,12 @@ public class NeuRepoDownloader {
         snbtIds.forEach((id, modernId) -> {
             NeuItem item = items.get(id);
             if (item != null) item.snbtItemId = modernId;
+        });
+
+        // Apply glint flags
+        snbtGlints.forEach((id, glint) -> {
+            NeuItem item = items.get(id);
+            if (item != null) item.enchantmentGlint = glint;
         });
 
         // Eagerly resolve categories now that all items are parsed
