@@ -11,16 +11,20 @@ import java.util.Optional;
 import com.github.kd_gaming1.skyblockenhancements.mixin.rrv.RecipeViewMenuAccessor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 
-/** Shared widget, matching, and NBT logic for all SkyBlock recipe types. */
+/**
+ * Shared widget, matching, and NBT logic for all SkyBlock recipe types.
+ *
+ * <p>{@link #extractSkyblockId} delegates to {@link FullStackListCache#getCachedId} so that
+ * overlay-list stacks never pay the {@code NbtComponent.copyTag()} cost in hot paths like
+ * {@code redirectsAsResult()} and {@code redirectsAsIngredient()}.
+ */
 public final class SkyblockRecipeUtil {
 
     private SkyblockRecipeUtil() {}
@@ -28,8 +32,8 @@ public final class SkyblockRecipeUtil {
     // ── Item matching ────────────────────────────────────────────────────────────
 
     /**
-     * Returns {@code true} if {@code query} matches any stack in the given slots by comparing
-     * the Skyblock internal ID from {@code custom_data.id}.
+     * Returns {@code true} if {@code query} matches any stack in the given slots by
+     * comparing SkyBlock internal IDs.
      */
     public static boolean matchesAny(ItemStack query, List<SlotContent> slots) {
         String queryId = extractSkyblockId(query);
@@ -44,12 +48,8 @@ public final class SkyblockRecipeUtil {
     }
 
     /**
-     * Family-aware matching: returns {@code true} if {@code query} matches any stack in
-     * the given slots either by exact ID match OR by being in the same item family (parent
-     * ↔ child relationship from {@code parents.json}). Only checks family in compact mode.
-     *
-     * <p>This enables clicking a parent item (e.g. "Iron Minion I") to show recipes for
-     * all child tiers (Iron Minion II–XI) in the recipe view.
+     * Family-aware matching: returns {@code true} if {@code query} matches any stack by
+     * exact ID or by being in the same item family (parent ↔ child from {@code parents.json}).
      */
     public static boolean matchesAnyOrFamily(ItemStack query, List<SlotContent> slots) {
         String queryId = extractSkyblockId(query);
@@ -59,9 +59,7 @@ public final class SkyblockRecipeUtil {
             for (ItemStack candidate : slot.getValidContents()) {
                 String candidateId = extractSkyblockId(candidate);
                 if (candidateId == null) continue;
-
                 if (queryId.equals(candidateId)) return true;
-
                 if (ItemFamilyHelper.isFamilyMember(queryId, candidateId)) return true;
             }
         }
@@ -69,22 +67,21 @@ public final class SkyblockRecipeUtil {
     }
 
     /**
-     * Extracts the Skyblock internal ID (e.g. {@code "ASPECT_OF_THE_END"}) from a stack's
-     * {@code custom_data.id} field. Returns {@code null} if not present.
+     * Extracts the SkyBlock internal ID from a stack.
+     *
+     * <p>For stacks sourced from the overlay item list this is an O(1) identity-map
+     * lookup in {@link FullStackListCache} with no NBT allocation. For all other stacks
+     * (recipe ingredients, results, etc.) it falls back to a single {@code copyTag()} call.
      */
     public static String extractSkyblockId(ItemStack stack) {
-        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-        if (customData == null) return null;
-        Optional<String> id = customData.copyTag().getString("id");
-        return id.orElse(null);
+        return FullStackListCache.getCachedId(stack);
     }
 
     // ── Tier extraction ─────────────────────────────────────────────────────────
 
     /**
-     * Extracts the trailing numeric tier from an internal ID (e.g.
-     * {@code "ACACIA_GENERATOR_11"} → {@code 11}, {@code "DIAMOND_SWORD"} → {@code 0}).
-     * Returns 0 if no trailing number is found.
+     * Extracts the trailing numeric tier from an internal ID
+     * (e.g. {@code "ACACIA_GENERATOR_11"} → {@code 11}).
      */
     public static int extractTierFromId(String internalId) {
         if (internalId == null || internalId.isEmpty()) return 0;
@@ -92,28 +89,20 @@ public final class SkyblockRecipeUtil {
         int lastUnderscore = internalId.lastIndexOf('_');
         if (lastUnderscore < 0 || lastUnderscore >= internalId.length() - 1) return 0;
 
-        String suffix = internalId.substring(lastUnderscore + 1);
         try {
-            return Integer.parseInt(suffix);
+            return Integer.parseInt(internalId.substring(lastUnderscore + 1));
         } catch (NumberFormatException e) {
             return 0;
         }
     }
 
-    /**
-     * Extracts the tier from the first result slot's internal ID. Used by client recipes
-     * to compute tier-aware priority for ordered display.
-     *
-     * @param results the recipe's result slots
-     * @return the tier number, or 0 if not determinable
-     */
+    /** Extracts the tier from the first result slot's internal ID. */
     public static int extractTierFromResults(List<SlotContent> results) {
         if (results == null || results.isEmpty()) return 0;
 
         for (SlotContent slot : results) {
             for (ItemStack stack : slot.getValidContents()) {
-                String id = extractSkyblockId(stack);
-                int tier = extractTierFromId(id);
+                int tier = extractTierFromId(extractSkyblockId(stack));
                 if (tier > 0) return tier;
             }
         }
@@ -123,8 +112,8 @@ public final class SkyblockRecipeUtil {
     // ── Wiki button ──────────────────────────────────────────────────────────────
 
     /**
-     * Adds a "Wiki" button to the recipe view. Prefers the official wiki (index 1) over
-     * fandom (index 0) when both are present.
+     * Adds a "Wiki" button to the recipe view. Prefers the official wiki (index 1)
+     * over fandom (index 0) when both are present.
      *
      * @return the created button, or {@code null} if {@code wikiUrls} is empty
      */
@@ -172,7 +161,7 @@ public final class SkyblockRecipeUtil {
         return urls;
     }
 
-    /** Strips null entries from a wiki URL array. */
+    /** Strips null/empty entries from a wiki URL array. */
     public static String[] sanitizeWikiUrls(String[] urls) {
         if (urls == null) return new String[0];
         int validCount = 0;
@@ -209,11 +198,7 @@ public final class SkyblockRecipeUtil {
 
     /**
      * Advances {@code menu} forward until its current display contains a recipe whose
-     * result matches {@code targetId} by exact Skyblock internal ID. If no page matches,
-     * resets to page 0 so behavior is unchanged from before.
-     *
-     * <p>Only meaningful for multi-page menus (family items). Single-page menus are
-     * no-ops because {@link RecipeViewMenu#hasNextRecipe()} returns false.
+     * result matches {@code targetId}. Resets to page 0 if no match is found.
      */
     public static void seekToMatchingPage(RecipeViewMenu menu, String targetId) {
         if (targetId == null || !menu.hasNextRecipe()) return;
@@ -224,17 +209,18 @@ public final class SkyblockRecipeUtil {
             List<ReliableClientRecipe> display =
                     ((RecipeViewMenuAccessor) menu).sbe$getCurrentDisplay();
 
-            if (sbe$displayContainsResult(display, targetId)) return;
+            if (displayContainsResult(display, targetId)) return;
 
             if (page < maxPage) menu.nextPage();
         }
 
+        // No matching page found — reset to first page
         while (menu.hasPrevRecipe()) {
             menu.prevPage();
         }
     }
 
-    private static boolean sbe$displayContainsResult(
+    private static boolean displayContainsResult(
             List<ReliableClientRecipe> display, String targetId) {
         for (ReliableClientRecipe recipe : display) {
             for (SlotContent result : recipe.getResults()) {

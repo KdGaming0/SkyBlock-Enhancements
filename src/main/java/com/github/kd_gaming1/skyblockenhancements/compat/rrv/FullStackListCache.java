@@ -2,72 +2,117 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv;
 
 import cc.cassian.rrv.api.recipe.ItemView;
 import cc.cassian.rrv.common.recipe.ClientRecipeCache;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuItem;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Caches the full SkyBlock item list and pre-computed lowercased display names used by the
- * RRV item overlay, eliminating two per-keystroke costs:
+ * Caches the full SkyBlock item list and several per-stack derived values used by the
+ * RRV item overlay. All caches are keyed by {@link ItemStack} identity (not equality),
+ * which is safe because every stack originates from {@code ItemStackBuilder.CACHE} and
+ * is never replaced during a session.
  *
- * <ol>
- *   <li>{@code fullStackList()} no longer re-scans the entire item registry.</li>
- *   <li>{@code stack.getDisplayName().getString().toLowerCase()} no longer creates
- *       bracketed/hover-styled {@code MutableText} objects, visits the component tree,
- *       and lowercases the result — all for 8 000+ items on every keystroke.</li>
- * </ol>
+ * <p>Caches maintained:
+ * <ul>
+ *   <li>Full item list ({@link #cachedList})</li>
+ *   <li>Lowercase display names ({@link #cachedNames}) — avoids {@code toHoverableText()} per keystroke</li>
+ *   <li>SkyBlock internal IDs ({@link #cachedIds}) — avoids {@code NbtComponent.copyTag()} in the filter loop</li>
+ *   <li>Resolved {@link NeuItem} references ({@link #cachedNeuItems}) — avoids HashMap lookup in the filter loop</li>
+ * </ul>
  *
- * <p>Both caches are invalidated together on RRV client reload or when the NEU repo changes.
+ * <p>All caches are invalidated together on RRV client reload or NEU repo change.
  */
 public final class FullStackListCache {
 
-    /** Immutable cached item list. {@code null} until first build. */
     private static volatile List<ItemStack> cachedList;
-
-    /**
-     * Pre-computed lowercased display names keyed by {@link ItemStack} identity.
-     */
     private static volatile Map<ItemStack, String> cachedNames;
+    /** SkyBlock internal ID per stack (e.g. {@code "ASPECT_OF_THE_END"}). */
+    private static volatile Map<ItemStack, String> cachedIds;
+    /** Resolved {@link NeuItem} per stack — eliminates registry lookup in the filter path. */
+    private static volatile Map<ItemStack, NeuItem> cachedNeuItems;
 
     private FullStackListCache() {}
 
-    /**
-     * Returns the cached item list, building it if necessary.
-     */
+    /** Returns the cached item list, building it if necessary. */
     public static List<ItemStack> getOrBuild() {
         List<ItemStack> snapshot = cachedList;
-        if (snapshot != null) {
-            return snapshot;
-        }
+        if (snapshot != null) return snapshot;
         return buildCache();
     }
 
     /**
-     * Returns the pre-computed lowercased display name for the given stack, or computes
-     * it on the fly if the cache hasn't been built yet (shouldn't happen in practice since
-     * {@code fullStackList()} is always called first).
+     * Returns the pre-computed lowercased display name for the given stack.
+     * Falls back to a live computation if the cache has not been built yet.
      */
     public static String getLowercaseName(ItemStack stack) {
         Map<ItemStack, String> names = cachedNames;
         if (names != null) {
             String cached = names.get(stack);
-            if (cached != null) {
-                return cached;
-            }
+            if (cached != null) return cached;
         }
-        // Fallback: compute without caching (stack not in our list, or cache not yet built)
         return stack.getHoverName().getString().toLowerCase();
     }
 
-    /** Clears both caches so the next access rebuilds from the registry. */
+    /**
+     * Returns the pre-extracted SkyBlock internal ID for the given stack without
+     * allocating an NBT copy. Falls back to a live {@code copyTag()} call for stacks
+     * that are not in the overlay cache (e.g. recipe ingredient/result stacks).
+     *
+     * <p>This is the single authoritative place to extract a SkyBlock ID — both
+     * {@link SkyblockCategoryFilter} and {@link SkyblockRecipeUtil} should delegate here.
+     */
+    @Nullable
+    public static String getCachedId(ItemStack stack) {
+        if (stack.isEmpty()) return null;
+
+        Map<ItemStack, String> ids = cachedIds;
+        if (ids != null) {
+            String id = ids.get(stack);
+            if (id != null) return id;
+        }
+
+        // Fallback: live extraction for stacks outside the overlay list (recipe slots, etc.)
+        return extractIdFromStack(stack);
+    }
+
+    /**
+     * Returns the pre-resolved {@link NeuItem} for the given stack without a registry
+     * lookup or NBT copy. Falls back to a live lookup for non-overlay stacks.
+     */
+    @Nullable
+    public static NeuItem getCachedNeuItem(ItemStack stack) {
+        if (stack.isEmpty()) return null;
+
+        Map<ItemStack, NeuItem> items = cachedNeuItems;
+        if (items != null) {
+            NeuItem item = items.get(stack);
+            if (item != null) return item;
+        }
+
+        // Fallback: live resolution for non-overlay stacks
+        String id = extractIdFromStack(stack);
+        if (id == null || id.isEmpty()) return null;
+        return NeuItemRegistry.get(id);
+    }
+
+    /** Clears all caches so the next access rebuilds from the registry. */
     public static void invalidate() {
         cachedList = null;
         cachedNames = null;
+        cachedIds = null;
+        cachedNeuItems = null;
     }
+
+    // ── Internal ────────────────────────────────────────────────────────────────
 
     @SuppressWarnings("UnstableApiUsage")
     private static List<ItemStack> buildCache() {
@@ -79,15 +124,42 @@ public final class FullStackListCache {
             }
         });
 
-        Map<ItemStack, String> names = new IdentityHashMap<>(results.size());
+        int size = results.size();
+        Map<ItemStack, String> names    = new IdentityHashMap<>(size);
+        Map<ItemStack, String> ids      = new IdentityHashMap<>(size);
+        Map<ItemStack, NeuItem> neuItems = new IdentityHashMap<>(size);
+
         for (ItemStack stack : results) {
             names.put(stack, stack.getHoverName().getString().toLowerCase());
+
+            String id = extractIdFromStack(stack);
+            if (id != null && !id.isEmpty()) {
+                ids.put(stack, id);
+                NeuItem neuItem = NeuItemRegistry.get(id);
+                if (neuItem != null) neuItems.put(stack, neuItem);
+            }
         }
 
         List<ItemStack> immutable = Collections.unmodifiableList(results);
-        cachedNames = names;
-        cachedList = immutable;
+        cachedNames    = names;
+        cachedIds      = ids;
+        cachedNeuItems = neuItems;
+        cachedList     = immutable;
         return immutable;
+    }
+
+    /**
+     * Extracts the SkyBlock internal ID directly from a stack's {@code CUSTOM_DATA}
+     * component. This allocates an NBT copy and should only be called for stacks that
+     * are not already in the identity caches (i.e. recipe slots, not overlay items).
+     */
+    @Nullable
+    private static String extractIdFromStack(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) return null;
+        // copyTag() allocates — intentionally limited to the non-cached fallback path
+        String id = data.copyTag().getStringOr("id", "");
+        return id.isEmpty() ? null : id;
     }
 
     static {

@@ -14,18 +14,18 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 /**
- * Up to 5 cost slots → 1 result slot, plus a button row below.
- * Slots 0–4 = costs, slot 5 = result.
- *
- * <p>Height is 56 px to leave room for the "NPC Info" and "Wiki" buttons rendered by
- * {@link SkyblockNpcShopClientRecipe}.
+ * Recipe type for NPC shop recipes. Up to 5 cost slots → 1 result slot.
  */
 public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockNpcShopRecipeType INSTANCE = new SkyblockNpcShopRecipeType();
 
     private static final int SLOT = 18;
-    private List<ItemStack> cachedReferences = null;
+
+    /** Cached icon — allocated once, never mutated. */
+    private final ItemStack icon = new ItemStack(Items.EMERALD);
+
+    private List<ItemStack> cachedNpcReferences = null;
 
     @Override
     public Component getDisplayName() {
@@ -67,11 +67,11 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
 
     @Override
     public ItemStack getIcon() {
-        return new ItemStack(Items.EMERALD);
+        return icon;
     }
 
     public void clearCache() {
-        cachedReferences = null;
+        cachedNpcReferences = null;
     }
 
     /**
@@ -81,7 +81,7 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
     @Override
     public List<ItemStack> getCraftReferences() {
         if (!NeuItemRegistry.isLoaded()) return List.of();
-        if (cachedReferences != null) return cachedReferences;
+        if (cachedNpcReferences != null) return cachedNpcReferences;
 
         List<ItemStack> npcs = new ArrayList<>();
         for (NeuItem item : NeuItemRegistry.getAll().values()) {
@@ -90,13 +90,13 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
                 if (!stack.isEmpty()) npcs.add(stack);
             }
         }
-        cachedReferences = npcs;
+        cachedNpcReferences = npcs;
         return npcs;
     }
 
     /**
      * Matches a craft-reference (NPC head) to shop recipes belonging to that specific NPC.
-     * Uses {@code CUSTOM_NAME} comparison because all NPC heads share the same vanilla item type.
+     * Uses {@code CUSTOM_NAME} comparison because all NPC heads share the same item type.
      */
     @Override
     public ReferenceCondition getCraftReferenceCondition() {
@@ -107,8 +107,9 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
     }
 
     /**
-     * Shared NPC name matching logic. Compares the clicked stack's {@code CUSTOM_NAME} against
-     * the registered NPC item's display name. Used by both shop and info recipe types.
+     * Shared NPC name-matching logic used by both shop and info recipe types.
+     * Compares the clicked stack's {@code CUSTOM_NAME} against the registered NPC item's
+     * display name.
      */
     static boolean matchesNpcByName(ItemStack clickedStack, String npcId) {
         if (npcId.isEmpty()) return false;

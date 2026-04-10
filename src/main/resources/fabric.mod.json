@@ -26,7 +26,7 @@
     ]
   },
   "mixins": [
-    "template.mixins.json"
+    "skyblock_enhancements.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${fabricloader}",

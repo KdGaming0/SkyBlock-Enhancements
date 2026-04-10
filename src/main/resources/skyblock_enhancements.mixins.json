@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "com.github.kd_gaming1.skyblockenhancements.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "plugin": "com.github.kd_gaming1.skyblockenhancements.mixin.SkyblockEnhancementsMixinPlugin",
   "mixins": [
   ],
@@ -39,12 +39,13 @@
     "rrv.QuickNavRecipeViewMixin",
     "rrv.RecipeViewCenterMixin",
     "rrv.RecipeViewFallbackMixin",
+    "rrv.RecipeViewMenuAccessor",
     "rrv.RrvCategoryFilterMixin",
     "rrv.RrvItemListMixin",
     "rrv.RrvRecipeRequestMixin",
+    "rrv.RrvScrollFixMixin",
     "rrv.RrvSearchCalculatorMixin",
     "rrv.VisitorHelperRecipeViewMixin",
-    "rrv.RecipeViewMenuAccessor",
     "tooltipscroll.ClientTextTooltipAccessor",
     "tooltipscroll.TooltipScrollGuiGraphicsMixin",
     "tooltipscroll.TooltipScrollMouseMixin"

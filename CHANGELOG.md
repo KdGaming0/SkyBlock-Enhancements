@@ -1,4 +1,4 @@
-## Changelog for 0.11.5
+## Changelog for 0.11.6
 **Improvements**
 - **Categories**
   - Added new categories: Enchantment, Minion, Potion, and Misc
@@ -41,3 +41,4 @@
 
 **Fixes**
 - Fixed enhanced items in the item list not having enhanced glint
+- Item list not being scrollable with the mouse wheel
