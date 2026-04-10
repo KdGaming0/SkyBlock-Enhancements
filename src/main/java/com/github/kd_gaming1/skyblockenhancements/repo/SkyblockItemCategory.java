@@ -53,13 +53,13 @@ public enum SkyblockItemCategory {
 
     PET(Set.of(), "pets"),
 
-    NPC(Set.of(), null),
+    NPC(Set.of(), "npcs"),
 
-    ENCHANTMENT(Set.of(), "enchantments"),
+    ENCHANTMENT(Set.of(), "enchants"),
 
     MINION(Set.of(), "minions"),
 
-    POTION(Set.of(), "potions"),
+    POTION(Set.of(), null),
 
     EQUIPMENT(Set.of(
             "DEPLOYABLE", "POWER STONE", "REFORGE STONE", "PET ITEM",
@@ -69,7 +69,7 @@ public enum SkyblockItemCategory {
 
     COSMETIC(Set.of(
             "COSMETIC", "DYE", "TRAVEL SCROLL", "PORTAL", "MEMENTO", "BOOSTER"),
-            "cosmetics"),
+            null),
 
     MATERIAL(Set.of(
             "GEMSTONE", "ORE", "DWARVEN METAL", "BLOCK", "SALT", "DUNGEON ITEM",
@@ -78,7 +78,7 @@ public enum SkyblockItemCategory {
             "materials"),
 
     /** Catch-all for items with lore but no matched type (bare-rarity materials, blocks, etc.). */
-    MISC(Set.of(), "misc");
+    MISC(Set.of(), null);
 
     // ── Reverse lookup ──────────────────────────────────────────────────────────
 
