@@ -182,13 +182,16 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
         Minecraft.getInstance().execute(() -> {
             if (injected) return;
 
+            if (cachedItems == null || cachedItems.isEmpty()) {
+                LOGGER.warn("RRV injection aborted — item cache empty. Will retry on next trigger.");
+                return;
+            }
+
             RrvCacheInjector.inject(cachedItems, cachedGrouped);
             injected = true;
 
-            assert cachedItems != null;
             assert cachedGrouped != null;
-            LOGGER.info(
-                    "Spoofed RRV cache with {} items and {} recipes.",
+            LOGGER.info("Injected {} items and {} recipes into RRV.",
                     cachedItems.size(),
                     cachedGrouped.values().stream().mapToInt(List::size).sum());
         });
@@ -198,9 +201,19 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
      * Builds the cached item/recipe data if it doesn't already exist. When compact mode is
      * enabled, child items (from {@code parents.json}) are excluded from the item list — their
      * recipes remain and are viewable when clicking the parent item.
+     *
+     * <p>Skips caching entirely if the registry is empty — this can happen transiently during a
+     * cache-version-bump re-download, where {@link NeuItemRegistry#clear()} has been called but
+     * {@link NeuItemRegistry#markLoaded()} has not yet been reached.
      */
     private static void ensureCachePopulated() {
         if (cachedItems != null && cachedGrouped != null) {
+            return;
+        }
+
+        // Do not cache an empty registry — it means the download is still in progress.
+        if (NeuItemRegistry.getAll().isEmpty()) {
+            LOGGER.warn("ensureCachePopulated called with empty registry — skipping cache build.");
             return;
         }
 

@@ -107,31 +107,22 @@ public class SkyblockEnhancements implements ClientModInitializer {
         Commands.register();
         if (!RrvCompat.isActive()) return;
 
-        // Kick off the initial repo download and feed results into RRV's cache.
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
-            LOGGER.info("Starting initial NEU repo download...");
-            long startTime = System.currentTimeMillis();
-
+            LOGGER.info("Starting NEU repo download...");
             repoFuture = repoDownloader.downloadAsync();
-
-            repoFuture.thenRun(() -> {
-                SkyblockRrvClientPlugin.spoofRrvCache();
-                long duration = System.currentTimeMillis() - startTime;
-                LOGGER.info("NEU repo data synchronized with RRV in {}ms.", duration);
-            }).exceptionally(ex -> {
-                LOGGER.error("Failed to sync NEU repo with RRV!", ex);
-                return null;
-            });
+            repoFuture
+                    .thenRun(SkyblockRrvClientPlugin::spoofRrvCache)
+                    .exceptionally(ex -> {
+                        LOGGER.error("Failed to sync NEU repo with RRV", ex);
+                        return null;
+                    });
         });
 
-        // Poll every ~5 minutes to see if the cached repo data has gone stale.
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (++lastRefreshCheckTick < REFRESH_CHECK_INTERVAL_TICKS) return;
             lastRefreshCheckTick = 0;
 
-            if (!repoDownloader.needsRefresh(SkyblockEnhancementsConfig.repoRefreshIntervalHours)) {
-                return;
-            }
+            if (!repoDownloader.needsRefresh(SkyblockEnhancementsConfig.repoRefreshIntervalHours)) return;
 
             LOGGER.info("Auto-refreshing NEU repo data...");
             ItemStackBuilder.clearCache();
