@@ -20,9 +20,9 @@ public class NeuItem {
     public int leatherColor = -1;
 
     /**
-     * Filter category resolved from the last lore line (e.g. {@code ARMOR}, {@code WEAPON}).
-     * {@code null} for items that don't fit any defined category bucket. Populated at parse
-     * time by {@link SkyblockItemCategory#fromNeuItem(NeuItem)} and persisted in the cache.
+     * Filter category resolved from structural checks and lore-type parsing.
+     * {@code null} for items that don't fit any defined category bucket.
+     * Populated eagerly during parsing and cached with the item data.
      */
     public transient SkyblockItemCategory category;
 
@@ -56,6 +56,18 @@ public class NeuItem {
 
     /** External links for this item. Populated when {@link #infoType} is {@code "WIKI_URL"}. */
     public List<String> info;
+
+    /**
+     * Click command associated with this item (e.g. {@code "viewrecipe"}, {@code "viewpotion"}).
+     * Used for structural category detection — potions use {@code "viewpotion"}.
+     */
+    public String clickcommand;
+
+    /**
+     * Parent item ID from the NEU repo's {@code parent} field (e.g. {@code "ENCHANTED_DIAMOND"}).
+     * Links this item to a parent in the item family hierarchy. Only present on ~469 items.
+     */
+    public String parent;
 
     // ── Recipe queries ───────────────────────────────────────────────────────────
 

@@ -8,6 +8,7 @@ import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.crafting.SkyblockCraftingServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.drops.SkyblockDropsServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.essence.SkyblockEssenceUpgradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatUpgradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoServerRecipe;
@@ -15,6 +16,8 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcShop
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.wiki.SkyblockWikiInfoServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuConstantsRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuConstantsRegistry.EssenceUpgrade;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
 import com.google.gson.JsonArray;
@@ -22,6 +25,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -45,6 +49,9 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
     /**
      * Iterates every NEU item and emits all applicable recipe types. Items that produce no
      * recipes but have wiki URLs get a wiki-only fallback card instead.
+     *
+     * <p>Modern recipes are dispatched in a single pass per item (one loop over {@code item.recipes}
+     * with a switch on type), avoiding redundant list scans.
      */
     public static List<ReliableServerRecipe> generateAllRecipes() {
         List<ReliableServerRecipe> list = new ArrayList<>();
@@ -57,13 +64,7 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
             int beforeSize = list.size();
 
             addLegacyCraftingRecipe(list, item);
-            addModernRecipes(list, item, "crafting");
-            addModernRecipes(list, item, "forge");
-            addModernRecipes(list, item, "npc_shop");
-            addModernRecipes(list, item, "trade");
-            addModernRecipes(list, item, "drops");
-            addModernRecipes(list, item, "katgrade");
-            // Every NPC gets an info card regardless of whether it has a shop.
+            addModernRecipes(list, item);
             addNpcInfoRecipe(list, item);
 
             // Wiki-only fallback for items with wiki URLs but no other recipe types.
@@ -72,6 +73,10 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
                 addWikiInfoRecipe(list, item);
             }
         }
+
+        // Essence upgrades come from constants data, not individual item entries
+        addAllEssenceUpgradeRecipes(list);
+
         return list;
     }
 
@@ -89,25 +94,29 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
                 inputs, SlotContent.of(ItemStackBuilder.build(item).copy()), extractWikiUrls(item)));
     }
 
-    // ── Modern recipe dispatcher ─────────────────────────────────────────────────
+    // ── Modern recipe dispatcher (single-pass) ──────────────────────────────────
 
-    private static void addModernRecipes(
-            List<ReliableServerRecipe> list, NeuItem item, String type) {
+    /**
+     * Iterates the item's modern {@code recipes} array once, dispatching each entry by its
+     * {@code type} field. This replaces the previous approach of calling
+     * {@code addModernRecipes(list, item, "type")} separately for each type string.
+     */
+    private static void addModernRecipes(List<ReliableServerRecipe> list, NeuItem item) {
         if (item.recipes == null) return;
 
         for (JsonObject recipe : item.recipes) {
-            if (!type.equals(jsonStr(recipe, "type"))) continue;
+            String type = jsonStr(recipe, "type");
+            if (type == null) continue;
 
-            ReliableServerRecipe parsed =
-                    switch (type) {
-                        case "crafting" -> parseCrafting(recipe, item);
-                        case "forge" -> parseForge(recipe, item);
-                        case "npc_shop" -> parseNpcShop(recipe, item);
-                        case "trade" -> parseTrade(recipe, item);
-                        case "drops" -> parseDrops(recipe, item);
-                        case "katgrade" -> parseKatgrade(recipe, item);
-                        default -> null;
-                    };
+            ReliableServerRecipe parsed = switch (type) {
+                case "crafting" -> parseCrafting(recipe, item);
+                case "forge"    -> parseForge(recipe, item);
+                case "npc_shop" -> parseNpcShop(recipe, item);
+                case "trade"    -> parseTrade(recipe, item);
+                case "drops"    -> parseDrops(recipe, item);
+                case "katgrade" -> parseKatgrade(recipe, item);
+                default         -> null;
+            };
 
             if (parsed != null) list.add(parsed);
         }
@@ -141,6 +150,60 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
         if (displayStack.isEmpty()) return;
 
         list.add(new SkyblockWikiInfoServerRecipe(displayStack, extractWikiUrls(item)));
+    }
+
+    // ── Essence upgrades (from constants/essencecosts.json) ─────────────────────
+
+    /**
+     * Generates one essence upgrade recipe per star level for every item in the essence
+     * costs registry. Each recipe shows: Item + N Essence (+ optional companion items) → ★ Item.
+     */
+    private static void addAllEssenceUpgradeRecipes(List<ReliableServerRecipe> list) {
+        Map<String, EssenceUpgrade> upgrades = NeuConstantsRegistry.getAllEssenceUpgrades();
+        LOGGER.info("Essence upgrades available: {}", upgrades.size());
+        if (upgrades.isEmpty()) return;
+
+        int count = 0;
+        for (var entry : upgrades.entrySet()) {
+            String itemId = entry.getKey();
+            EssenceUpgrade upgrade = entry.getValue();
+
+            NeuItem item = NeuItemRegistry.get(itemId);
+            if (item == null) continue;
+
+            ItemStack itemStack = ItemStackBuilder.build(item);
+            if (itemStack.isEmpty()) continue;
+
+            String[] wikiUrls = extractWikiUrls(item);
+
+            for (int star = 1; star <= upgrade.maxStar(); star++) {
+                int essenceCost = upgrade.getCost(star);
+                if (essenceCost <= 0) continue;
+
+                // Build the essence item reference (e.g. "ESSENCE_WITHER")
+                String essenceId = "ESSENCE_" + upgrade.essenceType().toUpperCase();
+                SlotContent essenceSlot = parseSlotRef(essenceId + ":" + essenceCost);
+
+                // Companion items for this star level (coins, souls, etc.)
+                List<String> companionRefs = upgrade.getItems(star);
+                SlotContent[] companions = new SlotContent[companionRefs.size()];
+                for (int i = 0; i < companionRefs.size(); i++) {
+                    companions[i] = parseSlotRef(companionRefs.get(i));
+                }
+
+                SlotContent inputSlot = SlotContent.of(itemStack.copy());
+                SlotContent outputSlot = SlotContent.of(itemStack.copy());
+
+                list.add(new SkyblockEssenceUpgradeServerRecipe(
+                        inputSlot, outputSlot, essenceSlot, companions,
+                        star, upgrade.essenceType(), wikiUrls));
+                count++;
+            }
+        }
+
+        if (count > 0) {
+            LOGGER.info("Generated {} essence upgrade recipes", count);
+        }
     }
 
     // ── Individual recipe parsers ────────────────────────────────────────────────
@@ -275,7 +338,7 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
      * Parses a slot reference like {@code "ENCHANTED_DIAMOND:64"} into a SlotContent.
      * Returns an empty slot for null/blank refs.
      */
-    private static SlotContent parseSlotRef(String ref) {
+    static SlotContent parseSlotRef(String ref) {
         if (ref == null || ref.isEmpty()) return SlotContent.of(ItemStack.EMPTY);
 
         String id = ref;

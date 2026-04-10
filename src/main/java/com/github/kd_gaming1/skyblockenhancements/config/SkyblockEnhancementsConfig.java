@@ -82,6 +82,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     public static int repoRefreshIntervalHours = 24;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean compactItemList = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean enableRecipeDiagnostics = false;
 
     @Comment(category = CHAT_ENHANCEMENTS, centered = true)
@@ -206,6 +209,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
         super.writeChanges();
         // BadOptimizations caches the lightmap aggressively — force a rebuild so fullbright changes take effect immediately.
         var mc = Minecraft.getInstance();
+        //noinspection ConstantValue
         if (mc.gameRenderer == null) return;
         LightTexture lt = mc.gameRenderer.lightTexture();
         if (lt instanceof LightTextureAccessor accessor) {

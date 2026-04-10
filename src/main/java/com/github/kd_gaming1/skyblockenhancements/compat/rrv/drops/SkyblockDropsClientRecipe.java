@@ -5,6 +5,7 @@ import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +73,12 @@ public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
 
     @Override
     public boolean redirectsAsResult(ItemStack stack) {
-        return SkyblockRecipeUtil.matchesAny(stack, getResults());
+        return SkyblockRecipeUtil.matchesAnyOrFamily(stack, getResults());
+    }
+
+    @Override
+    public boolean redirectsAsIngredient(ItemStack stack) {
+        return SkyblockRecipeUtil.matchesAnyOrFamily(stack, getIngredients());
     }
 
     @Override
@@ -86,5 +92,10 @@ public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
             wikiButton = SkyblockRecipeUtil.addWikiButton(
                     screen, wikiUrls, pos.left(), pos.top() + CONTENT_HEIGHT);
         }
+    }
+
+    @Override
+    public int getPriority() {
+        return SkyblockRecipePriority.DROPS;
     }
 }

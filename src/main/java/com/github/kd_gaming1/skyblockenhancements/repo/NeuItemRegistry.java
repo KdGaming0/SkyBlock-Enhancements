@@ -61,6 +61,8 @@ public final class NeuItemRegistry {
         invalidateRrvCache();
         // Invalidate the category filter's display-name index so it rebuilds from new data.
         invalidateCategoryIndex();
+        // Clear constants data — it will be re-loaded from the new repo download.
+        NeuConstantsRegistry.clear();
     }
 
     /**
@@ -77,17 +79,12 @@ public final class NeuItemRegistry {
         }
     }
 
-    /**
-     * Drops the category filter's display-name → NeuItem index. Guarded the same way as
-     * {@link #invalidateRrvCache()} to avoid class-loading issues when RRV is absent.
-     */
     private static void invalidateCategoryIndex() {
         try {
             if (RrvCompat.isRrvPresent()) {
                 SkyblockCategoryFilter.invalidateIndex();
             }
         } catch (NoClassDefFoundError ignored) {
-            // RRV not on the classpath — nothing to invalidate.
         }
     }
 
@@ -95,7 +92,6 @@ public final class NeuItemRegistry {
         loaded = true;
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean isLoaded() {
         return loaded;
     }

@@ -5,6 +5,7 @@ import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeClientRecipe;
 import java.util.ArrayList;
@@ -69,12 +70,12 @@ public class SkyblockKatUpgradeClientRecipe implements ReliableClientRecipe {
 
     @Override
     public boolean redirectsAsResult(ItemStack stack) {
-        return SkyblockRecipeUtil.matchesAny(stack, getResults());
+        return SkyblockRecipeUtil.matchesAnyOrFamily(stack, getResults());
     }
 
     @Override
     public boolean redirectsAsIngredient(ItemStack stack) {
-        return SkyblockRecipeUtil.matchesAny(stack, getIngredients());
+        return SkyblockRecipeUtil.matchesAnyOrFamily(stack, getIngredients());
     }
 
     @Override
@@ -112,5 +113,10 @@ public class SkyblockKatUpgradeClientRecipe implements ReliableClientRecipe {
         if (coins >= 1_000_000) return String.format("%.1fM", coins / 1_000_000.0);
         if (coins >= 1_000) return String.format("%.1fk", coins / 1_000.0);
         return String.valueOf(coins);
+    }
+
+    @Override
+    public int getPriority() {
+        return SkyblockRecipePriority.KAT_UPGRADE;
     }
 }

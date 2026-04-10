@@ -5,6 +5,7 @@ import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
     private final int durationSeconds;
     private final String[] wikiUrls;
     private Button wikiButton;
+    private final int tierOffset;
 
     public SkyblockForgeClientRecipe(
             SlotContent[] inputs, SlotContent output, int durationSeconds, String[] wikiUrls) {
@@ -29,6 +31,7 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
         this.output = output;
         this.durationSeconds = durationSeconds;
         this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
+        this.tierOffset = SkyblockRecipeUtil.extractTierFromResults(getResults());
     }
 
     @Override
@@ -62,12 +65,12 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
 
     @Override
     public boolean redirectsAsResult(ItemStack stack) {
-        return SkyblockRecipeUtil.matchesAny(stack, getResults());
+        return SkyblockRecipeUtil.matchesAnyOrFamily(stack, getResults());
     }
 
     @Override
     public boolean redirectsAsIngredient(ItemStack stack) {
-        return SkyblockRecipeUtil.matchesAny(stack, getIngredients());
+        return SkyblockRecipeUtil.matchesAnyOrFamily(stack, getIngredients());
     }
 
     @Override
@@ -97,5 +100,10 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
         }
         if (seconds >= 60) return (seconds / 60) + "m";
         return seconds + "s";
+    }
+
+    @Override
+    public int getPriority() {
+        return SkyblockRecipePriority.FORGE + tierOffset;
     }
 }

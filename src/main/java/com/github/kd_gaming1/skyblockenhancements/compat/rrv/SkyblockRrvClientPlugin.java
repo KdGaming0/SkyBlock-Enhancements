@@ -6,14 +6,14 @@ import cc.cassian.rrv.api.ReliableRecipeViewerClientPlugin;
 import cc.cassian.rrv.api.recipe.ItemView;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipeType;
-import cc.cassian.rrv.common.recipe.ClientRecipeManager;
 import cc.cassian.rrv.common.recipe.ServerRecipeManager.ServerRecipeEntry;
-import cc.cassian.rrv.common.recipe.cache.LowEndRecipeCache;
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.crafting.SkyblockCraftingClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.crafting.SkyblockCraftingServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.drops.SkyblockDropsClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.drops.SkyblockDropsServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.essence.SkyblockEssenceUpgradeClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.essence.SkyblockEssenceUpgradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatUpgradeClientRecipe;
@@ -29,7 +29,9 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTrade
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.wiki.SkyblockWikiInfoClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.wiki.SkyblockWikiInfoServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuConstantsRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
 import java.util.ArrayList;
@@ -38,18 +40,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Client-side RRV plugin. Registers server→client recipe wrappers and handles cache spoofing
+ * Registers server→client recipe wrappers and handles cache spoofing
  * to inject SkyBlock items and recipes into RRV as if they came from a compatible server.
  *
  * <p>Generated data (items + recipes) is cached after the first build so that subsequent RRV
  * reload callbacks (triggered by every Hypixel lobby switch) can re-inject the same data
  * without the expensive repo re-parse. Call {@link #invalidateCache()} when the NEU repo is
  * actually re-downloaded.
+ *
+ * <p>Cache injection is delegated to {@link RrvCacheInjector} which isolates all internal
+ * RRV API calls behind a version-checked facade.
  */
 public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin {
 
@@ -147,6 +154,12 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
                 SkyblockWikiInfoServerRecipe.TYPE,
                 r -> List.of(new SkyblockWikiInfoClientRecipe(
                         r.getDisplayItem(), r.getWikiUrls())));
+
+        ItemView.addClientRecipeWrapper(
+                SkyblockEssenceUpgradeServerRecipe.TYPE,
+                r -> List.of(new SkyblockEssenceUpgradeClientRecipe(
+                        r.getInput(), r.getOutput(), r.getEssence(), r.getCompanions(),
+                        r.getStarLevel(), r.getEssenceType(), r.getWikiUrls())));
     }
 
     // ── Cache spoofing ───────────────────────────────────────────────────────────
@@ -169,7 +182,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
         Minecraft.getInstance().execute(() -> {
             if (injected) return;
 
-            injectIntoRrv(cachedItems, cachedGrouped);
+            RrvCacheInjector.inject(cachedItems, cachedGrouped);
             injected = true;
 
             assert cachedItems != null;
@@ -182,21 +195,44 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
     }
 
     /**
-     * Builds the cached item/recipe data if it doesn't already exist.
+     * Builds the cached item/recipe data if it doesn't already exist. When compact mode is
+     * enabled, child items (from {@code parents.json}) are excluded from the item list — their
+     * recipes remain and are viewable when clicking the parent item.
      */
     private static void ensureCachePopulated() {
         if (cachedItems != null && cachedGrouped != null) {
             return;
         }
 
+        boolean compact = SkyblockEnhancementsConfig.compactItemList;
+
         List<ItemStack> items = new ArrayList<>();
-        for (NeuItem item : NeuItemRegistry.getAll().values()) {
-            ItemStack stack = ItemStackBuilder.build(item);
+        for (Map.Entry<String, NeuItem> entry : NeuItemRegistry.getAll().entrySet()) {
+            String itemId = entry.getKey();
+
+            if (compact && NeuConstantsRegistry.isChild(itemId)) {
+                String parentId = NeuConstantsRegistry.getParent(itemId);
+                if (ItemFamilyHelper.shouldCompactFamily(parentId)) {
+                    continue;
+                }
+            }
+
+            ItemStack stack = ItemStackBuilder.build(entry.getValue());
+            if (compact && !stack.isEmpty() && ItemFamilyHelper.shouldCompactFamily(itemId)) {
+                String compactName = ItemFamilyHelper.buildCompactDisplayName(
+                        itemId, entry.getValue().displayName);
+                if (compactName != null) {
+                    stack = stack.copy();
+                    stack.set(DataComponents.CUSTOM_NAME, Component.literal(compactName));
+                }
+            }
             if (!stack.isEmpty()) {
                 items.add(stack);
             }
         }
 
+        // Recipes are always generated for all items (including children) so clicking
+        // a parent item shows all tier recipes in the recipe view tabs.
         List<ReliableServerRecipe> allRecipes = SkyblockRrvPlugin.generateAllRecipes();
         Map<ReliableServerRecipeType<?>, List<ServerRecipeEntry>> grouped = new HashMap<>();
 
@@ -211,34 +247,5 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
 
         cachedItems = items;
         cachedGrouped = grouped;
-    }
-
-    /** Pushes pre-built items and recipes into RRV's low-level cache. */
-    @SuppressWarnings("UnstableApiUsage")
-    private static void injectIntoRrv(
-            List<ItemStack> items,
-            Map<ReliableServerRecipeType<?>, List<ServerRecipeEntry>> grouped) {
-
-        ClientRecipeManager.INSTANCE.queueTask(() -> {
-            LowEndRecipeCache.INSTANCE.stackSensitiveStartRecieved(items.size());
-            for (ItemStack stack : items) {
-                LowEndRecipeCache.INSTANCE.stackSensitiveRecieved(
-                        new ItemView.StackSensitive(stack));
-            }
-            LowEndRecipeCache.INSTANCE.stackSensitiveEndRecieved();
-
-            LowEndRecipeCache.INSTANCE.cacheStartRecieved(grouped.size());
-            for (var entry : grouped.entrySet()) {
-                LowEndRecipeCache.INSTANCE.startCaching(entry.getKey(), entry.getValue().size());
-                for (ServerRecipeEntry recipeEntry : entry.getValue()) {
-                    LowEndRecipeCache.INSTANCE.cacheModRecipe(recipeEntry);
-                }
-                LowEndRecipeCache.INSTANCE.endCaching(entry.getKey());
-            }
-
-            LowEndRecipeCache.INSTANCE.processRecipes();
-        });
-
-        ClientRecipeManager.INSTANCE.runTasks();
     }
 }

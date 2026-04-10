@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,9 +33,9 @@ import java.util.zip.ZipInputStream;
 import net.fabricmc.loader.api.FabricLoader;
 
 /**
- * Downloads the NotEnoughUpdates-REPO as a ZIP archive, stream-parses {@code items/*.json} and
- * {@code items/*.snbt} entries in-memory (never extracting to disk), and caches the result as a
- * single consolidated JSON file.
+ * Downloads the NotEnoughUpdates-REPO as a ZIP archive, stream-parses {@code items/*.json},
+ * {@code items/*.snbt}, and selected {@code constants/*.json} entries in-memory (never extracting
+ * to disk), and caches the result as a single consolidated JSON file.
  *
  * <p>Uses the GitHub Git Refs API to fetch the latest commit SHA before downloading, allowing fast
  * no-op checks on subsequent launches when the repo hasn't changed.
@@ -42,7 +43,7 @@ import net.fabricmc.loader.api.FabricLoader;
 public class NeuRepoDownloader {
 
     /** Bump this whenever the NeuItem schema or parsing logic changes. */
-    private static final int CACHE_VERSION = 6;
+    private static final int CACHE_VERSION = 7;
 
     private static final String REPO_ZIP_URL =
             "https://codeload.github.com/NotEnoughUpdates/NotEnoughUpdates-REPO/zip/refs/heads/master";
@@ -61,6 +62,17 @@ public class NeuRepoDownloader {
      */
     private static final Pattern SNBT_ID_PATTERN =
             Pattern.compile("^\\s*id:\\s*\"(minecraft:[^\"]+)\"", Pattern.MULTILINE);
+
+    /**
+     * Constants files to extract from the ZIP during stream-parsing. File names are relative
+     * to {@code constants/} inside the ZIP root.
+     */
+    private static final Set<String> CONSTANTS_TO_EXTRACT = Set.of(
+            "parents.json",
+            "essencecosts.json",
+            "museum.json",
+            "pets.json"
+    );
 
     private static final HttpClient HTTP =
             HttpClient.newBuilder()
@@ -96,6 +108,9 @@ public class NeuRepoDownloader {
         String latestSha = fetchLatestSha();
         String cachedSha = readMeta("sha");
 
+        LOGGER.info("NEU repo SHA check: latest={}, cached={}",
+                shortSha(latestSha), shortSha(cachedSha));
+
         if (latestSha != null && latestSha.equals(cachedSha) && Files.exists(cacheFile)) {
             LOGGER.info("NEU repo up-to-date (SHA {}), loading from cache", shortSha(cachedSha));
             loadFromCache();
@@ -108,15 +123,24 @@ public class NeuRepoDownloader {
             return;
         }
 
-        LOGGER.info("Downloading NEU repo ZIP...");
-        Map<String, NeuItem> items = downloadAndParseZip();
+        LOGGER.info("NEU repo cache miss or SHA changed; downloading ZIP...");
+        ParseResult result = downloadAndParseZip();
+
+        LOGGER.info("Parsed NEU ZIP: {} items, {} constants files",
+                result.items.size(), result.constants.size());
+
         NeuItemRegistry.clear();
-        items.forEach(NeuItemRegistry::register);
+        result.items.forEach(NeuItemRegistry::register);
+
+        LOGGER.info("Loading constants into registry...");
+        loadConstants(result.constants);
+
         NeuItemRegistry.markLoaded();
-        LOGGER.info("Loaded {} SkyBlock items from NEU repo", items.size());
+        LOGGER.info("Loaded {} SkyBlock items from NEU repo", result.items.size());
         RecipeDiagnostic.run();
 
-        saveCache(items, latestSha);
+        LOGGER.info("Saving NEU repo cache...");
+        saveCache(result.items, latestSha);
     }
 
     // ── GitHub API ──────────────────────────────────────────────────────────────
@@ -146,7 +170,12 @@ public class NeuRepoDownloader {
 
     // ── ZIP download + stream-parse ─────────────────────────────────────────────
 
-    private Map<String, NeuItem> downloadAndParseZip() throws Exception {
+    /** Bundled result from ZIP parsing — items and raw constants JSON. */
+    private record ParseResult(
+            Map<String, NeuItem> items,
+            Map<String, JsonObject> constants) {}
+
+    private ParseResult downloadAndParseZip() throws Exception {
         HttpRequest req =
                 HttpRequest.newBuilder()
                         .uri(URI.create(REPO_ZIP_URL))
@@ -165,6 +194,8 @@ public class NeuRepoDownloader {
         Map<String, NeuItem> items = new HashMap<>(5000);
         // Collect snbt overrides separately; apply after all JSONs are parsed.
         Map<String, String> snbtIds = new HashMap<>();
+        // Collect raw constants JSON for post-parse loading
+        Map<String, JsonObject> constants = new HashMap<>();
 
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(resp.body()))) {
             ZipEntry entry;
@@ -173,7 +204,7 @@ public class NeuRepoDownloader {
                 String name = entry.getName();
                 if (name.contains("..")) continue; // zip-slip protection
 
-                // items/<NAME>.json
+                // items/<n>.json
                 int itemsIdx = name.indexOf("/items/");
                 if (itemsIdx >= 0 && name.endsWith(".json")) {
                     String fileName = name.substring(itemsIdx + 7);
@@ -191,11 +222,10 @@ public class NeuRepoDownloader {
                     continue;
                 }
 
-                // itemsOverlay/<dataVersion>/<NAME>.snbt
+                // itemsOverlay/<dataVersion>/<n>.snbt
                 int overlayIdx = name.indexOf("/itemsOverlay/");
                 if (overlayIdx >= 0 && name.endsWith(".snbt")) {
-                    String afterOverlay = name.substring(overlayIdx + 14); // strip ".../itemsOverlay/"
-                    // afterOverlay = "<version>/<NAME>.snbt" — exactly one slash separating them
+                    String afterOverlay = name.substring(overlayIdx + 14);
                     int slash = afterOverlay.indexOf('/');
                     if (slash >= 0 && afterOverlay.indexOf('/', slash + 1) < 0) {
                         String fileName = afterOverlay.substring(slash + 1);
@@ -203,6 +233,22 @@ public class NeuRepoDownloader {
                         String content = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
                         String snbtId = parseSnbtId(content);
                         if (snbtId != null) snbtIds.put(internalName, snbtId);
+                    }
+                    zis.closeEntry();
+                    continue;
+                }
+
+                // constants/<name>.json — extract selected files
+                int constantsIdx = name.indexOf("/constants/");
+                if (constantsIdx >= 0 && name.endsWith(".json")) {
+                    String fileName = name.substring(constantsIdx + 11);
+                    if (CONSTANTS_TO_EXTRACT.contains(fileName)) {
+                        String content = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
+                        try {
+                            constants.put(fileName, GSON.fromJson(content, JsonObject.class));
+                        } catch (JsonSyntaxException e) {
+                            LOGGER.warn("Skipping malformed constants file: {}", fileName);
+                        }
                     }
                 }
 
@@ -216,7 +262,41 @@ public class NeuRepoDownloader {
             if (item != null) item.snbtItemId = modernId;
         });
 
-        return items;
+        // Eagerly resolve categories now that all items are parsed
+        for (NeuItem item : items.values()) {
+            item.category = SkyblockItemCategory.fromNeuItem(item);
+        }
+
+        return new ParseResult(items, constants);
+    }
+
+    // ── Constants loading ───────────────────────────────────────────────────────
+
+    /**
+     * Routes extracted constants files to their respective parsers in {@link NeuConstantsRegistry}.
+     */
+    private void loadConstants(Map<String, JsonObject> constants) {
+        NeuConstantsRegistry.clear();
+
+        JsonObject parents = constants.get("parents.json");
+        if (parents != null) {
+            NeuConstantsRegistry.loadParents(parents);
+        }
+
+        JsonObject essenceCosts = constants.get("essencecosts.json");
+        if (essenceCosts != null) {
+            NeuConstantsRegistry.loadEssenceCosts(essenceCosts);
+        }
+
+        JsonObject museum = constants.get("museum.json");
+        if (museum != null) {
+            NeuConstantsRegistry.loadMuseum(museum);
+        }
+
+        JsonObject pets = constants.get("pets.json");
+        if (pets != null) {
+            NeuConstantsRegistry.loadPetTypes(pets);
+        }
     }
 
     // ── SNBT parsing ────────────────────────────────────────────────────────────
@@ -288,6 +368,10 @@ public class NeuRepoDownloader {
             item.info = List.of();
         }
 
+        // ── Click command & parent ───────────────────────────────────────────────
+        item.clickcommand = str(json, "clickcommand", "");
+        item.parent = json.has("parent") ? json.get("parent").getAsString() : null;
+
         // Legacy crafting recipe (A1–C3)
         if (json.has("recipe") && json.get("recipe").isJsonObject()) {
             item.recipe = new LinkedHashMap<>();
@@ -314,7 +398,8 @@ public class NeuRepoDownloader {
             String content = Files.readString(cacheFile, StandardCharsets.UTF_8);
             JsonObject cache = GSON.fromJson(content, JsonObject.class);
 
-            int version = cache.has("cacheVersion") ? cache.get("cacheVersion").getAsInt() : 0;
+            int version = cache.has("cacheVersion") ?
+                    cache.get("cacheVersion").getAsInt() : 0;
             if (version < CACHE_VERSION) {
                 LOGGER.info(
                         "Cache version {} is outdated (current: {}), will re-download", version, CACHE_VERSION);
@@ -326,8 +411,14 @@ public class NeuRepoDownloader {
             NeuItemRegistry.clear();
             for (var entry : itemsObj.entrySet()) {
                 NeuItem item = GSON.fromJson(entry.getValue(), NeuItem.class);
+                // Re-resolve category on cache load (transient field)
+                item.category = SkyblockItemCategory.fromNeuItem(item);
                 NeuItemRegistry.register(entry.getKey(), item);
             }
+
+            // Load constants from cache if present
+            loadConstantsFromCache(cache);
+
             NeuItemRegistry.markLoaded();
             LOGGER.info("Loaded {} items from cache (version {})", itemsObj.size(), version);
             RecipeDiagnostic.run();
@@ -336,18 +427,64 @@ public class NeuRepoDownloader {
         }
     }
 
+    /**
+     * Loads constants data from the disk cache. Constants are stored alongside items
+     * in the same cache file to avoid a separate download on cache-hit launches.
+     */
+    private void loadConstantsFromCache(JsonObject cache) {
+        NeuConstantsRegistry.clear();
+
+        if (!cache.has("constants") || !cache.get("constants").isJsonObject()) {
+            LOGGER.warn("No constants object found in cache");
+            return;
+        }
+
+        JsonObject constants = cache.getAsJsonObject("constants");
+        LOGGER.info("Cached constants present: {}", constants.keySet());
+
+        if (constants.has("parents")) {
+            NeuConstantsRegistry.loadParents(constants.getAsJsonObject("parents"));
+        }
+        if (constants.has("essencecosts")) {
+            NeuConstantsRegistry.loadEssenceCosts(constants.getAsJsonObject("essencecosts"));
+        }
+        if (constants.has("museum")) {
+            NeuConstantsRegistry.loadMuseum(constants.getAsJsonObject("museum"));
+        }
+        if (constants.has("pets")) {
+            NeuConstantsRegistry.loadPetTypes(constants.getAsJsonObject("pets"));
+        }
+    }
+
+
     private void saveCache(Map<String, NeuItem> items, String sha) {
         try {
             JsonObject cache = new JsonObject();
             cache.addProperty("cacheVersion", CACHE_VERSION);
+
             JsonObject itemsObj = new JsonObject();
             items.forEach((k, v) -> itemsObj.add(k, GSON.toJsonTree(v)));
             cache.add("items", itemsObj);
+
+            // Persist constants so cache-hit launches don't need re-download
+            saveConstantsToCache(cache);
+
             Files.writeString(cacheFile, GSON.toJson(cache), StandardCharsets.UTF_8);
             saveMeta(sha);
             LOGGER.info("Saved items cache ({} items, version {})", items.size(), CACHE_VERSION);
         } catch (Exception e) {
             LOGGER.error("Failed to save items cache", e);
+        }
+    }
+
+    /**
+     * Serializes loaded constants data into the cache JSON using the raw JSON objects
+     * retained by {@link NeuConstantsRegistry} during parsing.
+     */
+    private void saveConstantsToCache(JsonObject cache) {
+        JsonObject constants = NeuConstantsRegistry.getRawConstantsForCache();
+        if (!constants.isEmpty()) {
+            cache.add("constants", constants);
         }
     }
 

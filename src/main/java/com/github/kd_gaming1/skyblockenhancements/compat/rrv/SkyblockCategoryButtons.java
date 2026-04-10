@@ -12,6 +12,9 @@ import org.jetbrains.annotations.Nullable;
  * <p>Active state is stored in {@link SkyblockCategoryState}. Clicking a button toggles the
  * category and triggers {@link OverlayManager#updateOverlaysAndWidgets()}, which re-runs the
  * query pipeline and re-creates these buttons with updated toggled state.
+ *
+ * <p>Button categories and sprite names are derived directly from
+ * {@link SkyblockItemCategory#BUTTON_CATEGORIES} — no parallel arrays to keep in sync.
  */
 public final class SkyblockCategoryButtons {
 
@@ -20,33 +23,6 @@ public final class SkyblockCategoryButtons {
 
     /** Horizontal gap between adjacent buttons in pixels. */
     private static final int BTN_GAP = 2;
-
-    private static final SkyblockItemCategory[] CATEGORIES = {
-            SkyblockItemCategory.ARMOR,
-            SkyblockItemCategory.WEAPON,
-            SkyblockItemCategory.TOOL,
-            SkyblockItemCategory.ACCESSORY,
-            SkyblockItemCategory.PET,
-            SkyblockItemCategory.EQUIPMENT,
-            SkyblockItemCategory.COSMETIC,
-            SkyblockItemCategory.MATERIAL,
-    };
-
-    /**
-     * Base sprite names — must exactly match the file names under
-     * {@code assets/skyblock_enhancements/textures/gui/sprites/item_list/}
-     * (without the {@code .png} extension or any state suffix).
-     */
-    private static final String[] SPRITE_NAMES = {
-            "armour",
-            "weaponry",
-            "tools",
-            "accessories",
-            "pets",
-            "equipment",
-            "cosmetics",
-            "materials",
-    };
 
     private SkyblockCategoryButtons() {}
 
@@ -61,7 +37,8 @@ public final class SkyblockCategoryButtons {
     public static List<CategoryIconButton> create(
             int searchBarX, int searchBarY, int searchBarWidth) {
 
-        int count = CATEGORIES.length;
+        List<SkyblockItemCategory> categories = SkyblockItemCategory.BUTTON_CATEGORIES;
+        int count = categories.size();
         int totalWidth = count * BTN_SIZE + (count - 1) * BTN_GAP;
         int startX = searchBarX + (searchBarWidth - totalWidth) / 2;
         int btnY = searchBarY - BTN_SIZE - 2;
@@ -70,11 +47,10 @@ public final class SkyblockCategoryButtons {
         List<CategoryIconButton> buttons = new ArrayList<>(count);
 
         int x = startX;
-        for (int i = 0; i < count; i++) {
-            SkyblockItemCategory category = CATEGORIES[i];
+        for (SkyblockItemCategory category : categories) {
             CategoryIconButton btn = new CategoryIconButton(
                     x, btnY, BTN_SIZE,
-                    SPRITE_NAMES[i],
+                    category.getSpriteName(),
                     category == active,
                     b -> onToggle(category));
             buttons.add(btn);
