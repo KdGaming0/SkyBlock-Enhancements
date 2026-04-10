@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public class Fullbright {
@@ -19,7 +18,9 @@ public class Fullbright {
         toggleKey =
                 KeyBindingHelper.registerKeyBinding(
                         new KeyMapping(
-                                "key.skyblock_enhancements.fullbright", GLFW.GLFW_KEY_G, CATEGORY));
+                                "key.skyblock_enhancements.fullbright",
+                                GLFW.GLFW_KEY_UNKNOWN,
+                                CATEGORY));
     }
 
     public static void onTick(Minecraft client) {
