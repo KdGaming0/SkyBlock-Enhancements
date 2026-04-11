@@ -45,7 +45,7 @@ public record SeparatorRenderer(int lineColor, @Nullable String middleText)
 
         int textWidth = font.width(middleText);
         int textX = lineX + (lineWidth - textWidth) / 2;
-        graphics.drawString(font, middleText, textX, textY, ARGB.color(alphaInt, 0xFFFFFF), true);
+        graphics.drawString(font, middleText, textX, textY, color, true);
 
         // Left arm.
         int leftEnd = textX - TEXT_PADDING;
@@ -70,12 +70,7 @@ public record SeparatorRenderer(int lineColor, @Nullable String middleText)
      */
     @Override
     public int getTextOffsetX(Font font, FormattedCharSequence text, int lineX, int lineWidth) {
-        if (middleText == null || middleText.isEmpty()) {
-            return -1;
-        }
-        // The middle text is centered within the line width — same formula as render().
-        int textWidth = font.width(middleText);
-        return (lineWidth - textWidth) / 2;
+        return -1;
     }
 
     /**
