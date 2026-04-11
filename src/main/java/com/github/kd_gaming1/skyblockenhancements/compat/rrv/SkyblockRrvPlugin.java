@@ -36,6 +36,9 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
 
     private static final String[] GRID_KEYS = {"A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3"};
 
+    /** Reusable empty slot — avoids allocating a new SlotContent per empty crafting grid cell. */
+    private static final SlotContent EMPTY_SLOT = SlotContent.of(ItemStack.EMPTY);
+
     @Override
     public void onIntegrationInitialize() {
         if (!RrvCompat.isActive()) return;
@@ -76,6 +79,11 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
 
         // Essence upgrades come from constants data, not individual item entries
         addAllEssenceUpgradeRecipes(list);
+
+        for (NeuItem item : NeuItemRegistry.getAll().values()) {
+            item.recipe = null;
+            item.recipes = null;
+        }
 
         return list;
     }
@@ -218,7 +226,8 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
     }
 
     private static ReliableServerRecipe parseForge(JsonObject recipe, NeuItem item) {
-        JsonArray inputsArr = recipe.has("inputs") ? recipe.getAsJsonArray("inputs") : null;
+        JsonArray inputsArr = recipe.has("inputs") ?
+                recipe.getAsJsonArray("inputs") : null;
         if (inputsArr == null || inputsArr.isEmpty()) return null;
 
         SlotContent[] inputs = new SlotContent[inputsArr.size()];
@@ -283,7 +292,8 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
         int level = recipe.has("level") ? recipe.get("level").getAsInt() : 0;
         int xp = recipe.has("combat_xp") ? recipe.get("combat_xp").getAsInt() : 0;
 
-        return new SkyblockDropsServerRecipe(mobName, drops, chances, level, xp, extractWikiUrls(item));
+        return new SkyblockDropsServerRecipe(
+                mobName, drops, chances, level, xp, extractWikiUrls(item));
     }
 
     private static ReliableServerRecipe parseKatgrade(JsonObject recipe, NeuItem item) {
@@ -291,40 +301,35 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
         String outputRef = jsonStr(recipe, "output");
         if (inputRef == null || outputRef == null) return null;
 
-        SlotContent input = parseSlotRef(inputRef);
-        SlotContent output = parseSlotRef(outputRef);
-
-        JsonArray itemsArr = recipe.has("items") ? recipe.getAsJsonArray("items") : null;
+        JsonArray materialsArr = recipe.has("items") ? recipe.getAsJsonArray("items") : null;
         SlotContent[] materials;
-        if (itemsArr != null) {
-            materials = new SlotContent[itemsArr.size()];
-            for (int i = 0; i < itemsArr.size(); i++) {
-                materials[i] = parseSlotRef(itemsArr.get(i).getAsString());
+        if (materialsArr != null && !materialsArr.isEmpty()) {
+            materials = new SlotContent[materialsArr.size()];
+            for (int i = 0; i < materialsArr.size(); i++) {
+                materials[i] = parseSlotRef(materialsArr.get(i).getAsString());
             }
         } else {
             materials = new SlotContent[0];
         }
 
-        long coins = recipe.has("coins") ? recipe.get("coins").getAsLong() : 0;
+        int coins = recipe.has("coins") ? recipe.get("coins").getAsInt() : 0;
         int time = recipe.has("time") ? recipe.get("time").getAsInt() : 0;
 
         return new SkyblockKatUpgradeServerRecipe(
-                input, output, materials, coins, time, extractWikiUrls(item));
+                parseSlotRef(inputRef), parseSlotRef(outputRef), materials, coins, time,
+                extractWikiUrls(item));
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────────
+    // ── Output resolution ────────────────────────────────────────────────────────
 
-    /**
-     * Resolves the output ItemStack for a recipe, honoring {@code overrideOutputId} and
-     * {@code count} fields from the JSON.
-     */
     private static ItemStack resolveOutput(JsonObject recipe, NeuItem item) {
-        String overrideId = jsonStr(recipe, "overrideOutputId");
+        String outputRef = jsonStr(recipe, "overrideOutputId");
         ItemStack output;
 
-        if (overrideId != null) {
-            NeuItem overrideItem = NeuItemRegistry.get(overrideId);
-            output = (overrideItem != null ? ItemStackBuilder.build(overrideItem) : ItemStackBuilder.build(item)).copy();
+        if (outputRef != null) {
+            NeuItem overrideItem = NeuItemRegistry.get(outputRef);
+            output = (overrideItem != null ?
+                    ItemStackBuilder.build(overrideItem) : ItemStackBuilder.build(item)).copy();
         } else {
             output = ItemStackBuilder.build(item).copy();
         }
@@ -336,10 +341,10 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
 
     /**
      * Parses a slot reference like {@code "ENCHANTED_DIAMOND:64"} into a SlotContent.
-     * Returns an empty slot for null/blank refs.
+     * Returns a cached empty slot for null/blank refs.
      */
     static SlotContent parseSlotRef(String ref) {
-        if (ref == null || ref.isEmpty()) return SlotContent.of(ItemStack.EMPTY);
+        if (ref == null || ref.isEmpty()) return EMPTY_SLOT;
 
         String id = ref;
         int count = 1;

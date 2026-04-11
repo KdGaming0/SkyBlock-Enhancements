@@ -9,6 +9,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -30,6 +31,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import com.google.gson.stream.JsonReader;
 import net.fabricmc.loader.api.FabricLoader;
 
 /**
@@ -397,18 +400,67 @@ public class NeuRepoDownloader {
     // ── Disk cache ──────────────────────────────────────────────────────────────
 
     /**
-     * Attempts to load items and constants from the disk cache.
+     * Attempts to load items and constants from the disk cache using streaming
+     * JSON parsing to minimize peak memory usage. Instead of loading the entire
+     * file into a String and parsing it as one JsonObject DOM tree, this reads
+     * the JSON token-by-token and constructs NeuItem POJOs on the fly.
      *
      * @return {@code true} if the cache was valid and loaded successfully;
      *         {@code false} if the cache version is outdated or loading failed,
      *         signalling the caller to fall through to a fresh download.
      */
     private boolean loadFromCache() {
-        try {
-            String content = Files.readString(cacheFile, StandardCharsets.UTF_8);
-            JsonObject cache = GSON.fromJson(content, JsonObject.class);
+        try (BufferedReader br = Files.newBufferedReader(cacheFile, StandardCharsets.UTF_8);
+             JsonReader reader = new JsonReader(br)) {
 
-            int version = cache.has("cacheVersion") ? cache.get("cacheVersion").getAsInt() : 0;
+            reader.beginObject();
+
+            int version = 0;
+            int itemCount = 0;
+            boolean itemsLoaded = false;
+            boolean constantsLoaded = false;
+
+            NeuItemRegistry.clear();
+
+            while (reader.hasNext()) {
+                String fieldName = reader.nextName();
+                switch (fieldName) {
+                    case "cacheVersion" -> version = reader.nextInt();
+
+                    case "items" -> {
+                        if (version < CACHE_VERSION) {
+                            LOGGER.info("Cache version {} is outdated (current: {}), will re-download",
+                                    version, CACHE_VERSION);
+                            Files.deleteIfExists(metaFile);
+                            return false;
+                        }
+                        reader.beginObject();
+                        while (reader.hasNext()) {
+                            String internalName = reader.nextName();
+                            // GSON.fromJson(JsonReader) reads exactly one value and advances the reader
+                            NeuItem item = GSON.fromJson(reader, NeuItem.class);
+                            item.category = SkyblockItemCategory.fromNeuItem(item);
+                            NeuItemRegistry.register(internalName, item);
+                            itemCount++;
+                        }
+                        reader.endObject();
+                        itemsLoaded = true;
+                    }
+
+                    case "constants" -> {
+                        JsonObject constants = GSON.fromJson(reader, JsonObject.class);
+                        loadConstantsFromCacheObject(constants);
+                        constantsLoaded = true;
+                    }
+
+                    // Skip etag, timestamp, and any other fields
+                    default -> reader.skipValue();
+                }
+            }
+
+            reader.endObject();
+
+            // Handle edge case: cacheVersion field appeared after items in the JSON
             if (version < CACHE_VERSION) {
                 LOGGER.info("Cache version {} is outdated (current: {}), will re-download",
                         version, CACHE_VERSION);
@@ -416,20 +468,20 @@ public class NeuRepoDownloader {
                 return false;
             }
 
-            JsonObject itemsObj = cache.getAsJsonObject("items");
-            NeuItemRegistry.clear();
-            for (var entry : itemsObj.entrySet()) {
-                NeuItem item = GSON.fromJson(entry.getValue(), NeuItem.class);
-                item.category = SkyblockItemCategory.fromNeuItem(item);
-                NeuItemRegistry.register(entry.getKey(), item);
+            if (!itemsLoaded) {
+                LOGGER.warn("Cache file contained no items section — will re-download");
+                return false;
             }
 
-            loadConstantsFromCache(cache);
-            NeuItemRegistry.markLoaded();
+            if (!constantsLoaded) {
+                LOGGER.warn("No constants found in cache — constants will be missing until next re-download");
+            }
 
-            LOGGER.info("Loaded {} SkyBlock items from cache (version {})", itemsObj.size(), version);
+            NeuItemRegistry.markLoaded();
+            LOGGER.info("Loaded {} SkyBlock items from cache (version {})", itemCount, version);
             RecipeDiagnostic.run();
             return true;
+
         } catch (Exception e) {
             LOGGER.error("Cache load failed — will re-download", e);
             return false;
@@ -437,18 +489,16 @@ public class NeuRepoDownloader {
     }
 
     /**
-     * Loads constants data from the disk cache. Constants are stored alongside items
-     * in the same cache file to avoid a separate download on cache-hit launches.
+     * Loads constants from a pre-parsed JsonObject. The object passed here is the
+     * "constants" value directly, not the root cache object.
      */
-    private void loadConstantsFromCache(JsonObject cache) {
+    private void loadConstantsFromCacheObject(JsonObject constants) {
         NeuConstantsRegistry.clear();
 
-        if (!cache.has("constants") || !cache.get("constants").isJsonObject()) {
+        if (constants == null) {
             LOGGER.warn("No constants found in cache — constants will be missing until next re-download");
             return;
         }
-
-        JsonObject constants = cache.getAsJsonObject("constants");
 
         if (constants.has("parents"))      NeuConstantsRegistry.loadParents(constants.getAsJsonObject("parents"));
         if (constants.has("essencecosts")) NeuConstantsRegistry.loadEssenceCosts(constants.getAsJsonObject("essencecosts"));

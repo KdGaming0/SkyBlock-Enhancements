@@ -18,19 +18,17 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForge
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatUpgradeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatUpgradeServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoRecipeType;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoRegistry;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcShopClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcShopRecipeType;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcShopServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.*;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTradeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.wiki.SkyblockWikiInfoClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.wiki.SkyblockWikiInfoServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
-import com.github.kd_gaming1.skyblockenhancements.repo.*;
+import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuConstantsRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuItem;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.SkyblockItemCategory;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -136,7 +134,8 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
         ItemView.addClientRecipeWrapper(
                 SkyblockDropsServerRecipe.TYPE,
                 r -> List.of(new SkyblockDropsClientRecipe(
-                        r.getMobName(), r.getDrops(), r.getChances(), r.getLevel(),
+                        r.getMobName(), r.getDrops(), r.getChances(),
+                        r.getLevel(),
                         r.getCombatXp(), r.getWikiUrls())));
 
         ItemView.addClientRecipeWrapper(
@@ -158,6 +157,25 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
     }
 
     // ── Cache spoofing ───────────────────────────────────────────────────────────
+
+    /**
+     * Pre-builds the item/recipe cache on a background thread without injecting
+     * into RRV. Call this from an async context after the repo download completes.
+     * The actual injection will happen when {@link #spoofRrvCache()} is called.
+     */
+    public static void prepareDataAsync() {
+        if (!NeuItemRegistry.isLoaded()) return;
+        if (injected) return;
+
+        SkyblockNpcInfoRegistry.clear();
+        ensureCachePopulated();
+
+        LOGGER.info("RRV injection data prepared ({} items, {} recipes). "
+                        + "Injection will happen on next spoofRrvCache() call.",
+                cachedItems != null ? cachedItems.size() : 0,
+                cachedGrouped != null
+                        ? cachedGrouped.values().stream().mapToInt(List::size).sum() : 0);
+    }
 
     /**
      * Injects SkyBlock items and recipes into RRV's internal cache. On the first call (or after
@@ -258,7 +276,8 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
                     return "";
                 })
                 .thenComparing(
-                        s -> s.neuItem().rarity != null ? s.neuItem().rarity.ordinal() : Integer.MAX_VALUE)
+                        s -> s.neuItem().rarity != null ?
+                                s.neuItem().rarity.ordinal() : Integer.MAX_VALUE)
                 .thenComparing(
                         s -> s.neuItem().displayName != null
                                 ? s.neuItem().displayName.replaceAll("§.", "")

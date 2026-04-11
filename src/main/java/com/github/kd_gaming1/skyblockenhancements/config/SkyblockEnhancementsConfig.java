@@ -5,14 +5,25 @@ import eu.midnightdust.lib.config.MidnightConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 
+// Fabric dev check
+import net.fabricmc.loader.api.FabricLoader;
+
+/**
+ * SkyblockEnhancementsConfig
+ */
 public class SkyblockEnhancementsConfig extends MidnightConfig {
 
+    // Category IDs (used by MidnightLib to group entries into tabs)
     public static final String SKYBLOCK_ENHANCEMENTS = "skyblock_enhancements";
+    public static final String RRV_INTEGRATION = "rrv_integration";
     public static final String CHAT_ENHANCEMENTS = "chat_enhancements";
     public static final String TOOLTIP_ENHANCEMENTS = "tooltip_enhancements";
     public static final String GENERAL_ENHANCEMENTS = "general_enhancements";
     public static final String DEV_TOOLS = "dev_tools";
 
+    // ------------------------
+    // SKYBLOCK_ENHANCEMENTS
+    // ------------------------
     @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
     public static Comment text;
 
@@ -75,18 +86,25 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
         SUCCESS
     }
 
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    // ------------------------
+    // RRV_INTEGRATION
+    // ------------------------
+
+    @Entry(category = RRV_INTEGRATION)
     public static boolean enableRecipeViewer = true;
 
-    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 168)
+    @Entry(category = RRV_INTEGRATION, isSlider = true, min = 1, max = 168)
     public static int repoRefreshIntervalHours = 24;
 
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    @Entry(category = RRV_INTEGRATION)
     public static boolean compactItemList = true;
 
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    @Entry(category = RRV_INTEGRATION)
     public static boolean enableRecipeDiagnostics = false;
 
+    // ------------------------
+    // CHAT_ENHANCEMENTS
+    // ------------------------
     @Comment(category = CHAT_ENHANCEMENTS, centered = true)
     public static Comment chatEnhancementsText;
 
@@ -132,6 +150,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 50, max = 500)
     public static int chatAnimationDurationMs = 150;
 
+    // ------------------------
+    // TOOLTIP_ENHANCEMENTS
+    // ------------------------
     @Comment(category = TOOLTIP_ENHANCEMENTS, centered = true)
     public static Comment tooltipEnhancementsText;
 
@@ -159,6 +180,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = TOOLTIP_ENHANCEMENTS)
     public static boolean enableHorizontalScroll = false;
 
+    // ------------------------
+    // GENERAL_ENHANCEMENTS
+    // ------------------------
     @Comment(category = GENERAL_ENHANCEMENTS, centered = true)
     public static Comment text2;
 
@@ -189,24 +213,39 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = GENERAL_ENHANCEMENTS, isSlider = true, min = 0, max = 100)
     public static double fullbrightStrength = 100.0;
 
+    // ------------------------
+    // DEV_TOOLS (developer-only category)
+    // ------------------------
+
+    @Entry(category = DEV_TOOLS)
+    public static boolean devMode = FabricLoader.getInstance().isDevelopmentEnvironment();
+
+    @Condition(requiredOption = "devMode", requiredValue = "true")
     @Comment(category = DEV_TOOLS, centered = true)
     public static Comment devToolsText;
 
+    @Condition(requiredOption = "devMode", requiredValue = "true")
     @Entry(category = DEV_TOOLS)
     public static boolean enableGroundItemDebugHelper = false;
 
+    @Condition(requiredOption = "devMode", requiredValue = "true")
     @Entry(category = DEV_TOOLS)
     public static boolean groundItemDebugOnlyNearby = true;
 
+    @Condition(requiredOption = "devMode", requiredValue = "true")
     @Entry(category = DEV_TOOLS, isSlider = true, min = 4, max = 64)
     public static int groundItemDebugRadius = 16;
 
+    @Condition(requiredOption = "devMode", requiredValue = "true")
     @Entry(category = DEV_TOOLS, isSlider = true, min = 1, max = 200)
     public static int groundItemDebugIntervalTicks = 20;
+
+    // ------------------------
 
     @Override
     public void writeChanges() {
         super.writeChanges();
+
         // BadOptimizations caches the lightmap aggressively — force a rebuild so fullbright changes take effect immediately.
         var mc = Minecraft.getInstance();
         //noinspection ConstantValue

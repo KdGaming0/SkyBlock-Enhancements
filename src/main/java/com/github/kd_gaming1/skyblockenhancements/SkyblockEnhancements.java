@@ -111,7 +111,10 @@ public class SkyblockEnhancements implements ClientModInitializer {
             LOGGER.info("Starting NEU repo download...");
             repoFuture = repoDownloader.downloadAsync();
             repoFuture
-                    .thenRun(SkyblockRrvClientPlugin::spoofRrvCache)
+                    .thenRun(() -> {
+                        SkyblockRrvClientPlugin.prepareDataAsync();
+                        SkyblockRrvClientPlugin.spoofRrvCache();
+                    })
                     .exceptionally(ex -> {
                         LOGGER.error("Failed to sync NEU repo with RRV", ex);
                         return null;
