@@ -91,7 +91,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
             if (future.isDone()) {
                 spoofRrvCache();
             } else {
-                future.thenRun(SkyblockRrvClientPlugin::spoofRrvCache);
+                injected = false;
             }
         });
     }
@@ -219,7 +219,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
      * cache-version-bump re-download, where {@link NeuItemRegistry#clear()} has been called but
      * {@link NeuItemRegistry#markLoaded()} has not yet been reached.
      */
-    private static void ensureCachePopulated() {
+    private static synchronized void ensureCachePopulated() {
         if (cachedItems != null && cachedGrouped != null) {
             return;
         }
