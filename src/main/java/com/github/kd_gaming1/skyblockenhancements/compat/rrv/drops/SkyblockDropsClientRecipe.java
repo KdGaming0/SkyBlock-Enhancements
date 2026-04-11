@@ -11,30 +11,43 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
-/** Client display for mob drop recipes. Shows mob name header and drop slots with chance tooltips. */
 public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
 
-    /** Vertical space used by the mob name header + drop grid, before the wiki row. */
     private static final int CONTENT_HEIGHT = 12 + 3 * 18;
 
     private final String mobName;
     private final SlotContent[] drops;
     private final String[] chances;
     private final String[] wikiUrls;
-    private Button wikiButton;
+
+    // True when buttons need to be (re)added to the screen.
+    private boolean buttonsDirty = true;
 
     public SkyblockDropsClientRecipe(
-            String mobName, SlotContent[] drops, String[] chances, int level, int combatXp,
-            String[] wikiUrls) {
-        this.mobName = mobName;
-        this.drops = drops;
-        this.chances = chances;
+            String mobName, SlotContent[] drops, String[] chances,
+            int level, int combatXp, String[] wikiUrls) {
+        this.mobName  = mobName;
+        this.drops    = drops;
+        this.chances  = chances;
         this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
     }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────────
+
+    @Override
+    public void initRecipe() {
+        buttonsDirty = true;
+    }
+
+    @Override
+    public void fadeRecipe() {
+        buttonsDirty = true;
+    }
+
+    // ── ReliableClientRecipe ──────────────────────────────────────────────────────
 
     @Override
     public ReliableClientRecipeType getViewType() {
@@ -46,8 +59,6 @@ public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
         for (int i = 0; i < drops.length && i < 12; i++) {
             if (drops[i] == null) continue;
             ctx.bindOptionalSlot(i, drops[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
-
-            // Capture index for the lambda — shows drop chance in the tooltip.
             final int idx = i;
             ctx.addAdditionalStackModifier(i, (stack, tooltip) -> {
                 if (idx < chances.length && chances[idx] != null && !chances[idx].isEmpty()) {
@@ -58,9 +69,7 @@ public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
     }
 
     @Override
-    public List<SlotContent> getIngredients() {
-        return List.of();
-    }
+    public List<SlotContent> getIngredients() { return List.of(); }
 
     @Override
     public List<SlotContent> getResults() {
@@ -85,17 +94,20 @@ public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
     public void renderRecipe(
             RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
             int mouseX, int mouseY, float partialTicks) {
-        gfx.drawString(
-                Minecraft.getInstance().font, Component.literal(mobName), 6, 2, 0xFFFFFFFF, true);
 
-        if (wikiButton == null || !screen.children().contains(wikiButton)) {
-            wikiButton = SkyblockRecipeUtil.addWikiButton(
-                    screen, wikiUrls, pos.left(), pos.top() + CONTENT_HEIGHT);
+        gfx.drawString(Minecraft.getInstance().font,
+                Component.literal(mobName), 6, 2, 0xFFFFFFFF, true);
+
+        if (buttonsDirty) {
+            addButtons(screen, pos);
+            buttonsDirty = false;
         }
     }
 
-    @Override
-    public int getPriority() {
-        return SkyblockRecipePriority.DROPS;
+    private void addButtons(RecipeViewScreen screen, RecipePosition pos) {
+        SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), pos.top() + CONTENT_HEIGHT);
     }
+
+    @Override
+    public int getPriority() { return SkyblockRecipePriority.DROPS; }
 }

@@ -2,13 +2,17 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv;
 
 import cc.cassian.rrv.api.recipe.ItemView;
 import cc.cassian.rrv.common.recipe.ClientRecipeCache;
+import com.github.kd_gaming1.skyblockenhancements.mixin.rrv.RrvCategoryFilterMixin;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.SkyblockItemCategory;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
@@ -27,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
  *   <li>Lowercase display names ({@link #cachedNames}) — avoids {@code toHoverableText()} per keystroke</li>
  *   <li>SkyBlock internal IDs ({@link #cachedIds}) — avoids {@code NbtComponent.copyTag()} in the filter loop</li>
  *   <li>Resolved {@link NeuItem} references ({@link #cachedNeuItems}) — avoids HashMap lookup in the filter loop</li>
+ *   <li>Per-category identity sets ({@link #cachedByCategory}) — O(1) category membership test
+ *       with no NeuItem resolution in {@link RrvCategoryFilterMixin}</li>
  * </ul>
  *
  * <p>All caches are invalidated together on RRV client reload or NEU repo change.
@@ -35,12 +41,21 @@ public final class FullStackListCache {
 
     private static volatile List<ItemStack> cachedList;
     private static volatile Map<ItemStack, String> cachedNames;
+
     /** SkyBlock internal ID per stack (e.g. {@code "ASPECT_OF_THE_END"}). */
     private static volatile Map<ItemStack, String> cachedIds;
+
     /** Resolved {@link NeuItem} per stack — eliminates registry lookup in the filter path. */
     private static volatile Map<ItemStack, NeuItem> cachedNeuItems;
 
+    /**
+     * Pre-built identity sets grouped by {@link SkyblockItemCategory}.
+     */
+    private static volatile Map<SkyblockItemCategory, Set<ItemStack>> cachedByCategory;
+
     private FullStackListCache() {}
+
+    // ── Public accessors ─────────────────────────────────────────────────────────
 
     /** Returns the cached item list, building it if necessary. */
     public static List<ItemStack> getOrBuild() {
@@ -104,12 +119,36 @@ public final class FullStackListCache {
         return NeuItemRegistry.get(id);
     }
 
+    /**
+     * Returns the pre-built identity set of all overlay stacks belonging to the given
+     * {@link SkyblockItemCategory}. The returned set uses reference equality (identity),
+     * so {@link Set#contains} is an O(1) probe against the overlay list's cached stack
+     * references — no NeuItem resolution or NBT access required.
+     *
+     * <p>Triggers a full cache build if the cache has not yet been populated. Returns an
+     * empty set for unknown or null categories.
+     */
+    public static Set<ItemStack> getCategoryItems(@Nullable SkyblockItemCategory category) {
+        if (category == null) return Collections.emptySet();
+
+        Map<SkyblockItemCategory, Set<ItemStack>> map = cachedByCategory;
+        if (map == null) {
+            buildCache();
+            map = cachedByCategory;
+        }
+        if (map == null) return Collections.emptySet();
+
+        Set<ItemStack> result = map.get(category);
+        return result != null ? result : Collections.emptySet();
+    }
+
     /** Clears all caches so the next access rebuilds from the registry. */
     public static void invalidate() {
-        cachedList = null;
-        cachedNames = null;
-        cachedIds = null;
-        cachedNeuItems = null;
+        cachedList       = null;
+        cachedNames      = null;
+        cachedIds        = null;
+        cachedNeuItems   = null;
+        cachedByCategory = null;
     }
 
     // ── Internal ────────────────────────────────────────────────────────────────
@@ -125,9 +164,15 @@ public final class FullStackListCache {
         });
 
         int size = results.size();
-        Map<ItemStack, String> names    = new IdentityHashMap<>(size);
-        Map<ItemStack, String> ids      = new IdentityHashMap<>(size);
-        Map<ItemStack, NeuItem> neuItems = new IdentityHashMap<>(size);
+        Map<ItemStack, String>   names    = new IdentityHashMap<>(size);
+        Map<ItemStack, String>   ids      = new IdentityHashMap<>(size);
+        Map<ItemStack, NeuItem>  neuItems = new IdentityHashMap<>(size);
+
+        // Per-category buckets — IdentityHashMap-backed sets for O(1) membership tests
+        Map<SkyblockItemCategory, Set<ItemStack>> byCategory = new EnumMap<>(SkyblockItemCategory.class);
+        for (SkyblockItemCategory cat : SkyblockItemCategory.values()) {
+            byCategory.put(cat, Collections.newSetFromMap(new IdentityHashMap<>()));
+        }
 
         for (ItemStack stack : results) {
             names.put(stack, stack.getHoverName().getString().toLowerCase());
@@ -135,16 +180,36 @@ public final class FullStackListCache {
             String id = extractIdFromStack(stack);
             if (id != null && !id.isEmpty()) {
                 ids.put(stack, id);
+
                 NeuItem neuItem = NeuItemRegistry.get(id);
-                if (neuItem != null) neuItems.put(stack, neuItem);
+                if (neuItem != null) {
+                    neuItems.put(stack, neuItem);
+
+                    // Eagerly resolve and memoise the category so the filter path never
+                    // needs to call fromNeuItem() during an overlay render or updateQuery().
+                    if (neuItem.category == null) {
+                        neuItem.category = SkyblockItemCategory.fromNeuItem(neuItem);
+                    }
+                    if (neuItem.category != null) {
+                        byCategory.get(neuItem.category).add(stack);
+                    }
+                }
             }
         }
 
+        // Wrap each set and the outer map as unmodifiable to prevent accidental mutation.
+        EnumMap<SkyblockItemCategory, Set<ItemStack>> immutableByCategory =
+                new EnumMap<>(SkyblockItemCategory.class);
+        for (Map.Entry<SkyblockItemCategory, Set<ItemStack>> entry : byCategory.entrySet()) {
+            immutableByCategory.put(entry.getKey(), Collections.unmodifiableSet(entry.getValue()));
+        }
+
         List<ItemStack> immutable = Collections.unmodifiableList(results);
-        cachedNames    = names;
-        cachedIds      = ids;
-        cachedNeuItems = neuItems;
-        cachedList     = immutable;
+        cachedNames      = names;
+        cachedIds        = ids;
+        cachedNeuItems   = neuItems;
+        cachedByCategory = Collections.unmodifiableMap(immutableByCategory);
+        cachedList       = immutable; // publish last — readers use this as the "cache ready" signal
         return immutable;
     }
 

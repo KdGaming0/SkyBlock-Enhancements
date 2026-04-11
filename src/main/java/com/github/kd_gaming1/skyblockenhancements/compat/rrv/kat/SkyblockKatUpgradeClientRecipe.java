@@ -12,11 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
-/** Client display for Kat pet upgrade recipes. */
 public class SkyblockKatUpgradeClientRecipe implements ReliableClientRecipe {
 
     private final SlotContent input;
@@ -25,18 +23,34 @@ public class SkyblockKatUpgradeClientRecipe implements ReliableClientRecipe {
     private final long coins;
     private final int timeSeconds;
     private final String[] wikiUrls;
-    private Button wikiButton;
+
+    // True when buttons need to be (re)added to the screen.
+    private boolean buttonsDirty = true;
 
     public SkyblockKatUpgradeClientRecipe(
-            SlotContent input, SlotContent output, SlotContent[] materials, long coins,
-            int timeSeconds, String[] wikiUrls) {
-        this.input = input;
-        this.output = output;
-        this.materials = materials;
-        this.coins = coins;
+            SlotContent input, SlotContent output, SlotContent[] materials,
+            long coins, int timeSeconds, String[] wikiUrls) {
+        this.input       = input;
+        this.output      = output;
+        this.materials   = materials;
+        this.coins       = coins;
         this.timeSeconds = timeSeconds;
-        this.wikiUrls = wikiUrls != null ? wikiUrls : new String[0];
+        this.wikiUrls    = wikiUrls != null ? wikiUrls : new String[0];
     }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────────
+
+    @Override
+    public void initRecipe() {
+        buttonsDirty = true;
+    }
+
+    @Override
+    public void fadeRecipe() {
+        buttonsDirty = true;
+    }
+
+    // ── ReliableClientRecipe ──────────────────────────────────────────────────────
 
     @Override
     public ReliableClientRecipeType getViewType() {
@@ -80,43 +94,39 @@ public class SkyblockKatUpgradeClientRecipe implements ReliableClientRecipe {
 
     @Override
     public void renderRecipe(
-            RecipeViewScreen screen,
-            RecipePosition pos,
-            GuiGraphics gfx,
-            int mouseX,
-            int mouseY,
-            float partialTicks) {
+            RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
+            int mouseX, int mouseY, float partialTicks) {
+
         var font = Minecraft.getInstance().font;
         gfx.drawString(font, Component.literal("→"), 22, 22, 0xFF404040, false);
         gfx.drawString(font, Component.literal("→"), 80, 22, 0xFF404040, false);
         if (coins > 0) {
-            gfx.drawString(
-                    font, Component.literal("§6" + formatCoins(coins) + " coins"), 2, 46, 0xFFAA8800, false);
+            gfx.drawString(font,
+                    Component.literal("§6" + formatCoins(coins) + " coins"),
+                    2, 46, 0xFFAA8800, false);
         }
         if (timeSeconds > 0) {
-            gfx.drawString(
-                    font,
+            gfx.drawString(font,
                     Component.literal("§7" + SkyblockForgeClientRecipe.formatDuration(timeSeconds)),
-                    90,
-                    46,
-                    0xFF808080,
-                    false);
+                    90, 46, 0xFF808080, false);
         }
 
-        if (wikiButton == null || !screen.children().contains(wikiButton)) {
-            wikiButton = SkyblockRecipeUtil.addWikiButton(
-                    screen, wikiUrls, pos.left(), pos.top() + 56);
+        if (buttonsDirty) {
+            addButtons(screen, pos);
+            buttonsDirty = false;
         }
+    }
+
+    private void addButtons(RecipeViewScreen screen, RecipePosition pos) {
+        SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), pos.top() + 56);
     }
 
     private static String formatCoins(long coins) {
         if (coins >= 1_000_000) return String.format("%.1fM", coins / 1_000_000.0);
-        if (coins >= 1_000) return String.format("%.1fk", coins / 1_000.0);
+        if (coins >= 1_000)     return String.format("%.1fk", coins / 1_000.0);
         return String.valueOf(coins);
     }
 
     @Override
-    public int getPriority() {
-        return SkyblockRecipePriority.KAT_UPGRADE;
-    }
+    public int getPriority() { return SkyblockRecipePriority.KAT_UPGRADE; }
 }

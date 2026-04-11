@@ -178,25 +178,6 @@ public final class SkyblockRecipeUtil {
     }
 
     /**
-     * Identity-based contains check for widget lists. Used to detect whether our buttons
-     * are still in the screen's children list (screens clear children on resize).
-     */
-    public static boolean containsAllByIdentity(
-            List<? extends GuiEventListener> children, List<? extends GuiEventListener> targets) {
-        for (GuiEventListener target : targets) {
-            boolean found = false;
-            for (GuiEventListener child : children) {
-                if (child == target) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) return false;
-        }
-        return true;
-    }
-
-    /**
      * Advances {@code menu} forward until its current display contains a recipe whose
      * result matches {@code targetId}. Resets to page 0 if no match is found.
      */

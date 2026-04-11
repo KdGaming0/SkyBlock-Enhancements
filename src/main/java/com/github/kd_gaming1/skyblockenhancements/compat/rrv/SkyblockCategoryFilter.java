@@ -5,7 +5,6 @@ import com.github.kd_gaming1.skyblockenhancements.repo.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.SkyblockItemCategory;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 import net.minecraft.core.component.DataComponents;
@@ -26,6 +25,11 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Category is resolved from the pre-populated {@link NeuItem#category} field, which is
  * set eagerly during repo parsing and never changes within a session.
+ *
+ * <p><b>Note on sub-category strings:</b> callers are expected to pass sub-category strings
+ * that are already uppercased (e.g. via {@link SkyblockCategoryState#setSearchFilter}).
+ * {@link #matchesSubCategory} uses {@code equalsIgnoreCase} defensively, so mixed-case
+ * inputs still work correctly but callers should normalise to avoid unnecessary allocations.
  */
 public final class SkyblockCategoryFilter {
 
@@ -36,6 +40,8 @@ public final class SkyblockCategoryFilter {
     private static final Pattern PET_ID_PATTERN = Pattern.compile(";\\d+$");
 
     private SkyblockCategoryFilter() {}
+
+    // ── Public API ───────────────────────────────────────────────────────────────
 
     /**
      * Returns {@code true} if the given stack's underlying {@link NeuItem} belongs to the
@@ -55,16 +61,29 @@ public final class SkyblockCategoryFilter {
 
     /**
      * Extended match that also checks a sub-category string (e.g. {@code "COMBAT"}).
+     *
+     * <p>Resolves {@link NeuItem} exactly once and reuses it for both the category check
+     * and the sub-category check, avoiding the double-resolution the previous version had.
+     *
+     * @param subCategory expected to already be uppercased; {@code equalsIgnoreCase} is
+     *                    used defensively in {@link #matchesSubCategory} so mixed-case still works
      */
     public static boolean matches(ItemStack stack, SkyblockItemCategory target,
                                   @Nullable String subCategory) {
-        if (!matches(stack, target)) return false;
-        if (subCategory == null || subCategory.isEmpty()) return true;
+        if (stack.isEmpty() || target == null) return false;
 
+        // Resolve once — reused for both category and sub-category checks below.
         NeuItem item = resolveNeuItem(stack);
         if (item == null) return false;
 
-        return matchesSubCategory(item, target, subCategory.toUpperCase(Locale.ROOT));
+        if (item.category == null) {
+            item.category = SkyblockItemCategory.fromNeuItem(item);
+        }
+
+        if (item.category != target) return false;
+        if (subCategory == null || subCategory.isEmpty()) return true;
+
+        return matchesSubCategory(item, target, subCategory);
     }
 
     /** Drops the fallback display-name index so it rebuilds on the next filter pass. */

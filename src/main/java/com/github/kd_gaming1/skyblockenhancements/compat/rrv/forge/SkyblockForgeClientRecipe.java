@@ -11,28 +11,42 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
-/** Client display for forge recipes with duration label and wiki button. */
 public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
 
     private final SlotContent[] inputs;
     private final SlotContent output;
     private final int durationSeconds;
     private final String[] wikiUrls;
-    private Button wikiButton;
     private final int tierOffset;
+
+    // True when buttons need to be (re)added to the screen.
+    private boolean buttonsDirty = true;
 
     public SkyblockForgeClientRecipe(
             SlotContent[] inputs, SlotContent output, int durationSeconds, String[] wikiUrls) {
-        this.inputs = inputs;
-        this.output = output;
+        this.inputs          = inputs;
+        this.output          = output;
         this.durationSeconds = durationSeconds;
-        this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
-        this.tierOffset = SkyblockRecipeUtil.extractTierFromResults(getResults());
+        this.wikiUrls        = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
+        this.tierOffset      = SkyblockRecipeUtil.extractTierFromResults(getResults());
     }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────────
+
+    @Override
+    public void initRecipe() {
+        buttonsDirty = true;
+    }
+
+    @Override
+    public void fadeRecipe() {
+        buttonsDirty = true;
+    }
+
+    // ── ReliableClientRecipe ──────────────────────────────────────────────────────
 
     @Override
     public ReliableClientRecipeType getViewType() {
@@ -42,9 +56,8 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
         for (int i = 0; i < inputs.length && i < 6; i++) {
-            if (inputs[i] != null) {
+            if (inputs[i] != null)
                 ctx.bindOptionalSlot(i, inputs[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
-            }
         }
         if (output != null) ctx.bindSlot(6, output);
     }
@@ -77,21 +90,25 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
     public void renderRecipe(
             RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
             int mouseX, int mouseY, float partialTicks) {
+
         var font = Minecraft.getInstance().font;
         gfx.drawString(font, Component.literal("→"), 68, 22, 0xFF404040, false);
         if (durationSeconds > 0) {
-            gfx.drawString(
-                    font, Component.literal("§7" + formatDuration(durationSeconds)),
+            gfx.drawString(font,
+                    Component.literal("§7" + formatDuration(durationSeconds)),
                     2, 46, 0xFF808080, false);
         }
 
-        if (wikiButton == null || !screen.children().contains(wikiButton)) {
-            wikiButton = SkyblockRecipeUtil.addWikiButton(
-                    screen, wikiUrls, pos.left(), pos.top() + 56);
+        if (buttonsDirty) {
+            addButtons(screen, pos);
+            buttonsDirty = false;
         }
     }
 
-    /** Formats seconds into a human-readable duration string (e.g. "2h 30m", "45m", "10s"). */
+    private void addButtons(RecipeViewScreen screen, RecipePosition pos) {
+        SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), pos.top() + 56);
+    }
+
     public static String formatDuration(int seconds) {
         if (seconds >= 3600) {
             int h = seconds / 3600;
@@ -103,7 +120,5 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
     }
 
     @Override
-    public int getPriority() {
-        return SkyblockRecipePriority.FORGE + tierOffset;
-    }
+    public int getPriority() { return SkyblockRecipePriority.FORGE + tierOffset; }
 }

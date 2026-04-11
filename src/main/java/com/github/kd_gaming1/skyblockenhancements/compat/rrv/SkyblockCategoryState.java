@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv;
 
 import com.github.kd_gaming1.skyblockenhancements.repo.SkyblockItemCategory;
+import java.util.Locale;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -15,6 +16,11 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>All reads and writes occur on the main client thread (UI interactions), so no
  * synchronization is required.
+ *
+ * <p><b>Sub-category normalisation:</b> {@link #setSearchFilter} stores the sub-category
+ * string uppercased. This means {@link SkyblockCategoryFilter#matches} never needs to call
+ * {@code toUpperCase(Locale.ROOT)} on a per-item basis inside the filter loop, avoiding
+ * repeated string allocations when thousands of items are filtered on every query change.
  */
 public final class SkyblockCategoryState {
 
@@ -28,7 +34,10 @@ public final class SkyblockCategoryState {
     /** Category parsed from the {@code %CATEGORY} search prefix. */
     @Nullable private static SkyblockItemCategory searchCategory = null;
 
-    /** Sub-category parsed from {@code %CATEGORY/SUBCATEGORY} (e.g. {@code "COMBAT"}). */
+    /**
+     * Sub-category parsed from {@code %CATEGORY/SUBCATEGORY} (e.g. {@code "COMBAT"}).
+     * Always stored uppercased — normalised once in {@link #setSearchFilter}.
+     */
     @Nullable private static String searchSubCategory = null;
 
     private SkyblockCategoryState() {}
@@ -47,6 +56,9 @@ public final class SkyblockCategoryState {
     /**
      * Returns the active sub-category, if any. Only applies when the search prefix is
      * active (button selections don't have sub-categories).
+     *
+     * <p>The returned string is guaranteed to be uppercase (normalised in
+     * {@link #setSearchFilter}), so callers do not need to call {@code toUpperCase}.
      */
     @Nullable
     public static String getActiveSubCategory() {
@@ -79,17 +91,19 @@ public final class SkyblockCategoryState {
      * when parsing the search query text.
      *
      * @param category    the parsed category, or {@code null} to clear
-     * @param subCategory the parsed sub-category (e.g. {@code "COMBAT"}), or {@code null}
+     * @param subCategory the parsed sub-category (e.g. {@code "combat"}), or {@code null}
      */
     public static void setSearchFilter(@Nullable SkyblockItemCategory category,
                                        @Nullable String subCategory) {
         searchCategory = category;
-        searchSubCategory = subCategory;
+        searchSubCategory = (subCategory != null && !subCategory.isEmpty())
+                ? subCategory.toUpperCase(Locale.ROOT)
+                : null;
     }
 
     /** Clears the search-driven filter. Called when the search text no longer has a prefix. */
     public static void clearSearchFilter() {
-        searchCategory = null;
+        searchCategory    = null;
         searchSubCategory = null;
     }
 
@@ -97,8 +111,8 @@ public final class SkyblockCategoryState {
 
     /** Clears all filter state (both button and search). */
     public static void clear() {
-        buttonCategory = null;
-        searchCategory = null;
+        buttonCategory    = null;
+        searchCategory    = null;
         searchSubCategory = null;
     }
 }
