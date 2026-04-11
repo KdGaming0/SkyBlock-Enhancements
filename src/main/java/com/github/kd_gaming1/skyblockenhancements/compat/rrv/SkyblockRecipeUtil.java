@@ -86,16 +86,26 @@ public final class SkyblockRecipeUtil {
     public static int extractTierFromId(String internalId) {
         if (internalId == null || internalId.isEmpty()) return 0;
 
-        int lastUnderscore = internalId.lastIndexOf('_');
-        if (lastUnderscore < 0 || lastUnderscore >= internalId.length() - 1) return 0;
-
-        try {
-            return Integer.parseInt(internalId.substring(lastUnderscore + 1));
-        } catch (NumberFormatException e) {
-            return 0;
+        // Enchanted books use semicolon: SHARPNESS;6, ULTIMATE_BANK;3
+        int semicolon = internalId.lastIndexOf(';');
+        if (semicolon >= 0 && semicolon < internalId.length() - 1) {
+            try {
+                return Integer.parseInt(internalId.substring(semicolon + 1));
+            } catch (NumberFormatException ignored) {}
         }
-    }
 
+        // Minions and other tiered items use underscore: COBBLESTONE_GENERATOR_11
+        int lastUnderscore = internalId.lastIndexOf('_');
+        if (lastUnderscore >= 0 && lastUnderscore < internalId.length() - 1) {
+            try {
+                return Integer.parseInt(internalId.substring(lastUnderscore + 1));
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+
+        return 0;
+    }
     /** Extracts the tier from the first result slot's internal ID. */
     public static int extractTierFromResults(List<SlotContent> results) {
         if (results == null || results.isEmpty()) return 0;

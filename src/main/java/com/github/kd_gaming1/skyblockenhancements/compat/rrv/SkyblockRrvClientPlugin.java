@@ -30,14 +30,9 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTrade
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.wiki.SkyblockWikiInfoClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.wiki.SkyblockWikiInfoServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
-import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuConstantsRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuItem;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.github.kd_gaming1.skyblockenhancements.repo.*;
+
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
@@ -211,7 +206,6 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
             return;
         }
 
-        // Do not cache an empty registry — it means the download is still in progress.
         if (NeuItemRegistry.getAll().isEmpty()) {
             LOGGER.warn("ensureCachePopulated called with empty registry — skipping cache build.");
             return;
@@ -219,9 +213,14 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
 
         boolean compact = SkyblockEnhancementsConfig.compactItemList;
 
-        List<ItemStack> items = new ArrayList<>();
+        // Build items alongside their NeuItem source so we can sort without re-resolving.
+        record StackWithMeta(ItemStack stack, NeuItem neuItem) {}
+
+        List<StackWithMeta> candidates = new ArrayList<>();
+
         for (Map.Entry<String, NeuItem> entry : NeuItemRegistry.getAll().entrySet()) {
             String itemId = entry.getKey();
+            NeuItem neuItem = entry.getValue();
 
             if (compact && NeuConstantsRegistry.isChild(itemId)) {
                 String parentId = NeuConstantsRegistry.getParent(itemId);
@@ -230,22 +229,51 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
                 }
             }
 
-            ItemStack stack = ItemStackBuilder.build(entry.getValue());
+            ItemStack stack = ItemStackBuilder.build(neuItem);
             if (compact && !stack.isEmpty() && ItemFamilyHelper.shouldCompactFamily(itemId)) {
                 String compactName = ItemFamilyHelper.buildCompactDisplayName(
-                        itemId, entry.getValue().displayName);
+                        itemId, neuItem.displayName);
                 if (compactName != null) {
                     stack = stack.copy();
                     stack.set(DataComponents.CUSTOM_NAME, Component.literal(compactName));
                 }
             }
+
             if (!stack.isEmpty()) {
-                items.add(stack);
+                if (neuItem.rarity == null) {
+                    neuItem.rarity = SkyblockItemCategory.extractRarity(neuItem);
+                }
+                candidates.add(new StackWithMeta(stack, neuItem));
             }
         }
 
-        // Recipes are always generated for all items (including children) so clicking
-        // a parent item shows all tier recipes in the recipe view tabs.
+        // Sort: primary = rarity ascending (COMMON → SPECIAL), secondary = display name
+        candidates.sort(Comparator
+                .<StackWithMeta, String>comparing(s -> {
+                    String id = s.neuItem().internalName;
+                    if (id != null) {
+                        int semi = id.indexOf(';');
+                        if (semi >= 0) return id.substring(0, semi);
+                    }
+                    return "";
+                })
+                .thenComparing(
+                        s -> s.neuItem().rarity != null ? s.neuItem().rarity.ordinal() : Integer.MAX_VALUE)
+                .thenComparing(
+                        s -> s.neuItem().displayName != null
+                                ? s.neuItem().displayName.replaceAll("§.", "")
+                                : "")
+                .thenComparing(
+                        s -> s.neuItem().internalName != null
+                                ? s.neuItem().internalName
+                                : ""));
+
+        List<ItemStack> items = new ArrayList<>(candidates.size());
+        for (StackWithMeta s : candidates) {
+            items.add(s.stack());
+        }
+
+        // Recipes generated for all items (including children) so tier recipes remain accessible.
         List<ReliableServerRecipe> allRecipes = SkyblockRrvPlugin.generateAllRecipes();
         Map<ReliableServerRecipeType<?>, List<ServerRecipeEntry>> grouped = new HashMap<>();
 

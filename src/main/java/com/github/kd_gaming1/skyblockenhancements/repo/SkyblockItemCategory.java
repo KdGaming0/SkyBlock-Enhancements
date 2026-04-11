@@ -240,4 +240,37 @@ public enum SkyblockItemCategory {
 
         return type;
     }
+
+    /**
+     * Extracts the Skyblock rarity from the last lore line.
+     * The lore format is {@code "§<color>§l<RARITY> [TYPE]"} — e.g. {@code "§6§lLEGENDARY SWORD"}.
+     *
+     * @return the parsed rarity, or {@code null} if none could be extracted
+     */
+    @Nullable
+    public static SkyblockRarity extractRarity(NeuItem item) {
+        if (item.lore == null || item.lore.isEmpty()) return null;
+
+        String lastLine = item.lore.getLast();
+        String clean = lastLine.replaceAll("§.", "").trim();
+        if (clean.isEmpty()) return null;
+
+        // First word is always the rarity (may be the only word for bare-rarity items)
+        int space = clean.indexOf(' ');
+        String rarityStr = space >= 0 ? clean.substring(0, space) : clean;
+
+        // "VERY SPECIAL" is two words — handle it
+        if ("VERY".equals(rarityStr) && space >= 0) {
+            String rest = clean.substring(space + 1).trim();
+            if (rest.startsWith("SPECIAL")) {
+                rarityStr = "VERY_SPECIAL";
+            }
+        }
+
+        try {
+            return SkyblockRarity.valueOf(rarityStr);
+        } catch (IllegalArgumentException e) {
+            return null; // Unrecognized rarity string
+        }
+    }
 }

@@ -117,4 +117,10 @@ public class NeuItem {
         }
         return false;
     }
+
+    /**
+     * Rarity extracted from the last lore line. {@code null} for items without a rarity line.
+     * Populated lazily during sort and cached to avoid re-parsing.
+     */
+    public transient SkyblockRarity rarity;
 }
