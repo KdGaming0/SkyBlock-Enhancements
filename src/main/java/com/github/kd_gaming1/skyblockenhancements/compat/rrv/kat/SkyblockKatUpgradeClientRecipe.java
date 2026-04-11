@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -24,8 +25,8 @@ public class SkyblockKatUpgradeClientRecipe implements ReliableClientRecipe {
     private final int timeSeconds;
     private final String[] wikiUrls;
 
-    // True when buttons need to be (re)added to the screen.
     private boolean buttonsDirty = true;
+    private Button sentinelButton = null;
 
     public SkyblockKatUpgradeClientRecipe(
             SlotContent input, SlotContent output, SlotContent[] materials,
@@ -48,6 +49,7 @@ public class SkyblockKatUpgradeClientRecipe implements ReliableClientRecipe {
     @Override
     public void fadeRecipe() {
         buttonsDirty = true;
+        sentinelButton = null;
     }
 
     // ── ReliableClientRecipe ──────────────────────────────────────────────────────
@@ -100,9 +102,10 @@ public class SkyblockKatUpgradeClientRecipe implements ReliableClientRecipe {
         var font = Minecraft.getInstance().font;
         gfx.drawString(font, Component.literal("→"), 22, 22, 0xFF404040, false);
         gfx.drawString(font, Component.literal("→"), 80, 22, 0xFF404040, false);
+
         if (coins > 0) {
             gfx.drawString(font,
-                    Component.literal("§6" + formatCoins(coins) + " coins"),
+                    Component.literal("§6" + SkyblockRecipeUtil.formatNumber(coins) + " coins"),
                     2, 46, 0xFFAA8800, false);
         }
         if (timeSeconds > 0) {
@@ -111,20 +114,14 @@ public class SkyblockKatUpgradeClientRecipe implements ReliableClientRecipe {
                     90, 46, 0xFF808080, false);
         }
 
-        if (buttonsDirty) {
+        if (buttonsDirty || (sentinelButton != null && !screen.children().contains(sentinelButton))) {
             addButtons(screen, pos);
             buttonsDirty = false;
         }
     }
 
     private void addButtons(RecipeViewScreen screen, RecipePosition pos) {
-        SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), pos.top() + 56);
-    }
-
-    private static String formatCoins(long coins) {
-        if (coins >= 1_000_000) return String.format("%.1fM", coins / 1_000_000.0);
-        if (coins >= 1_000)     return String.format("%.1fk", coins / 1_000.0);
-        return String.valueOf(coins);
+        sentinelButton = SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), pos.top() + 56);
     }
 
     @Override

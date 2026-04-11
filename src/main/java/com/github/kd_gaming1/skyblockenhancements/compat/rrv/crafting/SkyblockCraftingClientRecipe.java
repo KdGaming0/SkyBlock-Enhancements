@@ -25,6 +25,7 @@ public class SkyblockCraftingClientRecipe implements ReliableClientRecipe {
 
     // True when buttons need to be (re)added to the screen.
     private boolean buttonsDirty = true;
+    private Button sentinelButton = null;
 
     public SkyblockCraftingClientRecipe(
             SlotContent[] inputs, SlotContent output, String[] wikiUrls) {
@@ -44,6 +45,7 @@ public class SkyblockCraftingClientRecipe implements ReliableClientRecipe {
     @Override
     public void fadeRecipe() {
         buttonsDirty = true;
+        sentinelButton = null;
     }
 
     // ── ReliableClientRecipe ──────────────────────────────────────────────────────
@@ -93,7 +95,7 @@ public class SkyblockCraftingClientRecipe implements ReliableClientRecipe {
         gfx.drawString(Minecraft.getInstance().font,
                 Component.literal("→"), 62, 22, 0xFF404040, false);
 
-        if (buttonsDirty) {
+        if (buttonsDirty || (sentinelButton != null && !screen.children().contains(sentinelButton))) {
             addButtons(screen, pos);
             buttonsDirty = false;
         }
@@ -102,19 +104,24 @@ public class SkyblockCraftingClientRecipe implements ReliableClientRecipe {
     private void addButtons(RecipeViewScreen screen, RecipePosition pos) {
         int btnY = pos.top() + 56;
 
-        SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), btnY);
+        Button wikiBtn = SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), btnY);
+        if (wikiBtn != null) sentinelButton = wikiBtn;
 
         if (HypixelLocationState.isOnSkyblock()) {
             String itemId = resolveOutputId();
             if (itemId != null) {
-                screen.addRecipeWidget(Button.builder(
+                int craftX = (wikiBtn != null) ? pos.left() + 62 : pos.left();
+                Button craftBtn = Button.builder(
                                 Component.literal("Craft"),
                                 b -> sendViewRecipeCommand(itemId))
-                        .pos(pos.left() + 62, btnY)
+                        .pos(craftX, btnY)
                         .size(56, 12)
-                        .build());
+                        .build();
+                screen.addRecipeWidget(craftBtn);
+                if (sentinelButton == null) sentinelButton = craftBtn;
             }
         }
+
     }
 
     private String resolveOutputId() {

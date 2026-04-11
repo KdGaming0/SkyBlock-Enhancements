@@ -12,7 +12,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
@@ -36,6 +36,7 @@ public class SkyblockNpcInfoClientRecipe implements ReliableClientRecipe {
 
     // True when buttons need to be (re)added to the screen.
     private boolean buttonsDirty = true;
+    private Button sentinelButton = null;
 
     public SkyblockNpcInfoClientRecipe(
             ItemStack npcHead, String npcId, String npcDisplayName, String island,
@@ -61,6 +62,7 @@ public class SkyblockNpcInfoClientRecipe implements ReliableClientRecipe {
     @Override
     public void fadeRecipe() {
         buttonsDirty = true;
+        sentinelButton = null;
     }
 
     // ── ReliableClientRecipe ──────────────────────────────────────────────────────
@@ -126,7 +128,7 @@ public class SkyblockNpcInfoClientRecipe implements ReliableClientRecipe {
             }
         }
 
-        if (buttonsDirty) {
+        if (buttonsDirty || (sentinelButton != null && !screen.children().contains(sentinelButton))) {
             addButtons(screen, pos);
             buttonsDirty = false;
         }
@@ -136,21 +138,25 @@ public class SkyblockNpcInfoClientRecipe implements ReliableClientRecipe {
         int btnY = pos.top() + RECIPE_HEIGHT - BUTTON_ROW_HEIGHT + 3;
         int btnX = pos.left() + 2;
 
-        net.minecraft.client.gui.components.Button wikiBtn =
-                SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, btnX, btnY);
-        if (wikiBtn != null) btnX += 60;
+        Button wikiBtn = SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, btnX, btnY);
+        if (wikiBtn != null) {
+            sentinelButton = wikiBtn;
+            btnX += 60;
+        }
 
         if (SKYHANNI_PRESENT) {
             String cleanName = cleanNpcName(npcDisplayName);
-            screen.addRecipeWidget(
-                    net.minecraft.client.gui.components.Button.builder(
-                                    Component.literal("⬈ Navigate"),
-                                    b -> sendShNavCommand(cleanName))
-                            .pos(btnX, btnY)
-                            .size(60, 12)
-                            .build());
+            Button navBtn = Button.builder(
+                            Component.literal("⬈ Navigate"),
+                            b -> sendShNavCommand(cleanName))
+                    .pos(btnX, btnY)
+                    .size(60, 12)
+                    .build();
+            screen.addRecipeWidget(navBtn);
+            if (sentinelButton == null) sentinelButton = navBtn;
         }
     }
+
 
     private static void sendShNavCommand(String npcName) {
         Minecraft mc = Minecraft.getInstance();

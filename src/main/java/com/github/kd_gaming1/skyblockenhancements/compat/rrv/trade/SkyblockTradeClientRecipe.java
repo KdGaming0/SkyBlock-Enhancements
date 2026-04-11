@@ -10,6 +10,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -21,6 +22,7 @@ public class SkyblockTradeClientRecipe implements ReliableClientRecipe {
 
     // True when buttons need to be (re)added to the screen.
     private boolean buttonsDirty = true;
+    private Button sentinelButton = null;
 
     public SkyblockTradeClientRecipe(SlotContent cost, SlotContent result, String[] wikiUrls) {
         this.cost     = cost;
@@ -38,6 +40,7 @@ public class SkyblockTradeClientRecipe implements ReliableClientRecipe {
     @Override
     public void fadeRecipe() {
         buttonsDirty = true;
+        sentinelButton = null;
     }
 
     // ── ReliableClientRecipe ──────────────────────────────────────────────────────
@@ -81,14 +84,14 @@ public class SkyblockTradeClientRecipe implements ReliableClientRecipe {
         gfx.drawString(Minecraft.getInstance().font,
                 Component.literal("→"), 28, 13, 0xFF404040, false);
 
-        if (buttonsDirty) {
+        if (buttonsDirty || (sentinelButton != null && !screen.children().contains(sentinelButton))) {
             addButtons(screen, pos);
             buttonsDirty = false;
         }
     }
 
     private void addButtons(RecipeViewScreen screen, RecipePosition pos) {
-        SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), pos.top() + 36);
+        sentinelButton = SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), pos.top() + 36);
     }
 
     @Override

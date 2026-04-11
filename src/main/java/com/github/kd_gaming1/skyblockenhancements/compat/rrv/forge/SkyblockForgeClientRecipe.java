@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -24,6 +25,7 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
 
     // True when buttons need to be (re)added to the screen.
     private boolean buttonsDirty = true;
+    private Button sentinelButton = null;
 
     public SkyblockForgeClientRecipe(
             SlotContent[] inputs, SlotContent output, int durationSeconds, String[] wikiUrls) {
@@ -44,6 +46,7 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
     @Override
     public void fadeRecipe() {
         buttonsDirty = true;
+        sentinelButton = null;
     }
 
     // ── ReliableClientRecipe ──────────────────────────────────────────────────────
@@ -99,14 +102,14 @@ public class SkyblockForgeClientRecipe implements ReliableClientRecipe {
                     2, 46, 0xFF808080, false);
         }
 
-        if (buttonsDirty) {
+        if (buttonsDirty || (sentinelButton != null && !screen.children().contains(sentinelButton))) {
             addButtons(screen, pos);
             buttonsDirty = false;
         }
     }
 
     private void addButtons(RecipeViewScreen screen, RecipePosition pos) {
-        SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), pos.top() + 56);
+        sentinelButton = SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), pos.top() + 56);
     }
 
     public static String formatDuration(int seconds) {

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -28,6 +29,7 @@ public class SkyblockEssenceUpgradeClientRecipe implements ReliableClientRecipe 
 
     // True when buttons need to be (re)added to the screen.
     private boolean buttonsDirty = true;
+    private Button sentinelButton = null;
 
     public SkyblockEssenceUpgradeClientRecipe(
             SlotContent input, SlotContent output, SlotContent essence,
@@ -51,6 +53,7 @@ public class SkyblockEssenceUpgradeClientRecipe implements ReliableClientRecipe 
     @Override
     public void fadeRecipe() {
         buttonsDirty = true;
+        sentinelButton = null;
     }
 
     // ── ReliableClientRecipe ──────────────────────────────────────────────────────
@@ -108,17 +111,14 @@ public class SkyblockEssenceUpgradeClientRecipe implements ReliableClientRecipe 
                 62, 2, 0xFFFFFF, true);
         gfx.drawString(font, Component.literal("→"), 82, 22, 0xFF404040, false);
 
-        if (buttonsDirty) {
+        if (buttonsDirty || (sentinelButton != null && !screen.children().contains(sentinelButton))) {
             addButtons(screen, pos);
             buttonsDirty = false;
         }
     }
 
     private void addButtons(RecipeViewScreen screen, RecipePosition pos) {
-        SkyblockRecipeUtil.addWikiButton(
-                screen, wikiUrls,
-                pos.left() + 68,
-                pos.top() + DISPLAY_HEIGHT - 14);
+        sentinelButton = SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, pos.left(), pos.top() + 56);
     }
 
     @Override

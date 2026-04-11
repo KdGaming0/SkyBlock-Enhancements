@@ -30,6 +30,7 @@ public class SkyblockNpcShopClientRecipe implements ReliableClientRecipe {
     // True when buttons need to be (re)added to the screen.
     // Set on init and fade so we never scan screen.children() per frame.
     private boolean buttonsDirty = true;
+    private Button sentinelButton = null;
 
     public SkyblockNpcShopClientRecipe(
             SlotContent[] costs, SlotContent result, String npcId, String npcDisplayName,
@@ -55,6 +56,7 @@ public class SkyblockNpcShopClientRecipe implements ReliableClientRecipe {
     @Override
     public void fadeRecipe() {
         buttonsDirty = true;
+        sentinelButton = null;
     }
 
     // ── ReliableClientRecipe ──────────────────────────────────────────────────────
@@ -111,7 +113,7 @@ public class SkyblockNpcShopClientRecipe implements ReliableClientRecipe {
 
         gfx.drawString(font, Component.literal("→"), 91, 25, 0xFF404040, false);
 
-        if (buttonsDirty) {
+        if (buttonsDirty || (sentinelButton != null && !screen.children().contains(sentinelButton))) {
             addButtons(screen, pos);
             buttonsDirty = false;
         }
@@ -123,16 +125,20 @@ public class SkyblockNpcShopClientRecipe implements ReliableClientRecipe {
 
         SkyblockNpcInfoClientRecipe infoRecipe = SkyblockNpcInfoRegistry.get(npcId);
         if (infoRecipe != null) {
-            screen.addRecipeWidget(Button.builder(
+            Button infoBtn = Button.builder(
                             Component.literal("NPC Info"),
                             b -> openNpcInfo(infoRecipe))
                     .pos(leftX, btnY)
                     .size(56, 12)
-                    .build());
+                    .build();
+            screen.addRecipeWidget(infoBtn);
+            sentinelButton = infoBtn;
         }
 
-        SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, leftX + 62, btnY);
+        Button wiki = SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, leftX + 62, btnY);
+        if (sentinelButton == null) sentinelButton = wiki;
     }
+
 
     @SuppressWarnings("DuplicatedCode")
     private static void openNpcInfo(SkyblockNpcInfoClientRecipe infoRecipe) {
