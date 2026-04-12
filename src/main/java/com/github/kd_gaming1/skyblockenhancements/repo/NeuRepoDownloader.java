@@ -42,6 +42,10 @@ import net.fabricmc.loader.api.FabricLoader;
  *
  * <p>Uses the GitHub Git Refs API to fetch the latest commit SHA before downloading, allowing fast
  * no-op checks on subsequent launches when the repo hasn't changed.
+ *
+ * <p>Both {@link SkyblockItemCategory} and {@link SkyblockRarity} are resolved once per item
+ * immediately after parsing, before {@link NeuItemRegistry#markLoaded()} is called. No
+ * downstream code needs to resolve these — they are always non-null for items with lore.
  */
 public class NeuRepoDownloader {
 
@@ -56,23 +60,12 @@ public class NeuRepoDownloader {
     private static final Pattern TEXTURE_VALUE_PATTERN = Pattern.compile("Value:\"([^\"]+)\"");
     private static final Pattern DISPLAY_COLOR_PATTERN = Pattern.compile("display:\\{.*?color:(\\d+)");
 
-    /**
-     * Matches the top-level {@code id: "minecraft:..."} field in a .snbt file.
-     * The id is always a direct child of the root object (one level of indentation).
-     */
     private static final Pattern SNBT_ID_PATTERN =
             Pattern.compile("^\\s*id:\\s*\"(minecraft:[^\"]+)\"", Pattern.MULTILINE);
 
-    /**
-     * Matches the enchantment_glint_override component when set to true (1b) in a .snbt file.
-     */
     private static final Pattern SNBT_GLINT_PATTERN =
             Pattern.compile("\"minecraft:enchantment_glint_override\"\\s*:\\s*1b");
 
-    /**
-     * Constants files to extract from the ZIP during stream-parsing. File names are relative
-     * to {@code constants/} inside the ZIP root.
-     */
     private static final Set<String> CONSTANTS_TO_EXTRACT = Set.of(
             "parents.json",
             "essencecosts.json",
@@ -130,7 +123,6 @@ public class NeuRepoDownloader {
                     if (loadFromCache()) return;
                     LOGGER.info("Cache outdated (version bump), re-downloading NEU repo...");
                 } else {
-                    // 200 means content changed; capture new ETag for after download
                     LOGGER.info("NEU repo changed, downloading...");
                 }
             } catch (Exception e) {
@@ -139,7 +131,6 @@ public class NeuRepoDownloader {
                 LOGGER.warn("Cached data also unusable, re-downloading NEU repo...");
             }
         } else if (cacheExists) {
-            // No ETag stored yet but cache exists — try it, re-download if stale
             LOGGER.info("No ETag cached, checking cache validity...");
             if (loadFromCache()) return;
         } else {
@@ -162,7 +153,6 @@ public class NeuRepoDownloader {
 
     // ── ZIP download + stream-parse ─────────────────────────────────────────────
 
-    /** Bundled result from ZIP parsing — items and raw constants JSON. */
     private record ParseResult(
             Map<String, NeuItem> items,
             Map<String, JsonObject> constants,
@@ -186,10 +176,8 @@ public class NeuRepoDownloader {
         String etag = resp.headers().firstValue("ETag").orElse(null);
 
         Map<String, NeuItem> items = new HashMap<>(5000);
-        // Collect snbt overrides separately; apply after all JSONs are parsed.
         Map<String, String> snbtIds = new HashMap<>();
         Map<String, Boolean> snbtGlints = new HashMap<>();
-        // Collect raw constants JSON for post-parse loading
         Map<String, JsonObject> constants = new HashMap<>();
 
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(resp.body(), 1 << 16), StandardCharsets.UTF_8)) {
@@ -197,9 +185,8 @@ public class NeuRepoDownloader {
             while ((entry = zis.getNextEntry()) != null) {
                 if (entry.isDirectory()) continue;
                 String name = entry.getName();
-                if (name.contains("..")) continue; // zip-slip protection
+                if (name.contains("..")) continue;
 
-                // items/<n>.json
                 int itemsIdx = name.indexOf("/items/");
                 if (itemsIdx >= 0 && name.endsWith(".json")) {
                     String fileName = name.substring(itemsIdx + 7);
@@ -217,7 +204,6 @@ public class NeuRepoDownloader {
                     continue;
                 }
 
-                // itemsOverlay/<dataVersion>/<n>.snbt
                 int overlayIdx = name.indexOf("/itemsOverlay/");
                 if (overlayIdx >= 0 && name.endsWith(".snbt")) {
                     String afterOverlay = name.substring(overlayIdx + 14);
@@ -238,7 +224,6 @@ public class NeuRepoDownloader {
                     continue;
                 }
 
-                // constants/<name>.json — extract selected files
                 int constantsIdx = name.indexOf("/constants/");
                 if (constantsIdx >= 0 && name.endsWith(".json")) {
                     String fileName = name.substring(constantsIdx + 11);
@@ -256,31 +241,39 @@ public class NeuRepoDownloader {
             }
         }
 
-        // Apply snbt item ID overrides
+        // Apply snbt overrides
         snbtIds.forEach((id, modernId) -> {
             NeuItem item = items.get(id);
             if (item != null) item.snbtItemId = modernId;
         });
 
-        // Apply glint flags
         snbtGlints.forEach((id, glint) -> {
             NeuItem item = items.get(id);
             if (item != null) item.enchantmentGlint = glint;
         });
 
-        // Eagerly resolve categories now that all items are parsed
-        for (NeuItem item : items.values()) {
-            item.category = SkyblockItemCategory.fromNeuItem(item);
-        }
+        // Resolve category and rarity once per item
+        resolveAllCategoryAndRarity(items);
 
         return new ParseResult(items, constants, etag);
     }
 
-    // ── Constants loading ───────────────────────────────────────────────────────
+    // ── Category + rarity resolution ────────────────────────────────────────────
 
     /**
-     * Routes extracted constants files to their respective parsers in {@link NeuConstantsRegistry}.
+     * Resolves both {@link SkyblockItemCategory} and {@link SkyblockRarity} on every
+     * item, once, at parse time. Downstream consumers can treat these fields as stable
+     * (though still nullable for items that genuinely have no category or rarity).
      */
+    private static void resolveAllCategoryAndRarity(Map<String, NeuItem> items) {
+        for (NeuItem item : items.values()) {
+            item.category = SkyblockItemCategory.fromNeuItem(item);
+            item.rarity = SkyblockItemCategory.extractRarity(item);
+        }
+    }
+
+    // ── Constants loading ───────────────────────────────────────────────────────
+
     private void loadConstants(Map<String, JsonObject> constants) {
         NeuConstantsRegistry.clear();
 
@@ -307,10 +300,6 @@ public class NeuRepoDownloader {
 
     // ── SNBT parsing ────────────────────────────────────────────────────────────
 
-    /**
-     * Extracts the top-level {@code id} from a .snbt file. Only returns values starting with
-     * {@code "minecraft:"} to avoid picking up nested id fields (e.g. inside custom_data).
-     */
     private static String parseSnbtId(String snbt) {
         Matcher m = SNBT_ID_PATTERN.matcher(snbt);
         return m.find() ? m.group(1) : null;
@@ -327,7 +316,6 @@ public class NeuRepoDownloader {
         item.displayName = str(json, "displayname", internalName);
         item.damage = json.has("damage") ? json.get("damage").getAsInt() : 0;
 
-        // Lore
         if (json.has("lore") && json.get("lore").isJsonArray()) {
             item.lore = new ArrayList<>();
             for (JsonElement e : json.getAsJsonArray("lore")) {
@@ -337,13 +325,11 @@ public class NeuRepoDownloader {
             item.lore = List.of();
         }
 
-        // Extract ItemModel from SNBT-like nbttag
         if (json.has("nbttag")) {
             String nbtStr = json.get("nbttag").getAsString();
             Matcher m = ITEM_MODEL_PATTERN.matcher(nbtStr);
             item.itemModel = m.find() ? m.group(1) : null;
 
-            // Extract the skull texture
             Matcher texMatcher = TEXTURE_VALUE_PATTERN.matcher(nbtStr);
             if (texMatcher.find()) {
                 StringBuilder b64 = new StringBuilder(texMatcher.group(1).replaceAll("[^A-Za-z0-9+/=]", ""));
@@ -351,14 +337,12 @@ public class NeuRepoDownloader {
                 item.skullTexture = b64.toString();
             }
 
-            // Extract leather armor color
             Matcher colorMatcher = DISPLAY_COLOR_PATTERN.matcher(nbtStr);
             if (colorMatcher.find()) {
                 item.leatherColor = Integer.parseInt(colorMatcher.group(1));
             }
         }
 
-        // ── NPC location & external links ────────────────────────────────────────
         item.island = str(json, "island", "");
         item.x = json.has("x") ? json.get("x").getAsInt() : 0;
         item.y = json.has("y") ? json.get("y").getAsInt() : 0;
@@ -374,11 +358,9 @@ public class NeuRepoDownloader {
             item.info = List.of();
         }
 
-        // ── Click command & parent ───────────────────────────────────────────────
         item.clickcommand = str(json, "clickcommand", "");
         item.parent = json.has("parent") ? json.get("parent").getAsString() : null;
 
-        // Legacy crafting recipe (A1–C3)
         if (json.has("recipe") && json.get("recipe").isJsonObject()) {
             item.recipe = new LinkedHashMap<>();
             for (var e : json.getAsJsonObject("recipe").entrySet()) {
@@ -386,7 +368,6 @@ public class NeuRepoDownloader {
             }
         }
 
-        // Modern recipes array
         if (json.has("recipes") && json.get("recipes").isJsonArray()) {
             item.recipes = new ArrayList<>();
             for (JsonElement e : json.getAsJsonArray("recipes")) {
@@ -400,14 +381,8 @@ public class NeuRepoDownloader {
     // ── Disk cache ──────────────────────────────────────────────────────────────
 
     /**
-     * Attempts to load items and constants from the disk cache using streaming
-     * JSON parsing to minimize peak memory usage. Instead of loading the entire
-     * file into a String and parsing it as one JsonObject DOM tree, this reads
-     * the JSON token-by-token and constructs NeuItem POJOs on the fly.
-     *
-     * @return {@code true} if the cache was valid and loaded successfully;
-     *         {@code false} if the cache version is outdated or loading failed,
-     *         signalling the caller to fall through to a fresh download.
+     * Loads items from the disk cache using streaming JSON parsing.
+     * Resolves category and rarity at load time — same as the download path.
      */
     private boolean loadFromCache() {
         try (BufferedReader br = Files.newBufferedReader(cacheFile, StandardCharsets.UTF_8);
@@ -437,9 +412,10 @@ public class NeuRepoDownloader {
                         reader.beginObject();
                         while (reader.hasNext()) {
                             String internalName = reader.nextName();
-                            // GSON.fromJson(JsonReader) reads exactly one value and advances the reader
                             NeuItem item = GSON.fromJson(reader, NeuItem.class);
+                            // Resolve category and rarity at parse time — single point of resolution.
                             item.category = SkyblockItemCategory.fromNeuItem(item);
+                            item.rarity = SkyblockItemCategory.extractRarity(item);
                             NeuItemRegistry.register(internalName, item);
                             itemCount++;
                         }
@@ -453,14 +429,12 @@ public class NeuRepoDownloader {
                         constantsLoaded = true;
                     }
 
-                    // Skip etag, timestamp, and any other fields
                     default -> reader.skipValue();
                 }
             }
 
             reader.endObject();
 
-            // Handle edge case: cacheVersion field appeared after items in the JSON
             if (version < CACHE_VERSION) {
                 LOGGER.info("Cache version {} is outdated (current: {}), will re-download",
                         version, CACHE_VERSION);
@@ -488,10 +462,6 @@ public class NeuRepoDownloader {
         }
     }
 
-    /**
-     * Loads constants from a pre-parsed JsonObject. The object passed here is the
-     * "constants" value directly, not the root cache object.
-     */
     private void loadConstantsFromCacheObject(JsonObject constants) {
         NeuConstantsRegistry.clear();
 
@@ -532,7 +502,7 @@ public class NeuRepoDownloader {
 
             jw.name("etag").value(etag != null ? etag : "");
             jw.name("timestamp").value(System.currentTimeMillis());
-            jw.endObject(); // root
+            jw.endObject();
             jw.flush();
         }
     }
@@ -560,7 +530,6 @@ public class NeuRepoDownloader {
 
     // ── Public helpers ──────────────────────────────────────────────────────────
 
-    /** Forces a re-download by clearing the cached SHA. */
     public CompletableFuture<Void> refresh() {
         try {
             Files.deleteIfExists(metaFile);
@@ -569,7 +538,6 @@ public class NeuRepoDownloader {
         return downloadAsync();
     }
 
-    /** Returns {@code true} if the cache is older than {@code hours}. */
     public boolean needsRefresh(int hours) {
         try {
             String ts = readMeta("timestamp");

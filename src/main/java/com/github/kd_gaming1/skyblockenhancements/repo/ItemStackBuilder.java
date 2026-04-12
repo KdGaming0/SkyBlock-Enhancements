@@ -5,8 +5,10 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -27,14 +29,23 @@ import net.minecraft.world.item.component.ResolvableProfile;
 /**
  * Converts {@link NeuItem} POJOs into proper {@link ItemStack}s with custom name, lore, and item
  * model. Results are cached to avoid repeated allocations.
+ *
+ * <p>Skull textures are NOT fetched eagerly at build time. Instead, call
+ * {@link #ensureSkinLoaded(ItemStack)} when a skull stack is first rendered or tooltipped.
+ * This avoids scheduling thousands of main-thread skin fetches during bulk item construction.
  */
 public final class ItemStackBuilder {
 
     private static final Map<String, ItemStack> CACHE = new ConcurrentHashMap<>();
 
     /**
-     * Virtual items that don't exist in the NEU repo but are referenced in recipe data (e.g.
-     * currency). Each supplier creates a fresh prototype stack.
+     * Tracks skull stacks whose skin has already been fetched. Uses identity-based
+     * comparison since all overlay stacks are cached singletons.
+     */
+    private static final Set<ItemStack> SKIN_LOADED = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    /**
+     * Virtual items that don't exist in the NEU repo but are referenced in recipe data.
      */
     private static final Map<String, Supplier<ItemStack>> VIRTUAL_ITEMS =
             Map.of(
@@ -49,8 +60,7 @@ public final class ItemStackBuilder {
     }
 
     /**
-     * Builds an ingredient stack from a recipe reference like {@code "ENCHANTED_DIAMOND"}. Looks up
-     * the full item in the registry for proper display; falls back to virtual items, then a barrier.
+     * Builds an ingredient stack from a recipe reference like {@code "ENCHANTED_DIAMOND"}.
      */
     public static ItemStack buildIngredient(String neuId, int count) {
         if (neuId == null || neuId.isEmpty()) return ItemStack.EMPTY;
@@ -62,7 +72,6 @@ public final class ItemStackBuilder {
             return stack;
         }
 
-        // Virtual items not in the repo (e.g. SKYBLOCK_COIN)
         Supplier<ItemStack> virtual = VIRTUAL_ITEMS.get(neuId);
         if (virtual != null) {
             ItemStack stack = virtual.get();
@@ -79,9 +88,30 @@ public final class ItemStackBuilder {
         return fallback;
     }
 
+    /**
+     * Lazily triggers the skin manager fetch for a skull stack. Call this from the
+     * overlay slot render path or tooltip build — NOT during bulk construction.
+     *
+     * <p>No-op for non-skull stacks or stacks whose skin has already been fetched.
+     */
+    public static void ensureSkinLoaded(ItemStack stack) {
+        if (stack.isEmpty()) return;
+        if (!stack.has(DataComponents.PROFILE)) return;
+        if (!SKIN_LOADED.add(stack)) return; // already fetched
+
+        ResolvableProfile profile = stack.get(DataComponents.PROFILE);
+        if (profile == null) return;
+
+        // The profile's GameProfile is needed for the skin manager.
+        // ResolvableProfile wraps a GameProfile — fetch on the main thread.
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> mc.getSkinManager().get(profile.partialProfile()));
+    }
+
     /** Drops the entire stack cache — call after a repo reload. */
     public static void clearCache() {
         CACHE.clear();
+        SKIN_LOADED.clear();
     }
 
     // ── Internal ────────────────────────────────────────────────────────────────
@@ -95,6 +125,11 @@ public final class ItemStackBuilder {
         return stack;
     }
 
+    /**
+     * Creates the stack without fetching skull textures. The profile is set so the
+     * texture data is embedded in the stack, but the actual skin download is deferred
+     * to {@link #ensureSkinLoaded(ItemStack)}.
+     */
     private static ItemStack createStack(NeuItem item) {
         Item baseItem = resolveItem(item);
         ItemStack stack = new ItemStack(baseItem);
@@ -122,8 +157,7 @@ public final class ItemStackBuilder {
             UUID uuid = UUID.nameUUIDFromBytes(item.skullTexture.getBytes(StandardCharsets.UTF_8));
             GameProfile profile = new GameProfile(uuid, item.internalName, properties);
             stack.set(DataComponents.PROFILE, ResolvableProfile.createResolved(profile));
-            Minecraft mc = Minecraft.getInstance();
-            mc.execute(() -> mc.getSkinManager().get(profile));
+            // Skin fetch is deferred — see ensureSkinLoaded().
         }
 
         if (item.leatherColor >= 0) {
@@ -137,15 +171,6 @@ public final class ItemStackBuilder {
         return stack;
     }
 
-    /**
-     * Resolves the vanilla {@link Item} for a NeuItem, using the following priority:
-     *
-     * <ol>
-     *   <li>{@link NeuItem#snbtItemId} — from the companion {@code .snbt} file (most accurate,
-     *       covers ~7,861 of 8,055 items)
-     *   <li>{@link NeuItem#itemId} + {@link NeuItem#damage} passed through {@link #mapLegacyId}
-     * </ol>
-     */
     private static Item resolveItem(NeuItem item) {
         if (item.snbtItemId != null) {
             Item resolved = registryLookup(item.snbtItemId);
@@ -163,14 +188,10 @@ public final class ItemStackBuilder {
 
     /**
      * Maps legacy (pre-1.13) item IDs + damage values to modern 1.21 equivalents.
-     *
-     * <p>Only called when no SNBT companion file exists. The cases here are derived directly from
-     * the NEU repo — only the IDs that actually appear in items lacking an {@code .snbt} file and
-     * that are invalid in 1.21 are included.
+     * Only called when no SNBT companion file exists.
      */
     private static String mapLegacyId(String itemId, int damage) {
         return switch (itemId) {
-            // ── Skull ──────────────────────────────────────────────────────────────
             case "minecraft:skull" -> switch (damage) {
                 case 1 -> "minecraft:wither_skeleton_skull";
                 case 2 -> "minecraft:zombie_head";
@@ -179,7 +200,6 @@ public final class ItemStackBuilder {
                 case 5 -> "minecraft:dragon_head";
                 default -> "minecraft:skeleton_skull";
             };
-            // ── Dye (only damage 6/8/15 seen in repo without SNBT) ─────────────────
             case "minecraft:dye" -> switch (damage) {
                 case 4 -> "minecraft:lapis_lazuli";
                 case 6 -> "minecraft:cyan_dye";
@@ -187,7 +207,6 @@ public final class ItemStackBuilder {
                 case 15 -> "minecraft:bone_meal";
                 default -> "minecraft:ink_sac";
             };
-            // ── Banner (damage = 15 - colorIndex, black=0, red=1 … white=15) ───────
             case "minecraft:banner" -> switch (damage) {
                 case 0 -> "minecraft:black_banner";
                 case 1 -> "minecraft:red_banner";
@@ -206,21 +225,18 @@ public final class ItemStackBuilder {
                 case 14 -> "minecraft:orange_banner";
                 default -> "minecraft:white_banner";
             };
-            // ── Simple renames ──────────────────────────────────────────────────────
             case "minecraft:noteblock"     -> "minecraft:note_block";
             case "minecraft:bed"           -> "minecraft:white_bed";
             case "minecraft:fish"          -> "minecraft:cod";
             case "minecraft:mob_spawner"   -> "minecraft:spawner";
             case "minecraft:monster_egg"   -> "minecraft:infested_stone";
             case "minecraft:tallgrass"     -> "minecraft:short_grass";
-            case "minecraft:stained_glass_pane"   -> "minecraft:black_stained_glass_pane"; // only dmg=15
-            case "minecraft:stained_hardened_clay" -> "minecraft:red_terracotta";          // only dmg=14
-            case "minecraft:planks"        -> "minecraft:oak_planks";                      // only dmg=0
-            // ── Potion (damage values are bit-flags, not color indices; just use potion) ──
+            case "minecraft:stained_glass_pane"   -> "minecraft:black_stained_glass_pane";
+            case "minecraft:stained_hardened_clay" -> "minecraft:red_terracotta";
+            case "minecraft:planks"        -> "minecraft:oak_planks";
             case "minecraft:potion"        -> "minecraft:potion";
-            // ── Spawn egg fallback (specific ones handled via SNBT) ─────────────────
             case "minecraft:spawn_egg"     -> "minecraft:bat_spawn_egg";
-            default -> itemId; // pass through — likely already a valid 1.21 ID
+            default -> itemId;
         };
     }
 }

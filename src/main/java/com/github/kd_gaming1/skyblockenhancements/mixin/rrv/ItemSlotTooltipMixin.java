@@ -2,6 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.rrv;
 
 import cc.cassian.rrv.common.overlay.ItemSlot;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
+import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
 import java.util.List;
 
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
@@ -16,12 +17,11 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 /**
  * Caches the tooltip generated for the hovered {@link ItemSlot} to avoid invoking all registered
- * {@code ItemTooltipCallback} listeners (SkyHanni regex, Skyblocker networth codec, etc.) on every
- * render frame for the same unchanged item.
+ * {@code ItemTooltipCallback} listeners on every render frame for the same unchanged item.
  *
- * <p>Additionally sets {@link RrvCompat#enterOverlayTooltip()} for the duration of every tooltip
- * build so that features like {@link MissingEnchants} can skip
- * work that is only meaningful for actual container-slot hovers.
+ * <p>Additionally triggers lazy skin loading for skull items on first tooltip build,
+ * and sets {@link RrvCompat#enterOverlayTooltip()} for the duration so that features
+ * like {@link MissingEnchants} can skip work not meaningful for overlay hovers.
  */
 @Mixin(value = ItemSlot.class, remap = false)
 public class ItemSlotTooltipMixin {
@@ -31,8 +31,8 @@ public class ItemSlotTooltipMixin {
 
     /**
      * Redirects the per-frame {@code Screen.getTooltipFromItem()} call inside {@code
-     * ItemSlot.render()} to a single-entry identity cache. On a cache miss the tooltip is rebuilt
-     * with the overlay-context flag set so downstream callbacks can opt out cleanly.
+     * ItemSlot.render()} to a single-entry identity cache. On a cache miss the tooltip
+     * is rebuilt with the overlay-context flag set, and skull skins are lazily loaded.
      */
     @Redirect(
             method = "render",
@@ -50,6 +50,10 @@ public class ItemSlotTooltipMixin {
         }
         if (itemStack != sbe$lastHoveredStack) {
             sbe$lastHoveredStack = itemStack;
+
+            // Trigger lazy skin fetch for skull items on first hover.
+            ItemStackBuilder.ensureSkinLoaded(itemStack);
+
             RrvCompat.enterOverlayTooltip();
             try {
                 sbe$cachedTooltip = Screen.getTooltipFromItem(minecraft, itemStack);

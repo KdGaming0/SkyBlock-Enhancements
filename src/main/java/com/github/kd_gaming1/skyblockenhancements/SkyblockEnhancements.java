@@ -3,6 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements;
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockInjectionCache;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRrvClientPlugin;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
@@ -31,6 +32,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,21 +105,37 @@ public class SkyblockEnhancements implements ClientModInitializer {
         initReminders();
     }
 
-    /** Sets up the NEU repo download pipeline and periodic refresh when RRV is available. */
+    /**
+     * Sets up the NEU repo download → build → inject pipeline as a single async chain.
+     *
+     * <p>Pipeline:
+     * <pre>
+     * downloadAsync()                         // background: download + parse repo
+     *   .thenRunAsync(buildCache)             // background: build stacks + recipes + FullStackListCache
+     *   .thenRun(injectIfReady)              // inject into RRV (runTasks is already async)
+     * </pre>
+     *
+     * <p>No defensive rebuilds anywhere — each step trusts the previous step completed.
+     */
     private void initRecipeViewer() {
         Commands.register();
         if (!RrvCompat.isActive()) return;
 
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             LOGGER.info("Starting NEU repo download...");
-            repoFuture = repoDownloader.downloadAsync();
-            repoFuture
-                    .thenRun(() -> {
-                        SkyblockRrvClientPlugin.prepareDataAsync();
-                        SkyblockRrvClientPlugin.spoofRrvCache();
-                    })
+            repoFuture = repoDownloader.downloadAsync()
+                    .thenRunAsync(SkyblockInjectionCache::buildCache)
+                    .thenRun(SkyblockRrvClientPlugin::injectIfReady)
                     .exceptionally(ex -> {
                         LOGGER.error("Failed to sync NEU repo with RRV", ex);
+                        Minecraft.getInstance().execute(() -> {
+                            Minecraft mc = Minecraft.getInstance();
+                            if (mc.player != null) {
+                                mc.gui.getChat().addMessage(Component.literal(
+                                        "§c[Skyblock Enhancements] Failed to load SkyBlock item data. " +
+                                                "The recipe viewer will be empty. Run §e/skyblockenhancements refresh repoData §cto retry."));
+                            }
+                        });
                         return null;
                     });
         });
@@ -129,8 +148,13 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
             LOGGER.info("Auto-refreshing NEU repo data...");
             ItemStackBuilder.clearCache();
-            repoFuture = repoDownloader.refresh();
-            repoFuture.thenRun(SkyblockRrvClientPlugin::spoofRrvCache);
+            repoFuture = repoDownloader.refresh()
+                    .thenRunAsync(SkyblockInjectionCache::buildCache)
+                    .thenRun(SkyblockRrvClientPlugin::injectIfReady)
+                    .exceptionally(ex -> {
+                        LOGGER.error("Failed to refresh NEU repo", ex);
+                        return null;
+                    });
         });
     }
 

@@ -3,21 +3,22 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import net.fabricmc.loader.api.FabricLoader;
 
-/** Guards all RRV integration behind a mod-presence + config check. */
+/**
+ * Guards all RRV integration behind a mod-presence + config check.
+ *
+ * <p>The {@code overlayTooltipActive} flag is volatile to prevent stale reads if
+ * tooltip rendering happens on a slightly different frame path.
+ */
 public final class RrvCompat {
 
     private static final boolean RRV_PRESENT =
             FabricLoader.getInstance().isModLoaded("rrv");
 
     /**
-     * Set to {@code true} for the duration of a tooltip build triggered by an RRV item-list overlay
-     * slot hover.
-     *
-     * <p>Allows downstream features (e.g. {@link
-     * com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants}) to skip
-     * processing that is only useful when the player is actually inspecting an item in a container.
+     * Set to {@code true} for the duration of a tooltip build triggered by an RRV
+     * item-list overlay slot hover. Volatile for visibility across rendering paths.
      */
-    private static boolean overlayTooltipActive = false;
+    private static volatile boolean overlayTooltipActive = false;
 
     private RrvCompat() {}
 
@@ -31,21 +32,25 @@ public final class RrvCompat {
     }
 
     /**
-     * Marks the start of a tooltip build for an RRV item-list overlay slot. Must be paired with
-     * {@link #exitOverlayTooltip()} in a {@code finally} block.
+     * Marks the start of a tooltip build for an RRV item-list overlay slot.
+     * Must be paired with {@link #exitOverlayTooltip()} in a {@code finally} block.
      */
     public static void enterOverlayTooltip() {
         overlayTooltipActive = true;
     }
 
-    /** Marks the end of a tooltip build for an RRV item-list overlay slot. */
+    /**
+     * Marks the end of a tooltip build for an RRV item-list overlay slot.
+     * Must be called in a {@code finally} block paired with {@link #enterOverlayTooltip()}.
+     */
     public static void exitOverlayTooltip() {
+        assert overlayTooltipActive : "exitOverlayTooltip called without matching enterOverlayTooltip";
         overlayTooltipActive = false;
     }
 
     /**
-     * Returns {@code true} while a tooltip is being built for an item in the RRV item-list overlay,
-     * as opposed to a genuine hovered container slot.
+     * Returns {@code true} while a tooltip is being built for an item in the RRV
+     * item-list overlay, as opposed to a genuine hovered container slot.
      */
     public static boolean isOverlayTooltip() {
         return overlayTooltipActive;
