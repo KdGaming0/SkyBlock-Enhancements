@@ -50,7 +50,7 @@ import net.fabricmc.loader.api.FabricLoader;
 public class NeuRepoDownloader {
 
     /** Bump this whenever the NeuItem schema or parsing logic changes. */
-    private static final int CACHE_VERSION = 8;
+    private static final int CACHE_VERSION = 9;
 
     private static final String REPO_ZIP_URL =
             "https://codeload.github.com/NotEnoughUpdates/NotEnoughUpdates-REPO/zip/refs/heads/master";
@@ -70,7 +70,8 @@ public class NeuRepoDownloader {
             "parents.json",
             "essencecosts.json",
             "museum.json",
-            "pets.json"
+            "pets.json",
+            "petnums.json"
     );
 
     private static final HttpClient HTTP =
@@ -142,6 +143,10 @@ public class NeuRepoDownloader {
         NeuItemRegistry.clear();
         result.items.forEach(NeuItemRegistry::register);
         loadConstants(result.constants);
+
+        // Resolve pet stat placeholders after constants (petnums) are loaded
+        resolvePetStats(result.items);
+
         NeuItemRegistry.markLoaded();
 
         LOGGER.info("Loaded {} SkyBlock items and {} constants files from NEU repo",
@@ -272,6 +277,29 @@ public class NeuRepoDownloader {
         }
     }
 
+    // ── Pet stat placeholder resolution ─────────────────────────────────────────
+
+    /**
+     * Resolves {@code {STAT_NAME}} and {@code {N}} placeholders in pet lore using
+     * level-100 values from {@code petnums.json}. Must be called after constants are
+     * loaded (so {@link PetStatResolver} has data) and after category resolution
+     * (so we can identify pets).
+     */
+    private static void resolvePetStats(Map<String, NeuItem> items) {
+        if (!PetStatResolver.isLoaded()) {
+            LOGGER.warn("petnums not loaded — pet stat placeholders will remain unresolved");
+            return;
+        }
+
+        int resolved = 0;
+        for (NeuItem item : items.values()) {
+            if (item.category != SkyblockItemCategory.PET) continue;
+            PetStatResolver.resolve(item);
+            resolved++;
+        }
+        LOGGER.info("Resolved stat placeholders on {} pet items", resolved);
+    }
+
     // ── Constants loading ───────────────────────────────────────────────────────
 
     private void loadConstants(Map<String, JsonObject> constants) {
@@ -295,6 +323,11 @@ public class NeuRepoDownloader {
         JsonObject pets = constants.get("pets.json");
         if (pets != null) {
             NeuConstantsRegistry.loadPetTypes(pets);
+        }
+
+        JsonObject petNums = constants.get("petnums.json");
+        if (petNums != null) {
+            NeuConstantsRegistry.loadPetNums(petNums);
         }
     }
 
@@ -360,6 +393,10 @@ public class NeuRepoDownloader {
 
         item.clickcommand = str(json, "clickcommand", "");
         item.parent = json.has("parent") ? json.get("parent").getAsString() : null;
+
+        // Requirement metadata
+        item.crafttext = str(json, "crafttext", "");
+        item.slayerReq = str(json, "slayer_req", "");
 
         if (json.has("recipe") && json.get("recipe").isJsonObject()) {
             item.recipe = new LinkedHashMap<>();
@@ -474,6 +511,7 @@ public class NeuRepoDownloader {
         if (constants.has("essencecosts")) NeuConstantsRegistry.loadEssenceCosts(constants.getAsJsonObject("essencecosts"));
         if (constants.has("museum"))       NeuConstantsRegistry.loadMuseum(constants.getAsJsonObject("museum"));
         if (constants.has("pets"))         NeuConstantsRegistry.loadPetTypes(constants.getAsJsonObject("pets"));
+        if (constants.has("petnums"))      NeuConstantsRegistry.loadPetNums(constants.getAsJsonObject("petnums"));
     }
 
 
@@ -538,12 +576,12 @@ public class NeuRepoDownloader {
         return downloadAsync();
     }
 
-    public boolean needsRefresh(int hours) {
+    public boolean needsRefreshMinutes(int minutes) {
         try {
             String ts = readMeta("timestamp");
             if (ts == null) return true;
             long elapsed = System.currentTimeMillis() - Long.parseLong(ts);
-            return elapsed > (long) hours * 3_600_000L;
+            return elapsed > (long) minutes * 60_000L;
         } catch (Exception e) {
             return true;
         }

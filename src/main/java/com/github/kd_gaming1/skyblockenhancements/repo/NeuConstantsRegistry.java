@@ -21,6 +21,7 @@ import java.util.Map;
  *   <li>{@code essencecosts.json} — star upgrade costs for dungeon/crimson gear (528 entries)</li>
  *   <li>{@code museum.json} → {@code items} — skill-based museum categories (937 items)</li>
  *   <li>{@code pets.json} → {@code pet_types} — pet skill type mappings (73 entries)</li>
+ *   <li>{@code petnums.json} — per-pet stat values at level 1 and 100 for placeholder resolution</li>
  * </ul>
  *
  * <p>All data is immutable after loading. Thread-safe reads are guaranteed by volatile publication.
@@ -60,6 +61,7 @@ public final class NeuConstantsRegistry {
     private static volatile JsonObject rawEssenceCosts;
     private static volatile JsonObject rawMuseum;
     private static volatile JsonObject rawPets;
+    private static volatile JsonObject rawPetNums;
 
     private NeuConstantsRegistry() {}
 
@@ -227,6 +229,17 @@ public final class NeuConstantsRegistry {
         LOGGER.info("Loaded {} pet type mappings", map.size());
     }
 
+    /**
+     * Parses {@code constants/petnums.json}. Delegates to {@link PetStatResolver} which
+     * stores the level-100 stat values used for placeholder substitution in pet lore.
+     *
+     * @see PetStatResolver#load(JsonObject)
+     */
+    public static void loadPetNums(JsonObject json) {
+        rawPetNums = json;
+        PetStatResolver.load(json);
+    }
+
     /** Clears all loaded constants data. Called when the NEU repo is re-downloaded. */
     public static void clear() {
         parentToChildren = Map.of();
@@ -235,10 +248,12 @@ public final class NeuConstantsRegistry {
         museumCategories = Map.of();
         itemToMuseumWing = Map.of();
         petTypes = Map.of();
+        PetStatResolver.clear();
         rawParents = null;
         rawEssenceCosts = null;
         rawMuseum = null;
         rawPets = null;
+        rawPetNums = null;
     }
 
     /**
@@ -251,6 +266,7 @@ public final class NeuConstantsRegistry {
         if (rawEssenceCosts != null) obj.add("essencecosts", rawEssenceCosts);
         if (rawMuseum != null) obj.add("museum", rawMuseum);
         if (rawPets != null) obj.add("pets", rawPets);
+        if (rawPetNums != null) obj.add("petnums", rawPetNums);
         return obj;
     }
 

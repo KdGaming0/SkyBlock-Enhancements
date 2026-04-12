@@ -75,6 +75,21 @@ public class NeuItem {
      */
     public boolean enchantmentGlint = false;
 
+    // ── Requirement metadata ────────────────────────────────────────────────────
+
+    /**
+     * Crafting or collection requirement text from the NEU repo (e.g. {@code "Requires: Wheat III"},
+     * {@code "Requires: HotM 5"}). Empty string when absent. Present on ~1260 items — minions,
+     * collection-gated gear, Heart of the Mountain perks, etc.
+     */
+    public String crafttext = "";
+
+    /**
+     * Slayer requirement in the format {@code "SLAYER_TYPE_LEVEL"} (e.g. {@code "WOLF_3"},
+     * {@code "EMAN_6"}). Empty string when absent. Present on ~107 items.
+     */
+    public String slayerReq = "";
+
     // ── Recipe queries ───────────────────────────────────────────────────────────
 
     public boolean hasCraftingRecipe() {
@@ -101,6 +116,20 @@ public class NeuItem {
 
     public boolean hasWikiUrls() {
         return "WIKI_URL".equals(infoType) && info != null && !info.isEmpty();
+    }
+
+    /**
+     * Returns {@code true} if this item has a non-empty collection/crafting requirement.
+     */
+    public boolean hasCrafttext() {
+        return crafttext != null && !crafttext.isEmpty();
+    }
+
+    /**
+     * Returns {@code true} if this item is gated behind a slayer level requirement.
+     */
+    public boolean hasSlayerReq() {
+        return slayerReq != null && !slayerReq.isEmpty();
     }
 
     // ── Internal ─────────────────────────────────────────────────────────────────

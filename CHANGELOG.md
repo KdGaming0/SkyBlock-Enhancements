@@ -4,3 +4,4 @@
 **Improvements**
 - Code cleanups and refactors
 - Optimizations
+- Pets now show their stats instead of placeholder values.

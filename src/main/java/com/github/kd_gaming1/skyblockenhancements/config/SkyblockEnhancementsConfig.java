@@ -93,8 +93,8 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
     @Entry(category = RRV_INTEGRATION)
     public static boolean enableRecipeViewer = true;
 
-    @Entry(category = RRV_INTEGRATION, isSlider = true, min = 1, max = 168)
-    public static int repoRefreshIntervalHours = 24;
+    @Entry(category = RRV_INTEGRATION, isSlider = true, min = 5, max = 512, precision = 1)
+    public static int repoRefreshCheckMinutes = 15;
 
     @Entry(category = RRV_INTEGRATION)
     public static boolean compactItemList = true;

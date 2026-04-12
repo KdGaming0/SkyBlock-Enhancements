@@ -141,10 +141,10 @@ public class SkyblockEnhancements implements ClientModInitializer {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (++lastRefreshCheckTick < REFRESH_CHECK_INTERVAL_TICKS) return;
+            if (++lastRefreshCheckTick < SkyblockEnhancementsConfig.repoRefreshCheckMinutes * 20L) return;
             lastRefreshCheckTick = 0;
 
-            if (!repoDownloader.needsRefresh(SkyblockEnhancementsConfig.repoRefreshIntervalHours)) return;
+            if (!repoDownloader.needsRefreshMinutes(SkyblockEnhancementsConfig.repoRefreshCheckMinutes)) return;
 
             LOGGER.info("Auto-refreshing NEU repo data...");
             ItemStackBuilder.clearCache();
