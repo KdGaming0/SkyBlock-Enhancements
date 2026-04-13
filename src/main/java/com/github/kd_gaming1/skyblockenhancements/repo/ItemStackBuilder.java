@@ -134,14 +134,36 @@ public final class ItemStackBuilder {
         Item baseItem = resolveItem(item);
         ItemStack stack = new ItemStack(baseItem);
 
-        stack.set(DataComponents.CUSTOM_NAME, Component.literal(item.displayName));
+        // For enchanted books, use the enchant name (lore line 0) so RRV search
+        // matches "Sharpness III" instead of just "Enchanted Book".
+        String displayName = item.displayName;
+        if (baseItem == Items.ENCHANTED_BOOK
+                && item.lore != null && !item.lore.isEmpty()) {
+            String enchantLine = item.lore.getFirst(); // e.g. "§9Sharpness VII"
+            if (!enchantLine.isBlank()) {
+                // Take the rarity color from displayName (e.g. "§5") and the text from lore line 0
+                String rarityColor = item.displayName != null && item.displayName.length() > 2
+                        && item.displayName.charAt(0) == '§'
+                        ? item.displayName.substring(0, 2)
+                        : "§f";
+                String enchantText = enchantLine.length() > 2 && enchantLine.charAt(0) == '§'
+                        ? enchantLine.substring(2)
+                        : enchantLine;
+                displayName = rarityColor + enchantText;
+            }
+        }
+
+        stack.set(DataComponents.CUSTOM_NAME, Component.literal(displayName));
 
         CompoundTag customTag = new CompoundTag();
         customTag.putString("id", item.internalName);
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(customTag));
 
         if (item.lore != null && !item.lore.isEmpty()) {
-            List<Component> lines = item.lore.stream().<Component>map(Component::literal).toList();
+            List<String> loreLines = (baseItem == Items.ENCHANTED_BOOK)
+                    ? item.lore.subList(1, item.lore.size())
+                    : item.lore;
+            List<Component> lines = loreLines.stream().<Component>map(Component::literal).toList();
             stack.set(DataComponents.LORE, new ItemLore(lines));
         }
 

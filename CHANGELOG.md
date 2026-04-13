@@ -1,9 +1,5 @@
-## Changelog for 0.11.8
+## Changelog for 0.11.9
 
 ### **RRV Integration**
 **Improvements**
-- Fixed NEU repo update check happening every 15 seconds and not minutes
-
----
-
-- Improved Hide Item Frames with items in it.
+- Fixed not being able to search for enchantments in the item list.
