@@ -91,23 +91,24 @@ public class NeuRepoDownloader {
     }
 
     /** Kicks off an async download + parse. Safe to fire-and-forget. */
-    public CompletableFuture<Void> downloadAsync() {
+    public CompletableFuture<Void> downloadAsync(boolean startup) {
         return CompletableFuture.runAsync(
                 () -> {
                     try {
-                        download();
+                        download(startup);
                     } catch (Exception e) {
                         LOGGER.error("Failed to download/load NEU repo data", e);
                     }
                 });
     }
 
-    private void download() throws Exception {
+    private void download(boolean startup) throws Exception {
         Files.createDirectories(cacheDir);
 
         String cachedEtag = readMeta("etag");
         boolean cacheExists = Files.exists(cacheFile);
 
+        // ── If we have ETag + cache, check for updates ────────────────────────────
         if (cachedEtag != null && cacheExists) {
             HttpRequest headReq = HttpRequest.newBuilder()
                     .uri(URI.create(REPO_ZIP_URL))
@@ -118,40 +119,69 @@ public class NeuRepoDownloader {
                     .build();
 
             try {
-                HttpResponse<Void> headResp = HTTP.send(headReq, HttpResponse.BodyHandlers.discarding());
+                HttpResponse<Void> headResp =
+                        HTTP.send(headReq, HttpResponse.BodyHandlers.discarding());
+
                 if (headResp.statusCode() == 304) {
-                    LOGGER.info("NEU repo unchanged (ETag matched), loading from cache");
-                    if (loadFromCache()) return;
-                    LOGGER.info("Cache outdated (version bump), re-downloading NEU repo...");
+                    LOGGER.info("NEU repo unchanged (ETag matched)");
+
+                    if (startup) {
+                        LOGGER.info("Loading from cache...");
+                        if (loadFromCache()) {
+                            saveMeta(cachedEtag);
+                            return;
+                        }
+                        LOGGER.info("Cache outdated (version bump), re-downloading NEU repo...");
+                    } else {
+                        // Runtime check → nothing changed, do nothing
+                        LOGGER.info("No NEU repo updates found.");
+                        return;
+                    }
+
                 } else {
                     LOGGER.info("NEU repo changed, downloading...");
                 }
+
             } catch (Exception e) {
                 LOGGER.warn("HEAD check failed — falling back to cached data if available");
-                if (loadFromCache()) return;
-                LOGGER.warn("Cached data also unusable, re-downloading NEU repo...");
+
+                if (startup && loadFromCache()) {
+                    return;
+                }
+
+                LOGGER.warn("Cached data unusable or runtime check — re-downloading NEU repo...");
             }
+
         } else if (cacheExists) {
+            // No ETag but cache exists
             LOGGER.info("No ETag cached, checking cache validity...");
-            if (loadFromCache()) return;
+            if (loadFromCache()) {
+                saveMeta(null);
+                return;
+            }
+            LOGGER.info("Cache invalid, re-downloading NEU repo...");
         } else {
             LOGGER.info("No cache found, downloading NEU repo...");
         }
 
+        // ── Download + parse ──────────────────────────────────────────────────────
+        ItemStackBuilder.clearCache();
         ParseResult result = downloadAndParseZip();
 
         NeuItemRegistry.clear();
         result.items.forEach(NeuItemRegistry::register);
         loadConstants(result.constants);
 
-        // Resolve pet stat placeholders after constants (petnums) are loaded
+        // Resolve pet stat placeholders
         resolvePetStats(result.items);
 
         NeuItemRegistry.markLoaded();
 
         LOGGER.info("Loaded {} SkyBlock items and {} constants files from NEU repo",
                 result.items.size(), result.constants.size());
+
         RecipeDiagnostic.run();
+
         saveCache(result.items, result.constants, result.etag);
         saveMeta(result.etag);
     }
@@ -569,11 +599,7 @@ public class NeuRepoDownloader {
     // ── Public helpers ──────────────────────────────────────────────────────────
 
     public CompletableFuture<Void> refresh() {
-        try {
-            Files.deleteIfExists(metaFile);
-        } catch (IOException ignored) {
-        }
-        return downloadAsync();
+        return downloadAsync(true);
     }
 
     public boolean needsRefreshMinutes(int minutes) {

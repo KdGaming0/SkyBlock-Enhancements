@@ -2,8 +2,8 @@
 
 ### **RRV Integration**
 **Improvements**
-- More Code cleanups and refactors
+- Fixed NEU repo update check happening every 15 seconds and not minutes
 
-
+---
 
 - Improved Hide Item Frames with items in it.

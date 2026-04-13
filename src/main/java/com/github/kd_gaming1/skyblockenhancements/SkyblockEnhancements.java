@@ -16,7 +16,6 @@ import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManag
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
 import com.github.kd_gaming1.skyblockenhancements.feature.filter.LogFilterRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.IrisCompat;
@@ -123,7 +122,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             LOGGER.info("Starting NEU repo download...");
-            repoFuture = repoDownloader.downloadAsync()
+            repoFuture = repoDownloader.downloadAsync(true)
                     .thenRunAsync(SkyblockInjectionCache::buildCache)
                     .thenRun(SkyblockRrvClientPlugin::injectIfReady)
                     .exceptionally(ex -> {
@@ -141,14 +140,13 @@ public class SkyblockEnhancements implements ClientModInitializer {
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (++lastRefreshCheckTick < SkyblockEnhancementsConfig.repoRefreshCheckMinutes * 20L) return;
+            if (++lastRefreshCheckTick < SkyblockEnhancementsConfig.repoRefreshCheckMinutes * 20L * 60L) return;
             lastRefreshCheckTick = 0;
 
             if (!repoDownloader.needsRefreshMinutes(SkyblockEnhancementsConfig.repoRefreshCheckMinutes)) return;
 
             LOGGER.info("Auto-refreshing NEU repo data...");
-            ItemStackBuilder.clearCache();
-            repoFuture = repoDownloader.refresh()
+            repoFuture = repoDownloader.downloadAsync(false)
                     .thenRunAsync(SkyblockInjectionCache::buildCache)
                     .thenRun(SkyblockRrvClientPlugin::injectIfReady)
                     .exceptionally(ex -> {
