@@ -2,6 +2,8 @@
 
 ### **RRV Integration**
 **Improvements**
-- Code cleanups and refactors
-- Optimizations
-- Pets now show their stats instead of placeholder values.
+- More Code cleanups and refactors
+
+
+
+- Improved Hide Item Frames with items in it.
