@@ -135,6 +135,7 @@ public class NeuRepoDownloader {
                     } else {
                         // Runtime check → nothing changed, do nothing
                         LOGGER.info("No NEU repo updates found.");
+                        saveMeta(cachedEtag);
                         return;
                     }
 
