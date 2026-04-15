@@ -78,11 +78,6 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
         // Essence upgrades come from constants data, not individual item entries
         addAllEssenceUpgradeRecipes(list);
 
-        for (NeuItem item : NeuItemRegistry.getAll().values()) {
-            item.recipe = null;
-            item.recipes = null;
-        }
-
         return list;
     }
 
@@ -184,7 +179,9 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
             Map<String, int[]> tieredStats = HypixelItemsRegistry.getTieredStats(itemId); // nullable
             String[] wikiUrls = extractWikiUrls(item);
 
-            for (int i = 0; i < Objects.requireNonNull(apiCosts).size(); i++) {
+            if (apiCosts == null) continue;
+
+            for (int i = 0; i < apiCosts.size(); i++) {
                 int star = i + 1;
                 List<HypixelItemsRegistry.HypixelUpgradeCost> starCosts = apiCosts.get(i);
 
@@ -197,8 +194,7 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
                         essenceType = cost.essenceType();
                         essenceAmount = cost.amount();
                     } else {
-                        String ref = cost.toSlotRef();
-                        if (!ref.isEmpty()) companionRefs.add(ref);
+                        companionRefs.add(cost.toSlotRef());
                     }
                 }
 

@@ -1,5 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv;
 
+import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
+
 import cc.cassian.rrv.api.recipe.ItemView;
 import cc.cassian.rrv.common.recipe.ClientRecipeCache;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuItem;
@@ -207,6 +209,10 @@ public final class FullStackListCache {
      */
     @SuppressWarnings("UnstableApiUsage")
     private static List<ItemStack> buildCacheFromRegistry() {
+        LOGGER.warn("FullStackListCache.buildCacheFromRegistry() fallback triggered — "
+                + "populateFromInjected() was expected to run first. "
+                + "Please report this if it happens consistently.");
+
         List<ItemStack> results = new ArrayList<>();
         BuiltInRegistries.ITEM.forEach(item -> {
             for (ItemView.StackSensitive sensitive :

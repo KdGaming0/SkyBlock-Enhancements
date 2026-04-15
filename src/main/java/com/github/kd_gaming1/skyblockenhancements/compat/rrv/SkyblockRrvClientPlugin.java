@@ -37,6 +37,10 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
     public void onIntegrationInitialize() {
         if (!RrvCompat.isActive()) return;
 
+        // Wire invalidation: when the registry is cleared (repo reload), tear down RRV caches.
+        NeuItemRegistry.addClearListener(SkyblockInjectionCache::invalidate);
+        NeuItemRegistry.addClearListener(SkyblockCategoryFilter::invalidateIndex);
+
         registerRecipeWrappers();
 
         // Re-inject when RRV clears its cache (e.g. on server reconnect / lobby switch).

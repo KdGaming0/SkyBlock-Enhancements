@@ -1,12 +1,11 @@
 package com.github.kd_gaming1.skyblockenhancements.repo;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockCategoryFilter;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockInjectionCache;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -14,6 +13,10 @@ import net.minecraft.network.chat.Component;
  *
  * <p>Also maintains a secondary index mapping NPC display names to their {@link NeuItem},
  * enabling O(1) lookups in the recipe-view fallback mixin.
+ *
+ * <p>Downstream systems (e.g. RRV integration) can register invalidation listeners via
+ * {@link #addClearListener(Runnable)} to react to registry clears without introducing
+ * a reverse dependency from this package into theirs.
  */
 public final class NeuItemRegistry {
 
@@ -25,9 +28,27 @@ public final class NeuItemRegistry {
      */
     private static final Map<Component, NeuItem> NPC_BY_DISPLAY_NAME = new ConcurrentHashMap<>(256);
 
+    /**
+     * Listeners invoked after the registry is cleared. Used by downstream systems
+     * (e.g. cache invalidation) without requiring this class to import their types.
+     */
+    private static final List<Runnable> CLEAR_LISTENERS = new ArrayList<>();
+
     private static volatile boolean loaded = false;
 
     private NeuItemRegistry() {}
+
+    // ── Listener registration ────────────────────────────────────────────────────
+
+    /**
+     * Registers a callback that fires every time {@link #clear()} is called.
+     * Listeners are called in registration order on the same thread as {@code clear()}.
+     */
+    public static void addClearListener(Runnable listener) {
+        CLEAR_LISTENERS.add(listener);
+    }
+
+    // ── Registration ─────────────────────────────────────────────────────────────
 
     public static void register(String internalName, NeuItem item) {
         ITEMS.put(internalName, item);
@@ -35,6 +56,8 @@ public final class NeuItemRegistry {
             NPC_BY_DISPLAY_NAME.put(Component.literal(item.displayName), item);
         }
     }
+
+    // ── Lookups ──────────────────────────────────────────────────────────────────
 
     public static NeuItem get(String internalName) {
         return ITEMS.get(internalName);
@@ -48,34 +71,14 @@ public final class NeuItemRegistry {
         return Collections.unmodifiableMap(ITEMS);
     }
 
+    // ── Lifecycle ────────────────────────────────────────────────────────────────
+
     public static void clear() {
         ITEMS.clear();
         NPC_BY_DISPLAY_NAME.clear();
         loaded = false;
-        invalidateRrvCache();
-        invalidateCategoryIndex();
         NeuConstantsRegistry.clear();
-    }
-
-    /**
-     * Guarded call to avoid a hard dependency on RRV classes when the mod isn't present.
-     */
-    private static void invalidateRrvCache() {
-        try {
-            if (RrvCompat.isRrvPresent()) {
-                SkyblockInjectionCache.invalidate();
-            }
-        } catch (NoClassDefFoundError ignored) {
-        }
-    }
-
-    private static void invalidateCategoryIndex() {
-        try {
-            if (RrvCompat.isRrvPresent()) {
-                SkyblockCategoryFilter.invalidateIndex();
-            }
-        } catch (NoClassDefFoundError ignored) {
-        }
+        CLEAR_LISTENERS.forEach(Runnable::run);
     }
 
     public static void markLoaded() {
