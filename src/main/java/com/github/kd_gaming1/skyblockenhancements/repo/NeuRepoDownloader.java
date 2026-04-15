@@ -83,11 +83,13 @@ public class NeuRepoDownloader {
     private final Path cacheDir;
     private final Path cacheFile;
     private final Path metaFile;
+    private final Path hypixelCacheFile;
 
     public NeuRepoDownloader() {
         this.cacheDir = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("repo");
         this.cacheFile = cacheDir.resolve("items-cache.json");
         this.metaFile = cacheDir.resolve("repo-meta.json");
+        this.hypixelCacheFile = cacheDir.resolve("hypixel-items-cache.json");
     }
 
     /** Kicks off an async download + parse. Safe to fire-and-forget. */
@@ -129,6 +131,7 @@ public class NeuRepoDownloader {
                         LOGGER.info("Loading from cache...");
                         if (loadFromCache()) {
                             saveMeta(cachedEtag);
+                            HypixelItemsDownloader.fetchAndCache(HTTP, hypixelCacheFile, false);
                             return;
                         }
                         LOGGER.info("Cache outdated (version bump), re-downloading NEU repo...");
@@ -136,6 +139,7 @@ public class NeuRepoDownloader {
                         // Runtime check → nothing changed, do nothing
                         LOGGER.info("No NEU repo updates found.");
                         saveMeta(cachedEtag);
+                        HypixelItemsDownloader.fetchAndCache(HTTP, hypixelCacheFile, false);
                         return;
                     }
 
@@ -147,6 +151,7 @@ public class NeuRepoDownloader {
                 LOGGER.warn("HEAD check failed — falling back to cached data if available");
 
                 if (startup && loadFromCache()) {
+                    HypixelItemsDownloader.fetchAndCache(HTTP, hypixelCacheFile, false);
                     return;
                 }
 
@@ -158,6 +163,7 @@ public class NeuRepoDownloader {
             LOGGER.info("No ETag cached, checking cache validity...");
             if (loadFromCache()) {
                 saveMeta(null);
+                HypixelItemsDownloader.fetchAndCache(HTTP, hypixelCacheFile, false);
                 return;
             }
             LOGGER.info("Cache invalid, re-downloading NEU repo...");
@@ -167,16 +173,25 @@ public class NeuRepoDownloader {
 
         // ── Download + parse ──────────────────────────────────────────────────────
         ItemStackBuilder.clearCache();
+
+        CompletableFuture<Void> hypixelFuture = CompletableFuture.runAsync(
+                () -> HypixelItemsDownloader.fetchAndCache(HTTP, hypixelCacheFile, true));
+
         ParseResult result = downloadAndParseZip();
 
         NeuItemRegistry.clear();
         result.items.forEach(NeuItemRegistry::register);
         loadConstants(result.constants);
 
-        // Resolve pet stat placeholders
         resolvePetStats(result.items);
 
         NeuItemRegistry.markLoaded();
+
+        try {
+            hypixelFuture.join();
+        } catch (Exception e) {
+            LOGGER.warn("Hypixel items fetch encountered an error", e);
+        }
 
         LOGGER.info("Loaded {} SkyBlock items and {} constants files from NEU repo",
                 result.items.size(), result.constants.size());

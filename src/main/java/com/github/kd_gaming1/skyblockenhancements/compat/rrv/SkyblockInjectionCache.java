@@ -9,10 +9,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfo
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoRegistry;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcShopRecipeType;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
-import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuConstantsRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuItem;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.*;
 
 import java.util.*;
 import net.minecraft.core.component.DataComponents;
@@ -83,6 +80,7 @@ public final class SkyblockInjectionCache {
         SkyblockNpcShopRecipeType.INSTANCE.clearCache();
         SkyblockNpcInfoRecipeType.INSTANCE.clearCache();
         FullStackListCache.invalidate();
+        HypixelItemsRegistry.clear();
     }
 
     // ── Cache building ───────────────────────────────────────────────────────────

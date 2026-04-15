@@ -3,3 +3,4 @@
 ### **RRV Integration**
 **Improvements**
 - Fixed not being able to search for enchantments in the item list.
+- Fixed essence upgrades not showing how much their item stats improve.

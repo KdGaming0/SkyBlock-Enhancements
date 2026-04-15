@@ -15,17 +15,15 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfo
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcShopServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.wiki.SkyblockWikiInfoServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuConstantsRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuConstantsRegistry.EssenceUpgrade;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuItem;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.*;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -160,58 +158,72 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
         list.add(new SkyblockWikiInfoServerRecipe(displayStack, extractWikiUrls(item)));
     }
 
-    // ── Essence upgrades (from constants/essencecosts.json) ─────────────────────
+    // ── Essence upgrades (from Hypixel API) ─────────────────────────────────────
 
     /**
-     * Generates one essence upgrade recipe per star level for every item in the essence
-     * costs registry. Each recipe shows: Item + N Essence (+ optional companion items) → ★ Item.
+     * Generates one essence upgrade recipe per star level for every item that has
+     * {@code upgrade_costs} in the Hypixel API. The output slot carries the starred item
+     * name and updated stat values baked into its lore, so the standard tooltip already
+     * shows the correct per-star stats without any extra rendering code.
      */
     private static void addAllEssenceUpgradeRecipes(List<ReliableServerRecipe> list) {
-        Map<String, EssenceUpgrade> upgrades = NeuConstantsRegistry.getAllEssenceUpgrades();
-        LOGGER.info("Essence upgrades available: {}", upgrades.size());
-        if (upgrades.isEmpty()) return;
+        if (!HypixelItemsRegistry.isLoaded()) {
+            LOGGER.warn("Hypixel items registry not loaded — skipping essence upgrade recipes");
+            return;
+        }
 
         int count = 0;
-        for (var entry : upgrades.entrySet()) {
-            String itemId = entry.getKey();
-            EssenceUpgrade upgrade = entry.getValue();
-
+        for (String itemId : HypixelItemsRegistry.getAllUpgradeItemIds()) {
             NeuItem item = NeuItemRegistry.get(itemId);
             if (item == null) continue;
 
-            ItemStack itemStack = ItemStackBuilder.build(item);
-            if (itemStack.isEmpty()) continue;
+            ItemStack baseStack = ItemStackBuilder.build(item);
+            if (baseStack.isEmpty()) continue;
 
+            List<List<HypixelItemsRegistry.HypixelUpgradeCost>> apiCosts = HypixelItemsRegistry.getUpgradeCosts(itemId);
+            Map<String, int[]> tieredStats = HypixelItemsRegistry.getTieredStats(itemId); // nullable
             String[] wikiUrls = extractWikiUrls(item);
 
-            for (int star = 1; star <= upgrade.maxStar(); star++) {
-                int essenceCost = upgrade.getCost(star);
-                if (essenceCost <= 0) continue;
+            for (int i = 0; i < Objects.requireNonNull(apiCosts).size(); i++) {
+                int star = i + 1;
+                List<HypixelItemsRegistry.HypixelUpgradeCost> starCosts = apiCosts.get(i);
 
-                // Build the essence item reference (e.g. "ESSENCE_WITHER")
-                String essenceId = "ESSENCE_" + upgrade.essenceType().toUpperCase();
-                SlotContent essenceSlot = parseSlotRef(essenceId + ":" + essenceCost);
+                String essenceType = null;
+                int essenceAmount = 0;
+                List<String> companionRefs = new ArrayList<>();
 
-                // Companion items for this star level (coins, souls, etc.)
-                List<String> companionRefs = upgrade.getItems(star);
-                SlotContent[] companions = new SlotContent[companionRefs.size()];
-                for (int i = 0; i < companionRefs.size(); i++) {
-                    companions[i] = parseSlotRef(companionRefs.get(i));
+                for (HypixelItemsRegistry.HypixelUpgradeCost cost : starCosts) {
+                    if (cost.isEssence()) {
+                        essenceType = cost.essenceType();
+                        essenceAmount = cost.amount();
+                    } else {
+                        String ref = cost.toSlotRef();
+                        if (!ref.isEmpty()) companionRefs.add(ref);
+                    }
                 }
 
-                SlotContent inputSlot = SlotContent.of(itemStack.copy());
-                SlotContent outputSlot = SlotContent.of(itemStack.copy());
+                // Every essence upgrade must have an ESSENCE cost entry; skip stars that don't
+                if (essenceType == null || essenceAmount <= 0) continue;
+
+                SlotContent essenceSlot = parseSlotRef(
+                        "ESSENCE_" + essenceType.toUpperCase() + ":" + essenceAmount);
+
+                SlotContent[] companions = new SlotContent[companionRefs.size()];
+                for (int j = 0; j < companionRefs.size(); j++) {
+                    companions[j] = parseSlotRef(companionRefs.get(j));
+                }
+
+                // Output item: starred name + per-star stats in lore (baked at build time)
+                ItemStack output = StarredItemBuilder.buildStarredOutput(item, star, tieredStats);
 
                 list.add(new SkyblockEssenceUpgradeServerRecipe(
-                        inputSlot, outputSlot, essenceSlot, companions,
-                        star, upgrade.essenceType(), wikiUrls));
+                        SlotContent.of(baseStack.copy()), SlotContent.of(output),
+                        essenceSlot, companions, star, essenceType, wikiUrls));
                 count++;
             }
         }
 
-        if (count > 0) {
-            LOGGER.info("Generated {} essence upgrade recipes", count);
-        }
+        LOGGER.info("Generated {} essence upgrade recipes from Hypixel API", count);
     }
 
     // ── Individual recipe parsers ────────────────────────────────────────────────
