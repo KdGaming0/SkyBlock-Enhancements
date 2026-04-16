@@ -3,7 +3,6 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv;
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 
 import cc.cassian.rrv.api.ReliableRecipeViewerPlugin;
-import cc.cassian.rrv.api.recipe.ItemView;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.crafting.SkyblockCraftingServerRecipe;
@@ -22,7 +21,6 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import net.minecraft.world.item.ItemStack;
 

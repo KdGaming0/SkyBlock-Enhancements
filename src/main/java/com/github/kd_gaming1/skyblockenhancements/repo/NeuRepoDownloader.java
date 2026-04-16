@@ -167,7 +167,7 @@ public class NeuRepoDownloader {
     /**
      * Handles the ETag-based freshness check. Sends a HEAD request with If-None-Match.
      */
-    private FetchAction resolveWithEtag(String cachedEtag, boolean startup) throws IOException {
+    private FetchAction resolveWithEtag(String cachedEtag, boolean startup) {
         HttpRequest headReq = HttpRequest.newBuilder()
                 .uri(URI.create(REPO_ZIP_URL))
                 .method("HEAD", HttpRequest.BodyPublishers.noBody())

@@ -100,7 +100,10 @@ public final class HypixelItemsRegistry {
          */
         public String toSlotRef() {
             return switch (type) {
-                case "ESSENCE" -> "ESSENCE_" + essenceType.toUpperCase() + ":" + amount;
+                case "ESSENCE" -> {
+                    assert essenceType != null;
+                    yield "ESSENCE_" + essenceType.toUpperCase() + ":" + amount;
+                }
                 case "ITEM"    -> itemId + ":" + amount;
                 default        -> "";
             };
