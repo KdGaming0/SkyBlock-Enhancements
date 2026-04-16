@@ -97,7 +97,6 @@ public final class HypixelItemsRegistry {
 
         /**
          * Converts to the {@code "INTERNAL_ID:count"} slot-ref format expected by
-         * {@link com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRrvPlugin#parseSlotRef}.
          */
         public String toSlotRef() {
             return switch (type) {

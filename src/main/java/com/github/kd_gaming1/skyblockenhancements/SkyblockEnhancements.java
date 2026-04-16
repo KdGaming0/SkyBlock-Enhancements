@@ -2,6 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements;
 
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.DataReadinessTracker;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockInjectionCache;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRrvClientPlugin;
@@ -16,6 +17,8 @@ import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManag
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
 import com.github.kd_gaming1.skyblockenhancements.feature.filter.LogFilterRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.HypixelItemsRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.IrisCompat;
@@ -57,7 +60,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
     /** Guards against double-saving reminders on disconnect + shutdown. */
     private final AtomicBoolean remindersSaved = new AtomicBoolean(false);
 
-    private volatile CompletableFuture<Void> repoFuture = CompletableFuture.completedFuture(null);
+    private volatile CompletableFuture<Void> repoFuture = new CompletableFuture<>();
     private final NeuRepoDownloader repoDownloader = new NeuRepoDownloader();
     private long lastRefreshCheckTick = 0;
 
@@ -105,16 +108,11 @@ public class SkyblockEnhancements implements ClientModInitializer {
     }
 
     /**
-     * Sets up the NEU repo download → build → inject pipeline as a single async chain.
+     * Sets up the download → wait-for-readiness → build → inject pipeline.
      *
-     * <p>Pipeline:
-     * <pre>
-     * downloadAsync()                         // background: download + parse repo
-     *   .thenRunAsync(buildCache)             // background: build stacks + recipes + FullStackListCache
-     *   .thenRun(injectIfReady)              // inject into RRV (runTasks is already async)
-     * </pre>
-     *
-     * <p>No defensive rebuilds anywhere — each step trusts the previous step completed.
+     * <p>Both NEU and Hypixel downloads run in parallel. {@link DataReadinessTracker}
+     * waits on both readiness signals before building the cache and injecting into RRV.
+     * Partial injection is performed if one source fails, with a retry scheduled per config.
      */
     private void initRecipeViewer() {
         Commands.register();
@@ -122,19 +120,10 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             LOGGER.info("Starting NEU repo download...");
-            repoFuture = repoDownloader.downloadAsync(true)
-                    .thenRunAsync(SkyblockInjectionCache::buildCache)
-                    .thenRun(SkyblockRrvClientPlugin::injectIfReady)
+            repoDownloader.downloadAsync(true);
+            repoFuture = DataReadinessTracker.waitAndInject(repoDownloader)
                     .exceptionally(ex -> {
                         LOGGER.error("Failed to sync NEU repo with RRV", ex);
-                        Minecraft.getInstance().execute(() -> {
-                            Minecraft mc = Minecraft.getInstance();
-                            if (mc.player != null) {
-                                mc.gui.getChat().addMessage(Component.literal(
-                                        "§c[Skyblock Enhancements] Failed to load SkyBlock item data. " +
-                                                "The recipe viewer will be empty. Run §e/skyblockenhancements refresh repoData §cto retry."));
-                            }
-                        });
                         return null;
                     });
         });
@@ -143,12 +132,38 @@ public class SkyblockEnhancements implements ClientModInitializer {
             if (++lastRefreshCheckTick < SkyblockEnhancementsConfig.repoRefreshCheckMinutes * 20L * 60L) return;
             lastRefreshCheckTick = 0;
 
+            boolean neuFailed = !NeuItemRegistry.isLoaded();
+            boolean hypixelFailed = NeuItemRegistry.isLoaded() && !HypixelItemsRegistry.isLoaded();
+
+            if (neuFailed) {
+                LOGGER.info("Retrying NEU repo download...");
+                repoDownloader.downloadAsync(false);
+                repoFuture = DataReadinessTracker.retryNeuAndInject(repoDownloader)
+                        .exceptionally(ex -> {
+                            LOGGER.error("NEU repo retry failed", ex);
+                            return null;
+                        });
+                return;
+            }
+
+            if (hypixelFailed) {
+                LOGGER.info("Retrying Hypixel items download (essence upgrades missing)...");
+                // Re-fire the Hypixel fetch; downloadAsync resets the futures.
+                repoDownloader.downloadAsync(false);
+                repoFuture = DataReadinessTracker.retryHypixelAndDeltaInject(repoDownloader)
+                        .exceptionally(ex -> {
+                            LOGGER.error("Hypixel retry failed", ex);
+                            return null;
+                        });
+                return;
+            }
+
+            // Both loaded — check if a normal refresh is due.
             if (!repoDownloader.needsRefreshMinutes(SkyblockEnhancementsConfig.repoRefreshCheckMinutes)) return;
 
             LOGGER.info("Auto-refreshing NEU repo data...");
-            repoFuture = repoDownloader.downloadAsync(false)
-                    .thenRunAsync(SkyblockInjectionCache::buildCache)
-                    .thenRun(SkyblockRrvClientPlugin::injectIfReady)
+            repoDownloader.downloadAsync(false);
+            repoFuture = DataReadinessTracker.waitAndInject(repoDownloader)
                     .exceptionally(ex -> {
                         LOGGER.error("Failed to refresh NEU repo", ex);
                         return null;

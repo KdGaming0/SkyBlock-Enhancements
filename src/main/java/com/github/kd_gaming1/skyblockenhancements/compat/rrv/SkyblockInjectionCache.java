@@ -2,6 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv;
 
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 
+import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipeType;
 import cc.cassian.rrv.common.recipe.ServerRecipeManager.ServerRecipeEntry;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.SkyblockNpcInfoRecipeType;
@@ -29,7 +30,7 @@ public final class SkyblockInjectionCache {
     @Nullable private static volatile List<ItemStack> cachedItems;
 
     /** Pre-grouped recipe entries ready for injection. {@code null} until first build. */
-    @Nullable private static volatile Map<ReliableServerRecipeType<?>, List<ServerRecipeEntry>> cachedGrouped;
+    @Nullable private static volatile java.util.concurrent.ConcurrentHashMap<ReliableServerRecipeType<?>, List<ServerRecipeEntry>> cachedGrouped;
 
     /**
      * {@code true} once data has been successfully injected into RRV's cache.
@@ -75,7 +76,6 @@ public final class SkyblockInjectionCache {
         SkyblockNpcShopRecipeType.INSTANCE.clearCache();
         SkyblockNpcInfoRecipeType.INSTANCE.clearCache();
         FullStackListCache.invalidate();
-        HypixelItemsRegistry.clear();
     }
 
     // ── Cache building ───────────────────────────────────────────────────────────
@@ -107,11 +107,48 @@ public final class SkyblockInjectionCache {
         FullStackListCache.populateFromInjected(items);
 
         // Publish atomically — readers check cachedItems as the "ready" signal.
-        cachedGrouped = grouped;
+        cachedGrouped = new java.util.concurrent.ConcurrentHashMap<>(grouped);
         cachedItems = items;
 
         LOGGER.info("Built injection cache: {} items, {} recipes.",
                 items.size(),
                 grouped.values().stream().mapToInt(List::size).sum());
+    }
+
+    /**
+     * Rebuilds only essence upgrade recipes from the now-loaded {@link HypixelItemsRegistry}
+     * and injects them into RRV. Used when Hypixel data arrives after the initial injection.
+     *
+     * <p>This is a no-op if the main cache hasn't been built yet (items are required first),
+     * or if Hypixel data still isn't loaded.
+     */
+    public static synchronized void buildEssenceRecipesOnly() {
+        if (cachedItems == null || cachedGrouped == null) {
+            LOGGER.warn("buildEssenceRecipesOnly called before main cache is built — skipping.");
+            return;
+        }
+
+        if (!HypixelItemsRegistry.isLoaded()) {
+            LOGGER.warn("buildEssenceRecipesOnly: Hypixel registry still not loaded — skipping.");
+            return;
+        }
+
+        // Generate only essence upgrade recipes.
+        List<ReliableServerRecipe> essenceRecipes = SkyblockRrvPlugin.generateEssenceRecipesOnly();
+        if (essenceRecipes.isEmpty()) {
+            LOGGER.warn("buildEssenceRecipesOnly: no essence recipes generated.");
+            return;
+        }
+
+        Map<ReliableServerRecipeType<?>, List<ServerRecipeEntry>> essenceGrouped =
+                SkyblockRecipeGrouper.group(essenceRecipes);
+
+        // Merge into the existing grouped map so the full map stays consistent.
+        cachedGrouped.putAll(essenceGrouped);
+
+        LOGGER.info("Delta-injecting {} essence upgrade recipes into RRV.",
+                essenceRecipes.size());
+
+        RrvCacheInjector.inject(cachedItems, essenceGrouped);
     }
 }

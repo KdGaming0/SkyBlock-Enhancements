@@ -39,12 +39,7 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
 
     @Override
     public void onIntegrationInitialize() {
-        if (!RrvCompat.isActive()) return;
-
-        ItemView.addServerRecipeProvider(recipeList -> {
-            recipeList.addAll(generateAllRecipes());
-            LOGGER.info("Provided {} total SkyBlock recipes to RRV Server", recipeList.size());
-        });
+        // Do nothing - Item injection handled by SkyblockInjectionCache.buildCache()
     }
 
     /**
@@ -78,6 +73,16 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
         // Essence upgrades come from constants data, not individual item entries
         addAllEssenceUpgradeRecipes(list);
 
+        return list;
+    }
+
+    /**
+     * Generates only essence upgrade recipes. Called by the delta-inject path when
+     * Hypixel data becomes available after the initial injection.
+     */
+    public static List<ReliableServerRecipe> generateEssenceRecipesOnly() {
+        List<ReliableServerRecipe> list = new ArrayList<>();
+        addAllEssenceUpgradeRecipes(list);
         return list;
     }
 
