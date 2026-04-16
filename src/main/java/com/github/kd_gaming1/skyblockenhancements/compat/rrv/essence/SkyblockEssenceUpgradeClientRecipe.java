@@ -107,7 +107,7 @@ public class SkyblockEssenceUpgradeClientRecipe implements ReliableClientRecipe 
 
         var font = Minecraft.getInstance().font;
 
-        gfx.drawString(font, Component.literal("§e★" + starLevel + " " + essenceType),
+        gfx.drawString(font, Component.literal("§6" + "✪".repeat(starLevel) + " §e" + essenceType),
                 62, 2, 0xFFFFFF, true);
         gfx.drawString(font, Component.literal("→"), 82, 22, 0xFF404040, false);
 

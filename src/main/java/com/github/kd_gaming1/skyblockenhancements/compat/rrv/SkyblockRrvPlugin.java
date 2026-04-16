@@ -215,8 +215,12 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
                 // Output item: starred name + per-star stats in lore (baked at build time)
                 ItemStack output = StarredItemBuilder.buildStarredOutput(item, star, tieredStats);
 
+                ItemStack input = (star == 1)
+                        ? baseStack.copy()
+                        : StarredItemBuilder.buildStarredOutput(item, star - 1, tieredStats);
+
                 list.add(new SkyblockEssenceUpgradeServerRecipe(
-                        SlotContent.of(baseStack.copy()), SlotContent.of(output),
+                        SlotContent.of(input), SlotContent.of(output),
                         essenceSlot, companions, star, essenceType, wikiUrls));
                 count++;
             }

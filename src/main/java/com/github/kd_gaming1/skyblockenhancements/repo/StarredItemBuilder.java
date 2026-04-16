@@ -100,10 +100,10 @@ public final class StarredItemBuilder {
 
     private static void applyStarName(ItemStack stack, NeuItem item, int star) {
         String base = item.displayName != null ? item.displayName : "";
-        // §e = gold colour for the star glyph; the original name retains its own colour codes
-        stack.set(DataComponents.CUSTOM_NAME, Component.literal("§e★" + star + " " + base));
+        String stars = " §6" + "✪".repeat(star);
+        // Append gold star glyphs after the original display name
+        stack.set(DataComponents.CUSTOM_NAME, Component.literal(base + stars));
     }
-
     // ── Lore stat replacement ──────────────────────────────────────────────────
 
     private static void applyTieredStats(ItemStack stack, int star,
