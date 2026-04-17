@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public final class RepoDiskCache {
 
     /** Bump this whenever the NeuItem schema or parsing logic changes. */
-    static final int CACHE_VERSION = 9;
+    static final int CACHE_VERSION = 10;
 
     private static final Gson GSON = new GsonBuilder().create();
 

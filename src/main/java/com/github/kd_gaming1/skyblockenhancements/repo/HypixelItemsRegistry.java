@@ -8,21 +8,24 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Stores data from the Hypixel Public API ({@code /v2/resources/skyblock/items}).
  *
- * <p>This is the sole source of truth for essence upgrade data:
+ * <p>Sole source of truth for essence upgrade recipes:
  * <ul>
- *   <li>{@link #getTieredStats} — per-star stat values, used to update lore on the output item</li>
- *   <li>{@link #getUpgradeCosts} — authoritative upgrade costs per star (ESSENCE + ITEM types)</li>
+ *   <li>{@link #getBaseStats}    — base stat snapshot (API {@code stats}). Used for the +2%/star fallback.</li>
+ *   <li>{@link #getTieredStats}  — authoritative per-star stat values (API {@code tiered_stats}).</li>
+ *   <li>{@link #getUpgradeCosts} — per-star costs (API {@code upgrade_costs}).</li>
  * </ul>
  *
  * <p>All public accessors are thread-safe via volatile publish-on-write.
  */
 public final class HypixelItemsRegistry {
 
+    /** Item ID → {@code STAT_NAME (UPPER) → base value}. Populated from API {@code stats}. */
+    private static volatile Map<String, Map<String, Integer>> baseStatsMap = Map.of();
+
     /**
      * Item ID → tiered stats.
      * Key = API stat name (e.g. {@code "DAMAGE"}),
      * value = array where {@code [i]} is the stat value at ★(i+1) (0-indexed).
-     * Only stats with ≥ 2 distinct values are stored (single-value arrays are skipped at parse time).
      */
     private static volatile Map<String, Map<String, int[]>> tieredStatsMap = Map.of();
 
@@ -37,18 +40,21 @@ public final class HypixelItemsRegistry {
     // ── Loading ────────────────────────────────────────────────────────────────
 
     /**
-     * Replaces all stored data atomically. Both maps must already be immutable.
+     * Replaces all stored data atomically. All maps must already be immutable.
      * Called from {@link HypixelItemsDownloader} after a successful fetch or cache load.
      */
     public static void load(
+            Map<String, Map<String, Integer>> baseStats,
             Map<String, Map<String, int[]>> tieredStats,
             Map<String, List<List<HypixelUpgradeCost>>> upgradeCosts) {
+        baseStatsMap    = baseStats;
         tieredStatsMap  = tieredStats;
         upgradeCostsMap = upgradeCosts;
     }
 
     /** Drops all loaded data. Called when the mod resets (repo invalidation). */
     public static void clear() {
+        baseStatsMap    = Map.of();
         tieredStatsMap  = Map.of();
         upgradeCostsMap = Map.of();
     }
@@ -56,8 +62,17 @@ public final class HypixelItemsRegistry {
     // ── Accessors ──────────────────────────────────────────────────────────────
 
     /**
-     * Returns the per-star stat map for {@code itemId}, or {@code null} if the API
-     * has no tiered stat data for it.
+     * Returns the flat base stat map for {@code itemId} (API {@code stats}), or {@code null}
+     * if the API has no base stat data. Keys are normalised to UPPER_SNAKE.
+     */
+    @Nullable
+    public static Map<String, Integer> getBaseStats(String itemId) {
+        return baseStatsMap.get(itemId);
+    }
+
+    /**
+     * Returns the per-star stat map for {@code itemId}, or {@code null} if the API has no
+     * tiered stat data for it.
      */
     @Nullable
     public static Map<String, int[]> getTieredStats(String itemId) {
@@ -95,9 +110,7 @@ public final class HypixelItemsRegistry {
             @Nullable String itemId,
             int amount) {
 
-        /**
-         * Converts to the {@code "INTERNAL_ID:count"} slot-ref format expected by
-         */
+        /** Converts to the {@code "INTERNAL_ID:count"} slot-ref format. */
         public String toSlotRef() {
             return switch (type) {
                 case "ESSENCE" -> {

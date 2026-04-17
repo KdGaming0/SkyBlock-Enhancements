@@ -20,7 +20,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import net.minecraft.world.item.ItemStack;
 
@@ -159,10 +158,19 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
     // ── Essence upgrades (from Hypixel API) ─────────────────────────────────────
 
     /**
-     * Generates one essence upgrade recipe per star level for every item that has
-     * {@code upgrade_costs} in the Hypixel API. The output slot carries the starred item
-     * name and updated stat values baked into its lore, so the standard tooltip already
-     * shows the correct per-star stats without any extra rendering code.
+     * Emits one essence upgrade recipe per star for every item with {@code upgrade_costs}.
+     *
+     * <p>Per-star layout:
+     * <ul>
+     *   <li><b>Input</b>  — {@code star-1} state of the item (or the unstarred base for ★1).</li>
+     *   <li><b>Output</b> — {@code star} state of the item, with stat deltas in the lore.</li>
+     *   <li><b>Essence</b> — required essence for this star.</li>
+     *   <li><b>Companions</b> — any {@code ITEM}-type costs (coins, souls, mats).</li>
+     * </ul>
+     *
+     * <p>Stat values come from {@link EssenceStatResolver}: tiered_stats when present,
+     * otherwise base × (1 + 0.02 × star). Items with no stat data are still shown —
+     * the recipe just skips the stat-delta lore.
      */
     private static void addAllEssenceUpgradeRecipes(List<ReliableServerRecipe> list) {
         if (!HypixelItemsRegistry.isLoaded()) {
@@ -175,58 +183,61 @@ public class SkyblockRrvPlugin implements ReliableRecipeViewerPlugin {
             NeuItem item = NeuItemRegistry.get(itemId);
             if (item == null) continue;
 
-            ItemStack baseStack = ItemStackBuilder.build(item);
-            if (baseStack.isEmpty()) continue;
-
-            List<List<HypixelItemsRegistry.HypixelUpgradeCost>> apiCosts = HypixelItemsRegistry.getUpgradeCosts(itemId);
-            Map<String, int[]> tieredStats = HypixelItemsRegistry.getTieredStats(itemId); // nullable
-            String[] wikiUrls = extractWikiUrls(item);
-
+            List<List<HypixelItemsRegistry.HypixelUpgradeCost>> apiCosts =
+                    HypixelItemsRegistry.getUpgradeCosts(itemId);
             if (apiCosts == null) continue;
+
+            String[] wikiUrls = extractWikiUrls(item);
 
             for (int i = 0; i < apiCosts.size(); i++) {
                 int star = i + 1;
-                List<HypixelItemsRegistry.HypixelUpgradeCost> starCosts = apiCosts.get(i);
-
-                String essenceType = null;
-                int essenceAmount = 0;
-                List<String> companionRefs = new ArrayList<>();
-
-                for (HypixelItemsRegistry.HypixelUpgradeCost cost : starCosts) {
-                    if (cost.isEssence()) {
-                        essenceType = cost.essenceType();
-                        essenceAmount = cost.amount();
-                    } else {
-                        companionRefs.add(cost.toSlotRef());
-                    }
+                if (addSingleStarRecipe(list, item, apiCosts.get(i), star, wikiUrls)) {
+                    count++;
                 }
-
-                // Every essence upgrade must have an ESSENCE cost entry; skip stars that don't
-                if (essenceType == null || essenceAmount <= 0) continue;
-
-                SlotContent essenceSlot = parseSlotRef(
-                        "ESSENCE_" + essenceType.toUpperCase() + ":" + essenceAmount);
-
-                SlotContent[] companions = new SlotContent[companionRefs.size()];
-                for (int j = 0; j < companionRefs.size(); j++) {
-                    companions[j] = parseSlotRef(companionRefs.get(j));
-                }
-
-                // Output item: starred name + per-star stats in lore (baked at build time)
-                ItemStack output = StarredItemBuilder.buildStarredOutput(item, star, tieredStats);
-
-                ItemStack input = (star == 1)
-                        ? baseStack.copy()
-                        : StarredItemBuilder.buildStarredOutput(item, star - 1, tieredStats);
-
-                list.add(new SkyblockEssenceUpgradeServerRecipe(
-                        SlotContent.of(input), SlotContent.of(output),
-                        essenceSlot, companions, star, essenceType, wikiUrls));
-                count++;
             }
         }
 
         LOGGER.info("Generated {} essence upgrade recipes from Hypixel API", count);
+    }
+
+    /**
+     * Builds and appends a single star-level recipe. Returns {@code false} when the star has
+     * no ESSENCE cost entry (malformed API row — should not happen in practice).
+     */
+    private static boolean addSingleStarRecipe(
+            List<ReliableServerRecipe> list, NeuItem item,
+            List<HypixelItemsRegistry.HypixelUpgradeCost> starCosts,
+            int star, String[] wikiUrls) {
+
+        String essenceType = null;
+        int    essenceAmount = 0;
+        List<String> companionRefs = new ArrayList<>();
+
+        for (HypixelItemsRegistry.HypixelUpgradeCost cost : starCosts) {
+            if (cost.isEssence()) {
+                essenceType   = cost.essenceType();
+                essenceAmount = cost.amount();
+            } else {
+                companionRefs.add(cost.toSlotRef());
+            }
+        }
+        if (essenceType == null || essenceAmount <= 0) return false;
+
+        SlotContent essence = parseSlotRef(
+                "ESSENCE_" + essenceType.toUpperCase() + ":" + essenceAmount);
+
+        SlotContent[] companions = new SlotContent[companionRefs.size()];
+        for (int j = 0; j < companionRefs.size(); j++) {
+            companions[j] = parseSlotRef(companionRefs.get(j));
+        }
+
+        ItemStack input  = StarredItemBuilder.buildInput(item, star);
+        ItemStack output = StarredItemBuilder.buildOutput(item, star);
+
+        list.add(new SkyblockEssenceUpgradeServerRecipe(
+                SlotContent.of(input), SlotContent.of(output),
+                essence, companions, star, essenceType, wikiUrls));
+        return true;
     }
 
     // ── Individual recipe parsers ────────────────────────────────────────────────

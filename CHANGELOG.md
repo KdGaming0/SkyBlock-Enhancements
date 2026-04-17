@@ -4,4 +4,4 @@
 **Improvements**
 - Code refactors
 - Fixed not being able to search for enchantments in the item list.
-- Fixed essence upgrades not showing how much their item stats improve.
+- Fixed essence upgrades not showing how much their item stats improve by per star.

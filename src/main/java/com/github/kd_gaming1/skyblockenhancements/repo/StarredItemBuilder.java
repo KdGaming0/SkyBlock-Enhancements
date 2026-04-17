@@ -1,7 +1,6 @@
 package com.github.kd_gaming1.skyblockenhancements.repo;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,138 +13,161 @@ import net.minecraft.world.item.component.ItemLore;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Builds the output {@link ItemStack} for an essence upgrade recipe.
+ * Builds the input and output {@link ItemStack}s for an essence upgrade recipe.
  *
- * <p>Two things are modified on the copy relative to the base item:
- * <ol>
- *   <li><b>Name</b> — {@code §e★{star} } is prepended to the original display name.</li>
- *   <li><b>Lore</b> — each lore line is scanned with a pre-compiled {@link Pattern} per API stat
- *       name; if a line contains a matching stat label, the numeric value is replaced with the
- *       value from {@code tieredStats[statName][star - 1]}.</li>
- * </ol>
+ * <p>Input = unstarred base for ★1, or the {@code star-1} state otherwise.<br>
+ * Output = the item at {@code star}, with stat lines rewritten in place.
  *
- * <p>This approach is deliberately simple: the output stack carries the correct data as plain
- * lore text, so RRV's standard tooltip rendering shows it with zero extra code.
+ * <p><b>Lore handling:</b> the original NEU repo lore is preserved verbatim. Each line is
+ * scanned against a per-stat {@link Pattern}; when a line matches a known stat, the numeric
+ * value is replaced with the new value and a green {@code (+Δ)} delta is appended. Lines
+ * that don't match any stat pattern (ability text, set bonuses, reforge notes, dungeon tier,
+ * etc.) pass through unchanged.
+ *
+ * <p>Stat values come from {@link EssenceStatResolver} — tiered_stats when present, otherwise
+ * base × (1 + 0.02 × star). Items with no stat data keep their lore entirely unchanged.
  */
 public final class StarredItemBuilder {
 
-    /**
-     * Maps API stat names (as returned by {@code tiered_stats} keys) to the display text
-     * as it appears in NEU repo lore lines.
-     * Pattern per entry: {@code (?i)(displayName:\s*(?:§[0-9a-fk-or])+\+?)(\d+)}
-     */
-    private static final Map<String, Pattern> STAT_PATTERNS;
+    /** One regex per stat; matches "Label: §color[+]digits". Group 1 = prefix, group 2 = digits. */
+    private static final Map<EssenceStat, Pattern> STAT_PATTERNS = buildStatPatterns();
 
-    static {
-        // Key = API stat name, value = the exact substring that precedes the number in lore.
-        // All are matched case-insensitively to handle any future lore capitalisation variance.
-        Map<String, String> displayNames = Map.of(
-                "DAMAGE",          "damage",
-                "STRENGTH",        "strength",
-                "DEFENSE",         "defense",
-                "HEALTH",          "health",
-                "INTELLIGENCE",    "intelligence",
-                "CRITICAL_DAMAGE", "crit damage",
-                "CRITICAL_CHANCE", "crit chance",
-                "WALK_SPEED",      "speed",
-                "ATTACK_SPEED",    "bonus attack speed"
-        );
-
-        Map<String, Pattern> patterns = new HashMap<>(displayNames.size());
-        for (var entry : displayNames.entrySet()) {
-            // Matches "StatLabel: §X+digits" or "StatLabel: §X§Xdigits"
-            // Group 1 = everything up to and including the last formatting code + optional '+'
-            // Group 2 = the numeric value to replace
-            patterns.put(entry.getKey(), Pattern.compile(
-                    "(?i)(" + Pattern.quote(entry.getValue())
-                            + ":\\s*(?:§[0-9a-fk-or])+\\+?)(\\d+)"));
-        }
-        STAT_PATTERNS = Collections.unmodifiableMap(patterns);
-    }
+    private static final String DELTA_COLOR    = "§a";
+    private static final String DELTA_BRACKETS = "§8";
 
     private StarredItemBuilder() {}
 
     // ── Public API ─────────────────────────────────────────────────────────────
 
     /**
-     * Returns a copy of the base item's stack with:
-     * <ul>
-     *   <li>Name: {@code §e★{star} } + original display name (retains original rarity colour)</li>
-     *   <li>Lore: stat values updated to {@code tieredStats[stat][star - 1]} where available</li>
-     * </ul>
-     *
-     * <p>If {@code tieredStats} is {@code null} or empty, the lore is left unchanged and only
-     * the star name is applied.
-     *
-     * @param item        source item from the NEU registry
-     * @param star        star level (1-indexed, e.g. 1 = ★1)
-     * @param tieredStats per-star stat values from {@link HypixelItemsRegistry#getTieredStats},
-     *                    or {@code null} if the API has no stat data for this item
+     * Builds the input side of a star recipe — the item as it looks *before* applying this star.
+     * For ★1 this is the unstarred base. For ★N (N≥2) this is the ★(N-1) form.
      */
-    public static ItemStack buildStarredOutput(
-            NeuItem item, int star, @Nullable Map<String, int[]> tieredStats) {
-
-        ItemStack stack = ItemStackBuilder.build(item).copy();
-
-        applyStarName(stack, item, star);
-
-        if (tieredStats != null && !tieredStats.isEmpty()) {
-            applyTieredStats(stack, star, tieredStats);
+    public static ItemStack buildInput(NeuItem item, int star) {
+        if (star <= 1) {
+            return ItemStackBuilder.build(item).copy();
         }
-
-        return stack;
-    }
-
-    // ── Name ───────────────────────────────────────────────────────────────────
-
-    private static void applyStarName(ItemStack stack, NeuItem item, int star) {
-        String base = item.displayName != null ? item.displayName : "";
-        String stars = " §6" + "✪".repeat(star);
-        // Append gold star glyphs after the original display name
-        stack.set(DataComponents.CUSTOM_NAME, Component.literal(base + stars));
-    }
-    // ── Lore stat replacement ──────────────────────────────────────────────────
-
-    private static void applyTieredStats(ItemStack stack, int star,
-                                         Map<String, int[]> tieredStats) {
-
-        ItemLore existing = stack.get(DataComponents.LORE);
-        if (existing == null || existing.lines().isEmpty()) return;
-
-        List<Component> updated = new ArrayList<>(existing.lines().size());
-        for (Component line : existing.lines()) {
-            updated.add(replaceStat(line, star, tieredStats));
-        }
-        stack.set(DataComponents.LORE, new ItemLore(updated));
+        int previousStar = star - 1;
+        Map<EssenceStat, Integer> snapshot = EssenceStatResolver.resolve(item.internalName, previousStar);
+        return buildStack(item, previousStar, snapshot, null);
     }
 
     /**
-     * Scans a single lore line against every stat pattern and replaces the numeric value
-     * for any stat that has data at the requested star level. At most one stat pattern will
-     * match per line (SkyBlock lore has one stat per line).
+     * Builds the output side of a star recipe — the item at {@code star}, with stat lines
+     * showing the new value and the delta from the previous tier.
      */
-    private static Component replaceStat(Component line, int star,
-                                         Map<String, int[]> tieredStats) {
+    public static ItemStack buildOutput(NeuItem item, int star) {
+        Map<EssenceStat, Integer> after  = EssenceStatResolver.resolve(item.internalName, star);
+        Map<EssenceStat, Integer> before = star > 0
+                ? EssenceStatResolver.resolve(item.internalName, star - 1)
+                : null;
+        return buildStack(item, star, after, before);
+    }
 
-        // Component.literal stores the raw string (with § codes) as its content.
+    // ── Core builder ───────────────────────────────────────────────────────────
+
+    private static ItemStack buildStack(NeuItem item, int star,
+                                        @Nullable Map<EssenceStat, Integer> after,
+                                        @Nullable Map<EssenceStat, Integer> before) {
+
+        ItemStack stack = ItemStackBuilder.build(item).copy();
+        applyStarName(stack, item, star);
+
+        // No stat data — leave NEU lore untouched.
+        if (after == null || after.isEmpty()) return stack;
+
+        ItemLore existing = stack.get(DataComponents.LORE);
+        if (existing == null || existing.lines().isEmpty()) return stack;
+
+        List<Component> updated = new ArrayList<>(existing.lines().size());
+        for (Component line : existing.lines()) {
+            updated.add(rewriteStatLine(line, after, before));
+        }
+        stack.set(DataComponents.LORE, new ItemLore(updated));
+        return stack;
+    }
+
+    private static void applyStarName(ItemStack stack, NeuItem item, int star) {
+        String base  = item.displayName != null ? item.displayName : item.internalName;
+        String stars = star > 0 ? " §6" + "✪".repeat(star) : "";
+        stack.set(DataComponents.CUSTOM_NAME, Component.literal(base + stars));
+    }
+
+    // ── Line rewriting ────────────────────────────────────────────────────────
+
+    /**
+     * If the line matches a known stat pattern, rebuild it with the new value + delta.
+     * Otherwise return it unchanged. At most one stat matches per line.
+     */
+    private static Component rewriteStatLine(Component line,
+                                             Map<EssenceStat, Integer> after,
+                                             @Nullable Map<EssenceStat, Integer> before) {
+
         String raw = line.getString();
 
-        for (var entry : tieredStats.entrySet()) {
-            int[] values = entry.getValue();
-            // star is 1-indexed; values array is 0-indexed
-            if (star > values.length) continue;
-
-            Pattern pattern = STAT_PATTERNS.get(entry.getKey());
+        for (var entry : after.entrySet()) {
+            EssenceStat stat = entry.getKey();
+            Pattern pattern  = STAT_PATTERNS.get(stat);
             if (pattern == null) continue;
 
-            Matcher matcher = pattern.matcher(raw);
-            if (!matcher.find()) continue;
+            Matcher m = pattern.matcher(raw);
+            if (!m.find()) continue;
 
-            // Replace only the digit group (group 2), preserving formatting prefix (group 1)
-            String replaced = matcher.replaceFirst("$1" + values[star - 1]);
-            return Component.literal(replaced);
+            int afterValue = entry.getValue();
+            Integer beforeBoxed = before != null ? before.get(stat) : null;
+            return Component.literal(rebuildWithDelta(m, raw, afterValue, beforeBoxed));
         }
-
         return line;
+    }
+
+    /**
+     * Returns the rewritten line: {@code prefix + newValue + optionalPercent + (+Δ) + tail}.
+     * The optional {@code '%'} is captured separately so the delta sits <em>after</em> the
+     * percent sign ({@code "+31% (+1)"}), matching SkyBlock's usual formatting.
+     */
+    private static String rebuildWithDelta(Matcher m, String raw, int afterValue,
+                                           @Nullable Integer before) {
+        int prefixEnd  = m.end(1); // end of "Label: §color[+]"
+        int numberEnd  = m.end(2); // end of the digits
+        int percentEnd = m.end(3); // == numberEnd when no '%' is present
+
+        String prefix  = raw.substring(0, prefixEnd);
+        String percent = raw.substring(numberEnd, percentEnd); // "" or "%"
+        String tail    = raw.substring(percentEnd);
+
+        StringBuilder sb = new StringBuilder(raw.length() + 16);
+        sb.append(prefix).append(afterValue).append(percent);
+
+        if (before != null && before != afterValue) {
+            int delta = afterValue - before;
+            String sign = delta > 0 ? "+" : "";
+            sb.append(' ').append(DELTA_BRACKETS).append('(')
+                    .append(DELTA_COLOR).append(sign).append(delta)
+                    .append(DELTA_BRACKETS).append(')');
+        }
+        sb.append(tail);
+        return sb.toString();
+    }
+
+    // ── Pattern catalog ───────────────────────────────────────────────────────
+
+    /**
+     * One pattern per modelled stat. Matches the label, optional formatting codes, an optional
+     * {@code '+'}, the digits, and an optional {@code '%'} suffix. Example match against
+     * {@code "§7Crit Damage: §c+30%"}:
+     * <ul>
+     *   <li>group 1 = {@code "§7Crit Damage: §c+"}</li>
+     *   <li>group 2 = {@code "30"}</li>
+     *   <li>group 3 = {@code "%"}</li>
+     * </ul>
+     */
+    private static Map<EssenceStat, Pattern> buildStatPatterns() {
+        Map<EssenceStat, Pattern> out = new HashMap<>();
+        for (EssenceStat stat : EssenceStat.values()) {
+            String label = stat.displayLabel();
+            String regex = "(?i)(" + Pattern.quote(label) + ":\\s*(?:§[0-9a-fk-or])*\\+?)(\\d+)(%?)";
+            out.put(stat, Pattern.compile(regex));
+        }
+        return Map.copyOf(out);
     }
 }

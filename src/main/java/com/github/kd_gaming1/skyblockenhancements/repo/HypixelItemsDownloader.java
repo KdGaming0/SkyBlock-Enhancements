@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,14 +32,12 @@ import org.jetbrains.annotations.Nullable;
  * Fetches and disk-caches the Hypixel SkyBlock items resource endpoint.
  *
  * <p>The endpoint ({@code /v2/resources/skyblock/items}) is public and requires no API key.
- * It provides {@code upgrade_costs} and {@code tiered_stats} per item.
+ * It provides {@code stats}, {@code tiered_stats}, and {@code upgrade_costs} per item.
  *
  * <h3>Cache strategy</h3>
  * <ul>
- *   <li>When the NEU repo is re-downloaded (fresh data), pass {@code forceRefresh = true}
- *       to always re-fetch the API as well.</li>
- *   <li>When the NEU repo was loaded from cache (unchanged), pass {@code forceRefresh = false}
- *       and a 24-hour TTL prevents unnecessary re-fetches.</li>
+ *   <li>When the NEU repo is re-downloaded (fresh data), pass {@code forceRefresh = true}.</li>
+ *   <li>Otherwise a 24-hour TTL prevents unnecessary re-fetches.</li>
  * </ul>
  */
 public final class HypixelItemsDownloader {
@@ -55,14 +54,6 @@ public final class HypixelItemsDownloader {
 
     // ── Public entry point ─────────────────────────────────────────────────────
 
-    /**
-     * Loads data into {@link HypixelItemsRegistry}. Uses the disk cache when it is
-     * fresh and {@code forceRefresh} is {@code false}.
-     *
-     * @param http         the shared {@link HttpClient} (reused from {@link NeuRepoDownloader})
-     * @param cacheFile    path to {@code hypixel-items-cache.json}
-     * @param forceRefresh when {@code true} the TTL is ignored and the API is always fetched
-     */
     public static void fetchAndCache(HttpClient http, Path cacheFile, boolean forceRefresh) {
         if (!forceRefresh && isCacheFresh(cacheFile)) {
             if (loadFromCache(cacheFile)) {
@@ -75,7 +66,6 @@ public final class HypixelItemsDownloader {
 
         ParsedApiData data = fetch(http);
         if (data == null) {
-            // Network failure — attempt to fall back to stale cache
             if (loadFromCache(cacheFile)) {
                 LOGGER.warn("Hypixel API fetch failed; using stale cache for essence upgrades");
             } else {
@@ -84,10 +74,10 @@ public final class HypixelItemsDownloader {
             return;
         }
 
-        HypixelItemsRegistry.load(data.tieredStats(), data.upgradeCosts());
+        HypixelItemsRegistry.load(data.baseStats(), data.tieredStats(), data.upgradeCosts());
         saveToCache(data, cacheFile);
-        LOGGER.info("Fetched Hypixel items API: {} items with tiered_stats, {} with upgrade_costs",
-                data.tieredStats().size(), data.upgradeCosts().size());
+        LOGGER.info("Fetched Hypixel items API: {} with base stats, {} with tiered_stats, {} with upgrade_costs",
+                data.baseStats().size(), data.tieredStats().size(), data.upgradeCosts().size());
     }
 
     // ── HTTP fetch ─────────────────────────────────────────────────────────────
@@ -130,7 +120,8 @@ public final class HypixelItemsDownloader {
             return null;
         }
 
-        Map<String, Map<String, int[]>> tieredStats    = new HashMap<>(128);
+        Map<String, Map<String, Integer>>          baseStats    = new HashMap<>(512);
+        Map<String, Map<String, int[]>>            tieredStats  = new HashMap<>(128);
         Map<String, List<List<HypixelUpgradeCost>>> upgradeCosts = new HashMap<>(512);
 
         for (JsonElement element : root.getAsJsonArray("items")) {
@@ -140,13 +131,33 @@ public final class HypixelItemsDownloader {
             String id = item.has("id") ? item.get("id").getAsString() : null;
             if (id == null || id.isEmpty()) continue;
 
-            parseTieredStats(id, item, tieredStats);
+            parseBaseStats   (id, item, baseStats);
+            parseTieredStats (id, item, tieredStats);
             parseUpgradeCosts(id, item, upgradeCosts);
         }
 
         return new ParsedApiData(
+                Collections.unmodifiableMap(baseStats),
                 Collections.unmodifiableMap(tieredStats),
                 Collections.unmodifiableMap(upgradeCosts));
+    }
+
+    /** API {@code stats} uses lower_snake keys (e.g. {@code "damage"}); normalise to UPPER. */
+    private static void parseBaseStats(String id, JsonObject item,
+                                       Map<String, Map<String, Integer>> out) {
+        if (!item.has("stats") || !item.get("stats").isJsonObject()) return;
+
+        Map<String, Integer> stats = new HashMap<>();
+        for (var entry : item.getAsJsonObject("stats").entrySet()) {
+            if (!entry.getValue().isJsonPrimitive()) continue;
+            try {
+                int value = entry.getValue().getAsInt();
+                stats.put(entry.getKey().toUpperCase(Locale.ROOT), value);
+            } catch (NumberFormatException ignored) {
+                // non-numeric stat (shouldn't happen but don't crash)
+            }
+        }
+        if (!stats.isEmpty()) out.put(id, Collections.unmodifiableMap(stats));
     }
 
     private static void parseTieredStats(String id, JsonObject item,
@@ -159,7 +170,7 @@ public final class HypixelItemsDownloader {
             if (!entry.getValue().isJsonArray()) continue;
             JsonArray arr = entry.getValue().getAsJsonArray();
 
-            // Skip single-value arrays: the stat doesn't change across star levels
+            // Skip single-value arrays: the stat doesn't change across tiers
             if (arr.size() < 2) continue;
 
             int[] values = new int[arr.size()];
@@ -228,45 +239,26 @@ public final class HypixelItemsDownloader {
         if (!Files.exists(cacheFile)) return false;
         try (BufferedReader reader = Files.newBufferedReader(cacheFile, StandardCharsets.UTF_8)) {
             JsonObject root = GSON.fromJson(reader, JsonObject.class);
-            if (root == null) return false;
-
-            Map<String, Map<String, int[]>> tieredStats    = new HashMap<>();
-            Map<String, List<List<HypixelUpgradeCost>>> upgradeCosts = new HashMap<>();
-
-            if (root.has("tieredStats") && root.get("tieredStats").isJsonObject()) {
-                for (var itemEntry : root.getAsJsonObject("tieredStats").entrySet()) {
-                    if (!itemEntry.getValue().isJsonObject()) continue;
-                    Map<String, int[]> stats = new HashMap<>();
-                    for (var statEntry : itemEntry.getValue().getAsJsonObject().entrySet()) {
-                        if (!statEntry.getValue().isJsonArray()) continue;
-                        JsonArray arr = statEntry.getValue().getAsJsonArray();
-                        int[] values = new int[arr.size()];
-                        for (int i = 0; i < arr.size(); i++) values[i] = arr.get(i).getAsInt();
-                        stats.put(statEntry.getKey(), values);
-                    }
-                    if (!stats.isEmpty()) tieredStats.put(itemEntry.getKey(),
-                            Collections.unmodifiableMap(stats));
+            int version = 0;
+            if (root.has("cacheVersion") && root.get("cacheVersion").isJsonPrimitive()) {
+                try {
+                    version = root.get("cacheVersion").getAsInt();
+                } catch (Exception ignored) {
+                    LOGGER.warn("Failed to parse Hypixel items cache version");
                 }
             }
-
-            if (root.has("upgradeCosts") && root.get("upgradeCosts").isJsonObject()) {
-                for (var itemEntry : root.getAsJsonObject("upgradeCosts").entrySet()) {
-                    if (!itemEntry.getValue().isJsonArray()) continue;
-                    List<List<HypixelUpgradeCost>> perStar = new ArrayList<>();
-                    for (JsonElement starEl : itemEntry.getValue().getAsJsonArray()) {
-                        if (!starEl.isJsonArray()) { perStar.add(List.of()); continue; }
-                        List<HypixelUpgradeCost> starCosts = new ArrayList<>();
-                        for (JsonElement costEl : starEl.getAsJsonArray()) {
-                            HypixelUpgradeCost cost = parseSingleCost(costEl);
-                            if (cost != null) starCosts.add(cost);
-                        }
-                        perStar.add(Collections.unmodifiableList(starCosts));
-                    }
-                    upgradeCosts.put(itemEntry.getKey(), Collections.unmodifiableList(perStar));
-                }
+            if (version < RepoDiskCache.CACHE_VERSION) {
+                LOGGER.info("Hypixel items cache version {} is outdated (current: {}), will re-fetch",
+                        version, RepoDiskCache.CACHE_VERSION);
+                return false;
             }
+
+            Map<String, Map<String, Integer>>            baseStats    = readBaseStatsCache(root);
+            Map<String, Map<String, int[]>>              tieredStats  = readTieredStatsCache(root);
+            Map<String, List<List<HypixelUpgradeCost>>>  upgradeCosts = readUpgradeCostsCache(root);
 
             HypixelItemsRegistry.load(
+                    Collections.unmodifiableMap(baseStats),
                     Collections.unmodifiableMap(tieredStats),
                     Collections.unmodifiableMap(upgradeCosts));
             return true;
@@ -277,12 +269,78 @@ public final class HypixelItemsDownloader {
         }
     }
 
+    private static Map<String, Map<String, Integer>> readBaseStatsCache(JsonObject root) {
+        Map<String, Map<String, Integer>> out = new HashMap<>();
+        if (!root.has("baseStats") || !root.get("baseStats").isJsonObject()) return out;
+        for (var itemEntry : root.getAsJsonObject("baseStats").entrySet()) {
+            if (!itemEntry.getValue().isJsonObject()) continue;
+            Map<String, Integer> stats = new HashMap<>();
+            for (var statEntry : itemEntry.getValue().getAsJsonObject().entrySet()) {
+                if (!statEntry.getValue().isJsonPrimitive()) continue;
+                stats.put(statEntry.getKey(), statEntry.getValue().getAsInt());
+            }
+            if (!stats.isEmpty()) out.put(itemEntry.getKey(), Collections.unmodifiableMap(stats));
+        }
+        return out;
+    }
+
+    private static Map<String, Map<String, int[]>> readTieredStatsCache(JsonObject root) {
+        Map<String, Map<String, int[]>> out = new HashMap<>();
+        if (!root.has("tieredStats") || !root.get("tieredStats").isJsonObject()) return out;
+        for (var itemEntry : root.getAsJsonObject("tieredStats").entrySet()) {
+            if (!itemEntry.getValue().isJsonObject()) continue;
+            Map<String, int[]> stats = new HashMap<>();
+            for (var statEntry : itemEntry.getValue().getAsJsonObject().entrySet()) {
+                if (!statEntry.getValue().isJsonArray()) continue;
+                JsonArray arr = statEntry.getValue().getAsJsonArray();
+                int[] values = new int[arr.size()];
+                for (int i = 0; i < arr.size(); i++) values[i] = arr.get(i).getAsInt();
+                stats.put(statEntry.getKey(), values);
+            }
+            if (!stats.isEmpty()) out.put(itemEntry.getKey(), Collections.unmodifiableMap(stats));
+        }
+        return out;
+    }
+
+    private static Map<String, List<List<HypixelUpgradeCost>>> readUpgradeCostsCache(JsonObject root) {
+        Map<String, List<List<HypixelUpgradeCost>>> out = new HashMap<>();
+        if (!root.has("upgradeCosts") || !root.get("upgradeCosts").isJsonObject()) return out;
+        for (var itemEntry : root.getAsJsonObject("upgradeCosts").entrySet()) {
+            if (!itemEntry.getValue().isJsonArray()) continue;
+            List<List<HypixelUpgradeCost>> perStar = new ArrayList<>();
+            for (JsonElement starEl : itemEntry.getValue().getAsJsonArray()) {
+                if (!starEl.isJsonArray()) { perStar.add(List.of()); continue; }
+                List<HypixelUpgradeCost> starCosts = new ArrayList<>();
+                for (JsonElement costEl : starEl.getAsJsonArray()) {
+                    HypixelUpgradeCost cost = parseSingleCost(costEl);
+                    if (cost != null) starCosts.add(cost);
+                }
+                perStar.add(Collections.unmodifiableList(starCosts));
+            }
+            out.put(itemEntry.getKey(), Collections.unmodifiableList(perStar));
+        }
+        return out;
+    }
+
     private static void saveToCache(ParsedApiData data, Path cacheFile) {
         try {
             JsonObject root = new JsonObject();
 
+            root.addProperty("cacheVersion", RepoDiskCache.CACHE_VERSION);
+
+            // baseStats: { "ITEM_ID": { "DAMAGE": 100, ... }, ... }
+            JsonObject baseStatsRoot = new JsonObject();
+            for (var itemEntry : data.baseStats().entrySet()) {
+                JsonObject statsObj = new JsonObject();
+                for (var statEntry : itemEntry.getValue().entrySet()) {
+                    statsObj.addProperty(statEntry.getKey(), statEntry.getValue());
+                }
+                baseStatsRoot.add(itemEntry.getKey(), statsObj);
+            }
+            root.add("baseStats", baseStatsRoot);
+
             // tieredStats: { "ITEM_ID": { "STAT_NAME": [v1, v2, ...], ... }, ... }
-            JsonObject statsRoot = new JsonObject();
+            JsonObject tieredStatsRoot = new JsonObject();
             for (var itemEntry : data.tieredStats().entrySet()) {
                 JsonObject statsObj = new JsonObject();
                 for (var statEntry : itemEntry.getValue().entrySet()) {
@@ -290,9 +348,9 @@ public final class HypixelItemsDownloader {
                     for (int v : statEntry.getValue()) arr.add(v);
                     statsObj.add(statEntry.getKey(), arr);
                 }
-                statsRoot.add(itemEntry.getKey(), statsObj);
+                tieredStatsRoot.add(itemEntry.getKey(), statsObj);
             }
-            root.add("tieredStats", statsRoot);
+            root.add("tieredStats", tieredStatsRoot);
 
             // upgradeCosts: { "ITEM_ID": [ [ {cost}, ... ], ... ], ... }
             JsonObject costsRoot = new JsonObject();
@@ -325,6 +383,7 @@ public final class HypixelItemsDownloader {
     // ── Internal ───────────────────────────────────────────────────────────────
 
     private record ParsedApiData(
+            Map<String, Map<String, Integer>> baseStats,
             Map<String, Map<String, int[]>> tieredStats,
             Map<String, List<List<HypixelUpgradeCost>>> upgradeCosts) {}
 }
