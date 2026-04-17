@@ -2,6 +2,9 @@ package com.github.kd_gaming1.skyblockenhancements.feature.chat.menu;
 
 import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatTextHelper;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.GuiMessage;
@@ -13,22 +16,25 @@ import net.minecraft.network.chat.TextColor;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Resolves which {@link GuiMessage} the cursor is hovering over and converts {@link Component}
- * content to plain or {@code &}-formatted strings.
+ * Maps cursor positions to messages and converts {@link Component}s into copyable strings
+ * (plain, body-only, or &-code annotated).
  *
- * <p>Resolution uses the line-to-message mapping maintained by {@link SBEChatAccess} for O(1)
- * lookup, avoiding the old fragile {@code addedTime}-matching approach where multiple messages
- * sharing the same tick could cause incorrect resolution.
+ * <p>Resolution uses the line-to-message mapping maintained by
+ * {@link com.github.kd_gaming1.skyblockenhancements.feature.chat.ChatLineTracker}; there is
+ * no fallback path because the tracker is updated by the same injections that populate
+ * {@code trimmedMessages}, so any resolvable line is guaranteed to have a mapping.
  */
 public final class ChatMessageResolver {
 
+    /** Chat area bottom margin (pixels from screen bottom to the bottom of the newest line). */
+    private static final int CHAT_BOTTOM_MARGIN = 40;
+
+    private static final Int2ObjectMap<ChatFormatting> FORMAT_BY_RGB = buildColorLookup();
+
     private ChatMessageResolver() {}
 
-    /**
-     * Returns the {@link GuiMessage} under the given screen coordinates, or {@code null} if the
-     * cursor is not over any chat message.
-     */
-    public static @Nullable GuiMessage resolve(double screenX, double screenY) {
+    /** @return the message under the given screen coordinates, or {@code null} if none. */
+    public static @Nullable GuiMessage resolve(double screenY) {
         Minecraft mc = Minecraft.getInstance();
         ChatComponent chat = mc.gui.getChat();
         SBEChatAccess access = (SBEChatAccess) chat;
@@ -36,49 +42,35 @@ public final class ChatMessageResolver {
         List<GuiMessage.Line> trimmed = access.sbe$getTrimmedMessages();
         if (trimmed.isEmpty()) return null;
 
-        int screenHeight = mc.getWindow().getGuiScaledHeight();
         double scale = mc.options.chatScale().get();
-        double localY = (screenY - (double) screenHeight + 40.0) / scale;
-
         double lineSpacing = mc.options.chatLineSpacing().get();
         int entryHeight = (int) (9.0 * (lineSpacing + 1.0));
         if (entryHeight <= 0) return null;
 
+        int screenHeight = mc.getWindow().getGuiScaledHeight();
+        double localY = (screenY - screenHeight + CHAT_BOTTOM_MARGIN) / scale;
         int lineIndex = (int) Math.floor(-localY / entryHeight);
         if (lineIndex < 0 || lineIndex >= chat.getLinesPerPage()) return null;
 
         int trimmedIndex = lineIndex + access.sbe$getChatScrollbarPos();
         if (trimmedIndex < 0 || trimmedIndex >= trimmed.size()) return null;
 
-        GuiMessage.Line line = trimmed.get(trimmedIndex);
-
-        GuiMessage parent = access.sbe$getParentMessage(line);
-        if (parent != null) {
-            return parent;
-        }
-
-        // Fallback: if the mapping is missing (shouldn't happen normally), use addedTime.
-        // This preserves backwards compatibility during edge cases like mid-refresh state.
-        int targetTime = line.addedTime();
-        for (GuiMessage msg : access.sbe$getAllMessages()) {
-            if (msg.addedTime() == targetTime) {
-                return msg;
-            }
-        }
-        return null;
+        return access.sbe$getLineTracker().parentFor(trimmed.get(trimmedIndex));
     }
 
-    /**
-     * Plain text with all formatting and compact suffixes stripped.
-     */
+    // ---------------------------------------------------------------------
+    // Text extraction
+    // ---------------------------------------------------------------------
+
+    /** Plain text with all formatting and compact suffixes stripped. */
     public static String toRawText(Component content) {
         String plain = ChatFormatting.stripFormatting(content.getString());
-        return ChatTextHelper.stripCompactSuffix(plain != null ? plain : "");
+        return ChatTextHelper.stripCompactSuffix(plain);
     }
 
     /**
-     * The message body only — everything after the first {@code ": "} separator — with formatting
-     * and compact suffixes stripped. Returns the full plain text if no sender prefix is found.
+     * Message body only — everything after the first {@code ": "} separator. Falls back to
+     * the full plain text if no sender prefix is present.
      */
     public static String toMessageBody(Component content) {
         String plain = toRawText(content);
@@ -86,9 +78,7 @@ public final class ChatMessageResolver {
         return sep >= 0 ? plain.substring(sep + 2) : plain;
     }
 
-    /**
-     * Text with {@code &} colour/formatting codes preserved; compact suffixes stripped.
-     */
+    /** Text with {@code &}-prefixed color/format codes preserved. */
     public static String toFormattedText(Component content) {
         StringBuilder sb = new StringBuilder();
         Style[] previous = {Style.EMPTY};
@@ -101,34 +91,35 @@ public final class ChatMessageResolver {
             sb.appendCodePoint(codePoint);
             return true;
         });
-
         return ChatTextHelper.stripCompactSuffix(sb.toString());
     }
+
+    // ---------------------------------------------------------------------
+    // Internal
+    // ---------------------------------------------------------------------
 
     private static void appendStylePrefix(Style style, StringBuilder sb) {
         sb.append("&r");
 
         TextColor color = style.getColor();
         if (color != null) {
-            ChatFormatting fmt = chatFormattingFromColor(color);
-            if (fmt != null) {
-                sb.append('&').append(fmt.getChar());
-            }
+            ChatFormatting fmt = FORMAT_BY_RGB.get(color.getValue());
+            if (fmt != null) sb.append('&').append(fmt.getChar());
         }
-        if (style.isBold()) sb.append("&l");
-        if (style.isItalic()) sb.append("&o");
-        if (style.isUnderlined()) sb.append("&n");
+        if (style.isBold())          sb.append("&l");
+        if (style.isItalic())        sb.append("&o");
+        if (style.isUnderlined())    sb.append("&n");
         if (style.isStrikethrough()) sb.append("&m");
-        if (style.isObfuscated()) sb.append("&k");
+        if (style.isObfuscated())    sb.append("&k");
     }
 
-    private static @Nullable ChatFormatting chatFormattingFromColor(TextColor color) {
-        int value = color.getValue();
+    private static Int2ObjectMap<ChatFormatting> buildColorLookup() {
+        Int2ObjectOpenHashMap<ChatFormatting> map = new Int2ObjectOpenHashMap<>(16);
         for (ChatFormatting fmt : ChatFormatting.values()) {
-            if (fmt.isColor() && fmt.getColor() != null && fmt.getColor() == value) {
-                return fmt;
+            if (fmt.isColor() && fmt.getColor() != null) {
+                map.put((int) fmt.getColor(), fmt);
             }
         }
-        return null;
+        return Int2ObjectMaps.unmodifiable(map);
     }
 }

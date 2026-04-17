@@ -4,19 +4,20 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
- * Renders a separator line: centered text flanked by smooth horizontal lines. If there is no middle
- * text (all dashes), a single line is drawn across the full width.
+ * Draws a separator line as two smooth rectangles flanking optional centered text.
+ * When {@code middleText} is null, a single continuous line spans the chat area.
  */
 public record SeparatorRenderer(int lineColor, @Nullable String middleText)
         implements CustomChatRenderer {
 
-    /** The Hypixel block-separator character that warrants a 2px line. */
+    /** Hypixel's heavy-block separator; rendered as a thicker line. */
     private static final int BLOCK_CHAR = '▬';
 
     private static final int TEXT_PADDING = 4;
+    private static final float SHADOW_FACTOR = 0.25f;
 
     @Override
     public void render(
@@ -28,18 +29,15 @@ public record SeparatorRenderer(int lineColor, @Nullable String middleText)
             int lineWidth,
             float alpha) {
 
-        // Check for the block character via codepoint iteration to avoid allocating a String.
-        int lineThickness = containsBlockChar(text) ? 2 : 1;
-
-        int alphaInt = ARGB.as8BitChannel(alpha);
-        int color = ARGB.color(alphaInt, lineColor);
-        int shadow = ARGB.scaleRGB(ARGB.color(alphaInt, lineColor), 0.25f);
-        int lineY = textY + (font.lineHeight - lineThickness) / 2;
+        int thickness = containsBlockChar(text) ? 2 : 1;
+        int alpha8 = ARGB.as8BitChannel(alpha);
+        int color = ARGB.color(alpha8, lineColor);
+        int shadow = ARGB.scaleRGB(color, SHADOW_FACTOR);
+        int lineY = textY + (font.lineHeight - thickness) / 2;
         int right = lineX + lineWidth;
 
         if (middleText == null || middleText.isEmpty()) {
-            graphics.fill(lineX + 1, lineY + 1, right - 1, lineY + lineThickness + 1, shadow);
-            graphics.fill(lineX, lineY, right - 2, lineY + lineThickness, color);
+            drawLineSegment(graphics, lineX, lineY, right, thickness, color, shadow);
             return;
         }
 
@@ -47,42 +45,36 @@ public record SeparatorRenderer(int lineColor, @Nullable String middleText)
         int textX = lineX + (lineWidth - textWidth) / 2;
         graphics.drawString(font, middleText, textX, textY, color, true);
 
-        // Left arm.
         int leftEnd = textX - TEXT_PADDING;
         if (leftEnd > lineX + 2) {
-            graphics.fill(lineX + 2, lineY + 1, leftEnd, lineY + lineThickness + 1, shadow);
-            graphics.fill(lineX + 1, lineY, leftEnd - 1, lineY + lineThickness, color);
+            drawLineSegment(graphics, lineX + 1, lineY, leftEnd, thickness, color, shadow);
         }
 
-        // Right arm.
         int rightStart = textX + textWidth + TEXT_PADDING;
         if (rightStart < right - 2) {
-            graphics.fill(rightStart + 1, lineY + 1, right - 1, lineY + lineThickness + 1, shadow);
-            graphics.fill(rightStart, lineY, right - 2, lineY + lineThickness, color);
+            drawLineSegment(graphics, rightStart, lineY, right, thickness, color, shadow);
         }
     }
 
-    /**
-     * For pure separator lines (no middle text), returns {@code -1} to signal that no hit-testing
-     * is needed — there is no interactive text to click. For separators with centered middle text
-     * (e.g., "---- Friends (Page 1 of 2) >> ----"), returns the X offset where the middle text
-     * was drawn, so the proxy can align hit-testing with the rendered position.
-     */
     @Override
-    public int getTextOffsetX(Font font, FormattedCharSequence text, int lineX, int lineWidth) {
-        return -1;
+    public HitTest hitTest(Font font, FormattedCharSequence text, int lineX, int lineWidth) {
+        // Even separators with middle text carry no clickable content, so hit-testing is
+        // unconditionally off. Mouse interaction on these lines is intentional no-op.
+        return HitTest.DISABLED;
     }
 
-    /**
-     * Returns {@code true} if the sequence contains {@link #BLOCK_CHAR}, short-circuiting on the
-     * first match. Avoids the String allocation that {@code getString().contains()} would require.
-     */
+    private static void drawLineSegment(
+            GuiGraphics graphics, int x, int y, int xEnd, int thickness, int color, int shadow) {
+        graphics.fill(x + 1, y + 1, xEnd - 1, y + thickness + 1, shadow);
+        graphics.fill(x, y, xEnd - 2, y + thickness, color);
+    }
+
     private static boolean containsBlockChar(FormattedCharSequence text) {
         boolean[] found = {false};
         text.accept((index, style, cp) -> {
             if (cp == BLOCK_CHAR) {
                 found[0] = true;
-                return false; // stop iteration early
+                return false;
             }
             return true;
         });

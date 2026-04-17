@@ -5,21 +5,20 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.FormattedCharSequence;
 
 /**
- * Replaces the default left-aligned chat line drawing with custom rendering (centered text,
- * separator lines, etc.).
+ * Alternative draw strategy for a single chat line. Implementations replace the vanilla
+ * left-aligned draw and describe, via {@link #hitTest}, how the vanilla hover/click pass
+ * should be adapted to match where the text was actually drawn.
  */
 public interface CustomChatRenderer {
 
     /**
-     * Draws one chat line.
-     *
-     * @param graphics current GuiGraphics
-     * @param font current Font
-     * @param text the wrapped line content
-     * @param lineX left edge of the chat area (usually 0 in scaled space)
-     * @param textY baseline Y for text drawing
+     * @param graphics  current graphics context
+     * @param font      active font
+     * @param text      wrapped line content
+     * @param lineX     left edge of the chat area in scaled space (usually 0)
+     * @param textY     text baseline Y
      * @param lineWidth chat width in scaled pixels
-     * @param alpha opacity (0–1)
+     * @param alpha     opacity, 0–1
      */
     void render(
             GuiGraphics graphics,
@@ -31,11 +30,31 @@ public interface CustomChatRenderer {
             float alpha);
 
     /**
-     * Returns the horizontal offset (in scaled pixels) from the left edge of the chat area
-     * where the primary text content was drawn. Used by the graphics access proxy to align
-     * the delegate's hit-test region with the actual rendered position.
+     * Describes how the vanilla hit-test should handle this line. Default is to run it
+     * unchanged at the natural position.
      */
-    default int getTextOffsetX(Font font, FormattedCharSequence text, int lineX, int lineWidth) {
-        return 0;
+    default HitTest hitTest(Font font, FormattedCharSequence text, int lineX, int lineWidth) {
+        return HitTest.PASSTHROUGH;
+    }
+
+    /**
+     * Explicit alternative to a -1 / 0 / positive int sentinel. Tells the graphics proxy
+     * whether to skip the vanilla hit-test or to translate it by {@link #offsetX()} before
+     * running.
+     */
+    record HitTest(Kind kind, int offsetX) {
+
+        public static final HitTest PASSTHROUGH = new HitTest(Kind.ENABLED, 0);
+        public static final HitTest DISABLED = new HitTest(Kind.DISABLED, 0);
+
+        public static HitTest shifted(int offsetX) {
+            return offsetX == 0 ? PASSTHROUGH : new HitTest(Kind.ENABLED, offsetX);
+        }
+
+        public boolean isEnabled() {
+            return kind == Kind.ENABLED;
+        }
+
+        public enum Kind { ENABLED, DISABLED }
     }
 }

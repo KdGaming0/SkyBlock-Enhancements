@@ -12,6 +12,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,26 +21,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Adds a right-click context menu to the chat screen. When the player right-clicks a chat message,
- * either a context menu with copy/delete options is shown, or the raw text is copied directly to
- * the clipboard (controlled by the {@code rightClickChatCopies} config option).
+ * Wires a right-click chat context menu into {@link ChatScreen}. The actual menu lives in
+ * {@link ChatContextMenu}; this mixin only forwards events.
  */
 @Mixin(ChatScreen.class)
 public abstract class ChatContextMenuMixin extends Screen {
 
+    @Unique
+    private static final int MOUSE_BUTTON_LEFT = 0;
+    @Unique
+    private static final int MOUSE_BUTTON_RIGHT = 1;
+
     @Unique private final ChatContextMenu sbe$contextMenu = new ChatContextMenu();
 
-    protected ChatContextMenuMixin(Component title) {
-        super(title);
-    }
+    protected ChatContextMenuMixin(Component title) { super(title); }
 
-    // Mouse handling
-
-    /**
-     * Intercepts mouse clicks. Right-click (button 1) resolves the hovered message and either
-     * copies directly or opens the context menu. Left-click (button 0) is forwarded to the open
-     * menu first so its buttons can be pressed.
-     */
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void sbe$onMouseClicked(
             MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
@@ -50,69 +46,60 @@ public abstract class ChatContextMenuMixin extends Screen {
         double x = event.x();
         double y = event.y();
 
-        // Forward left-clicks to the open menu so its buttons work.
-        if (button == 0 && sbe$contextMenu.isOpen()) {
-            boolean consumed = sbe$contextMenu.mouseClicked(x, y, button);
-            if (consumed) {
+        // Left-click inside an open menu: route to the menu's button dispatcher.
+        if (button == MOUSE_BUTTON_LEFT && sbe$contextMenu.isOpen()) {
+            if (sbe$contextMenu.mouseClicked(x, y, button)) {
                 cir.setReturnValue(true);
             }
             return;
         }
 
-        // Right-click: resolve the message under the cursor.
-        if (button == 1) {
-            GuiMessage message = ChatMessageResolver.resolve(x, y);
-            if (message == null) {
-                sbe$contextMenu.close();
-                return;
-            }
+        if (button != MOUSE_BUTTON_RIGHT) return;
 
-            if (SkyblockEnhancementsConfig.rightClickChatCopies) {
-                // Direct copy mode: briefly flash the outline, copy, and show toast.
-                SBEChatAccess access =
-                        (SBEChatAccess) Minecraft.getInstance().gui.getChat();
-                access.sbe$setSelectedMessage(message);
-
-                String text = ChatMessageResolver.toRawText(message.content());
-                Minecraft.getInstance().keyboardHandler.setClipboard(text);
-                sbe$contextMenu.notifyCopied((int) x, (int) y);
-
-                // Schedule clearing the highlight after one frame so the user sees a brief flash.
-                Minecraft.getInstance().schedule(() -> access.sbe$setSelectedMessage(null));
-            } else {
-                // Context menu mode: outline persists while menu is open.
-                sbe$contextMenu.open(message, (int) x, (int) y, this.width, this.height);
-            }
-            cir.setReturnValue(true);
+        GuiMessage message = ChatMessageResolver.resolve(y);
+        if (message == null) {
+            sbe$contextMenu.close();
+            return;
         }
+
+        if (SkyblockEnhancementsConfig.rightClickChatCopies) {
+            sbe$directCopy(message, (int) x, (int) y);
+        } else {
+            sbe$contextMenu.open(message, (int) x, (int) y, this.width, this.height);
+        }
+        cir.setReturnValue(true);
     }
 
-    // Keyboard handling
-
-    /** Pressing Escape while the context menu is open dismisses the menu without closing chat. */
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void sbe$onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
-        // GLFW_KEY_ESCAPE = 256
-        if (event.key() == 256 && sbe$contextMenu.isOpen()) {
+        if (event.key() == GLFW.GLFW_KEY_ESCAPE && sbe$contextMenu.isOpen()) {
             sbe$contextMenu.close();
             cir.setReturnValue(true);
         }
     }
 
-    // Rendering
-
-    /** Draws the context menu overlay and copy toast after the rest of the chat screen. */
     @Inject(method = "render", at = @At("TAIL"))
     private void sbe$renderContextMenu(
             GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         sbe$contextMenu.render(graphics, mouseX, mouseY, partialTick);
     }
 
-    // Lifecycle
-
-    /** Dismiss the context menu when the chat screen is removed. */
     @Inject(method = "removed", at = @At("HEAD"))
     private void sbe$closeMenuOnRemoved(CallbackInfo ci) {
         sbe$contextMenu.close();
+    }
+
+    /** Direct copy path: flash the outline briefly, copy raw text, show the toast. */
+    @Unique
+    private void sbe$directCopy(GuiMessage message, int x, int y) {
+        Minecraft mc = Minecraft.getInstance();
+        SBEChatAccess access = (SBEChatAccess) mc.gui.getChat();
+
+        access.sbe$getLineTracker().setSelectedMessage(message);
+        mc.keyboardHandler.setClipboard(ChatMessageResolver.toRawText(message.content()));
+        sbe$contextMenu.notifyCopied(x, y);
+
+        // One-frame flash then clear — the selection is purely visual here.
+        mc.schedule(() -> access.sbe$getLineTracker().setSelectedMessage(null));
     }
 }

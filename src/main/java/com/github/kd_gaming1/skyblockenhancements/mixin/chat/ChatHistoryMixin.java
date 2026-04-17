@@ -7,10 +7,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /**
- * Replaces the hardcoded chat history limit of 100 with a configurable value.
- *
- * <p>Targets both {@code addMessageToDisplayQueue} (trimmed lines limit) and the private {@code
- * addMessageToQueue} (raw message history limit).
+ * Overrides the hardcoded chat history limit of 100 with a configurable value, affecting both
+ * the display-queue trim and the raw message history.
  */
 @Mixin(ChatComponent.class)
 public class ChatHistoryMixin {

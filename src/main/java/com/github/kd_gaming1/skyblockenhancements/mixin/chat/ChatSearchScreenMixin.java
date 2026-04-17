@@ -2,8 +2,9 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
 
 import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
-import com.github.kd_gaming1.skyblockenhancements.feature.chat.search.ChatSearchLayout;
-import com.github.kd_gaming1.skyblockenhancements.feature.chat.search.ChatSearchState;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.ChatFeatureState;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.search.ChatSearchController;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.search.ChatSearchTheme;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -22,207 +23,192 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Adds a search bar to the chat screen, toggled with Ctrl+F (or always shown if configured).
- *
- * <p>The search bar sits directly above the vanilla chat input and uses the same borderless
- * EditBox style with a semi-transparent background drawn manually. The vanilla input remains
- * fully functional at all times — clicking it simply moves focus away from the search bar.
+ * Adds a borderless search bar to {@link ChatScreen}, toggled with Ctrl+F or kept always-on
+ * per config. Layout and colours live in {@link ChatSearchTheme}; query and filter state live
+ * in {@link ChatSearchController}. This mixin is just the presentation layer.
  */
 @Mixin(ChatScreen.class)
 public abstract class ChatSearchScreenMixin extends Screen {
+
+    @Unique
+    private static final int SEARCH_INPUT_MAX_LEN = 128;
 
     @Shadow protected EditBox input;
 
     @Unique private EditBox sbe$searchBox;
     @Unique private String sbe$pendingQuery;
-
-    // Semi-transparent dark background, same style as the vanilla chat input fill.
-    @Unique private static final int SBE_SEARCH_BG = 0x60000000;
-
-    // Hint overlay — shown for SBE_HINT_DURATION_MS after the screen opens,
-    // only when the search bar is not already active.
-    @Unique private static final long SBE_HINT_DURATION_MS = 4000L;
-    @Unique private static final long SBE_HINT_FADE_MS     =  600L;
     @Unique private long sbe$hintShownAt = -1L;
 
-    protected ChatSearchScreenMixin(Component title) {
-        super(title);
-    }
+    protected ChatSearchScreenMixin(Component title) { super(title); }
 
-    // ── Lifecycle ────────────────────────────────────────────────────────────
+    // ── Lifecycle ────────────────────────────────────────────────────────
 
     @Inject(method = "init", at = @At("TAIL"))
     private void sbe$initSearchBar(CallbackInfo ci) {
         if (!SkyblockEnhancementsConfig.enableChatSearch) return;
 
-        // Show the hint whenever the screen (re)opens and search is not already active.
-        if (!ChatSearchState.isActive()) {
+        ChatSearchController search = ChatFeatureState.get().search();
+
+        if (!search.isActive()) {
             sbe$hintShownAt = Util.getMillis();
         }
 
-        // Auto-open when "always show" is configured
-        if (SkyblockEnhancementsConfig.alwaysShowChatSearch && !ChatSearchState.isActive()) {
-            ChatSearchState.setActive(true);
+        if (SkyblockEnhancementsConfig.alwaysShowChatSearch && !search.isActive()) {
+            search.setActive(true);
         }
 
-        if (!ChatSearchState.isActive()) return;
+        if (!search.isActive()) return;
 
-        Minecraft mc = Minecraft.getInstance();
-        int y = ChatSearchLayout.searchBarY(height);
-
-        sbe$searchBox = new EditBox(
-                mc.font,
-                4, y, width - 8, ChatSearchLayout.SEARCH_BAR_HEIGHT,
-                Component.literal("Search chat..."));
-        sbe$searchBox.setHint(Component.literal("Search chat... (Ctrl+F)"));
-        sbe$searchBox.setMaxLength(128);
-        sbe$searchBox.setResponder(this::sbe$onQueryChanged);
-        sbe$searchBox.setBordered(false);
-        sbe$searchBox.setCanLoseFocus(true);
-
-        // Restore query across widget rebuilds (resize, Ctrl+F toggle, etc.)
-        if (sbe$pendingQuery != null) {
-            sbe$searchBox.setValue(sbe$pendingQuery);
-            sbe$pendingQuery = null;
-        } else {
-            sbe$searchBox.setValue(ChatSearchState.getQuery());
-        }
-
+        sbe$searchBox = sbe$buildSearchBox(search);
         addRenderableWidget(sbe$searchBox);
-        if (ChatSearchState.isActive()) {
-            input.setCanLoseFocus(true);
-        }
-
-        // Focus is set explicitly in sbe$openSearch() after rebuildWidgets() returns,
-        // so no deferred schedule is needed here for the Ctrl+F toggle path.
-        // The alwaysShowChatSearch path gets focus naturally since init runs at screen open.
+        input.setCanLoseFocus(true);
     }
 
     @Inject(method = "removed", at = @At("HEAD"))
     private void sbe$clearSearchOnClose(CallbackInfo ci) {
-        if (ChatSearchState.isActive()) {
-            ChatSearchState.setActive(false);
+        ChatSearchController search = ChatFeatureState.get().search();
+        if (search.isActive()) {
+            search.setActive(false);
             sbe$refreshChat();
         }
     }
 
-    // ── Key handling ─────────────────────────────────────────────────────────
+    // ── Keys ─────────────────────────────────────────────────────────────
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void sbe$handleSearchKeys(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
         if (!SkyblockEnhancementsConfig.enableChatSearch) return;
 
         int key = event.key();
+        ChatSearchController search = ChatFeatureState.get().search();
 
-        // Ctrl+F: toggle (or focus if always-show)
         if (key == GLFW.GLFW_KEY_F && event.hasControlDown()) {
             sbe$toggleSearch();
             cir.setReturnValue(true);
             return;
         }
 
-        // Escape: clear query first, then close (or just clear if always-show)
-        if (key == GLFW.GLFW_KEY_ESCAPE && ChatSearchState.isActive()) {
-            if (sbe$searchBox != null && !sbe$searchBox.getValue().isEmpty()) {
-                // First press: clear the query but keep the bar open
-                sbe$searchBox.setValue("");
-                ChatSearchState.setQuery("");
-                sbe$refreshChat();
-            } else if (SkyblockEnhancementsConfig.alwaysShowChatSearch) {
-                return;
-            } else {
-                sbe$closeSearch();
-            }
+        if (key == GLFW.GLFW_KEY_ESCAPE && search.isActive() && sbe$handleEscape(search)) {
             cir.setReturnValue(true);
         }
     }
 
-    // ── Render ───────────────────────────────────────────────────────────────
-
-    /**
-     * Draw the semi-transparent background fill for the search bar before widgets render.
-     * This replaces the heavy background that EditBoxWidget would draw itself.
-     */
-    @Inject(method = "render", at = @At("HEAD"))
-    private void sbe$renderSearchBackground(GuiGraphics graphics, int mouseX, int mouseY,
-                                            float delta, CallbackInfo ci) {
-        if (!SkyblockEnhancementsConfig.enableChatSearch) return;
-        if (!ChatSearchState.isActive() || sbe$searchBox == null) return;
-
-        int y = ChatSearchLayout.searchBarY(height);
-        int x1 = 2, x2 = width - 2;
-        int y1 = y - 2, y2 = y + ChatSearchLayout.SEARCH_BAR_HEIGHT + 2;
-
-        graphics.fill(x1, y1, x2, y2, SBE_SEARCH_BG);
-        graphics.fill(x1,     y1,     x2, y1 + 1, 0xFFAAAAAA);
-        graphics.fill(x1,     y2 - 1, x2, y2,     0xFFAAAAAA);
-        graphics.fill(x1,     y1,     x1 + 1, y2, 0xFFAAAAAA);
-        graphics.fill(x2 - 1, y1,     x2, y2,     0xFFAAAAAA);
+    /** @return {@code true} if Esc was consumed; {@code false} to let the screen close. */
+    @Unique
+    private boolean sbe$handleEscape(ChatSearchController search) {
+        // First press with text: clear the query but keep the bar open.
+        if (sbe$searchBox != null && !sbe$searchBox.getValue().isEmpty()) {
+            sbe$searchBox.setValue("");
+            search.setQuery("");
+            sbe$refreshChat();
+            return true;
+        }
+        // Pinned bar with empty query: defer to the screen so Esc closes chat.
+        if (SkyblockEnhancementsConfig.alwaysShowChatSearch) {
+            return false;
+        }
+        sbe$closeSearch();
+        return true;
     }
 
-    /**
-     * Draw a subtle "Press Ctrl+F to search" hint when the search bar is not open.
-     * Fades out over SBE_HINT_FADE_MS at the end of SBE_HINT_DURATION_MS.
-     */
-    @Inject(method = "render", at = @At("TAIL"))
-    private void sbe$renderSearchHint(GuiGraphics graphics, int mouseX, int mouseY, float delta,
-                                      CallbackInfo ci) {
+    // ── Rendering ────────────────────────────────────────────────────────
+
+    @Inject(method = "render", at = @At("HEAD"))
+    private void sbe$renderSearchBackground(
+            GuiGraphics graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (!SkyblockEnhancementsConfig.enableChatSearch) return;
-        if (ChatSearchState.isActive() || sbe$hintShownAt < 0) return;
+        if (!ChatFeatureState.get().search().isActive() || sbe$searchBox == null) return;
+
+        int y = ChatSearchTheme.searchBarY(height);
+        int x1 = 2, x2 = width - 2;
+        int y1 = y - 2, y2 = y + ChatSearchTheme.SEARCH_BAR_HEIGHT + 2;
+
+        graphics.fill(x1, y1, x2, y2, ChatSearchTheme.BACKGROUND);
+        // 1px outline
+        graphics.fill(x1, y1, x2, y1 + 1, ChatSearchTheme.BORDER);
+        graphics.fill(x1, y2 - 1, x2, y2, ChatSearchTheme.BORDER);
+        graphics.fill(x1, y1, x1 + 1, y2, ChatSearchTheme.BORDER);
+        graphics.fill(x2 - 1, y1, x2, y2, ChatSearchTheme.BORDER);
+    }
+
+    @Inject(method = "render", at = @At("TAIL"))
+    private void sbe$renderSearchHint(
+            GuiGraphics graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        if (!SkyblockEnhancementsConfig.enableChatSearch) return;
+        if (ChatFeatureState.get().search().isActive() || sbe$hintShownAt < 0) return;
 
         long elapsed = Util.getMillis() - sbe$hintShownAt;
-        if (elapsed >= SBE_HINT_DURATION_MS) return;
+        if (elapsed >= ChatSearchTheme.HINT_DURATION_MS) return;
 
-        // Compute alpha: fully opaque for most of the duration, then fade to 0.
-        float alpha;
-        long fadeStart = SBE_HINT_DURATION_MS - SBE_HINT_FADE_MS;
-        if (elapsed < fadeStart) {
-            alpha = 1.0f;
-        } else {
-            alpha = 1.0f - (float)(elapsed - fadeStart) / SBE_HINT_FADE_MS;
-        }
-        int a = (int)(alpha * 0xFF) & 0xFF;
-
-        // Position: bottom-right corner just above the vanilla chat input.
-        int inputY = height - 14;
+        int alpha = sbe$fadeAlpha(elapsed);
         String hintText = "Ctrl+F to search";
         int textWidth = font.width(hintText);
+        int inputY = height - 14;
         int x = width - textWidth - 6;
         int y = inputY - font.lineHeight - 3;
 
-        graphics.fill(x - 3, y - 2, x + textWidth + 3, y + font.lineHeight + 2,
-                (a / 2) << 24);
-        int color = (a << 24) | 0x00AAAAAA;
+        graphics.fill(x - 3, y - 2, x + textWidth + 3, y + font.lineHeight + 2, (alpha / 2) << 24);
+        int color = (alpha << 24) | ChatSearchTheme.HINT_RGB;
         graphics.drawString(font, hintText, x, y, color, false);
     }
 
-    /**
-     * Draw the match-count overlay after widgets (so it appears on top of the text).
-     */
     @Inject(method = "render", at = @At("TAIL"))
-    private void sbe$renderMatchCount(GuiGraphics graphics, int mouseX, int mouseY, float delta,
-                                      CallbackInfo ci) {
+    private void sbe$renderMatchCount(
+            GuiGraphics graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (!SkyblockEnhancementsConfig.enableChatSearch) return;
-        if (!ChatSearchState.isActive() || sbe$searchBox == null) return;
 
-        if (ChatSearchState.isFiltering()) {
-            SBEChatAccess access = (SBEChatAccess) Minecraft.getInstance().gui.getChat();
-            int total = access.sbe$getAllMessages().size();
-            int matching = ChatSearchState.countMatching(access.sbe$getAllMessages());
-            String info = matching + "/" + total;
-            int infoWidth = font.width(info);
-            int infoX = sbe$searchBox.getX() + sbe$searchBox.getWidth() - infoWidth - 4;
-            int infoY = ChatSearchLayout.searchBarY(height)
-                    + (ChatSearchLayout.SEARCH_BAR_HEIGHT - 8) / 2;
-            graphics.drawString(font, info, infoX, infoY, 0xFFAAAAAA, false);
-        }
+        ChatSearchController search = ChatFeatureState.get().search();
+        if (!search.isActive() || sbe$searchBox == null || !search.isFiltering()) return;
+
+        SBEChatAccess access = (SBEChatAccess) Minecraft.getInstance().gui.getChat();
+        int total = access.sbe$getAllMessages().size();
+        int matching = search.countMatching(access.sbe$getAllMessages());
+        String info = matching + "/" + total;
+        int infoWidth = font.width(info);
+        int infoX = sbe$searchBox.getX() + sbe$searchBox.getWidth() - infoWidth - 4;
+        int infoY = ChatSearchTheme.searchBarY(height)
+                + (ChatSearchTheme.SEARCH_BAR_HEIGHT - 8) / 2;
+        graphics.drawString(font, info, infoX, infoY, ChatSearchTheme.MATCH_COUNT_TEXT, false);
     }
 
-    // ── Internal ─────────────────────────────────────────────────────────────
+    @Unique
+    private static int sbe$fadeAlpha(long elapsed) {
+        long fadeStart = ChatSearchTheme.HINT_DURATION_MS - ChatSearchTheme.HINT_FADE_MS;
+        float alpha = elapsed < fadeStart
+                ? 1f
+                : 1f - (elapsed - fadeStart) / (float) ChatSearchTheme.HINT_FADE_MS;
+        return (int) (alpha * 0xFF) & 0xFF;
+    }
+
+    // ── Internal state changes ───────────────────────────────────────────
+
+    @Unique
+    private EditBox sbe$buildSearchBox(ChatSearchController search) {
+        Minecraft mc = Minecraft.getInstance();
+        int y = ChatSearchTheme.searchBarY(height);
+
+        EditBox box = new EditBox(
+                mc.font, 4, y, width - 8, ChatSearchTheme.SEARCH_BAR_HEIGHT,
+                Component.literal("Search chat..."));
+        box.setHint(Component.literal("Search chat... (Ctrl+F)"));
+        box.setMaxLength(SEARCH_INPUT_MAX_LEN);
+        box.setResponder(value -> sbe$onQueryChanged(search, value));
+        box.setBordered(false);
+        box.setCanLoseFocus(true);
+
+        if (sbe$pendingQuery != null) {
+            box.setValue(sbe$pendingQuery);
+            sbe$pendingQuery = null;
+        } else {
+            box.setValue(search.getQuery());
+        }
+        return box;
+    }
 
     @Unique
     private void sbe$toggleSearch() {
-        if (!ChatSearchState.isActive()) {
+        ChatSearchController search = ChatFeatureState.get().search();
+        if (!search.isActive()) {
             sbe$openSearch();
             return;
         }
@@ -230,48 +216,32 @@ public abstract class ChatSearchScreenMixin extends Screen {
             sbe$closeSearch();
             return;
         }
-        // Always-show mode: ping-pong focus between search box and chat input.
-        if (sbe$searchBox != null) {
-            boolean searchHasFocus = sbe$searchBox.isFocused();
-            if (searchHasFocus) {
-                setFocused(input);
-                input.setFocused(true);
-                sbe$searchBox.setFocused(false);
-            } else {
-                setFocused(sbe$searchBox);
-                sbe$searchBox.setFocused(true);
-                input.setFocused(false);
-            }
-        }
+        sbe$pingPongFocus();
     }
 
     @Unique
     private void sbe$openSearch() {
-        ChatSearchState.setActive(true);
+        ChatFeatureState.get().search().setActive(true);
         sbe$pendingQuery = "";
         rebuildWidgets();
-        if (sbe$searchBox != null) {
-            setFocused(sbe$searchBox);
-            sbe$searchBox.setFocused(true);
-            input.setFocused(false);
-        }
+        sbe$focusSearchBox();
     }
 
     @Unique
     private void sbe$closeSearch() {
-        ChatSearchState.setActive(false);
-        ChatSearchState.setQuery("");
+        ChatSearchController search = ChatFeatureState.get().search();
+        search.setActive(false);
+        search.setQuery("");
         sbe$pendingQuery = null;
         sbe$refreshChat();
         rebuildWidgets();
         input.setCanLoseFocus(false);
-        setFocused(input);
-        input.setFocused(true);
+        sbe$focusInput();
     }
 
     @Unique
-    private void sbe$onQueryChanged(String query) {
-        ChatSearchState.setQuery(query);
+    private void sbe$onQueryChanged(ChatSearchController search, String query) {
+        search.setQuery(query);
         sbe$refreshChat();
     }
 
@@ -280,5 +250,29 @@ public abstract class ChatSearchScreenMixin extends Screen {
         Minecraft mc = Minecraft.getInstance();
         mc.gui.getChat().resetChatScroll();
         ((SBEChatAccess) mc.gui.getChat()).sbe$refreshMessages();
+    }
+
+    // ── Focus helpers ────────────────────────────────────────────────────
+
+    @Unique
+    private void sbe$focusSearchBox() {
+        if (sbe$searchBox == null) return;
+        setFocused(sbe$searchBox);
+        sbe$searchBox.setFocused(true);
+        input.setFocused(false);
+    }
+
+    @Unique
+    private void sbe$focusInput() {
+        setFocused(input);
+        input.setFocused(true);
+        if (sbe$searchBox != null) sbe$searchBox.setFocused(false);
+    }
+
+    @Unique
+    private void sbe$pingPongFocus() {
+        if (sbe$searchBox == null) return;
+        if (sbe$searchBox.isFocused()) sbe$focusInput();
+        else sbe$focusSearchBox();
     }
 }

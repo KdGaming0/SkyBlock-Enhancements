@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.chat.render;
 
 import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.ChatLineTracker;
 import java.util.function.Consumer;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.GuiMessageTag;
@@ -15,45 +16,48 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Proxies vanilla {@link ChatComponent.ChatGraphicsAccess} to intercept text rendering for custom
- * renderers while preserving mouse interaction (hover/click) detection.
+ * Intercepts vanilla chat rendering to dispatch to {@link CustomChatRenderer}s and to draw the
+ * selection outline around the currently targeted message.
+ *
+ * <p>All parent-message and renderer lookups are O(1) via {@link ChatLineTracker}; the proxy
+ * itself does no searching. Line spacing is sampled once per render pass to avoid repeated
+ * option reads in the per-line hot path.
  */
 public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess {
 
+    private static final float OUTLINE_ALPHA_FACTOR = 0.35f;
+    private static final int OUTLINE_LEFT_INSET = -4;
+    private static final int OUTLINE_RIGHT_INSET = 8;
+    private static final int OFFSCREEN_Y = -10000;
+
     private final ChatComponent.ChatGraphicsAccess delegate;
     private final SBEChatAccess chatAccess;
-    private final GuiGraphics graphics;
+    private final @Nullable GuiGraphics graphics;
     private final Font font;
 
-    /**
-     * Tracks the current line being processed so we can check if it belongs to the selected
-     * message for outline rendering.
-     */
-    private GuiMessage.@Nullable Line currentLine;
+    // Sampled once per frame — chat line-spacing doesn't change during a render pass.
+    private final int entryHeight;
+    private final int entryBottomToMessageY;
 
-    /** Entry bounds captured from the background fill call, used for outline rendering. */
-    private int currentEntryTop;
-    private int currentEntryBottom;
-
-    /** Whether any line belonging to the selected message was seen this pass. */
+    // Per-line outline accumulation; reset between messages by handleMessage.
     private boolean outlineActive;
-
-    /** Accumulated vertical bounds across all lines of the selected message. */
     private int outlineMinY = Integer.MAX_VALUE;
     private int outlineMaxY = Integer.MIN_VALUE;
-
-    /** The opacity of the last selected-message line seen (used for the outline alpha). */
     private float outlineOpacity;
 
     public ChatGraphicsAccessProxy(
             ChatComponent.ChatGraphicsAccess delegate,
             SBEChatAccess chatAccess,
-            GuiGraphics graphics,
+            @Nullable GuiGraphics graphics,
             Font font) {
         this.delegate = delegate;
         this.chatAccess = chatAccess;
         this.graphics = graphics;
         this.font = font;
+
+        double lineSpacing = Minecraft.getInstance().options.chatLineSpacing().get();
+        this.entryHeight = (int) (9.0 * (lineSpacing + 1.0));
+        this.entryBottomToMessageY = (int) Math.round(8.0 * (lineSpacing + 1.0) - 4.0 * lineSpacing);
     }
 
     @Override
@@ -68,104 +72,46 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
 
     @Override
     public boolean handleMessage(int textTop, float opacity, @NonNull FormattedCharSequence message) {
-        currentLine = resolveCurrentLine(message);
+        ChatLineTracker tracker = chatAccess.sbe$getLineTracker();
+        CustomChatRenderer renderer = tracker.rendererFor(message);
+        GuiMessage parent = tracker.parentFor(message);
 
-        double lineSpacing = Minecraft.getInstance().options.chatLineSpacing().get();
-        int entryHeight = (int)(9.0 * (lineSpacing + 1.0));
-        int entryBottomToMessageY = (int)Math.round(8.0 * (lineSpacing + 1.0) - 4.0 * lineSpacing);
-        currentEntryBottom = textTop + entryBottomToMessageY;
-        currentEntryTop = currentEntryBottom - entryHeight;
+        int entryBottom = textTop + entryBottomToMessageY;
+        int entryTop = entryBottom - entryHeight;
 
-        CustomChatRenderer renderer = chatAccess.sbe$getRenderer(message);
+        boolean hovered = renderer == null
+                ? delegate.handleMessage(textTop, opacity, message)
+                : dispatchCustom(renderer, message, textTop, opacity);
 
-        boolean hovered;
-        if (renderer != null) {
-            int scaledWidth = chatAccess.sbe$getScaledWidth();
-
-            if (graphics != null) {
-                renderer.render(graphics, font, message, 0, textTop, scaledWidth, opacity);
-            }
-
-            int offsetX = renderer.getTextOffsetX(font, message, 0, scaledWidth);
-
-            if (offsetX == -1) {
-                hovered = false;
-            } else {
-                if (offsetX != 0) {
-                    delegate.updatePose(pose -> pose.translate(offsetX, 0));
-                }
-
-                if (graphics != null) {
-                    graphics.pose().pushMatrix();
-                    graphics.pose().translate(0, -10000);
-                }
-
-                hovered = delegate.handleMessage(textTop, opacity, message);
-
-                if (graphics != null) {
-                    graphics.pose().popMatrix();
-                }
-
-                if (offsetX != 0) {
-                    delegate.updatePose(pose -> pose.translate(-offsetX, 0));
-                }
-            }
-        } else {
-            hovered = delegate.handleMessage(textTop, opacity, message);
-        }
-
-        accumulateOutlineBounds(opacity);
+        maybeAccumulateOutline(parent, tracker.getSelectedMessage(), opacity, entryTop, entryBottom);
         return hovered;
     }
 
     @Override
     public void handleTag(int x0, int y0, int x1, int y1, float opacity, @NonNull GuiMessageTag tag) {
-        // Intentionally blank — disables the colored indicator bar on the left.
+        // Intentionally empty: the coloured indicator bar is suppressed for all messages.
     }
 
     @Override
     public void handleTagIcon(
-            int left,
-            int bottom,
-            boolean forceVisible,
-            @NonNull GuiMessageTag tag,
-            GuiMessageTag.@NonNull Icon icon) {
+            int left, int bottom, boolean forceVisible,
+            @NonNull GuiMessageTag tag, GuiMessageTag.@NonNull Icon icon) {
         delegate.handleTagIcon(left, bottom, forceVisible, tag, icon);
     }
 
-    // --- Selection outline ---
-
     /**
-     * Records the bounds of the current entry if it belongs to the selected message. The actual
-     * outline is drawn later by {@link #finishOutline()} so that all lines of a multi-line
-     * message are merged into a single continuous rectangle.
-     */
-    private void accumulateOutlineBounds(float opacity) {
-        GuiMessage selected = chatAccess.sbe$getSelectedMessage();
-        if (selected == null || currentLine == null) return;
-
-        GuiMessage parent = chatAccess.sbe$getParentMessage(currentLine);
-        if (parent != selected) return;
-
-        outlineActive = true;
-        outlineOpacity = opacity;
-        outlineMinY = Math.min(outlineMinY, currentEntryTop);
-        outlineMaxY = Math.max(outlineMaxY, currentEntryBottom);
-    }
-
-    /**
-     * Draws a single merged outline around all visible lines of the selected message. Must be
-     * called once after the render pass completes (i.e. after all {@code handleMessage} calls).
+     * Draws the accumulated outline (one merged rectangle spanning every visible line of the
+     * selected message). Call once after the render pass completes.
      */
     public void finishOutline() {
         if (graphics == null || !outlineActive) return;
 
         int scaledWidth = chatAccess.sbe$getScaledWidth();
-        int alpha = ARGB.as8BitChannel(outlineOpacity * 0.35f);
+        int alpha = ARGB.as8BitChannel(outlineOpacity * OUTLINE_ALPHA_FACTOR);
         int color = ARGB.color(alpha, 0xFF, 0xFF, 0xFF);
 
-        int x0 = -4;
-        int x1 = scaledWidth + 4 + 4;
+        int x0 = OUTLINE_LEFT_INSET;
+        int x1 = scaledWidth + OUTLINE_RIGHT_INSET;
         int y0 = outlineMinY;
         int y1 = outlineMaxY;
 
@@ -179,22 +125,55 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
         outlineMaxY = Integer.MIN_VALUE;
     }
 
-    /**
-     * Finds the {@link GuiMessage.Line} whose {@code content()} matches the given sequence
-     * by identity. This works because we use the same {@link FormattedCharSequence} references
-     * that were stored in {@code trimmedMessages}.
-     */
-    private GuiMessage.@Nullable Line resolveCurrentLine(FormattedCharSequence message) {
-        var trimmed = chatAccess.sbe$getTrimmedMessages();
-        int scrollPos = chatAccess.sbe$getChatScrollbarPos();
+    // ---------------------------------------------------------------------
+    // Internal
+    // ---------------------------------------------------------------------
 
-        int pageSize = Math.min(trimmed.size() - scrollPos, 100);
-        for (int i = 0; i < pageSize; i++) {
-            GuiMessage.Line line = trimmed.get(i + scrollPos);
-            if (line.content() == message) {
-                return line;
+    private boolean dispatchCustom(
+            CustomChatRenderer renderer, FormattedCharSequence message, int textTop, float opacity) {
+
+        int scaledWidth = chatAccess.sbe$getScaledWidth();
+        if (graphics != null) {
+            renderer.render(graphics, font, message, 0, textTop, scaledWidth, opacity);
+        }
+
+        CustomChatRenderer.HitTest hit = renderer.hitTest(font, message, 0, scaledWidth);
+        if (!hit.isEnabled()) return false;
+
+        return hiddenHitTest(message, textTop, opacity, hit.offsetX());
+    }
+
+    /**
+     * Runs the vanilla hit-test with the visible delegate draw shifted far off-screen (text
+     * was already drawn by the custom renderer). If {@code offsetX} is non-zero the hit-test
+     * is translated to match the custom draw's actual position.
+     */
+    private boolean hiddenHitTest(FormattedCharSequence message, int textTop, float opacity, int offsetX) {
+        if (offsetX != 0) {
+            delegate.updatePose(pose -> pose.translate(offsetX, 0));
+        }
+        if (graphics != null) {
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(0, OFFSCREEN_Y);
+        }
+        try {
+            return delegate.handleMessage(textTop, opacity, message);
+        } finally {
+            if (graphics != null) graphics.pose().popMatrix();
+            if (offsetX != 0) {
+                int reverse = -offsetX;
+                delegate.updatePose(pose -> pose.translate(reverse, 0));
             }
         }
-        return null;
+    }
+
+    private void maybeAccumulateOutline(
+            @Nullable GuiMessage parent, @Nullable GuiMessage selected,
+            float opacity, int entryTop, int entryBottom) {
+        if (selected == null || parent != selected) return;
+        outlineActive = true;
+        outlineOpacity = opacity;
+        outlineMinY = Math.min(outlineMinY, entryTop);
+        outlineMaxY = Math.max(outlineMaxY, entryBottom);
     }
 }

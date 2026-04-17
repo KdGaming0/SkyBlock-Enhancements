@@ -2,31 +2,24 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
 
 import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
-import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.CenteredTextRenderer;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.ChatLineTracker;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatGraphicsAccessProxy;
-import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatTextHelper;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatLineProcessor;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.CustomChatRenderer;
-import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.SeparatorRenderer;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import net.minecraft.client.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ChatComponent;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,6 +28,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * Adapter between vanilla {@link ChatComponent} and the chat-rendering feature classes.
+ *
+ * <p>The mixin holds one piece of persistent state — the per-instance {@link ChatLineTracker}
+ * — and delegates every non-trivial decision to the feature classes. When all affected config
+ * options are disabled and the player is off Hypixel, the proxy wrap still runs but every
+ * lookup short-circuits to {@code null}, preserving vanilla behaviour exactly.
+ */
 @Mixin(ChatComponent.class)
 public abstract class ChatRenderingMixin implements SBEChatAccess {
 
@@ -42,106 +43,37 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
     @Shadow @Final private List<GuiMessage> allMessages;
     @Shadow private int chatScrollbarPos;
 
-    @Shadow
-    protected abstract int getWidth();
+    @Shadow protected abstract int getWidth();
+    @Shadow protected abstract double getScale();
+    @Shadow protected abstract void refreshTrimmedMessages();
 
-    @Shadow
-    protected abstract double getScale();
+    @Unique private final ChatLineTracker sbe$lineTracker = new ChatLineTracker();
 
-    @Shadow
-    protected abstract void refreshTrimmedMessages();
+    // ---------- SBEChatAccess ----------
 
-    @Unique
-    private final Map<FormattedCharSequence, CustomChatRenderer> sbe$renderers =
-            new Reference2ObjectOpenHashMap<>();
+    @Override public List<GuiMessage> sbe$getAllMessages() { return allMessages; }
+    @Override public List<GuiMessage.Line> sbe$getTrimmedMessages() { return trimmedMessages; }
+    @Override public int sbe$getChatScrollbarPos() { return chatScrollbarPos; }
+    @Override public int sbe$getScaledWidth() { return Mth.floor(getWidth() / getScale()); }
+    @Override public void sbe$refreshMessages() { refreshTrimmedMessages(); }
+    @Override public ChatLineTracker sbe$getLineTracker() { return sbe$lineTracker; }
 
-    /**
-     * Maps each display line back to the {@link GuiMessage} that produced it.
-     * Uses an {@link IdentityHashMap} because {@link GuiMessage.Line} is a record and we want
-     * to track the exact instance that was added to {@code trimmedMessages}, not any structurally
-     * equal line from a different message.
-     */
-    @Unique
-    private final Map<GuiMessage.Line, GuiMessage> sbe$lineToMessage = new IdentityHashMap<>();
-
-    /** The message currently highlighted by the context menu, or {@code null}. */
-    @Unique
-    private @Nullable GuiMessage sbe$selectedMessage;
-
-    /**
-     * Tracks the {@link GuiMessage} currently being processed by {@code addMessageToDisplayQueue}
-     * so that the {@code addFirst} injection can associate newly created lines with their parent.
-     */
-    @Unique
-    private @Nullable GuiMessage sbe$currentParent;
-
-    // --- SBEChatAccess implementation ---
-
-    @Override
-    public List<GuiMessage> sbe$getAllMessages() {
-        return allMessages;
-    }
-
-    @Override
-    public List<GuiMessage.Line> sbe$getTrimmedMessages() {
-        return trimmedMessages;
-    }
-
-    @Override
-    public int sbe$getChatScrollbarPos() {
-        return chatScrollbarPos;
-    }
-
-    @Override
-    public void sbe$refreshMessages() {
-        refreshTrimmedMessages();
-    }
-
-    @Override
-    public int sbe$getScaledWidth() {
-        return Mth.floor(getWidth() / getScale());
-    }
-
-    @Override
-    public @Nullable CustomChatRenderer sbe$getRenderer(FormattedCharSequence content) {
-        return sbe$renderers.get(content);
-    }
-
-    @Override
-    public @Nullable GuiMessage sbe$getParentMessage(GuiMessage.Line line) {
-        return sbe$lineToMessage.get(line);
-    }
-
-    @Override
-    public void sbe$setSelectedMessage(@Nullable GuiMessage message) {
-        sbe$selectedMessage = message;
-    }
-
-    @Override
-    public @Nullable GuiMessage sbe$getSelectedMessage() {
-        return sbe$selectedMessage;
-    }
-
-    // --- Render proxy injection ---
+    // ---------- Render proxy ----------
 
     @WrapOperation(
-            method =
-                    "render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/gui/Font;IIIZZ)V",
-            at =
-            @At(
+            method = "render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/gui/Font;IIIZZ)V",
+            at = @At(
                     value = "INVOKE",
-                    target =
-                            "Lnet/minecraft/client/gui/components/ChatComponent;"
-                                    + "render(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"))
+                    target = "Lnet/minecraft/client/gui/components/ChatComponent;"
+                            + "render(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"))
     private void sbe$proxyGraphicsAccess(
             ChatComponent instance,
             ChatComponent.ChatGraphicsAccess access,
-            int i,
-            int j,
-            boolean bl,
+            int i, int j, boolean bl,
             Operation<Void> original,
             @Local(argsOnly = true) GuiGraphics graphics,
             @Local(argsOnly = true) Font font) {
+
         ChatGraphicsAccessProxy proxy = new ChatGraphicsAccessProxy(access, this, graphics, font);
         original.call(instance, proxy, i, j, bl);
         proxy.finishOutline();
@@ -149,160 +81,108 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
 
     @WrapOperation(
             method = "captureClickableText",
-            at =
-            @At(
+            at = @At(
                     value = "INVOKE",
-                    target =
-                            "Lnet/minecraft/client/gui/components/ChatComponent;"
-                                    + "render(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"))
+                    target = "Lnet/minecraft/client/gui/components/ChatComponent;"
+                            + "render(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IIZ)V"))
     private void sbe$proxyClickableTextAccess(
             ChatComponent instance,
             ChatComponent.ChatGraphicsAccess access,
-            int screenHeight,
-            int ticks,
-            boolean isChatting,
+            int screenHeight, int ticks, boolean isChatting,
             Operation<Void> original) {
-        original.call(
-                instance,
-                new ChatGraphicsAccessProxy(access, this, null, Minecraft.getInstance().font),
-                screenHeight,
-                ticks,
-                isChatting);
+
+        ChatGraphicsAccessProxy proxy = new ChatGraphicsAccessProxy(
+                access, this, null, Minecraft.getInstance().font);
+        original.call(instance, proxy, screenHeight, ticks, isChatting);
     }
 
-    // --- Line processing ---
+    // ---------- Line processing ----------
 
-    /**
-     * Captures the parent {@link GuiMessage} at the start of {@code addMessageToDisplayQueue}
-     * so that all lines created during this invocation can be associated with it.
-     */
     @Inject(method = "addMessageToDisplayQueue", at = @At("HEAD"))
-    private void sbe$captureParent(GuiMessage message, CallbackInfo ci) {
-        sbe$currentParent = message;
+    private void sbe$beginLineBatch(GuiMessage message, CallbackInfo ci) {
+        sbe$lineTracker.beginAddingLinesFor(message);
     }
 
     @Inject(method = "addMessageToDisplayQueue", at = @At("TAIL"))
-    private void sbe$clearParent(GuiMessage message, CallbackInfo ci) {
-        sbe$currentParent = null;
+    private void sbe$endLineBatch(GuiMessage message, CallbackInfo ci) {
+        sbe$lineTracker.finishAddingLines();
     }
 
     @WrapOperation(
             method = "addMessageToDisplayQueue",
-            at =
-            @At(
+            at = @At(
                     value = "INVOKE",
-                    target =
-                            "Lnet/minecraft/client/GuiMessage;splitLines(Lnet/minecraft/client/gui/Font;I)Ljava/util/List;"))
+                    target = "Lnet/minecraft/client/GuiMessage;splitLines(Lnet/minecraft/client/gui/Font;I)Ljava/util/List;"))
     private List<FormattedCharSequence> sbe$processLines(
-            GuiMessage instance,
-            Font font,
-            int width,
+            GuiMessage instance, Font font, int width,
             Operation<List<FormattedCharSequence>> original,
-            @Share("sbe_renderers") LocalRef<List<CustomChatRenderer>> renderersRef,
-            @Local(argsOnly = true) GuiMessage message) {
+            @Share("sbe_renderers") LocalRef<List<CustomChatRenderer>> renderersRef) {
 
-        if (!HypixelLocationState.isOnHypixel()) {
+        boolean centerEnabled = SkyblockEnhancementsConfig.centerHypixelText;
+        boolean separatorsEnabled = SkyblockEnhancementsConfig.smoothSeparators;
+
+        // True vanilla path when no rendering feature is active or we're off Hypixel.
+        if (!HypixelLocationState.isOnHypixel() || (!centerEnabled && !separatorsEnabled)) {
             renderersRef.set(null);
             return original.call(instance, font, width);
         }
 
-        // Bypass initial word wrapping to get \n-separated raw lines.
+        // Step 1: bypass initial word-wrapping to inspect raw \n-separated lines.
         List<FormattedCharSequence> rawLines = original.call(instance, font, Integer.MAX_VALUE);
-        List<FormattedCharSequence> finalLines = new ArrayList<>();
-        List<CustomChatRenderer> renderers = new ArrayList<>();
 
-        boolean enableCenter = SkyblockEnhancementsConfig.centerHypixelText;
-        boolean enableSeparators = SkyblockEnhancementsConfig.smoothSeparators;
+        // Step 2: classify and re-wrap, producing per-line renderers.
+        ChatLineProcessor.Result result = ChatLineProcessor.process(
+                rawLines, font, width, centerEnabled, separatorsEnabled);
 
-        for (FormattedCharSequence rawSeq : rawLines) {
-            String rawStr = ChatTextHelper.getString(rawSeq);
-            String trimmedStr = rawStr.trim();
-
-            if (enableSeparators && ChatTextHelper.isFullSeparator(trimmedStr)) {
-                finalLines.add(ChatTextHelper.trim(rawSeq));
-                renderers.add(
-                        new SeparatorRenderer(ChatTextHelper.extractColor(rawSeq), null));
-
-            } else if (enableSeparators && ChatTextHelper.isCenteredSeparator(trimmedStr)) {
-                finalLines.add(ChatTextHelper.trim(rawSeq));
-                renderers.add(
-                        new SeparatorRenderer(
-                                ChatTextHelper.extractColor(rawSeq),
-                                ChatTextHelper.extractMiddleText(trimmedStr)));
-
-            } else if (enableCenter && ChatTextHelper.isCenteredText(font, rawStr, trimmedStr)) {
-                Component trimmedComp = ChatTextHelper.toComponent(ChatTextHelper.trim(rawSeq));
-                for (FormattedCharSequence w : Minecraft.getInstance().font.split(trimmedComp, width)) {
-                    finalLines.add(w);
-                    renderers.add(CenteredTextRenderer.INSTANCE);
-                }
-
-            } else {
-                Component normalComp = ChatTextHelper.toComponent(rawSeq);
-                for (FormattedCharSequence w : Minecraft.getInstance().font.split(normalComp, width)) {
-                    finalLines.add(w);
-                    renderers.add(null);
-                }
-            }
-        }
-
-        renderersRef.set(renderers);
-        return finalLines;
+        renderersRef.set(result.renderers());
+        return result.lines();
     }
 
+    /**
+     * Fires immediately after each {@code trimmedMessages.addFirst(...)}. The {@code i} local
+     * (ordinal=1) is the line index within the current message — this is the only local-capture
+     * index used by this file, and it's stable across vanilla refactors because it names the
+     * lambda variable used by the enclosing for-loop.
+     */
     @Inject(
             method = "addMessageToDisplayQueue",
-            at =
-            @At(
+            at = @At(
                     value = "INVOKE",
                     target = "Ljava/util/List;addFirst(Ljava/lang/Object;)V",
                     shift = At.Shift.AFTER))
-    private void sbe$storeRenderer(
+    private void sbe$registerAddedLine(
             CallbackInfo ci,
             @Share("sbe_renderers") LocalRef<List<CustomChatRenderer>> renderersRef,
-            @Local(ordinal = 1) int i,
-            @Local(argsOnly = true) GuiMessage message) {
+            @Local(ordinal = 1) int lineIndex) {
 
-        // Map the newly added line back to its parent message.
-        GuiMessage.Line addedLine = trimmedMessages.getFirst();
-        if (sbe$currentParent != null) {
-            sbe$lineToMessage.put(addedLine, sbe$currentParent);
-        }
+        GuiMessage.Line added = trimmedMessages.getFirst();
 
         List<CustomChatRenderer> renderers = renderersRef.get();
-        if (renderers == null || i >= renderers.size()) return;
+        CustomChatRenderer renderer = (renderers != null && lineIndex < renderers.size())
+                ? renderers.get(lineIndex)
+                : null;
 
-        CustomChatRenderer renderer = renderers.get(i);
-        if (renderer != null) {
-            sbe$renderers.put(addedLine.content(), renderer);
-        }
+        sbe$lineTracker.recordLine(added, renderer);
     }
 
     @WrapOperation(
             method = "addMessageToDisplayQueue",
-            at =
-            @At(
-                    value = "INVOKE",
-                    target = "Ljava/util/List;removeLast()Ljava/lang/Object;"))
-    private <E> E sbe$cleanupEvicted(List<E> instance, Operation<E> original) {
+            at = @At(value = "INVOKE", target = "Ljava/util/List;removeLast()Ljava/lang/Object;"))
+    private <E> E sbe$evictLine(List<E> instance, Operation<E> original) {
         GuiMessage.Line evicted = (GuiMessage.Line) instance.getLast();
-        sbe$renderers.remove(evicted.content());
-        sbe$lineToMessage.remove(evicted);
+        sbe$lineTracker.evictLine(evicted);
         return original.call(instance);
     }
 
     @Inject(method = "clearMessages", at = @At("HEAD"))
     private void sbe$clearAll(boolean clearHistory, CallbackInfo ci) {
-        sbe$renderers.clear();
-        sbe$lineToMessage.clear();
-        sbe$selectedMessage = null;
+        sbe$lineTracker.clearAll();
     }
 
     @Inject(method = "refreshTrimmedMessages", at = @At("HEAD"))
     private void sbe$clearOnRefresh(CallbackInfo ci) {
-        sbe$renderers.clear();
-        sbe$lineToMessage.clear();
-        // Intentionally preserve sbe$selectedMessage across refresh — the context menu may
-        // still be open and the message still exists in allMessages.
+        // Preserve selection across refresh: the selected GuiMessage still exists in
+        // allMessages, so re-deriving its lines is enough to restore the outline.
+        sbe$lineTracker.clearLineMappings();
     }
 }
