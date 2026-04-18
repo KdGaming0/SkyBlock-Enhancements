@@ -1,6 +1,6 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.pricing;
 
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.SkyblockRecipeUtil;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceDataFetcher.BazaarPrice;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;

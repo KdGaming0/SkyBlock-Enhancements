@@ -5,8 +5,8 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.lit
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
-import com.github.kd_gaming1.skyblockenhancements.repo.ItemStackBuilder;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 import com.github.kd_gaming1.skyblockenhancements.util.NeuRepoCache;
 import com.mojang.brigadier.context.CommandContext;

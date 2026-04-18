@@ -4,26 +4,34 @@ import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LO
 
 import cc.cassian.rrv.api.recipe.ItemView;
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.crafting.SkyblockCraftingClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.crafting.SkyblockCraftingServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.drops.SkyblockDropsClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.drops.SkyblockDropsServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.essence.SkyblockEssenceUpgradeClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.essence.SkyblockEssenceUpgradeServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.forge.SkyblockForgeServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatUpgradeClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.kat.SkyblockKatUpgradeServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.npc.*;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTradeClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.trade.SkyblockTradeServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.wiki.SkyblockWikiInfoClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.wiki.SkyblockWikiInfoServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting.SkyblockCraftingClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting.SkyblockCraftingServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops.SkyblockDropsClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops.SkyblockDropsServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.essence.SkyblockEssenceUpgradeClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.essence.SkyblockEssenceUpgradeServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.forge.SkyblockForgeClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.forge.SkyblockForgeServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.kat.SkyblockKatUpgradeClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.kat.SkyblockKatUpgradeServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.*;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.trade.SkyblockTradeClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.trade.SkyblockTradeServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.wiki.SkyblockWikiInfoClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.wiki.SkyblockWikiInfoServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 
 import cc.cassian.rrv.api.ReliableRecipeViewerClientPlugin;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.RrvCacheInjector;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCategoryFilter;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockInjectionCache;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoRegistry;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcShopClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcShopServerRecipe;
 
 /**
  * RRV client plugin entry point. Registers recipe wrappers and handles reload callbacks.

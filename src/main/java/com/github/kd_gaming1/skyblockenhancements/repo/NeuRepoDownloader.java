@@ -3,6 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements.repo;
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.MOD_ID;
 
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.net.URI;
@@ -16,6 +17,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import net.fabricmc.loader.api.FabricLoader;
+import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsDownloader;
+import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemParser;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 
 /**
  * Orchestrates the NEU repo download, parse, and cache pipeline. Each stage is

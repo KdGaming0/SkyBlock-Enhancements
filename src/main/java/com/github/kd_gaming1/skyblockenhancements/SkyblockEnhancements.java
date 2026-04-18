@@ -2,7 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements;
 
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.DataReadinessTracker;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.DataReadinessTracker;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
@@ -15,8 +15,8 @@ import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManag
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
 import com.github.kd_gaming1.skyblockenhancements.feature.filter.LogFilterRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.HypixelItemsRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.IrisCompat;

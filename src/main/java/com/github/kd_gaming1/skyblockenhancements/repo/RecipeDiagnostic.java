@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 
 /**
  * Scans the loaded {@link NeuItemRegistry} and logs a full breakdown of every recipe type found

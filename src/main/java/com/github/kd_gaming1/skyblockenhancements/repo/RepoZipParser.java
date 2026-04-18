@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemParser;
 
 /**
  * Downloads and stream-parses the NEU repo ZIP archive. Dispatches individual entries
