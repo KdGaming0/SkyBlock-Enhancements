@@ -26,6 +26,11 @@ import org.jspecify.annotations.Nullable;
  *   <li><b>Unlimited</b> — every duplicate collapses regardless of distance or age.</li>
  * </ol>
  *
+ * <p>When a duplicate is removed, every separator, blank line, and accompanying line that
+ * arrived on the same tick is removed with it. This treats each Hypixel block (banner, profile
+ * view, summary card) as an atomic unit: the separators that bordered it are part of the same
+ * logical message and share its {@link GuiMessage#addedTime()}.
+ *
  * <p>The {@link #entries} map uses <b>access-order</b> {@link LinkedHashMap}: every
  * {@link Map#get} promotes the entry to the most-recently-used position, so the eldest entry
  * (least-recently-accessed) is the natural eviction candidate once size exceeds
@@ -76,8 +81,9 @@ public final class CompactMessageHandler {
 
     /**
      * Inspects an incoming message. If it qualifies as a compactable duplicate, removes the
-     * prior occurrence from history and returns a new component with a {@code (×N)} suffix
-     * appended; otherwise returns the original message unchanged.
+     * prior occurrence (along with its tick-group companions) from history and returns a new
+     * component with a {@code (×N)} suffix appended; otherwise returns the original message
+     * unchanged.
      */
     public Component process(Component message) {
         if (!SkyblockEnhancementsConfig.compactDuplicateMessages) return message;
@@ -138,67 +144,44 @@ public final class CompactMessageHandler {
     // History manipulation
     // ---------------------------------------------------------------------
 
-    /** Removes the most-recent prior occfurrence of {@code raw} and any orphaned separators. */
+    /**
+     * Removes the most-recent prior occurrence of {@code raw} and every other message that
+     * arrived on the same tick. Hypixel emits multi-line blocks (banners, profile views,
+     * separator borders) atomically within one tick, so the tick is the authoritative
+     * grouping signal for "everything that belongs to this message".
+     */
     private void removePreviousDuplicate(String raw) {
         List<GuiMessage> msgs = chatAccess.sbe$getAllMessages();
         for (int i = 0; i < msgs.size(); i++) {
             String candidate = ChatTextHelper.stripCompactSuffix(msgs.get(i).content().getString());
             if (!candidate.equals(raw)) continue;
 
-            msgs.remove(i);
-            removeOrphanedSeparators(msgs, i);
+            removeTickGroupAt(msgs, i);
             return;
         }
     }
 
     /**
-     * After removing a message at {@code removedIndex}, walks outward in both directions
-     * removing any separator lines that are no longer bordered by non-separator content.
-     * Repeats until no further orphans are found, handling stacked separators (e.g. a role
-     * header directly above a full-width rule).
+     * Removes the message at {@code anchorIndex} and every contiguous neighbour sharing its
+     * {@link GuiMessage#addedTime()}. The scan stops at the first timestamp mismatch in each
+     * direction, so the cost is proportional to the group size — a handful of messages for
+     * typical Hypixel blocks.
      */
-    private void removeOrphanedSeparators(List<GuiMessage> msgs, int removedIndex) {
-        boolean removeBelow = removedIndex < msgs.size() && isOrphanedSeparator(msgs, removedIndex);
-        int aboveIdx = removedIndex - 1;
-        boolean removeAbove = aboveIdx >= 0 && isOrphanedSeparator(msgs, aboveIdx);
+// CompactMessageHandler.java
 
-        if (removeBelow) msgs.remove(removedIndex);
-        if (removeAbove && aboveIdx < msgs.size()) msgs.remove(aboveIdx);
+    private static void removeTickGroupAt(List<GuiMessage> msgs, int anchorIndex) {
+        int anchorTick = msgs.get(anchorIndex).addedTime();
 
-        removeOrphanedBlanks(msgs, removedIndex);
-    }
-
-    /** Removes blank lines that are left directly adjacent to the removal site. */
-    private static void removeOrphanedBlanks(List<GuiMessage> msgs, int index) {
-        // Check below first (higher index), then above, so removals don't shift the above index.
-        if (index < msgs.size() && plainText(msgs.get(index)).isEmpty()) {
-            msgs.remove(index);
+        int upper = anchorIndex;
+        while (upper + 1 < msgs.size() && msgs.get(upper + 1).addedTime() == anchorTick) {
+            upper++;
         }
-        int aboveIdx = index - 1;
-        if (aboveIdx >= 0 && aboveIdx < msgs.size() && plainText(msgs.get(aboveIdx)).isEmpty()) {
-            msgs.remove(aboveIdx);
+        int lower = anchorIndex;
+        while (lower - 1 >= 0 && msgs.get(lower - 1).addedTime() == anchorTick) {
+            lower--;
         }
-    }
 
-    /**
-     * A separator is orphaned when it has no non-separator neighbour on at least one side,
-     * meaning it no longer visually separates any content from anything else.
-     */
-    private static boolean isOrphanedSeparator(List<GuiMessage> msgs, int index) {
-        if (!isSeparator(plainText(msgs.get(index)))) return false;
-
-        boolean hasContentAbove = index > 0
-                && !isSeparator(plainText(msgs.get(index - 1)))
-                && !plainText(msgs.get(index - 1)).isEmpty();
-        boolean hasContentBelow = index < msgs.size() - 1
-                && !isSeparator(plainText(msgs.get(index + 1)))
-                && !plainText(msgs.get(index + 1)).isEmpty();
-
-        return !hasContentAbove || !hasContentBelow;
-    }
-
-    private static String plainText(GuiMessage msg) {
-        return ChatFormatting.stripFormatting(msg.content().getString()).trim();
+        msgs.subList(lower, upper + 1).clear();
     }
 
     private static boolean isSeparator(String trimmed) {

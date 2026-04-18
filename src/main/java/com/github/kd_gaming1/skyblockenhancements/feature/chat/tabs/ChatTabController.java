@@ -11,10 +11,11 @@ import net.minecraft.network.chat.Component;
 /**
  * Owns the currently active chat tab and decides per-message visibility.
  *
- * <p>Separator lines are a special case: they are shown under a tab only when at least one of
- * their immediate non-separator neighbours belongs to that tab. This keeps context banners
- * like {@code ------ Party ------} visible in the Party tab while hiding orphaned separators
- * from unrelated channels.
+ * <p>Separator lines are grouped with their surrounding messages by arrival tick: Hypixel
+ * emits a channel block (banner, profile view, etc.) within a single tick, so every line in
+ * that block — including the top and bottom separator borders — shares the same
+ * {@link GuiMessage#addedTime()}. A separator is shown under a tab iff at least one
+ * non-separator message in its tick-group matches that tab.
  */
 public final class ChatTabController {
 
@@ -49,27 +50,42 @@ public final class ChatTabController {
     // Separator handling
     // ---------------------------------------------------------------------
 
+    /**
+     * Scans the separator's tick-group for a non-separator message that matches the active
+     * tab. Both directions are bounded by the tick boundary, so the scan size equals the
+     * block size — typically a handful of messages for Hypixel banners and summaries.
+     *
+     * <p>When {@code index == -1} the separator is mid-insert and not yet in history. The
+     * newest message at index 0 is either (a) part of the separator's own block and shares
+     * its tick, or (b) from a different tick, in which case the separator stands alone.
+     */
     private boolean separatorBelongsToActiveTab(List<GuiMessage> allMessages, int index) {
-        if (index < 0) {
-            // Not yet in history: the only neighbour we can inspect is the most-recent message,
-            // which lives at index 0 once addMessageToQueue finishes. Check that first.
-            if (allMessages.isEmpty()) return true;
-            return matchesActiveTab(nearestNonSeparator(allMessages, -1, +1));
+        if (allMessages.isEmpty()) return false;
+
+        int anchorTick = index < 0
+                ? allMessages.getFirst().addedTime()
+                : allMessages.get(index).addedTime();
+
+        // allMessages is newest-first: indices > current walk backwards in time (older),
+        // indices < current walk forwards in time (newer).
+        int start = Math.max(0, index);
+        for (int i = start; i < allMessages.size(); i++) {
+            GuiMessage candidate = allMessages.get(i);
+            if (candidate.addedTime() != anchorTick) break;
+            if (matchesAsNonSeparator(candidate)) return true;
         }
-        return matchesActiveTab(nearestNonSeparator(allMessages, index, -1))
-                || matchesActiveTab(nearestNonSeparator(allMessages, index, +1));
+        for (int i = index - 1; i >= 0; i--) {
+            GuiMessage candidate = allMessages.get(i);
+            if (candidate.addedTime() != anchorTick) break;
+            if (matchesAsNonSeparator(candidate)) return true;
+        }
+        return false;
     }
 
-    private Component nearestNonSeparator(List<GuiMessage> allMessages, int startIndex, int step) {
-        for (int i = startIndex + step; i >= 0 && i < allMessages.size(); i += step) {
-            Component content = allMessages.get(i).content();
-            if (!isSeparator(plainText(content))) return content;
-        }
-        return null;
-    }
-
-    private boolean matchesActiveTab(Component message) {
-        return message != null && activeTab.matches(plainText(message));
+    private boolean matchesAsNonSeparator(GuiMessage message) {
+        String plain = plainText(message.content());
+        if (isSeparator(plain)) return false;
+        return activeTab.matches(plain);
     }
 
     // ---------------------------------------------------------------------

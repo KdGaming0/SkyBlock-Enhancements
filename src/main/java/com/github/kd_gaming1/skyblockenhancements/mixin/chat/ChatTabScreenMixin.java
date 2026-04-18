@@ -109,7 +109,7 @@ public abstract class ChatTabScreenMixin extends Screen {
         if (wasAlreadyActive) return;
 
         String cmd = tab.command();
-        if (cmd != null && !cmd.isEmpty() && mc.player != null) {
+        if (!cmd.isEmpty() && mc.player != null) {
             if (cmd.startsWith("/")) {
                 mc.player.connection.sendCommand(cmd.substring(1));
             } else {
