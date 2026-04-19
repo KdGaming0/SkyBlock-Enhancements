@@ -4,7 +4,7 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.mixin.access.ScreenAccessor;
-import com.github.kd_gaming1.skyblockenhancements.mixin.rrv.internal.QuickNavListFinder;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.internal.QuickNavListFinder;
 import java.util.List;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import org.spongepowered.asm.mixin.Mixin;

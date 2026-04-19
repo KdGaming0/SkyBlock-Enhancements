@@ -141,7 +141,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
         ItemView.addClientRecipeWrapper(
                 SkyblockWikiInfoServerRecipe.TYPE,
                 r -> List.of(new SkyblockWikiInfoClientRecipe(
-                        r.getDisplayItem(), r.getWikiUrls())));
+                        r.getDisplayItem(), r.getDisplayName(), r.getWikiUrls())));
 
         ItemView.addClientRecipeWrapper(
                 SkyblockEssenceUpgradeServerRecipe.TYPE,

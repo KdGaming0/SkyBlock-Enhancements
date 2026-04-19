@@ -1,4 +1,4 @@
-package com.github.kd_gaming1.skyblockenhancements.mixin.rrv.internal;
+package com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.internal;
 
 import java.lang.reflect.Field;
 import java.util.List;

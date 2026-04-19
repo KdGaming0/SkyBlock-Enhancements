@@ -1,8 +1,9 @@
-## Changelog for 0.11.9
+## Changelog for 1.0.0-beta.1
 
 ### **RRV Integration**
 **Improvements**
 - Code refactors
+- Added item name to wiki recipes, in addition to the item icon that already existed.
 
 ### **Chat Enhancements**
 **Improvements**

@@ -1,4 +1,4 @@
-package com.github.kd_gaming1.skyblockenhancements.mixin.rrv.internal;
+package com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.internal;
 
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;

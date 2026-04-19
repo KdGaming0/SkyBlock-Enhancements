@@ -13,25 +13,29 @@ public class SkyblockWikiInfoServerRecipe implements ReliableServerRecipe {
     public static final ReliableServerRecipeType<SkyblockWikiInfoServerRecipe> TYPE =
             ReliableServerRecipeType.register(
                     Identifier.fromNamespaceAndPath("skyblock_enhancements", "skyblock_wiki_info"),
-                    () -> new SkyblockWikiInfoServerRecipe(ItemStack.EMPTY, new String[0]));
+                    () -> new SkyblockWikiInfoServerRecipe(ItemStack.EMPTY, "", new String[0]));
 
     private ItemStack displayItem;
+    private String displayName;
     private String[] wikiUrls;
 
-    public SkyblockWikiInfoServerRecipe(ItemStack displayItem, String[] wikiUrls) {
+    public SkyblockWikiInfoServerRecipe(ItemStack displayItem, String displayName, String[] wikiUrls) {
         this.displayItem = displayItem != null ? displayItem : ItemStack.EMPTY;
-        this.wikiUrls = wikiUrls;
+        this.displayName = displayName != null ? displayName : "";
+        this.wikiUrls    = wikiUrls;
     }
 
     @Override
     public void writeToTag(CompoundTag tag) {
         RecipeTagCodec.writeStack(tag, "item", displayItem);
+        tag.putString("name", displayName);
         RecipeTagCodec.writeWikiUrls(tag, wikiUrls);
     }
 
     @Override
     public void loadFromTag(CompoundTag tag) {
         displayItem = RecipeTagCodec.readStack(tag, "item");
+        displayName = tag.getStringOr("name", "");
         wikiUrls    = RecipeTagCodec.readWikiUrls(tag);
     }
 
@@ -40,6 +44,7 @@ public class SkyblockWikiInfoServerRecipe implements ReliableServerRecipe {
         return TYPE;
     }
 
-    public ItemStack getDisplayItem() { return displayItem; }
-    public String[]  getWikiUrls()    { return wikiUrls; }
+    public ItemStack getDisplayItem()  { return displayItem; }
+    public String    getDisplayName()  { return displayName; }
+    public String[]  getWikiUrls()     { return wikiUrls; }
 }

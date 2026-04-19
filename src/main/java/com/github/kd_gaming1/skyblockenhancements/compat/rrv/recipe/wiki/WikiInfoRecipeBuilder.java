@@ -25,6 +25,7 @@ public final class WikiInfoRecipeBuilder {
         ItemStack stack = ItemStackBuilder.build(item).copy();
         if (stack.isEmpty()) return null;
 
-        return new SkyblockWikiInfoServerRecipe(stack, item.getWikiUrls());
+        String name = item.displayName != null ? item.displayName : item.internalName;
+        return new SkyblockWikiInfoServerRecipe(stack, name, item.getWikiUrls());
     }
 }

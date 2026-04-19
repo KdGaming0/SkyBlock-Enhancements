@@ -37,7 +37,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
 public final class RepoDiskCache {
 
     /** Bump whenever {@link NeuItem} schema or parser output changes. */
-    public static final int CACHE_VERSION = 10;
+    public static final int CACHE_VERSION = 11;
 
     private static final Gson GSON = new GsonBuilder().create();
 
