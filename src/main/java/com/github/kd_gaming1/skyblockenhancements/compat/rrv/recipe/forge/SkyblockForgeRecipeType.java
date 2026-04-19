@@ -8,32 +8,37 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-/** 2×3 input grid → single output with duration text. */
+/** 2×4 input grid → single output with duration text. */
 public class SkyblockForgeRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockForgeRecipeType INSTANCE = new SkyblockForgeRecipeType();
 
     private static final int SLOT = 18;
+    private static final int COLS = 4;
+    private static final int ROWS = 2;
+    private static final int OUTPUT_INDEX = COLS * ROWS;
+    private static final int OUTPUT_X = COLS * SLOT + 12;
+    private static final int OUTPUT_Y = (ROWS * SLOT) / 2;
 
     private final ItemStack icon = new ItemStack(Items.ANVIL);
     private final List<ItemStack> craftReferences = List.of(icon);
 
     @Override public Component   getDisplayName()   { return Component.literal("SkyBlock Forge"); }
-    @Override public int         getDisplayWidth()  { return 120; }
+    @Override public int         getDisplayWidth()  { return OUTPUT_X + SLOT; }
     @Override public int         getDisplayHeight() { return 68; }
     @Override public Identifier  getGuiTexture()    { return null; }
-    @Override public int         getSlotCount()     { return 7; }
+    @Override public int         getSlotCount()     { return OUTPUT_INDEX + 1; }
     @Override public ItemStack   getIcon()          { return icon; }
     @Override public List<ItemStack> getCraftReferences() { return craftReferences; }
 
     @Override
     public void placeSlots(RecipeViewMenu.SlotDefinition def) {
-        for (int row = 0; row < 2; row++) {
-            for (int col = 0; col < 3; col++) {
-                def.addItemSlot(row * 3 + col, col * SLOT, row * SLOT + 9);
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
+                def.addItemSlot(row * COLS + col, col * SLOT, row * SLOT + 9);
             }
         }
-        def.addItemSlot(6, 96, 18);
+        def.addItemSlot(OUTPUT_INDEX, OUTPUT_X, OUTPUT_Y);
     }
 
     @Override

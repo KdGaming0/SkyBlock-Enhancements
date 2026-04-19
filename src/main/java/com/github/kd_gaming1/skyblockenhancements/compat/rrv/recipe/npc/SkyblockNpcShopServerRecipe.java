@@ -7,7 +7,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.RecipeT
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 
-/** NPC shop purchase: up to 5 cost slots → 1 result. Tagged with the owning NPC's ID. */
+/** NPC shop purchase: up to {@link #MAX_COSTS} cost slots → 1 result. Tagged with the owning NPC's ID. */
 public class SkyblockNpcShopServerRecipe implements ReliableServerRecipe {
 
     public static final ReliableServerRecipeType<SkyblockNpcShopServerRecipe> TYPE =
@@ -15,7 +15,7 @@ public class SkyblockNpcShopServerRecipe implements ReliableServerRecipe {
                     Identifier.fromNamespaceAndPath("skyblock_enhancements", "skyblock_npc_shop"),
                     () -> new SkyblockNpcShopServerRecipe(new SlotContent[0], null, "", "", new String[0]));
 
-    private static final int MAX_COSTS = 5;
+    static final int MAX_COSTS = 10;
 
     private SlotContent[] costs;
     private SlotContent result;

@@ -19,11 +19,16 @@ import org.jetbrains.annotations.Nullable;
 public class SkyblockForgeClientRecipe extends AbstractSkyblockClientRecipe
         implements ReliableClientRecipe {
 
-    private static final int ARROW_X = 68;
-    private static final int ARROW_Y = 22;
+    /** 4-column grid: arrow sits between the grid (ends at 4*18=72) and the output. */
+    private static final int ARROW_X = 74;
+    private static final int ARROW_Y = 23;
     private static final int DURATION_X = 2;
     private static final int DURATION_Y = 46;
     private static final int BUTTON_ROW_Y_OFFSET = 56;
+    /** Max inputs bindable; mirrors SkyblockForgeServerRecipe.MAX_INPUTS. */
+    private static final int MAX_INPUTS = 8;
+    /** Output slot index in the bound layout. */
+    private static final int OUTPUT_SLOT = MAX_INPUTS;
 
     private final SlotContent[] inputs;
     private final SlotContent output;
@@ -46,12 +51,12 @@ public class SkyblockForgeClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
-        for (int i = 0; i < inputs.length && i < 6; i++) {
+        for (int i = 0; i < inputs.length && i < MAX_INPUTS; i++) {
             if (inputs[i] != null) {
                 ctx.bindOptionalSlot(i, inputs[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
             }
         }
-        if (output != null) ctx.bindSlot(6, output);
+        if (output != null) ctx.bindSlot(OUTPUT_SLOT, output);
     }
 
     @Override

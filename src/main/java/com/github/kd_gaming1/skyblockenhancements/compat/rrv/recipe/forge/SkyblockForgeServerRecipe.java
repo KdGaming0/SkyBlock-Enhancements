@@ -15,7 +15,7 @@ public class SkyblockForgeServerRecipe implements ReliableServerRecipe {
                     Identifier.fromNamespaceAndPath("skyblock_enhancements", "skyblock_forge"),
                     () -> new SkyblockForgeServerRecipe(new SlotContent[0], null, 0, new String[0]));
 
-    private static final int MAX_INPUTS = 6;
+    static final int MAX_INPUTS = 8;
 
     private SlotContent[] inputs;
     private SlotContent output;

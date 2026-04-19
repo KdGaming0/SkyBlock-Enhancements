@@ -18,11 +18,16 @@ import org.jetbrains.annotations.Nullable;
 public class SkyblockNpcShopClientRecipe extends AbstractSkyblockClientRecipe
         implements ReliableClientRecipe {
 
-    private static final int ARROW_X = 91;
+    /** Arrow sits between the 5-column cost grid and the result slot, vertically on the shared center. */
+    private static final int ARROW_X = 84;
     private static final int ARROW_Y = 25;
     private static final int BUTTON_ROW_Y_OFFSET = 52;
     private static final int BUTTON_W = 56;
     private static final int BUTTON_H = 12;
+    /** Max costs bindable; mirrors SkyblockNpcShopServerRecipe.MAX_COSTS. */
+    private static final int MAX_COSTS = 10;
+    /** Result slot index (costs occupy 0..MAX_COSTS-1). */
+    private static final int RESULT_SLOT = MAX_COSTS;
 
     private final SlotContent[] costs;
     private final SlotContent result;
@@ -49,12 +54,12 @@ public class SkyblockNpcShopClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
-        for (int i = 0; i < costs.length && i < 5; i++) {
+        for (int i = 0; i < costs.length && i < MAX_COSTS; i++) {
             if (costs[i] != null) {
                 ctx.bindOptionalSlot(i, costs[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
             }
         }
-        if (result != null) ctx.bindSlot(5, result);
+        if (result != null) ctx.bindSlot(RESULT_SLOT, result);
     }
 
     @Override
