@@ -36,6 +36,9 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
  *
  * <p>This class handles only the high-level flow: should we use the cache or download?
  * After data is available, it populates {@link NeuItemRegistry} and {@link NeuConstantsRegistry}.
+ *
+ * <p>The raw ZIP is saved to disk during fresh downloads so that mob render data
+ * (JSONs and skin PNGs) can be re-parsed on cache-only startups without re-downloading.
  */
 public class NeuRepoDownloader {
 
@@ -50,6 +53,7 @@ public class NeuRepoDownloader {
 
     private final Path cacheDir;
     private final Path hypixelCacheFile;
+    private final Path repoZipFile;
     private final RepoDiskCache diskCache;
 
     /**
@@ -67,6 +71,7 @@ public class NeuRepoDownloader {
     public NeuRepoDownloader() {
         this.cacheDir = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("repo");
         this.hypixelCacheFile = cacheDir.resolve("hypixel-items-cache.json");
+        this.repoZipFile = cacheDir.resolve("neu_repo.zip");
         this.diskCache = new RepoDiskCache(
                 cacheDir.resolve("items-cache.json"),
                 cacheDir.resolve("repo-meta.json"));
@@ -158,6 +163,7 @@ public class NeuRepoDownloader {
         if (cacheExists) {
             LOGGER.info("No ETag cached, checking cache validity...");
             if (diskCache.loadFromCache()) {
+                loadMobData();
                 diskCache.saveMeta(null);
                 neuReadyFuture.complete(true);
                 fetchHypixelAndSignal(false);
@@ -209,6 +215,7 @@ public class NeuRepoDownloader {
         if (startup) {
             LOGGER.info("Loading from cache...");
             if (diskCache.loadFromCache()) {
+                loadMobData();
                 diskCache.saveMeta(cachedEtag);
                 neuReadyFuture.complete(true);
                 fetchHypixelAndSignal(false);
@@ -231,6 +238,7 @@ public class NeuRepoDownloader {
      */
     private FetchAction handleHeadCheckFailure(boolean startup) {
         if (startup && diskCache.loadFromCache()) {
+            loadMobData();
             neuReadyFuture.complete(true);
             fetchHypixelAndSignal(false);
             return FetchAction.USE_CACHE;
@@ -256,7 +264,7 @@ public class NeuRepoDownloader {
         CompletableFuture<Void> hypixelParallelFuture = CompletableFuture.runAsync(
                 () -> fetchHypixelAndSignal(true));
 
-        RepoZipParser.ParseResult result = RepoZipParser.downloadAndParse(HTTP);
+        RepoZipParser.ParseResult result = RepoZipParser.downloadAndParse(HTTP, repoZipFile);
 
         NeuItemRegistry.clear();
         result.items().forEach(NeuItemRegistry::register);
@@ -282,6 +290,22 @@ public class NeuRepoDownloader {
         diskCache.saveCache(result.items(), result.constants(), result.etag());
         diskCache.saveMeta(result.etag());
     }
+
+    // ── Mob data loading ────────────────────────────────────────────────────────
+
+    /**
+     * Populates {@link com.github.kd_gaming1.skyblockenhancements.repo.neu.mob.MobRenderRegistry}
+     * and {@link com.github.kd_gaming1.skyblockenhancements.repo.neu.mob.MobSkinRegistry} from
+     * the saved repo ZIP. Called on cache-load paths where the full ZIP parse did not run.
+     *
+     * <p>If the ZIP file does not exist (first run with this code version, or user deleted it),
+     * mob previews degrade to placeholders until the next fresh download saves the ZIP.
+     */
+    private void loadMobData() {
+        RepoZipParser.parseMobsFromFile(repoZipFile);
+    }
+
+    // ── Hypixel items ───────────────────────────────────────────────────────────
 
     /**
      * Fetches (or loads from cache) Hypixel items and completes {@link #hypixelReadyFuture}.

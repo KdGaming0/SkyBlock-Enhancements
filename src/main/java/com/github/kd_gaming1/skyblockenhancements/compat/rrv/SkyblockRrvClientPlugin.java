@@ -6,6 +6,7 @@ import cc.cassian.rrv.api.recipe.ItemView;
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting.SkyblockCraftingClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting.SkyblockCraftingServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops.MobPreviewRenderer;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops.SkyblockDropsClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops.SkyblockDropsServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.essence.SkyblockEssenceUpgradeClientRecipe;
@@ -20,6 +21,8 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.trade.Skyblo
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.wiki.SkyblockWikiInfoClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.wiki.SkyblockWikiInfoServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.mob.MobRenderRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.mob.MobSkinRegistry;
 
 import cc.cassian.rrv.api.ReliableRecipeViewerClientPlugin;
 import java.util.List;
@@ -48,6 +51,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
         // Wire invalidation: when the registry is cleared (repo reload), tear down RRV caches.
         NeuItemRegistry.addClearListener(SkyblockInjectionCache::invalidate);
         NeuItemRegistry.addClearListener(SkyblockCategoryFilter::invalidateIndex);
+        NeuItemRegistry.addClearListener(SkyblockRrvClientPlugin::clearMobCaches);
 
         registerRecipeWrappers();
 
@@ -61,6 +65,16 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
                 SkyblockInjectionCache.markNotInjected();
             }
         });
+    }
+
+    /**
+     * Releases all mob-preview data on repo reload. Also invalidates the cached PlayerModel
+     * because resource packs can change between reloads, which rebakes the model layer.
+     */
+    private static void clearMobCaches() {
+        MobRenderRegistry.clear();
+        MobSkinRegistry.clear();
+        MobPreviewRenderer.invalidatePlayerModel();
     }
 
     /**
@@ -127,10 +141,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
 
         ItemView.addClientRecipeWrapper(
                 SkyblockDropsServerRecipe.TYPE,
-                r -> List.of(new SkyblockDropsClientRecipe(
-                        r.getMobName(), r.getDrops(), r.getChances(),
-                        r.getLevel(),
-                        r.getCombatXp(), r.getWikiUrls())));
+                r -> List.of(new SkyblockDropsClientRecipe(r)));
 
         ItemView.addClientRecipeWrapper(
                 SkyblockKatUpgradeServerRecipe.TYPE,

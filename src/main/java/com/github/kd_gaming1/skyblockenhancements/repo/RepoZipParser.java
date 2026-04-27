@@ -12,6 +12,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,9 +26,11 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemParser;
 
 /**
  * Downloads and stream-parses the NEU repo ZIP archive. Dispatches individual entries
- * to {@link NeuItemParser} for item/SNBT parsing.
+ * to {@link NeuItemParser} for item/SNBT parsing and to {@link MobEntryProcessor} /
+ * {@link MobPngEntryProcessor} for mob render data.
  *
- * <p>Never extracts to disk — all parsing happens in-memory during the ZIP stream read.
+ * <p>The ZIP is saved to disk during fresh downloads so that mob data can be re-parsed
+ * on subsequent cache-only startups without re-downloading.
  */
 public final class RepoZipParser {
 
@@ -51,18 +56,19 @@ public final class RepoZipParser {
             Map<String, JsonObject> constants,
             String etag) {}
 
-    // ── Public entry point ───────────────────────────────────────────────────────
+    // ── Public entry points ─────────────────────────────────────────────────────
 
     /**
-     * Downloads the NEU repo ZIP and stream-parses all entries in a single pass.
-     * SNBT overrides are applied after the stream completes.
+     * Downloads the NEU repo ZIP, saves it to {@code zipSavePath}, and stream-parses
+     * all entries in a single pass. SNBT overrides are applied after the stream completes.
      * Category and rarity are resolved once at the end.
      *
-     * @param http the shared HttpClient
+     * @param http        the shared HttpClient
+     * @param zipSavePath where to persist the raw ZIP for later mob-data re-parsing
      * @return parsed items, constants, and ETag
      * @throws Exception on HTTP or parse failure
      */
-    public static ParseResult downloadAndParse(HttpClient http) throws Exception {
+    public static ParseResult downloadAndParse(HttpClient http, Path zipSavePath) throws Exception {
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(REPO_ZIP_URL))
                 .header("User-Agent", "SkyblockEnhancements")
@@ -79,16 +85,66 @@ public final class RepoZipParser {
 
         String etag = resp.headers().firstValue("ETag").orElse(null);
 
+        // Save the raw ZIP to disk so mob data can be re-parsed on cache-only startups.
+        Files.copy(resp.body(), zipSavePath, StandardCopyOption.REPLACE_EXISTING);
+
         Map<String, NeuItem> items = new HashMap<>(5000);
         Map<String, String> snbtIds = new HashMap<>();
         Map<String, Boolean> snbtGlints = new HashMap<>();
         Map<String, JsonObject> constants = new HashMap<>();
 
-        parseZipStream(resp.body(), items, snbtIds, snbtGlints, constants);
+        try (InputStream fileStream = Files.newInputStream(zipSavePath)) {
+            parseZipStream(fileStream, items, snbtIds, snbtGlints, constants);
+        }
+
         applySnbtOverrides(items, snbtIds, snbtGlints);
         NeuItemParser.resolveAllCategoryAndRarity(items);
 
         return new ParseResult(items, constants, etag);
+    }
+
+    /**
+     * Re-parses only {@code mobs/*.json} and {@code mobs/*.png} entries from a previously
+     * saved ZIP file. Used on cache-load startup when item data comes from the JSON cache
+     * but mob render data still needs to be populated.
+     *
+     * <p>Does nothing if the file does not exist (graceful degradation — mob previews will
+     * show placeholders until the next fresh download).
+     *
+     * @param zipFile path to the saved repo ZIP
+     */
+    public static void parseMobsFromFile(Path zipFile) {
+        if (!Files.exists(zipFile)) {
+            LOGGER.warn("No saved repo ZIP at {} — mob previews will be unavailable "
+                    + "until the next re-download.", zipFile);
+            return;
+        }
+
+        MobEntryProcessor.resetCounters();
+        MobPngEntryProcessor.resetCounters();
+
+        try (ZipInputStream zis = new ZipInputStream(
+                new BufferedInputStream(Files.newInputStream(zipFile), 1 << 16),
+                StandardCharsets.UTF_8)) {
+
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.isDirectory()) continue;
+                String name = entry.getName();
+                if (name.contains("..")) continue;
+
+                if (!MobEntryProcessor.process(name, zis)) {
+                    MobPngEntryProcessor.process(name, zis);
+                }
+
+                zis.closeEntry();
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to parse mob data from saved ZIP: {}", zipFile, e);
+        }
+
+        MobEntryProcessor.logSummary();
+        MobPngEntryProcessor.logSummary();
     }
 
     // ── ZIP stream processing ───────────────────────────────────────────────────
@@ -100,6 +156,9 @@ public final class RepoZipParser {
             Map<String, Boolean> snbtGlints,
             Map<String, JsonObject> constants) throws IOException {
 
+        MobEntryProcessor.resetCounters();
+        MobPngEntryProcessor.resetCounters();
+
         try (ZipInputStream zis = new ZipInputStream(
                 new BufferedInputStream(body, 1 << 16), StandardCharsets.UTF_8)) {
 
@@ -109,16 +168,19 @@ public final class RepoZipParser {
                 String name = entry.getName();
                 if (name.contains("..")) continue;
 
-                if (processItemEntry(name, zis, items)
-                        || processSnbtEntry(name, zis, snbtIds, snbtGlints)
-                        || processConstantsEntry(name, zis, constants)) {
-                    zis.closeEntry();
-                    continue;
+                if (!processItemEntry(name, zis, items)
+                        && !processSnbtEntry(name, zis, snbtIds, snbtGlints)
+                        && !processConstantsEntry(name, zis, constants)
+                        && !MobEntryProcessor.process(name, zis)) {
+                    MobPngEntryProcessor.process(name, zis);
                 }
 
                 zis.closeEntry();
             }
         }
+
+        MobEntryProcessor.logSummary();
+        MobPngEntryProcessor.logSummary();
     }
 
     // ── Entry dispatchers ───────────────────────────────────────────────────────

@@ -19,6 +19,7 @@ public final class DropsRecipeParser {
         if (dropsArr == null || dropsArr.isEmpty()) return null;
 
         String mobName = recipe.has("name") ? recipe.get("name").getAsString() : DEFAULT_MOB_NAME;
+        String renderRef = str(recipe, "render");
 
         int size = dropsArr.size();
         SlotContent[] drops = new SlotContent[size];
@@ -29,11 +30,8 @@ public final class DropsRecipeParser {
             chances[i] = str(drop, "chance");
         }
 
-        int level = recipe.has("level") ? recipe.get("level").getAsInt() : 0;
-        int combatXp = recipe.has("combat_xp") ? recipe.get("combat_xp").getAsInt() : 0;
-
         return new SkyblockDropsServerRecipe(
-                mobName, drops, chances, level, combatXp, item.getWikiUrls());
+                mobName, renderRef, drops, chances, item.getWikiUrls());
     }
 
     private static String str(JsonObject obj, String key) {

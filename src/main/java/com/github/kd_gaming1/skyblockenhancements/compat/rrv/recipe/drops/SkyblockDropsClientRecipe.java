@@ -1,38 +1,98 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops;
 
+import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
+
 import cc.cassian.rrv.api.recipe.ReliableClientRecipe;
 import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 
-public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe
-        implements ReliableClientRecipe {
+/**
+ * Client-side drop recipe. Implements {@link ReliableClientRecipe} directly (no RRV
+ * inheritance) so it uses {@link SkyblockDropsRecipeType} and has full control over the
+ * preview rendering — no silent fall-through to a placeholder pig.
+ *
+ * <p>Preview is resolved once at construction. When {@link #initRecipe()} fires, any vanilla
+ * {@link LivingEntity} needed for the current preview is spawned; {@link #fadeRecipe()}
+ * releases it. Rotation pauses while the preview box is hovered, matching RRV's native feel.
+ */
+public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
 
-    private static final int BUTTON_ROW_Y_OFFSET = 12 + 3 * 18;
-    private static final int MOB_NAME_X = 6;
-    private static final int MOB_NAME_Y = 2;
+    private static final int MAX_DROPS = 12;
+    private static final int BUTTON_ROW_Y_OFFSET = SkyblockDropsRecipeType.WIKI_BUTTON_TOP;
+    private static final int NAME_CAPTION_Y      = SkyblockDropsRecipeType.NAME_CAPTION_TOP;
+    private static final int NAME_COLOR        = 0xFF404040;
+    private static final int NAME_SIDE_PADDING = 4;
+    private static final String ELLIPSIS       = "...";
+
+    /** De-duplicates warn logs so unresolved refs don't spam once per scroll tick. */
+    private static final Set<String> LOGGED_UNRESOLVED = ConcurrentHashMap.newKeySet();
 
     private final String mobName;
-    private final SlotContent[] drops;
     private final String[] chances;
+    private final String[] wikiUrls;
+    private final List<SlotContent> drops;
 
-    public SkyblockDropsClientRecipe(String mobName, SlotContent[] drops, String[] chances,
-                                     int level, int combatXp, String[] wikiUrls) {
-        super(wikiUrls);
-        this.mobName = mobName;
-        this.drops = drops;
-        this.chances = chances;
+    @Nullable private final MobPreview preview;
+
+    /** Spawned on {@link #initRecipe()} only when the preview requires a vanilla mob. */
+    @Nullable private LivingEntity mountEntity;
+    @Nullable private LivingEntity riderEntity;
+
+    private int animationTick;
+    private boolean previewHovered;
+
+    private boolean buttonsDirty = true;
+    @Nullable private Button sentinelButton;
+
+    public SkyblockDropsClientRecipe(SkyblockDropsServerRecipe src) {
+        this.mobName  = src.getMobName() != null ? src.getMobName() : "";
+        this.chances  = src.getChances();
+        this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(src.getWikiUrls());
+        this.drops    = buildDropsList(src.getDrops());
+
+        MobPreview resolved = MobRenderResolver.resolve(src.getRenderRef());
+        if (resolved == null) logUnresolvedOnce(src.getRenderRef());
+        this.preview = resolved;
     }
+
+    private static List<SlotContent> buildDropsList(SlotContent[] rawDrops) {
+        int slotCount = SkyblockDropsRecipeType.INSTANCE.getSlotCount();
+        List<SlotContent> out = new ArrayList<>(slotCount);
+        for (int i = 0; i < slotCount; i++) {
+            out.add(i < rawDrops.length && rawDrops[i] != null ? rawDrops[i] : SlotContent.of());
+        }
+        return out;
+    }
+
+    private static void logUnresolvedOnce(@Nullable String renderRef) {
+        String key = renderRef != null ? renderRef : "<empty>";
+        if (LOGGED_UNRESOLVED.add(key)) {
+            LOGGER.debug("Unresolved drop-recipe render ref '{}' — placeholder will be drawn.", key);
+        }
+    }
+
+    // ── ReliableClientRecipe core ──────────────────────────────────────────────
 
     @Override
     public ReliableClientRecipeType getViewType() {
@@ -41,15 +101,20 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
-        for (int i = 0; i < drops.length && i < 12; i++) {
-            if (drops[i] == null) continue;
-            ctx.bindOptionalSlot(i, drops[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
-            final int idx = i;
-            ctx.addAdditionalStackModifier(i, (stack, tooltip) -> {
-                if (idx < chances.length && chances[idx] != null && !chances[idx].isEmpty()) {
-                    tooltip.add(Component.literal("§7Drop chance: §e" + chances[idx]));
-                }
-            });
+        int limit = Math.min(drops.size(), MAX_DROPS);
+        for (int i = 0; i < limit; i++) {
+            ctx.bindSlot(i, drops.get(i));
+        }
+        attachChanceTooltips(ctx);
+    }
+
+    private void attachChanceTooltips(RecipeViewMenu.SlotFillContext ctx) {
+        int limit = Math.min(chances != null ? chances.length : 0, MAX_DROPS);
+        for (int i = 0; i < limit; i++) {
+            String chance = chances[i];
+            if (chance == null || chance.isEmpty()) continue;
+            ctx.addAdditionalStackModifier(i, (stack, tooltip) ->
+                    tooltip.add(Component.literal("§7Drop chance: §e" + chance)));
         }
     }
 
@@ -60,29 +125,136 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     public List<SlotContent> getResults() {
-        List<SlotContent> list = new ArrayList<>();
-        for (SlotContent sc : drops) {
-            if (sc != null) list.add(sc);
-        }
-        return list;
+        return drops;
     }
 
     @Override
-    public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
-                             int mouseX, int mouseY, float partialTicks) {
-        gfx.drawString(Minecraft.getInstance().font,
-                Component.literal(mobName), MOB_NAME_X, MOB_NAME_Y, 0xFFFFFFFF, true);
-        maintainButtons(screen, pos);
-    }
-
-    @Override
-    @Nullable
-    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
-        return placeWikiButton(screen, pos.left(), pos.top() + BUTTON_ROW_Y_OFFSET);
+    public boolean isVisualOnly() {
+        return true;
     }
 
     @Override
     public int getPriority() {
         return SkyblockRecipePriority.DROPS;
+    }
+
+    // ── Lifecycle ──────────────────────────────────────────────────────────────
+
+    @Override
+    public void initRecipe() {
+        buttonsDirty = true;
+        if (preview == null || !preview.needsLivingEntity()) return;
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        mountEntity = spawnForLayer(level, preview.entityType());
+        MobPreview rider = preview.rider();
+        if (rider != null) {
+            riderEntity = spawnForLayer(level, rider.entityType());
+            if (riderEntity != null && mountEntity != null) {
+                riderEntity.startRiding(mountEntity);
+            }
+        }
+    }
+
+    /** Creates and configures a preview entity, or returns {@code null} if the type is absent/invalid. */
+    @Nullable
+    private static LivingEntity spawnForLayer(ClientLevel level, @Nullable EntityType<?> type) {
+        if (type == null) return null;
+        Entity entity = type.create(level, EntitySpawnReason.LOAD);
+        if (!(entity instanceof LivingEntity living)) return null;
+        living.setYBodyRot(30.0F);
+        living.setYHeadRot(30.0F);
+        return living;
+    }
+
+    @Override
+    public void fadeRecipe() {
+        buttonsDirty = true;
+        sentinelButton = null;
+        disposeEntities();
+    }
+
+    private void disposeEntities() {
+        if (mountEntity != null) {
+            mountEntity.remove(Entity.RemovalReason.DISCARDED);
+            mountEntity = null;
+        }
+        if (riderEntity != null) {
+            riderEntity.remove(Entity.RemovalReason.DISCARDED);
+            riderEntity = null;
+        }
+    }
+
+    @Override
+    public void tick() {
+        if (previewHovered) return;
+        animationTick++;
+        if (animationTick >= MobPreviewRenderer.rotationPeriod()) animationTick = 0;
+    }
+
+    // ── Rendering ──────────────────────────────────────────────────────────────
+
+    @Override
+    public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
+                             int mouseX, int mouseY, float partialTicks) {
+        previewHovered = MobPreviewRenderer.isPointInPreviewBox(mouseX, mouseY);
+
+        if (preview != null) {
+            MobPreviewRenderer.render(preview, gfx, pos.left(), pos.top(),
+                    mountEntity, riderEntity, animationTick, partialTicks);
+        } else {
+            MobPreviewRenderer.renderPlaceholder(gfx, pos.left(), pos.top());
+        }
+
+        renderMobName(gfx, pos);
+        renderHoverTooltipIfNeeded(gfx, screen, pos, mouseX, mouseY);
+        maintainWikiButton(screen, pos);
+    }
+
+    private void renderMobName(GuiGraphics gfx, RecipePosition pos) {
+        if (mobName.isEmpty()) return;
+
+        Font font = Minecraft.getInstance().font;
+        int maxWidth = pos.width() - NAME_SIDE_PADDING * 2;
+        Component line = fitToWidth(font, mobName, maxWidth);
+
+        int textWidth = font.width(line);
+        int x = pos.left() + NAME_SIDE_PADDING + (maxWidth - textWidth) / 2;
+        int y = pos.top() + NAME_CAPTION_Y;
+        gfx.drawString(font, line, x, y, NAME_COLOR, true);
+    }
+
+    private static Component fitToWidth(Font font, String raw, int maxWidth) {
+        Component full = Component.literal(raw);
+        if (font.width(full) <= maxWidth) return full;
+
+        FormattedText ellipsis = FormattedText.of(ELLIPSIS);
+        int ellipsisWidth = font.width(ellipsis);
+        int available = Math.max(0, maxWidth - ellipsisWidth);
+        String trimmed = font.substrByWidth(full, available).getString();
+        return Component.literal(trimmed + ELLIPSIS);
+    }
+
+    private void renderHoverTooltipIfNeeded(GuiGraphics gfx, RecipeViewScreen screen,
+                                            RecipePosition pos, int mouseX, int mouseY) {
+        if (!previewHovered || mobName.isEmpty()) return;
+
+        Component tip = Component.literal(mobName).withStyle(ChatFormatting.GOLD);
+        gfx.setComponentTooltipForNextFrame(
+                screen.getFont(),
+                List.of(tip),
+                pos.left() + mouseX,
+                pos.top() + mouseY);
+    }
+
+    // ── Wiki button ────────────────────────────────────────────────────────────
+
+    private void maintainWikiButton(RecipeViewScreen screen, RecipePosition pos) {
+        boolean screenDropped = sentinelButton != null && !screen.children().contains(sentinelButton);
+        if (!buttonsDirty && !screenDropped) return;
+
+        sentinelButton = SkyblockRecipeUtil.addWikiButton(
+                screen, wikiUrls, pos.left(), pos.top() + BUTTON_ROW_Y_OFFSET);
+        buttonsDirty = false;
     }
 }
