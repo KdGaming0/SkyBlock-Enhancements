@@ -12,3 +12,4 @@
 
 **Fixes**
 - Fixed a bug that removed blank lines from some chat messages
+- Fixed a bug that reset scroll postion when new chat message where received.

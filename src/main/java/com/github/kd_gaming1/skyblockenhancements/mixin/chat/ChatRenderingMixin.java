@@ -42,6 +42,7 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
     @Shadow @Final private List<GuiMessage.Line> trimmedMessages;
     @Shadow @Final private List<GuiMessage> allMessages;
     @Shadow private int chatScrollbarPos;
+    @Shadow private boolean newMessageSinceScroll;
 
     @Shadow protected abstract int getWidth();
     @Shadow protected abstract double getScale();
@@ -55,8 +56,36 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
     @Override public List<GuiMessage.Line> sbe$getTrimmedMessages() { return trimmedMessages; }
     @Override public int sbe$getChatScrollbarPos() { return chatScrollbarPos; }
     @Override public int sbe$getScaledWidth() { return Mth.floor(getWidth() / getScale()); }
-    @Override public void sbe$refreshMessages() { refreshTrimmedMessages(); }
     @Override public ChatLineTracker sbe$getLineTracker() { return sbe$lineTracker; }
+
+    /**
+     * Rebuilds the display queue while preserving the player's scroll offset.
+     * This prevents mod features that refresh the display (compact chat, message
+     * deletion, tab/search filters) from force-snapping the chat back to the bottom.
+     */
+    @Override
+    public void sbe$refreshMessages() {
+        int savedScroll = this.chatScrollbarPos;
+        boolean savedNewMessage = this.newMessageSinceScroll;
+
+        // Pin to bottom while the queue is temporarily empty/small so that
+        // addMessageToDisplayQueue's internal scrollChat(1) calls become no-ops.
+        this.chatScrollbarPos = 0;
+        this.newMessageSinceScroll = false;
+
+        refreshTrimmedMessages();
+
+        // Restore scroll, clamped to the new message bounds.
+        int linesPerPage = ((ChatComponent) (Object) this).getLinesPerPage();
+        int maxScroll = Math.max(0, this.trimmedMessages.size() - linesPerPage);
+        this.chatScrollbarPos = Math.min(savedScroll, maxScroll);
+        this.newMessageSinceScroll = savedNewMessage;
+
+        if (this.chatScrollbarPos <= 0) {
+            this.chatScrollbarPos = 0;
+            this.newMessageSinceScroll = false;
+        }
+    }
 
     // ---------- Render proxy ----------
 
