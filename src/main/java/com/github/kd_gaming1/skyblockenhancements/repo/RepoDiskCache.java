@@ -2,6 +2,12 @@ package com.github.kd_gaming1.skyblockenhancements.repo;
 
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 
+import com.github.kd_gaming1.skyblockenhancements.repo.cache.VersionedJsonCache;
+import com.github.kd_gaming1.skyblockenhancements.repo.io.AtomicFileWriter;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -15,10 +21,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
 
 /**
  * On-disk consolidated cache for NEU repo data.
@@ -37,7 +39,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
 public final class RepoDiskCache {
 
     /** Bump whenever {@link NeuItem} schema or parser output changes. */
-    public static final int CACHE_VERSION = 11;
+    public static final int CACHE_VERSION = 12;
 
     private static final Gson GSON = new GsonBuilder().create();
 
@@ -48,10 +50,12 @@ public final class RepoDiskCache {
 
     private final Path cacheFile;
     private final Path metaFile;
+    private final VersionedJsonCache<Object> metaCache;
 
     public RepoDiskCache(Path cacheFile, Path metaFile) {
         this.cacheFile = cacheFile;
         this.metaFile  = metaFile;
+        this.metaCache = new VersionedJsonCache<>(GSON, Object.class);
     }
 
     public boolean cacheExists() {
@@ -154,14 +158,15 @@ public final class RepoDiskCache {
     // ── Save ────────────────────────────────────────────────────────────────────
 
     /**
-     * Serialises items and constants to the cache file. Constants are passed in directly
+     * Serialises items and constants to the cache file atomically. Constants are passed in directly
      * (keyed by original file name, e.g. {@code "parents.json"}); the {@code .json} suffix
      * is stripped when writing.
      */
     public void saveCache(Map<String, NeuItem> items,
                           Map<String, JsonObject> constants,
                           @Nullable String etag) throws Exception {
-        try (BufferedWriter writer = Files.newBufferedWriter(cacheFile, StandardCharsets.UTF_8);
+        Path tempPath = cacheFile.resolveSibling(cacheFile.getFileName() + ".tmp");
+        try (BufferedWriter writer = Files.newBufferedWriter(tempPath, StandardCharsets.UTF_8);
              JsonWriter jw = GSON.newJsonWriter(writer)) {
 
             jw.beginObject();
@@ -188,6 +193,13 @@ public final class RepoDiskCache {
             jw.endObject();
             jw.flush();
         }
+
+        java.nio.file.AtomicMoveNotSupportedException fallback = null;
+        try {
+            Files.move(tempPath, cacheFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+            Files.move(tempPath, cacheFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     private static String stripJsonExtension(String key) {
@@ -197,22 +209,20 @@ public final class RepoDiskCache {
     // ── Meta ────────────────────────────────────────────────────────────────────
 
     public void saveMeta(@Nullable String etag) throws IOException {
-        JsonObject meta = new JsonObject();
-        meta.addProperty("etag", etag != null ? etag : "");
-        meta.addProperty("timestamp", System.currentTimeMillis());
-        Files.writeString(metaFile, GSON.toJson(meta), StandardCharsets.UTF_8);
+        VersionedJsonCache.Metadata meta = new VersionedJsonCache.Metadata(
+                etag != null ? etag : "", System.currentTimeMillis(), CACHE_VERSION);
+        metaCache.saveMeta(metaFile, meta);
     }
 
     @Nullable
     public String readMeta(String key) {
-        try {
-            if (!Files.exists(metaFile)) return null;
-            JsonObject meta = GSON.fromJson(
-                    Files.readString(metaFile, StandardCharsets.UTF_8), JsonObject.class);
-            return meta.has(key) ? meta.get(key).getAsString() : null;
-        } catch (Exception ignored) {
-            return null;
-        }
+        VersionedJsonCache.Metadata meta = metaCache.readMeta(metaFile);
+        if (meta == null) return null;
+        return switch (key) {
+            case "etag" -> meta.etag();
+            case "timestamp" -> String.valueOf(meta.timestamp());
+            default -> null;
+        };
     }
 
     /** Exposes the constants-key set for code that needs to know the cache schema. */

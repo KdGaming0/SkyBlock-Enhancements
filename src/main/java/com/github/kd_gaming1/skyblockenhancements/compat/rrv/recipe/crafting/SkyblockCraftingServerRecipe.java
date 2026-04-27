@@ -1,14 +1,14 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting;
 
-import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.RecipeTagCodec;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 
 /** 3×3 SkyBlock crafting: 9 input slots + 1 output. */
-public class SkyblockCraftingServerRecipe implements ReliableServerRecipe {
+public class SkyblockCraftingServerRecipe extends AbstractSkyblockServerRecipe {
 
     public static final ReliableServerRecipeType<SkyblockCraftingServerRecipe> TYPE =
             ReliableServerRecipeType.register(
@@ -19,34 +19,30 @@ public class SkyblockCraftingServerRecipe implements ReliableServerRecipe {
 
     private SlotContent[] inputs;
     private SlotContent output;
-    private String[] wikiUrls;
 
     public SkyblockCraftingServerRecipe(SlotContent[] inputs, SlotContent output, String[] wikiUrls) {
+        super(wikiUrls);
         this.inputs = inputs;
         this.output = output;
-        this.wikiUrls = wikiUrls;
     }
 
     @Override
-    public void writeToTag(CompoundTag tag) {
-        RecipeTagCodec.writeFixedSlotArray(tag, "in", inputs);
-        RecipeTagCodec.writeSlot(tag, "out", output);
-        RecipeTagCodec.writeWikiUrls(tag, wikiUrls);
-    }
-
-    @Override
-    public void loadFromTag(CompoundTag tag) {
-        inputs = RecipeTagCodec.readFixedSlotArray(tag, "in", GRID_SIZE);
-        output = RecipeTagCodec.readSlot(tag, "out");
-        wikiUrls = RecipeTagCodec.readWikiUrls(tag);
-    }
-
-    @Override
-    public ReliableServerRecipeType<? extends ReliableServerRecipe> getRecipeType() {
+    protected ReliableServerRecipeType<?> getType() {
         return TYPE;
     }
 
-    public SlotContent[] getInputs()   { return inputs; }
-    public SlotContent   getOutput()   { return output; }
-    public String[]      getWikiUrls() { return wikiUrls; }
+    @Override
+    protected void writeFields(CompoundTag tag) {
+        RecipeTagCodec.writeFixedSlotArray(tag, RecipeTagCodec.KEY_INPUTS, inputs);
+        RecipeTagCodec.writeSlot(tag, RecipeTagCodec.KEY_OUTPUT, output);
+    }
+
+    @Override
+    protected void readFields(CompoundTag tag) {
+        inputs = RecipeTagCodec.readFixedSlotArray(tag, RecipeTagCodec.KEY_INPUTS, GRID_SIZE);
+        output = RecipeTagCodec.readSlot(tag, RecipeTagCodec.KEY_OUTPUT);
+    }
+
+    public SlotContent[] getInputs() { return inputs; }
+    public SlotContent   getOutput() { return output; }
 }

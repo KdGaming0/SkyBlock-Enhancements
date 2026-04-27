@@ -41,6 +41,19 @@ public class SkyblockNpcInfoClientRecipe extends AbstractSkyblockClientRecipe
     private final int x, y, z;
     private final String[] loreLines;
 
+    /**
+     * Creates an NPC info client recipe and registers it in {@link SkyblockNpcInfoRegistry}
+     * so that the "NPC Info" button in shop recipes can resolve it.
+     */
+    public static SkyblockNpcInfoClientRecipe createAndRegister(SkyblockNpcInfoServerRecipe r) {
+        SkyblockNpcInfoClientRecipe recipe = new SkyblockNpcInfoClientRecipe(
+                r.getNpcHead(), r.getNpcId(), r.getNpcDisplayName(),
+                r.getIsland(), r.getX(), r.getY(), r.getZ(),
+                r.getLoreLines(), r.getWikiUrls());
+        SkyblockNpcInfoRegistry.register(r.getNpcId(), recipe);
+        return recipe;
+    }
+
     public SkyblockNpcInfoClientRecipe(ItemStack npcHead, String npcId, String npcDisplayName,
                                        String island, int x, int y, int z,
                                        String[] loreLines, String[] wikiUrls) {

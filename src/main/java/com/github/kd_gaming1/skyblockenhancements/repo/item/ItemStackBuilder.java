@@ -1,5 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.repo.item;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMultimap;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
@@ -38,7 +40,9 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 public final class ItemStackBuilder {
 
     /** Prototype cache. Stacks here are shared; call {@code .copy()} before mutating. */
-    private static final Map<String, ItemStack> CACHE = new ConcurrentHashMap<>();
+    private static final Cache<String, ItemStack> CACHE = CacheBuilder.newBuilder()
+            .maximumSize(2000)
+            .build();
 
     /** Identity set of skull stacks whose skin fetch has already been scheduled. */
     private static final Set<ItemStack> SKIN_LOADED =
@@ -55,7 +59,11 @@ public final class ItemStackBuilder {
 
     /** Returns a shared prototype for the given item. Call {@code .copy()} before mutating. */
     public static ItemStack build(NeuItem item) {
-        return CACHE.computeIfAbsent(item.internalName, k -> createStack(item));
+        try {
+            return CACHE.get(item.internalName, () -> createStack(item));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to build ItemStack for " + item.internalName, e);
+        }
     }
 
     /**
@@ -100,7 +108,7 @@ public final class ItemStackBuilder {
 
     /** Drops all cached prototypes — call after a repo reload. */
     public static void clearCache() {
-        CACHE.clear();
+        CACHE.invalidateAll();
         SKIN_LOADED.clear();
     }
 

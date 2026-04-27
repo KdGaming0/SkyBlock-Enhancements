@@ -2,10 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc;
 
 import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
-import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -61,18 +58,9 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
 
     @Override
     public List<ItemStack> getCraftReferences() {
-        if (!NeuItemRegistry.isLoaded()) return List.of();
         if (cachedNpcReferences != null) return cachedNpcReferences;
-
-        List<ItemStack> npcs = new ArrayList<>();
-        for (NeuItem item : NeuItemRegistry.getAll().values()) {
-            if (item.internalName.endsWith("_NPC") && item.hasNpcShopRecipes()) {
-                ItemStack stack = ItemStackBuilder.build(item);
-                if (!stack.isEmpty()) npcs.add(stack);
-            }
-        }
-        cachedNpcReferences = npcs;
-        return npcs;
+        cachedNpcReferences = NpcReferenceCollector.collect(NeuItem::hasNpcShopRecipes);
+        return cachedNpcReferences;
     }
 
     @Override

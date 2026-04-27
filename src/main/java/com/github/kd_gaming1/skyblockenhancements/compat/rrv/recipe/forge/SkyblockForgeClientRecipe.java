@@ -77,9 +77,9 @@ public class SkyblockForgeClientRecipe extends AbstractSkyblockClientRecipe
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
         var font = Minecraft.getInstance().font;
-        gfx.drawString(font, Component.literal("→"), ARROW_X, ARROW_Y, 0xFF404040, false);
+        renderArrow(gfx, ARROW_X, ARROW_Y);
         if (durationSeconds > 0) {
-            gfx.drawString(font, Component.literal("§7" + formatDuration(durationSeconds)),
+            gfx.drawString(font, Component.literal("§7" + SkyblockRecipeUtil.formatDuration(durationSeconds)),
                     DURATION_X, DURATION_Y, 0xFF808080, false);
         }
         maintainButtons(screen, pos);
@@ -91,16 +91,7 @@ public class SkyblockForgeClientRecipe extends AbstractSkyblockClientRecipe
         return placeWikiButton(screen, pos.left(), pos.top() + BUTTON_ROW_Y_OFFSET);
     }
 
-    /** Formats a second count as {@code "1h 30m"} / {@code "5m"} / {@code "45s"}. */
-    public static String formatDuration(int seconds) {
-        if (seconds >= 3600) {
-            int h = seconds / 3600;
-            int m = (seconds % 3600) / 60;
-            return m > 0 ? h + "h " + m + "m" : h + "h";
-        }
-        if (seconds >= 60) return (seconds / 60) + "m";
-        return seconds + "s";
-    }
+
 
     @Override
     public int getPriority() {

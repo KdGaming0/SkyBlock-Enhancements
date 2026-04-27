@@ -3,7 +3,13 @@ package com.github.kd_gaming1.skyblockenhancements.repo;
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.MOD_ID;
 
+import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsDownloader;
+import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemParser;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.net.URI;
@@ -13,16 +19,11 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import net.fabricmc.loader.api.FabricLoader;
-import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsDownloader;
-import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemParser;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 
 /**
  * Orchestrates the NEU repo download, parse, and cache pipeline. Each stage is
@@ -56,18 +57,6 @@ public class NeuRepoDownloader {
     private final Path repoZipFile;
     private final RepoDiskCache diskCache;
 
-    /**
-     * Completed with {@code true} when the NEU item cache is fully loaded into
-     * {@link NeuItemRegistry}, {@code false} if it failed. Reset on each {@link #downloadAsync} call.
-     */
-    private volatile CompletableFuture<Boolean> neuReadyFuture = new CompletableFuture<>();
-
-    /**
-     * Completed with {@code true} when {@link HypixelItemsRegistry} is loaded,
-     * {@code false} if it failed. Reset on each {@link #downloadAsync} call.
-     */
-    private volatile CompletableFuture<Boolean> hypixelReadyFuture = new CompletableFuture<>();
-
     public NeuRepoDownloader() {
         this.cacheDir = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("repo");
         this.hypixelCacheFile = cacheDir.resolve("hypixel-items-cache.json");
@@ -80,39 +69,32 @@ public class NeuRepoDownloader {
     // ── Public API ──────────────────────────────────────────────────────────────
 
     /**
-     * Kicks off an async download + parse. Resets both readiness futures before starting.
-     * Safe to fire-and-forget; callers that need completion signals use
-     * {@link #getNeuReadyFuture()} and {@link #getHypixelReadyFuture()}.
+     * Kicks off an async download + parse and returns an immutable {@link DownloadSession}
+     * containing the futures that signal when NEU and Hypixel data are ready.
+     *
+     * <p>Callers should not block on these futures directly; instead, pass the session to
+     * {@link com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.DataReadinessTracker}.
      */
-    public CompletableFuture<Void> downloadAsync(boolean startup) {
-        // Reset futures so callers always get fresh signals for this run.
-        neuReadyFuture = new CompletableFuture<>();
-        hypixelReadyFuture = new CompletableFuture<>();
+    public DownloadSession startDownload(boolean startup) {
+        CompletableFuture<Boolean> neuReady = new CompletableFuture<>();
+        CompletableFuture<Boolean> hypixelReady = new CompletableFuture<>();
+        DownloadSession session = new DownloadSession(neuReady, hypixelReady, Instant.now());
 
-        return CompletableFuture.runAsync(() -> {
+        CompletableFuture.runAsync(() -> {
             try {
-                download(startup);
+                download(startup, session);
             } catch (Exception e) {
                 LOGGER.error("Failed to download/load NEU repo data", e);
-                // Ensure futures are always completed — never leave callers hanging.
-                neuReadyFuture.complete(false);
-                hypixelReadyFuture.complete(false);
+                neuReady.complete(false);
+                hypixelReady.complete(false);
             }
         });
+
+        return session;
     }
 
-    public CompletableFuture<Void> refresh() {
-        return downloadAsync(true);
-    }
-
-    /** Returns the future that completes when NEU item data is ready (or failed). */
-    public CompletableFuture<Boolean> getNeuReadyFuture() {
-        return neuReadyFuture;
-    }
-
-    /** Returns the future that completes when Hypixel item data is ready (or failed). */
-    public CompletableFuture<Boolean> getHypixelReadyFuture() {
-        return hypixelReadyFuture;
+    public DownloadSession refresh() {
+        return startDownload(true);
     }
 
     public boolean needsRefreshMinutes(int minutes) {
@@ -128,16 +110,16 @@ public class NeuRepoDownloader {
 
     // ── Pipeline orchestration ──────────────────────────────────────────────────
 
-    private void download(boolean startup) throws Exception {
+    private void download(boolean startup, DownloadSession session) throws Exception {
         Files.createDirectories(cacheDir);
 
-        FetchAction action = resolveFetchAction(startup);
+        FetchAction action = resolveFetchAction(startup, session);
 
         if (action == FetchAction.USE_CACHE) {
             return;
         }
 
-        performFreshDownload();
+        performFreshDownload(session);
     }
 
     // ── Fetch strategy resolution ───────────────────────────────────────────────
@@ -150,13 +132,13 @@ public class NeuRepoDownloader {
      *
      * @return {@link FetchAction#USE_CACHE} if the cache was loaded, {@link FetchAction#DOWNLOAD} otherwise
      */
-    private FetchAction resolveFetchAction(boolean startup) throws IOException {
+    private FetchAction resolveFetchAction(boolean startup, DownloadSession session) throws IOException {
         String cachedEtag = diskCache.readMeta("etag");
         boolean cacheExists = diskCache.cacheExists();
 
         // ── ETag + cache available → check if remote has changed ─────────────────
         if (cachedEtag != null && cacheExists) {
-            return resolveWithEtag(cachedEtag, startup);
+            return resolveWithEtag(cachedEtag, startup, session);
         }
 
         // ── No ETag but cache exists → try loading it ────────────────────────────
@@ -165,8 +147,8 @@ public class NeuRepoDownloader {
             if (diskCache.loadFromCache()) {
                 loadMobData();
                 diskCache.saveMeta(null);
-                neuReadyFuture.complete(true);
-                fetchHypixelAndSignal(false);
+                session.neuReady().complete(true);
+                fetchHypixelAndSignal(session, false);
                 return FetchAction.USE_CACHE;
             }
             LOGGER.info("Cache invalid, re-downloading NEU repo...");
@@ -180,7 +162,7 @@ public class NeuRepoDownloader {
     /**
      * Handles the ETag-based freshness check. Sends a HEAD request with If-None-Match.
      */
-    private FetchAction resolveWithEtag(String cachedEtag, boolean startup) {
+    private FetchAction resolveWithEtag(String cachedEtag, boolean startup, DownloadSession session) {
         HttpRequest headReq = HttpRequest.newBuilder()
                 .uri(URI.create(REPO_ZIP_URL))
                 .method("HEAD", HttpRequest.BodyPublishers.noBody())
@@ -194,7 +176,7 @@ public class NeuRepoDownloader {
                     HTTP.send(headReq, HttpResponse.BodyHandlers.discarding());
 
             if (headResp.statusCode() == 304) {
-                return handleUnchangedRepo(cachedEtag, startup);
+                return handleUnchangedRepo(cachedEtag, startup, session);
             }
 
             LOGGER.info("NEU repo changed, downloading...");
@@ -202,14 +184,14 @@ public class NeuRepoDownloader {
 
         } catch (Exception e) {
             LOGGER.warn("HEAD check failed — falling back to cached data if available");
-            return handleHeadCheckFailure(startup);
+            return handleHeadCheckFailure(startup, session);
         }
     }
 
     /**
      * Called when the remote repo hasn't changed (HTTP 304).
      */
-    private FetchAction handleUnchangedRepo(String cachedEtag, boolean startup) throws IOException {
+    private FetchAction handleUnchangedRepo(String cachedEtag, boolean startup, DownloadSession session) throws IOException {
         LOGGER.info("NEU repo unchanged (ETag matched)");
 
         if (startup) {
@@ -217,8 +199,8 @@ public class NeuRepoDownloader {
             if (diskCache.loadFromCache()) {
                 loadMobData();
                 diskCache.saveMeta(cachedEtag);
-                neuReadyFuture.complete(true);
-                fetchHypixelAndSignal(false);
+                session.neuReady().complete(true);
+                fetchHypixelAndSignal(session, false);
                 return FetchAction.USE_CACHE;
             }
             LOGGER.info("Cache outdated (version bump), re-downloading NEU repo...");
@@ -228,19 +210,19 @@ public class NeuRepoDownloader {
         // Runtime check → nothing changed
         LOGGER.info("No NEU repo updates found.");
         diskCache.saveMeta(cachedEtag);
-        neuReadyFuture.complete(true);
-        fetchHypixelAndSignal(false);
+        session.neuReady().complete(true);
+        fetchHypixelAndSignal(session, false);
         return FetchAction.USE_CACHE;
     }
 
     /**
      * Called when the HEAD request fails (network error, timeout, etc.).
      */
-    private FetchAction handleHeadCheckFailure(boolean startup) {
+    private FetchAction handleHeadCheckFailure(boolean startup, DownloadSession session) {
         if (startup && diskCache.loadFromCache()) {
             loadMobData();
-            neuReadyFuture.complete(true);
-            fetchHypixelAndSignal(false);
+            session.neuReady().complete(true);
+            fetchHypixelAndSignal(session, false);
             return FetchAction.USE_CACHE;
         }
 
@@ -253,16 +235,16 @@ public class NeuRepoDownloader {
     /**
      * Downloads the ZIP, parses everything, populates registries, and saves the cache.
      *
-     * <p>NEU and Hypixel fetches run in parallel. {@link #neuReadyFuture} is completed as
+     * <p>NEU and Hypixel fetches run in parallel. {@link DownloadSession#neuReady()} is completed as
      * soon as {@link NeuItemRegistry#markLoaded()} returns, before waiting on the Hypixel
      * future — so both signals reflect actual data availability, not combined completion.
      */
-    private void performFreshDownload() throws Exception {
+    private void performFreshDownload(DownloadSession session) throws Exception {
         ItemStackBuilder.clearCache();
 
         // Fire Hypixel fetch in parallel with the ZIP download.
         CompletableFuture<Void> hypixelParallelFuture = CompletableFuture.runAsync(
-                () -> fetchHypixelAndSignal(true));
+                () -> fetchHypixelAndSignal(session, true));
 
         RepoZipParser.ParseResult result = RepoZipParser.downloadAndParse(HTTP, repoZipFile);
 
@@ -273,7 +255,7 @@ public class NeuRepoDownloader {
         NeuItemRegistry.markLoaded();
 
         // Signal NEU ready now — independently of Hypixel.
-        neuReadyFuture.complete(true);
+        session.neuReady().complete(true);
 
         LOGGER.info("Loaded {} SkyBlock items and {} constants files from NEU repo",
                 result.items().size(), result.constants().size());
@@ -283,7 +265,7 @@ public class NeuRepoDownloader {
             hypixelParallelFuture.join();
         } catch (Exception e) {
             LOGGER.warn("Hypixel items fetch encountered an error during join", e);
-            hypixelReadyFuture.complete(false);
+            session.hypixelReady().complete(false);
         }
 
         RecipeDiagnostic.run();
@@ -308,23 +290,23 @@ public class NeuRepoDownloader {
     // ── Hypixel items ───────────────────────────────────────────────────────────
 
     /**
-     * Fetches (or loads from cache) Hypixel items and completes {@link #hypixelReadyFuture}.
+     * Fetches (or loads from cache) Hypixel items and completes {@link DownloadSession#hypixelReady()}.
      * Must never throw — always completes the future, success or failure.
      */
-    private void fetchHypixelAndSignal(boolean forceRefresh) {
+    private void fetchHypixelAndSignal(DownloadSession session, boolean forceRefresh) {
         try {
             if (forceRefresh) {
                 HypixelItemsRegistry.clear();
             }
             HypixelItemsDownloader.fetchAndCache(HTTP, hypixelCacheFile, forceRefresh);
             boolean loaded = HypixelItemsRegistry.isLoaded();
-            hypixelReadyFuture.complete(loaded);
+            session.hypixelReady().complete(loaded);
             if (!loaded) {
                 LOGGER.warn("Hypixel items registry empty after fetch — signalling failure.");
             }
         } catch (Exception e) {
             LOGGER.warn("Hypixel items fetch failed", e);
-            hypixelReadyFuture.complete(false);
+            session.hypixelReady().complete(false);
         }
     }
 

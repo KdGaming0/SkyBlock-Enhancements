@@ -1,14 +1,14 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.wiki;
 
-import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipeType;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.RecipeTagCodec;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 /** Visual-only wiki card for items that have wiki URLs but no other recipe data. */
-public class SkyblockWikiInfoServerRecipe implements ReliableServerRecipe {
+public class SkyblockWikiInfoServerRecipe extends AbstractSkyblockServerRecipe {
 
     public static final ReliableServerRecipeType<SkyblockWikiInfoServerRecipe> TYPE =
             ReliableServerRecipeType.register(
@@ -17,34 +17,30 @@ public class SkyblockWikiInfoServerRecipe implements ReliableServerRecipe {
 
     private ItemStack displayItem;
     private String displayName;
-    private String[] wikiUrls;
 
     public SkyblockWikiInfoServerRecipe(ItemStack displayItem, String displayName, String[] wikiUrls) {
+        super(wikiUrls);
         this.displayItem = displayItem != null ? displayItem : ItemStack.EMPTY;
         this.displayName = displayName != null ? displayName : "";
-        this.wikiUrls    = wikiUrls;
     }
 
     @Override
-    public void writeToTag(CompoundTag tag) {
-        RecipeTagCodec.writeStack(tag, "item", displayItem);
-        tag.putString("name", displayName);
-        RecipeTagCodec.writeWikiUrls(tag, wikiUrls);
-    }
-
-    @Override
-    public void loadFromTag(CompoundTag tag) {
-        displayItem = RecipeTagCodec.readStack(tag, "item");
-        displayName = tag.getStringOr("name", "");
-        wikiUrls    = RecipeTagCodec.readWikiUrls(tag);
-    }
-
-    @Override
-    public ReliableServerRecipeType<? extends ReliableServerRecipe> getRecipeType() {
+    protected ReliableServerRecipeType<?> getType() {
         return TYPE;
+    }
+
+    @Override
+    protected void writeFields(CompoundTag tag) {
+        RecipeTagCodec.writeStack(tag, RecipeTagCodec.KEY_ITEM, displayItem);
+        tag.putString(RecipeTagCodec.KEY_NAME, displayName);
+    }
+
+    @Override
+    protected void readFields(CompoundTag tag) {
+        displayItem = RecipeTagCodec.readStack(tag, RecipeTagCodec.KEY_ITEM);
+        displayName = tag.getStringOr(RecipeTagCodec.KEY_NAME, "");
     }
 
     public ItemStack getDisplayItem()  { return displayItem; }
     public String    getDisplayName()  { return displayName; }
-    public String[]  getWikiUrls()     { return wikiUrls; }
 }

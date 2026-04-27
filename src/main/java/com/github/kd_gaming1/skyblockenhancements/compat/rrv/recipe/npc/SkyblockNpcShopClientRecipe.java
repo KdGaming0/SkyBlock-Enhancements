@@ -83,8 +83,7 @@ public class SkyblockNpcShopClientRecipe extends AbstractSkyblockClientRecipe
             gfx.drawString(Minecraft.getInstance().font,
                     Component.literal(npcDisplayName), 0, 0, 0xFFFFFFFF, true);
         }
-        gfx.drawString(Minecraft.getInstance().font,
-                Component.literal("→"), ARROW_X, ARROW_Y, 0xFF404040, false);
+        renderArrow(gfx, ARROW_X, ARROW_Y);
         maintainButtons(screen, pos);
     }
 

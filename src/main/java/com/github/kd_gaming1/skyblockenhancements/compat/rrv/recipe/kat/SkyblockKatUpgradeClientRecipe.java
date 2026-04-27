@@ -8,7 +8,7 @@ import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.forge.SkyblockForgeClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -74,8 +74,8 @@ public class SkyblockKatUpgradeClientRecipe extends AbstractSkyblockClientRecipe
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
         var font = Minecraft.getInstance().font;
-        gfx.drawString(font, Component.literal("→"), 22, 22, 0xFF404040, false);
-        gfx.drawString(font, Component.literal("→"), 80, 22, 0xFF404040, false);
+        renderArrow(gfx, 22, 22);
+        renderArrow(gfx, 80, 22);
 
         if (coins > 0) {
             gfx.drawString(font,
@@ -84,7 +84,7 @@ public class SkyblockKatUpgradeClientRecipe extends AbstractSkyblockClientRecipe
         }
         if (timeSeconds > 0) {
             gfx.drawString(font,
-                    Component.literal("§7" + SkyblockForgeClientRecipe.formatDuration(timeSeconds)),
+                    Component.literal("§7" + SkyblockRecipeUtil.formatDuration(timeSeconds)),
                     90, 46, 0xFF808080, false);
         }
         maintainButtons(screen, pos);

@@ -83,7 +83,7 @@ public class SkyblockEssenceUpgradeClientRecipe extends AbstractSkyblockClientRe
         gfx.drawString(font,
                 Component.literal("§6" + "✪".repeat(starLevel) + " §e" + essenceType),
                 HEADER_X, HEADER_Y, 0xFFFFFF, true);
-        gfx.drawString(font, Component.literal("→"), ARROW_X, ARROW_Y, 0xFF404040, false);
+        renderArrow(gfx, ARROW_X, ARROW_Y);
         maintainButtons(screen, pos);
     }
 

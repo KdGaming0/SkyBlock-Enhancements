@@ -99,6 +99,9 @@ public final class SkyblockInjectionCache {
         cachedGrouped = new HashMap<>(grouped);
         cachedItems = items;
 
+        // Raw recipe JSON is no longer needed after generation — free the memory.
+        NeuItemRegistry.trimRecipes();
+
         LOGGER.info("Built injection cache: {} items, {} recipes.",
                 items.size(), countRecipes(grouped));
     }

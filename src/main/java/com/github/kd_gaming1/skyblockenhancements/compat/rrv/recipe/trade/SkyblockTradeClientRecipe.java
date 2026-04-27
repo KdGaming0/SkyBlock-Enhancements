@@ -8,10 +8,8 @@ import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 public class SkyblockTradeClientRecipe extends AbstractSkyblockClientRecipe
@@ -54,8 +52,7 @@ public class SkyblockTradeClientRecipe extends AbstractSkyblockClientRecipe
     @Override
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
-        gfx.drawString(Minecraft.getInstance().font,
-                Component.literal("→"), ARROW_X, ARROW_Y, 0xFF404040, false);
+        renderArrow(gfx, ARROW_X, ARROW_Y);
         maintainButtons(screen, pos);
     }
 

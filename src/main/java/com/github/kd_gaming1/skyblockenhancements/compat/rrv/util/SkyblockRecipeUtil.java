@@ -102,6 +102,19 @@ public final class SkyblockRecipeUtil {
                 + suffix;
     }
 
+    // ── Duration formatting ─────────────────────────────────────────────────────
+
+    /** Formats a second count as {@code "1h 30m"} / {@code "5m"} / {@code "45s"}. */
+    public static String formatDuration(int seconds) {
+        if (seconds >= 3600) {
+            int h = seconds / 3600;
+            int m = (seconds % 3600) / 60;
+            return m > 0 ? h + "h " + m + "m" : h + "h";
+        }
+        if (seconds >= 60) return (seconds / 60) + "m";
+        return seconds + "s";
+    }
+
     // ── Wiki button ──────────────────────────────────────────────────────────────
 
     /**

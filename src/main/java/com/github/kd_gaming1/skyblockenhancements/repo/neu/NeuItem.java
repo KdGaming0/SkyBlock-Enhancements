@@ -161,4 +161,13 @@ public class NeuItem {
      * Populated lazily during sort and cached to avoid re-parsing.
      */
     public transient SkyblockRarity rarity;
+
+    /**
+     * Releases the raw recipe JSON to reduce memory pressure after recipes have been
+     * generated and injected. The boolean query methods continue to work because they
+     * only need the already-populated flags.
+     */
+    public void trimRecipes() {
+        this.recipes = null;
+    }
 }

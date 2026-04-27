@@ -2,11 +2,11 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops;
 
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 
-import cc.cassian.rrv.api.recipe.ReliableClientRecipe;
 import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import java.util.ArrayList;
@@ -28,15 +28,10 @@ import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Client-side drop recipe. Implements {@link ReliableClientRecipe} directly (no RRV
- * inheritance) so it uses {@link SkyblockDropsRecipeType} and has full control over the
- * preview rendering — no silent fall-through to a placeholder pig.
- *
- * <p>Preview is resolved once at construction. When {@link #initRecipe()} fires, any vanilla
- * {@link LivingEntity} needed for the current preview is spawned; {@link #fadeRecipe()}
- * releases it. Rotation pauses while the preview box is hovered, matching RRV's native feel.
+ * Client-side drop recipe. Uses {@link AbstractSkyblockClientRecipe} for button lifecycle
+ * but manages its own entity preview spawn / dispose in {@link #initRecipe} / {@link #fadeRecipe}.
  */
-public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
+public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
 
     private static final int MAX_DROPS = 12;
     private static final int BUTTON_ROW_Y_OFFSET = SkyblockDropsRecipeType.WIKI_BUTTON_TOP;
@@ -50,7 +45,6 @@ public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
 
     private final String mobName;
     private final String[] chances;
-    private final String[] wikiUrls;
     private final List<SlotContent> drops;
 
     @Nullable private final MobPreview preview;
@@ -62,13 +56,10 @@ public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
     private int animationTick;
     private boolean previewHovered;
 
-    private boolean buttonsDirty = true;
-    @Nullable private Button sentinelButton;
-
     public SkyblockDropsClientRecipe(SkyblockDropsServerRecipe src) {
+        super(src.getWikiUrls());
         this.mobName  = src.getMobName() != null ? src.getMobName() : "";
         this.chances  = src.getChances();
-        this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(src.getWikiUrls());
         this.drops    = buildDropsList(src.getDrops());
 
         MobPreview resolved = MobRenderResolver.resolve(src.getRenderRef());
@@ -142,7 +133,7 @@ public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
 
     @Override
     public void initRecipe() {
-        buttonsDirty = true;
+        super.initRecipe();
         if (preview == null || !preview.needsLivingEntity()) return;
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return;
@@ -169,8 +160,7 @@ public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
 
     @Override
     public void fadeRecipe() {
-        buttonsDirty = true;
-        sentinelButton = null;
+        super.fadeRecipe();
         disposeEntities();
     }
 
@@ -208,7 +198,7 @@ public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
 
         renderMobName(gfx, pos);
         renderHoverTooltipIfNeeded(gfx, screen, pos, mouseX, mouseY);
-        maintainWikiButton(screen, pos);
+        maintainButtons(screen, pos);
     }
 
     private void renderMobName(GuiGraphics gfx, RecipePosition pos) {
@@ -247,14 +237,11 @@ public class SkyblockDropsClientRecipe implements ReliableClientRecipe {
                 pos.top() + mouseY);
     }
 
-    // ── Wiki button ────────────────────────────────────────────────────────────
+    // ── Buttons ────────────────────────────────────────────────────────────────
 
-    private void maintainWikiButton(RecipeViewScreen screen, RecipePosition pos) {
-        boolean screenDropped = sentinelButton != null && !screen.children().contains(sentinelButton);
-        if (!buttonsDirty && !screenDropped) return;
-
-        sentinelButton = SkyblockRecipeUtil.addWikiButton(
-                screen, wikiUrls, pos.left(), pos.top() + BUTTON_ROW_Y_OFFSET);
-        buttonsDirty = false;
+    @Override
+    @Nullable
+    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+        return placeWikiButton(screen, pos.left(), pos.top() + BUTTON_ROW_Y_OFFSET);
     }
 }

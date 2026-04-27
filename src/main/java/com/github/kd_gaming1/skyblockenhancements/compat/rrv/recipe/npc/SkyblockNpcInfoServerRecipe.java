@@ -1,7 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc;
 
-import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipeType;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.RecipeTagCodec;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -13,7 +13,7 @@ import net.minecraft.world.item.ItemStack;
  * Generated for every NPC item. Shop NPCs are reached from the shop page's "NPC Info" button,
  * non-shop NPCs by clicking the NPC item directly.
  */
-public class SkyblockNpcInfoServerRecipe implements ReliableServerRecipe {
+public class SkyblockNpcInfoServerRecipe extends AbstractSkyblockServerRecipe {
 
     public static final ReliableServerRecipeType<SkyblockNpcInfoServerRecipe> TYPE =
             ReliableServerRecipeType.register(
@@ -29,11 +29,11 @@ public class SkyblockNpcInfoServerRecipe implements ReliableServerRecipe {
     private int y;
     private int z;
     private String[] loreLines;
-    private String[] wikiUrls;
 
     public SkyblockNpcInfoServerRecipe(ItemStack npcHead, String npcId, String npcDisplayName,
                                        String island, int x, int y, int z,
                                        String[] loreLines, String[] wikiUrls) {
+        super(wikiUrls);
         this.npcHead = npcHead != null ? npcHead : ItemStack.EMPTY;
         this.npcId = npcId != null ? npcId : "";
         this.npcDisplayName = npcDisplayName != null ? npcDisplayName : "";
@@ -42,41 +42,37 @@ public class SkyblockNpcInfoServerRecipe implements ReliableServerRecipe {
         this.y = y;
         this.z = z;
         this.loreLines = loreLines != null ? loreLines : new String[0];
-        this.wikiUrls = wikiUrls;
     }
 
     @Override
-    public void writeToTag(CompoundTag tag) {
-        RecipeTagCodec.writeStack(tag, "head", npcHead);
-        tag.putString("npc", npcId);
-        tag.putString("displayName", npcDisplayName);
-        tag.putString("island", island);
-        tag.putInt("x", x);
-        tag.putInt("y", y);
-        tag.putInt("z", z);
-        RecipeTagCodec.writeStringArray(tag, "lore", loreLines);
-        RecipeTagCodec.writeWikiUrls(tag, wikiUrls);
-    }
-
-    @Override
-    public void loadFromTag(CompoundTag tag) {
-        npcHead        = RecipeTagCodec.readStack(tag, "head");
-        npcId          = tag.getStringOr("npc", "");
-        npcDisplayName = tag.getStringOr("displayName", "");
-        island         = tag.getStringOr("island", "");
-        x              = tag.getIntOr("x", 0);
-        y              = tag.getIntOr("y", 0);
-        z              = tag.getIntOr("z", 0);
-
-        ListTag loreTag = tag.getListOrEmpty("lore");
-        loreLines = RecipeTagCodec.readStringArray(tag, "lore", loreTag.size());
-
-        wikiUrls = RecipeTagCodec.readWikiUrls(tag);
-    }
-
-    @Override
-    public ReliableServerRecipeType<? extends ReliableServerRecipe> getRecipeType() {
+    protected ReliableServerRecipeType<?> getType() {
         return TYPE;
+    }
+
+    @Override
+    protected void writeFields(CompoundTag tag) {
+        RecipeTagCodec.writeStack(tag, RecipeTagCodec.KEY_HEAD, npcHead);
+        tag.putString(RecipeTagCodec.KEY_NPC, npcId);
+        tag.putString(RecipeTagCodec.KEY_DISPLAY_NAME, npcDisplayName);
+        tag.putString(RecipeTagCodec.KEY_ISLAND, island);
+        tag.putInt(RecipeTagCodec.KEY_X, x);
+        tag.putInt(RecipeTagCodec.KEY_Y, y);
+        tag.putInt(RecipeTagCodec.KEY_Z, z);
+        RecipeTagCodec.writeStringArray(tag, RecipeTagCodec.KEY_LORE, loreLines);
+    }
+
+    @Override
+    protected void readFields(CompoundTag tag) {
+        npcHead        = RecipeTagCodec.readStack(tag, RecipeTagCodec.KEY_HEAD);
+        npcId          = tag.getStringOr(RecipeTagCodec.KEY_NPC, "");
+        npcDisplayName = tag.getStringOr(RecipeTagCodec.KEY_DISPLAY_NAME, "");
+        island         = tag.getStringOr(RecipeTagCodec.KEY_ISLAND, "");
+        x              = tag.getIntOr(RecipeTagCodec.KEY_X, 0);
+        y              = tag.getIntOr(RecipeTagCodec.KEY_Y, 0);
+        z              = tag.getIntOr(RecipeTagCodec.KEY_Z, 0);
+
+        ListTag loreTag = tag.getListOrEmpty(RecipeTagCodec.KEY_LORE);
+        loreLines = RecipeTagCodec.readStringArray(tag, RecipeTagCodec.KEY_LORE, loreTag.size());
     }
 
     public ItemStack getNpcHead()        { return npcHead; }
@@ -87,5 +83,4 @@ public class SkyblockNpcInfoServerRecipe implements ReliableServerRecipe {
     public int       getY()              { return y; }
     public int       getZ()              { return z; }
     public String[]  getLoreLines()      { return loreLines; }
-    public String[]  getWikiUrls()       { return wikiUrls; }
 }

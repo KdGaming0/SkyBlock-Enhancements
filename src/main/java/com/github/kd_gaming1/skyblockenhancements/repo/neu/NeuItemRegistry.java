@@ -89,4 +89,14 @@ public final class NeuItemRegistry {
     public static boolean isLoaded() {
         return loaded;
     }
+
+    /**
+     * Nulls out the raw recipe JSON on every registered item to free memory.
+     * Safe to call once recipe generation is complete.
+     */
+    public static void trimRecipes() {
+        for (NeuItem item : ITEMS.values()) {
+            item.trimRecipes();
+        }
+    }
 }

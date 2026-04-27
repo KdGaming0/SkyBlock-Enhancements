@@ -3,6 +3,9 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv;
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 
 import cc.cassian.rrv.api.recipe.ItemView;
+import cc.cassian.rrv.api.recipe.ReliableClientRecipe;
+import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
+import cc.cassian.rrv.api.recipe.ReliableServerRecipeType;
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting.SkyblockCraftingClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting.SkyblockCraftingServerRecipe;
@@ -106,58 +109,47 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
 
     // ── Recipe wrappers (server → client) ────────────────────────────────────────
 
+    @FunctionalInterface
+    private interface ClientRecipeFactory<R extends ReliableServerRecipe, C extends ReliableClientRecipe> {
+        C create(R recipe);
+    }
+
+    private static <R extends ReliableServerRecipe, C extends ReliableClientRecipe>
+    void register(ReliableServerRecipeType<R> type, ClientRecipeFactory<R, C> factory) {
+        ItemView.addClientRecipeWrapper(type, r -> List.of(factory.create(r)));
+    }
+
     private void registerRecipeWrappers() {
-        ItemView.addClientRecipeWrapper(
-                SkyblockCraftingServerRecipe.TYPE,
-                r -> List.of(new SkyblockCraftingClientRecipe(
-                        r.getInputs(), r.getOutput(), r.getWikiUrls())));
+        register(SkyblockCraftingServerRecipe.TYPE,
+                r -> new SkyblockCraftingClientRecipe(r.getInputs(), r.getOutput(), r.getWikiUrls()));
 
-        ItemView.addClientRecipeWrapper(
-                SkyblockForgeServerRecipe.TYPE,
-                r -> List.of(new SkyblockForgeClientRecipe(
-                        r.getInputs(), r.getOutput(), r.getDurationSeconds(), r.getWikiUrls())));
+        register(SkyblockForgeServerRecipe.TYPE,
+                r -> new SkyblockForgeClientRecipe(
+                        r.getInputs(), r.getOutput(), r.getDurationSeconds(), r.getWikiUrls()));
 
-        ItemView.addClientRecipeWrapper(
-                SkyblockNpcShopServerRecipe.TYPE,
-                r -> List.of(new SkyblockNpcShopClientRecipe(
+        register(SkyblockNpcShopServerRecipe.TYPE,
+                r -> new SkyblockNpcShopClientRecipe(
                         r.getCosts(), r.getResult(), r.getNpcId(), r.getNpcDisplayName(),
-                        r.getWikiUrls())));
+                        r.getWikiUrls()));
 
-        ItemView.addClientRecipeWrapper(
-                SkyblockNpcInfoServerRecipe.TYPE,
-                r -> {
-                    SkyblockNpcInfoClientRecipe recipe = new SkyblockNpcInfoClientRecipe(
-                            r.getNpcHead(), r.getNpcId(), r.getNpcDisplayName(),
-                            r.getIsland(), r.getX(), r.getY(), r.getZ(),
-                            r.getLoreLines(), r.getWikiUrls());
-                    SkyblockNpcInfoRegistry.register(r.getNpcId(), recipe);
-                    return List.of(recipe);
-                });
+        register(SkyblockNpcInfoServerRecipe.TYPE, SkyblockNpcInfoClientRecipe::createAndRegister);
 
-        ItemView.addClientRecipeWrapper(
-                SkyblockTradeServerRecipe.TYPE,
-                r -> List.of(new SkyblockTradeClientRecipe(
-                        r.getCost(), r.getResult(), r.getWikiUrls())));
+        register(SkyblockTradeServerRecipe.TYPE,
+                r -> new SkyblockTradeClientRecipe(r.getCost(), r.getResult(), r.getWikiUrls()));
 
-        ItemView.addClientRecipeWrapper(
-                SkyblockDropsServerRecipe.TYPE,
-                r -> List.of(new SkyblockDropsClientRecipe(r)));
+        register(SkyblockDropsServerRecipe.TYPE, SkyblockDropsClientRecipe::new);
 
-        ItemView.addClientRecipeWrapper(
-                SkyblockKatUpgradeServerRecipe.TYPE,
-                r -> List.of(new SkyblockKatUpgradeClientRecipe(
+        register(SkyblockKatUpgradeServerRecipe.TYPE,
+                r -> new SkyblockKatUpgradeClientRecipe(
                         r.getInput(), r.getOutput(), r.getMaterials(), r.getCoins(),
-                        r.getTimeSeconds(), r.getWikiUrls())));
+                        r.getTimeSeconds(), r.getWikiUrls()));
 
-        ItemView.addClientRecipeWrapper(
-                SkyblockWikiInfoServerRecipe.TYPE,
-                r -> List.of(new SkyblockWikiInfoClientRecipe(
-                        r.getDisplayItem(), r.getDisplayName(), r.getWikiUrls())));
+        register(SkyblockWikiInfoServerRecipe.TYPE,
+                r -> new SkyblockWikiInfoClientRecipe(r.getDisplayItem(), r.getDisplayName(), r.getWikiUrls()));
 
-        ItemView.addClientRecipeWrapper(
-                SkyblockEssenceUpgradeServerRecipe.TYPE,
-                r -> List.of(new SkyblockEssenceUpgradeClientRecipe(
+        register(SkyblockEssenceUpgradeServerRecipe.TYPE,
+                r -> new SkyblockEssenceUpgradeClientRecipe(
                         r.getInput(), r.getOutput(), r.getEssence(), r.getCompanions(),
-                        r.getStarLevel(), r.getEssenceType(), r.getWikiUrls())));
+                        r.getStarLevel(), r.getEssenceType(), r.getWikiUrls()));
     }
 }

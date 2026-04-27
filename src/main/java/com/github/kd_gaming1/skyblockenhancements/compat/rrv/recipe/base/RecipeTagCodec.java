@@ -23,6 +23,33 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class RecipeTagCodec {
 
+    // ── Common NBT keys ─────────────────────────────────────────────────────────
+
+    public static final String KEY_INPUTS      = "in";
+    public static final String KEY_OUTPUT      = "out";
+    public static final String KEY_COST        = "cost";
+    public static final String KEY_DURATION    = "dur";
+    public static final String KEY_TIME        = "time";
+    public static final String KEY_COINS       = "coins";
+    public static final String KEY_COUNT       = "count";
+    public static final String KEY_MOB         = "mob";
+    public static final String KEY_RENDER      = "render";
+    public static final String KEY_CHANCES     = "chances";
+    public static final String KEY_NPC         = "npc";
+    public static final String KEY_DISPLAY_NAME = "displayName";
+    public static final String KEY_HEAD        = "head";
+    public static final String KEY_ISLAND      = "island";
+    public static final String KEY_X           = "x";
+    public static final String KEY_Y           = "y";
+    public static final String KEY_Z           = "z";
+    public static final String KEY_LORE        = "lore";
+    public static final String KEY_ITEM        = "item";
+    public static final String KEY_NAME        = "name";
+    public static final String KEY_ESSENCE     = "ess";
+    public static final String KEY_STAR        = "star";
+    public static final String KEY_ESSENCE_TYPE = "essType";
+    public static final String KEY_WIKI_URLS   = "wiki";
+
     private RecipeTagCodec() {}
 
     // ── Single slots ─────────────────────────────────────────────────────────────

@@ -67,8 +67,7 @@ public class SkyblockCraftingClientRecipe extends AbstractSkyblockClientRecipe
     @Override
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
-        gfx.drawString(Minecraft.getInstance().font,
-                Component.literal("→"), ARROW_X, ARROW_Y, 0xFF404040, false);
+        renderArrow(gfx, ARROW_X, ARROW_Y);
         maintainButtons(screen, pos);
     }
 

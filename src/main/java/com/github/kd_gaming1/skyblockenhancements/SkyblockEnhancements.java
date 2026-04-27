@@ -15,12 +15,12 @@ import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManag
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
 import com.github.kd_gaming1.skyblockenhancements.feature.filter.LogFilterRegistry;
+import com.github.kd_gaming1.skyblockenhancements.repo.DownloadSession;
 import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.IrisCompat;
-import com.github.kd_gaming1.skyblockenhancements.util.NeuRepoCache;
 import eu.midnightdust.lib.config.MidnightConfig;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.concurrent.CompletableFuture;
@@ -44,7 +44,6 @@ public class SkyblockEnhancements implements ClientModInitializer {
     /** Ticks between repo staleness checks (~5 minutes at 20 TPS). */
     private static final int REFRESH_CHECK_INTERVAL_TICKS = 12000;
 
-    private final NeuRepoCache cache = new NeuRepoCache();
     private final ReminderStorage reminderStorage =
             new ReminderStorage(
                     FabricLoader.getInstance()
@@ -58,6 +57,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
     private volatile CompletableFuture<Void> repoFuture = new CompletableFuture<>();
     private final NeuRepoDownloader repoDownloader = new NeuRepoDownloader();
+    private volatile DownloadSession currentSession;
     private long lastRefreshCheckTick = 0;
 
     private static SkyblockEnhancements instance;
@@ -93,7 +93,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
         ClientLifecycleEvents.CLIENT_STARTED.register(
                 client -> CompletableFuture.runAsync(() -> {
                     try {
-                        cache.downloadAndSave("constants/enchants.json");
+                        downloadEnchantsData();
                     } catch (Exception e) {
                         LOGGER.error("Failed to download enchants data", e);
                     }
@@ -116,8 +116,8 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             LOGGER.info("Starting NEU repo download...");
-            repoDownloader.downloadAsync(true);
-            repoFuture = DataReadinessTracker.waitAndInject(repoDownloader)
+            currentSession = repoDownloader.startDownload(true);
+            repoFuture = DataReadinessTracker.waitAndInject(currentSession)
                     .exceptionally(ex -> {
                         LOGGER.error("Failed to sync NEU repo with RRV", ex);
                         return null;
@@ -133,8 +133,8 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
             if (neuFailed) {
                 LOGGER.info("Retrying NEU repo download...");
-                repoDownloader.downloadAsync(false);
-                repoFuture = DataReadinessTracker.retryNeuAndInject(repoDownloader)
+                currentSession = repoDownloader.startDownload(false);
+                repoFuture = DataReadinessTracker.retryNeuAndInject(currentSession)
                         .exceptionally(ex -> {
                             LOGGER.error("NEU repo retry failed", ex);
                             return null;
@@ -144,9 +144,8 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
             if (hypixelFailed) {
                 LOGGER.info("Retrying Hypixel items download (essence upgrades missing)...");
-                // Re-fire the Hypixel fetch; downloadAsync resets the futures.
-                repoDownloader.downloadAsync(false);
-                repoFuture = DataReadinessTracker.retryHypixelAndDeltaInject(repoDownloader)
+                currentSession = repoDownloader.startDownload(false);
+                repoFuture = DataReadinessTracker.retryHypixelAndDeltaInject(currentSession)
                         .exceptionally(ex -> {
                             LOGGER.error("Hypixel retry failed", ex);
                             return null;
@@ -158,8 +157,8 @@ public class SkyblockEnhancements implements ClientModInitializer {
             if (!repoDownloader.needsRefreshMinutes(SkyblockEnhancementsConfig.repoRefreshCheckMinutes)) return;
 
             LOGGER.info("Auto-refreshing NEU repo data...");
-            repoDownloader.downloadAsync(false);
-            repoFuture = DataReadinessTracker.waitAndInject(repoDownloader)
+            currentSession = repoDownloader.startDownload(false);
+            repoFuture = DataReadinessTracker.waitAndInject(currentSession)
                     .exceptionally(ex -> {
                         LOGGER.error("Failed to refresh NEU repo", ex);
                         return null;
@@ -196,6 +195,24 @@ public class SkyblockEnhancements implements ClientModInitializer {
             RemindersFileData data = reminderManager.saveToStorage();
             reminderStorage.setRemindersData(data);
             reminderStorage.save();
+        }
+    }
+
+    private static void downloadEnchantsData() throws Exception {
+        String url = "https://raw.githubusercontent.com/NotEnoughUpdates/NotEnoughUpdates-REPO/master/constants/enchants.json";
+        java.net.http.HttpClient http = java.net.http.HttpClient.newHttpClient();
+        com.google.gson.Gson gson = new com.google.gson.GsonBuilder().create();
+        com.github.kd_gaming1.skyblockenhancements.repo.network.JsonHttpClient client =
+                new com.github.kd_gaming1.skyblockenhancements.repo.network.JsonHttpClient(http, gson);
+        String text = client.getString(url);
+        if (text != null) {
+            java.nio.file.Path target = FabricLoader.getInstance()
+                    .getConfigDir()
+                    .resolve(MOD_ID)
+                    .resolve("data")
+                    .resolve("constants")
+                    .resolve("enchants.json");
+            com.github.kd_gaming1.skyblockenhancements.repo.io.AtomicFileWriter.writeString(target, text);
         }
     }
 

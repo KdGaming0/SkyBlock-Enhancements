@@ -5,6 +5,7 @@ import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.RecipeOutputResolver;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.SlotRefParser;
 import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.JsonUtil;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.google.gson.JsonObject;
 
@@ -41,15 +42,11 @@ public final class CraftingRecipeParser {
     public static ReliableServerRecipe parseModern(JsonObject recipe, NeuItem item) {
         SlotContent[] inputs = new SlotContent[9];
         for (int i = 0; i < 9; i++) {
-            inputs[i] = SlotRefParser.parse(jsonStr(recipe, GRID_KEYS[i]));
+            inputs[i] = SlotRefParser.parse(JsonUtil.getString(recipe, GRID_KEYS[i]));
         }
         return new SkyblockCraftingServerRecipe(
                 inputs,
                 SlotContent.of(RecipeOutputResolver.resolve(recipe, item)),
                 item.getWikiUrls());
-    }
-
-    private static String jsonStr(JsonObject obj, String key) {
-        return obj.has(key) && obj.get(key).isJsonPrimitive() ? obj.get(key).getAsString() : null;
     }
 }
