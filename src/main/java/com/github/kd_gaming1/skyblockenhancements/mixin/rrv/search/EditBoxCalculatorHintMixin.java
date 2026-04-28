@@ -21,19 +21,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * end of the value ({@code !insert} guard in {@code renderWidget}). This mixin bypasses
  * that guard by:
  * <ol>
- *   <li>Nulling the suggestion at HEAD so vanilla never draws it.</li>
- *   <li>Re-drawing it ourselves at TAIL, anchored to {@code textX + width(visibleText)},
- *       which is independent of cursor position.</li>
+ *   <li>Snapshotting and clearing the suggestion at HEAD so vanilla never draws it.</li>
+ *   <li>Restoring and re-drawing it at TAIL, anchored to the end of the visible text.</li>
  * </ol>
  *
- * <p>Only active for {@link SearchBar} instances — every other {@code EditBox} in the
- * game is unaffected.
+ * <p>The field mutation is conditional — it only occurs when the suggestion is non-empty,
+ * avoiding unnecessary per-frame writes when no calculator result is present.
+ *
+ * <p>Only active for {@link SearchBar} instances.
  */
 @Mixin(EditBox.class)
 public abstract class EditBoxCalculatorHintMixin {
 
-    @Final
-    @Shadow private Font font;
+    @Final @Shadow private Font font;
     @Shadow private String value;
     @Shadow private int displayPos;
     @Shadow private int textColor;
@@ -45,37 +45,46 @@ public abstract class EditBoxCalculatorHintMixin {
 
     @Shadow public abstract int getInnerWidth();
 
-    // ── Render-thread scratch: holds the suggestion while vanilla renders ────────
+    // ── Render-thread scratch state ─────────────────────────────────────────────
 
-    @Unique
-    private transient String sbe$pendingSuggestion;
+    /** Holds the original suggestion while vanilla renders, or {@code null} if unchanged. */
+    @Unique private transient String sbe$pendingSuggestion;
+    /** Set to {@code true} only when we actually cleared the field for this frame. */
+    @Unique private transient boolean sbe$didSuppress;
 
-    // ── Injections ────────────────────────────────────────────────────────────────
+    // ── Injections ──────────────────────────────────────────────────────────────
 
     /**
      * Snapshot and suppress the suggestion before vanilla's render pass so vanilla
      * never draws it (regardless of cursor position).
+     *
+     * <p>Only mutates the field when the suggestion is non-empty, avoiding needless
+     * writes on every render frame.
      */
     @Inject(method = "renderWidget", at = @At("HEAD"))
     private void sbe$suppressVanillaSuggestion(
             GuiGraphics gfx, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
 
         if (!isTrackedSearchBar()) return;
+        if (suggestion == null || suggestion.isEmpty()) return;
+
         sbe$pendingSuggestion = suggestion;
+        sbe$didSuppress = true;
         suggestion = null;
     }
 
     /**
      * After vanilla finishes, restore the suggestion field and draw it ourselves
-     * anchored to the end of the visible text — always visible regardless of where
-     * the cursor currently sits.
+     * anchored to the end of the visible text.
      */
     @Inject(method = "renderWidget", at = @At("TAIL"))
     private void sbe$renderCalculatorHintAlways(
             GuiGraphics gfx, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
 
         if (!isTrackedSearchBar()) return;
+        if (!sbe$didSuppress) return;
 
+        sbe$didSuppress = false;
         suggestion = sbe$pendingSuggestion;
         sbe$pendingSuggestion = null;
 
@@ -88,7 +97,7 @@ public abstract class EditBoxCalculatorHintMixin {
         gfx.drawString(font, suggestion, hintX, textY, dimColor(textColor), textShadow);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────────
+    // ── Helpers ─────────────────────────────────────────────────────────────────
 
     @Unique
     @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "ConstantValue"})

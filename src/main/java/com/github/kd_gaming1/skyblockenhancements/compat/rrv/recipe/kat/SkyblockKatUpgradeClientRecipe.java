@@ -8,10 +8,10 @@ import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
@@ -73,19 +73,18 @@ public class SkyblockKatUpgradeClientRecipe extends AbstractSkyblockClientRecipe
     @Override
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
-        var font = Minecraft.getInstance().font;
         renderArrow(gfx, 22, 22);
         renderArrow(gfx, 80, 22);
 
         if (coins > 0) {
-            gfx.drawString(font,
-                    Component.literal("§6" + SkyblockRecipeUtil.formatNumber(coins) + " coins"),
-                    2, 46, 0xFFAA8800, false);
+            gfx.drawString(font(),
+                    SkyblockRecipeUtil.gold(SkyblockRecipeUtil.formatNumber(coins) + " coins"),
+                    2, 46, RecipeColors.COINS, false);
         }
         if (timeSeconds > 0) {
-            gfx.drawString(font,
-                    Component.literal("§7" + SkyblockRecipeUtil.formatDuration(timeSeconds)),
-                    90, 46, 0xFF808080, false);
+            gfx.drawString(font(),
+                    SkyblockRecipeUtil.gray(SkyblockRecipeUtil.formatDuration(timeSeconds)),
+                    90, 46, RecipeColors.DURATION, false);
         }
         maintainButtons(screen, pos);
     }

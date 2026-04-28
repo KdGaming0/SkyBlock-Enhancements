@@ -6,10 +6,11 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
@@ -79,10 +80,9 @@ public class SkyblockEssenceUpgradeClientRecipe extends AbstractSkyblockClientRe
     @Override
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
-        var font = Minecraft.getInstance().font;
-        gfx.drawString(font,
-                Component.literal("§6" + "✪".repeat(starLevel) + " §e" + essenceType),
-                HEADER_X, HEADER_Y, 0xFFFFFF, true);
+        gfx.drawString(font(),
+                SkyblockRecipeUtil.gold("✪".repeat(starLevel) + " §e" + essenceType),
+                HEADER_X, HEADER_Y, RecipeColors.WHITE, true);
         renderArrow(gfx, ARROW_X, ARROW_Y);
         maintainButtons(screen, pos);
     }

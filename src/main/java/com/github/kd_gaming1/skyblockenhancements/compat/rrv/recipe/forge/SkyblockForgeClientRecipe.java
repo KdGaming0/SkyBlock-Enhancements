@@ -7,16 +7,15 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
-import java.util.ArrayList;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.ArraySlotRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
-public class SkyblockForgeClientRecipe extends AbstractSkyblockClientRecipe
+public class SkyblockForgeClientRecipe extends ArraySlotRecipe
         implements ReliableClientRecipe {
 
     /** 4-column grid: arrow sits between the grid (ends at 4*18=72) and the output. */
@@ -60,12 +59,8 @@ public class SkyblockForgeClientRecipe extends AbstractSkyblockClientRecipe
     }
 
     @Override
-    public List<SlotContent> getIngredients() {
-        List<SlotContent> list = new ArrayList<>();
-        for (SlotContent sc : inputs) {
-            if (sc != null) list.add(sc);
-        }
-        return list;
+    protected SlotContent[] getInputSlots() {
+        return inputs;
     }
 
     @Override
@@ -76,11 +71,10 @@ public class SkyblockForgeClientRecipe extends AbstractSkyblockClientRecipe
     @Override
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
-        var font = Minecraft.getInstance().font;
         renderArrow(gfx, ARROW_X, ARROW_Y);
         if (durationSeconds > 0) {
-            gfx.drawString(font, Component.literal("§7" + SkyblockRecipeUtil.formatDuration(durationSeconds)),
-                    DURATION_X, DURATION_Y, 0xFF808080, false);
+            gfx.drawString(font(), SkyblockRecipeUtil.gray(SkyblockRecipeUtil.formatDuration(durationSeconds)),
+                    DURATION_X, DURATION_Y, RecipeColors.DURATION, false);
         }
         maintainButtons(screen, pos);
     }

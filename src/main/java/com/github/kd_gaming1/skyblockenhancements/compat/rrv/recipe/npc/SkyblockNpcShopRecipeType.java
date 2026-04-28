@@ -7,6 +7,7 @@ import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 import net.minecraft.world.item.Items;
 
 /** 2×5 cost grid + 1 result; craft-references are NPCs with at least one shop recipe. */
@@ -14,7 +15,7 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockNpcShopRecipeType INSTANCE = new SkyblockNpcShopRecipeType();
 
-    private static final int SLOT = 18;
+    
     private static final int COST_COLS = 5;
     private static final int COST_ROWS = 2;
     /** Top of cost grid — leaves 12px header row for the NPC display name. */
@@ -22,8 +23,8 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
     /** Result slot index (costs fill 0..9). */
     private static final int RESULT_INDEX = COST_COLS * COST_ROWS;
     /** Result sits to the right of the cost grid, vertically centered across the two rows. */
-    private static final int RESULT_X = COST_COLS * SLOT + 6;
-    private static final int RESULT_Y = GRID_TOP + SLOT / 2;
+    private static final int RESULT_X = COST_COLS * RecipeLayoutConstants.SLOT_SIZE + 6;
+    private static final int RESULT_Y = GRID_TOP + RecipeLayoutConstants.SLOT_SIZE / 2;
 
     private final ItemStack icon = new ItemStack(Items.EMERALD);
 
@@ -31,8 +32,8 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
     private List<ItemStack> cachedNpcReferences = null;
 
     @Override public Component  getDisplayName()   { return Component.literal("SkyBlock NPC Shop"); }
-    @Override public int        getDisplayWidth()  { return RESULT_X + SLOT; }
-    @Override public int        getDisplayHeight() { return GRID_TOP + COST_ROWS * SLOT + 18; }
+    @Override public int        getDisplayWidth()  { return RESULT_X + RecipeLayoutConstants.SLOT_SIZE; }
+    @Override public int        getDisplayHeight() { return GRID_TOP + COST_ROWS * RecipeLayoutConstants.SLOT_SIZE + 18; }
     @Override public Identifier getGuiTexture()    { return null; }
     @Override public int        getSlotCount()     { return RESULT_INDEX + 1; }
     @Override public ItemStack  getIcon()          { return icon; }
@@ -41,7 +42,7 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
     public void placeSlots(RecipeViewMenu.SlotDefinition def) {
         for (int row = 0; row < COST_ROWS; row++) {
             for (int col = 0; col < COST_COLS; col++) {
-                def.addItemSlot(row * COST_COLS + col, col * SLOT, GRID_TOP + row * SLOT);
+                def.addItemSlot(row * COST_COLS + col, col * RecipeLayoutConstants.SLOT_SIZE, GRID_TOP + row * RecipeLayoutConstants.SLOT_SIZE);
             }
         }
         def.addItemSlot(RESULT_INDEX, RESULT_X, RESULT_Y);

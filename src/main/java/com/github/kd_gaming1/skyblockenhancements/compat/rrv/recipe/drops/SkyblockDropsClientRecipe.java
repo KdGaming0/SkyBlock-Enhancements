@@ -7,6 +7,7 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import java.util.ArrayList;
@@ -15,30 +16,21 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Client-side drop recipe. Uses {@link AbstractSkyblockClientRecipe} for button lifecycle
- * but manages its own entity preview spawn / dispose in {@link #initRecipe} / {@link #fadeRecipe}.
+ * Client-side drop recipe. Delegates mob-preview entity lifecycle to
+ * {@link MobPreviewController} so this class only handles slots, text, and buttons.
  */
 public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
 
     private static final int MAX_DROPS = 12;
     private static final int BUTTON_ROW_Y_OFFSET = SkyblockDropsRecipeType.WIKI_BUTTON_TOP;
     private static final int NAME_CAPTION_Y      = SkyblockDropsRecipeType.NAME_CAPTION_TOP;
-    private static final int NAME_COLOR        = 0xFF404040;
     private static final int NAME_SIDE_PADDING = 4;
-    private static final String ELLIPSIS       = "...";
 
     /** De-duplicates warn logs so unresolved refs don't spam once per scroll tick. */
     private static final Set<String> LOGGED_UNRESOLVED = ConcurrentHashMap.newKeySet();
@@ -46,15 +38,7 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
     private final String mobName;
     private final String[] chances;
     private final List<SlotContent> drops;
-
-    @Nullable private final MobPreview preview;
-
-    /** Spawned on {@link #initRecipe()} only when the preview requires a vanilla mob. */
-    @Nullable private LivingEntity mountEntity;
-    @Nullable private LivingEntity riderEntity;
-
-    private int animationTick;
-    private boolean previewHovered;
+    private final MobPreviewController previewController;
 
     public SkyblockDropsClientRecipe(SkyblockDropsServerRecipe src) {
         super(src.getWikiUrls());
@@ -64,7 +48,7 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
 
         MobPreview resolved = MobRenderResolver.resolve(src.getRenderRef());
         if (resolved == null) logUnresolvedOnce(src.getRenderRef());
-        this.preview = resolved;
+        this.previewController = new MobPreviewController(resolved);
     }
 
     private static List<SlotContent> buildDropsList(SlotContent[] rawDrops) {
@@ -134,52 +118,19 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
     @Override
     public void initRecipe() {
         super.initRecipe();
-        if (preview == null || !preview.needsLivingEntity()) return;
-        ClientLevel level = Minecraft.getInstance().level;
-        if (level == null) return;
-        mountEntity = spawnForLayer(level, preview.entityType());
-        MobPreview rider = preview.rider();
-        if (rider != null) {
-            riderEntity = spawnForLayer(level, rider.entityType());
-            if (riderEntity != null && mountEntity != null) {
-                riderEntity.startRiding(mountEntity);
-            }
-        }
-    }
-
-    /** Creates and configures a preview entity, or returns {@code null} if the type is absent/invalid. */
-    @Nullable
-    private static LivingEntity spawnForLayer(ClientLevel level, @Nullable EntityType<?> type) {
-        if (type == null) return null;
-        Entity entity = type.create(level, EntitySpawnReason.LOAD);
-        if (!(entity instanceof LivingEntity living)) return null;
-        living.setYBodyRot(30.0F);
-        living.setYHeadRot(30.0F);
-        return living;
+        var level = Minecraft.getInstance().level;
+        if (level != null) previewController.init(level);
     }
 
     @Override
     public void fadeRecipe() {
         super.fadeRecipe();
-        disposeEntities();
-    }
-
-    private void disposeEntities() {
-        if (mountEntity != null) {
-            mountEntity.remove(Entity.RemovalReason.DISCARDED);
-            mountEntity = null;
-        }
-        if (riderEntity != null) {
-            riderEntity.remove(Entity.RemovalReason.DISCARDED);
-            riderEntity = null;
-        }
+        previewController.fade();
     }
 
     @Override
     public void tick() {
-        if (previewHovered) return;
-        animationTick++;
-        if (animationTick >= MobPreviewRenderer.rotationPeriod()) animationTick = 0;
+        previewController.tick();
     }
 
     // ── Rendering ──────────────────────────────────────────────────────────────
@@ -187,14 +138,7 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
     @Override
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
-        previewHovered = MobPreviewRenderer.isPointInPreviewBox(mouseX, mouseY);
-
-        if (preview != null) {
-            MobPreviewRenderer.render(preview, gfx, pos.left(), pos.top(),
-                    mountEntity, riderEntity, animationTick, partialTicks);
-        } else {
-            MobPreviewRenderer.renderPlaceholder(gfx, pos.left(), pos.top());
-        }
+        previewController.render(gfx, pos.left(), pos.top(), mouseX, mouseY, partialTicks);
 
         renderMobName(gfx, pos);
         renderHoverTooltipIfNeeded(gfx, screen, pos, mouseX, mouseY);
@@ -204,30 +148,18 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
     private void renderMobName(GuiGraphics gfx, RecipePosition pos) {
         if (mobName.isEmpty()) return;
 
-        Font font = Minecraft.getInstance().font;
         int maxWidth = pos.width() - NAME_SIDE_PADDING * 2;
-        Component line = fitToWidth(font, mobName, maxWidth);
+        Component line = SkyblockRecipeUtil.ellipsize(font(), mobName, maxWidth);
 
-        int textWidth = font.width(line);
+        int textWidth = font().width(line);
         int x = pos.left() + NAME_SIDE_PADDING + (maxWidth - textWidth) / 2;
         int y = pos.top() + NAME_CAPTION_Y;
-        gfx.drawString(font, line, x, y, NAME_COLOR, true);
-    }
-
-    private static Component fitToWidth(Font font, String raw, int maxWidth) {
-        Component full = Component.literal(raw);
-        if (font.width(full) <= maxWidth) return full;
-
-        FormattedText ellipsis = FormattedText.of(ELLIPSIS);
-        int ellipsisWidth = font.width(ellipsis);
-        int available = Math.max(0, maxWidth - ellipsisWidth);
-        String trimmed = font.substrByWidth(full, available).getString();
-        return Component.literal(trimmed + ELLIPSIS);
+        gfx.drawString(font(), line, x, y, RecipeColors.DARK_TEXT, true);
     }
 
     private void renderHoverTooltipIfNeeded(GuiGraphics gfx, RecipeViewScreen screen,
                                             RecipePosition pos, int mouseX, int mouseY) {
-        if (!previewHovered || mobName.isEmpty()) return;
+        if (!previewController.isHovered() || mobName.isEmpty()) return;
 
         Component tip = Component.literal(mobName).withStyle(ChatFormatting.GOLD);
         gfx.setComponentTooltipForNextFrame(

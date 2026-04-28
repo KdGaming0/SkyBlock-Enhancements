@@ -82,7 +82,7 @@ public final class KatReminderFeature {
         }
     }
 
-    public static List<KatUpgradeReminderManager.KatReminderData> getActiveReminders() {
+    public static List<KatReminderStore.KatReminderData> getActiveReminders() {
         if (katUpgradeReminderManager == null) return List.of();
         return katUpgradeReminderManager.getActiveReminders();
     }

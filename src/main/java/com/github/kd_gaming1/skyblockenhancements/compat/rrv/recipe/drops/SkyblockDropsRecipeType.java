@@ -5,6 +5,7 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 import net.minecraft.world.item.Items;
 
 /**
@@ -15,7 +16,7 @@ public class SkyblockDropsRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockDropsRecipeType INSTANCE = new SkyblockDropsRecipeType();
 
-    static final int SLOT = 18;
+    static final int SLOT = RecipeLayoutConstants.SLOT_SIZE;
     static final int COLS = 4;
     static final int ROWS = 3;
 

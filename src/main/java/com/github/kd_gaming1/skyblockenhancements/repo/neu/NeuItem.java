@@ -20,6 +20,12 @@ public class NeuItem {
     public String skullTexture;
     public int leatherColor = -1;
 
+    private transient boolean recipesTrimmed = false;
+    private transient boolean cachedHasCrafting = false;
+    private transient boolean cachedHasForge = false;
+    private transient boolean cachedHasNpcShop = false;
+    private transient boolean cachedHasAny = false;
+
     /**
      * Filter category resolved from structural checks and lore-type parsing.
      * {@code null} for items that don't fit any defined category bucket.
@@ -94,15 +100,18 @@ public class NeuItem {
     // ── Recipe queries ───────────────────────────────────────────────────────────
 
     public boolean hasCraftingRecipe() {
+        if (recipesTrimmed) return cachedHasCrafting;
         if (recipe != null && !recipe.isEmpty()) return true;
         return hasRecipeOfType("crafting");
     }
 
     public boolean hasForgeRecipe() {
+        if (recipesTrimmed) return cachedHasForge;
         return hasRecipeOfType("forge");
     }
 
     public boolean hasNpcShopRecipes() {
+        if (recipesTrimmed) return cachedHasNpcShop;
         return hasRecipeOfType("npc_shop");
     }
 
@@ -111,6 +120,7 @@ public class NeuItem {
      * or at least one entry in the modern recipes array.
      */
     public boolean hasAnyRecipe() {
+        if (recipesTrimmed) return cachedHasAny;
         if (recipe != null && !recipe.isEmpty()) return true;
         return recipes != null && !recipes.isEmpty();
     }
@@ -168,6 +178,13 @@ public class NeuItem {
      * only need the already-populated flags.
      */
     public void trimRecipes() {
+        if (!recipesTrimmed) {
+            this.cachedHasCrafting = hasCraftingRecipe();
+            this.cachedHasForge = hasForgeRecipe();
+            this.cachedHasNpcShop = hasNpcShopRecipes();
+            this.cachedHasAny = hasAnyRecipe();
+            this.recipesTrimmed = true;
+        }
         this.recipes = null;
     }
 }

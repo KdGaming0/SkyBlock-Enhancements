@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 import net.minecraft.world.item.Items;
 
 /**
@@ -21,7 +22,7 @@ public class SkyblockEssenceUpgradeRecipeType implements ReliableClientRecipeTyp
 
     public static final SkyblockEssenceUpgradeRecipeType INSTANCE = new SkyblockEssenceUpgradeRecipeType();
 
-    private static final int SLOT = 18;
+    
 
     private final ItemStack icon = new ItemStack(Items.EXPERIENCE_BOTTLE);
     private final List<ItemStack> craftReferences = List.of(icon);
@@ -38,10 +39,10 @@ public class SkyblockEssenceUpgradeRecipeType implements ReliableClientRecipeTyp
     public void placeSlots(RecipeViewMenu.SlotDefinition def) {
         def.addItemSlot(0, 0, 18);
         def.addItemSlot(1, 30, 0);
-        def.addItemSlot(2, 24, SLOT + 4);
-        def.addItemSlot(3, 24 + SLOT, SLOT + 4);
-        def.addItemSlot(4, 24, SLOT * 2 + 4);
-        def.addItemSlot(5, 24 + SLOT, SLOT * 2 + 4);
+        def.addItemSlot(2, 24, RecipeLayoutConstants.SLOT_SIZE + 4);
+        def.addItemSlot(3, 24 + RecipeLayoutConstants.SLOT_SIZE, RecipeLayoutConstants.SLOT_SIZE + 4);
+        def.addItemSlot(4, 24, RecipeLayoutConstants.SLOT_SIZE * 2 + 4);
+        def.addItemSlot(5, 24 + RecipeLayoutConstants.SLOT_SIZE, RecipeLayoutConstants.SLOT_SIZE * 2 + 4);
         def.addItemSlot(6, 106, 18);
     }
 

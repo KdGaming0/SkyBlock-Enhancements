@@ -1,4 +1,4 @@
-package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
+package com.github.kd_gaming1.skyblockenhancements.mixin.chat.tab;
 
 import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
@@ -14,7 +14,9 @@ import org.spongepowered.asm.mixin.Unique;
 /**
  * Hides messages that don't match the active chat tab.
  *
- * <p>Priority 900 runs this before {@link ChatSearchFilterMixin} (priority 1000), giving the
+ * <p>Priority 900 runs this before
+ * {@link com.github.kd_gaming1.skyblockenhancements.mixin.chat.search.ChatSearchFilterMixin}
+ * (priority 1000), giving the
  * deterministic filter chain: tab → search → display. A message must pass both filters.
  *
  * <p>When chat tabs are disabled in config, the filter is completely bypassed — no lookup,

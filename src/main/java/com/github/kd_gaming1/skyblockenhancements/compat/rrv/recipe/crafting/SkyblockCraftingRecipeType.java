@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 import net.minecraft.world.item.Items;
 
 /** 3×3 SkyBlock crafting grid: 9 input slots + 1 output slot. */
@@ -13,7 +14,7 @@ public class SkyblockCraftingRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockCraftingRecipeType INSTANCE = new SkyblockCraftingRecipeType();
 
-    private static final int SLOT = 18;
+    
     private static final int OUTPUT_X = 94;
     private static final int OUTPUT_Y = 18;
 
@@ -32,7 +33,7 @@ public class SkyblockCraftingRecipeType implements ReliableClientRecipeType {
     public void placeSlots(RecipeViewMenu.SlotDefinition def) {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
-                def.addItemSlot(row * 3 + col, col * SLOT, row * SLOT);
+                def.addItemSlot(row * 3 + col, col * RecipeLayoutConstants.SLOT_SIZE, row * RecipeLayoutConstants.SLOT_SIZE);
             }
         }
         def.addItemSlot(9, OUTPUT_X, OUTPUT_Y);

@@ -6,7 +6,10 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 import java.util.List;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
@@ -30,8 +33,6 @@ public class SkyblockNpcInfoClientRecipe extends AbstractSkyblockClientRecipe
     private static final int LINE_HEIGHT       = 10;
     private static final int TEXT_X            = 22;
     private static final int TEXT_RIGHT_LIMIT  = 130;
-    private static final int BUTTON_W          = 56;
-    private static final int BUTTON_H          = 12;
     private static final int NAV_BUTTON_W      = 60;
 
     private final @Nullable SlotContent npcHead;
@@ -98,9 +99,8 @@ public class SkyblockNpcInfoClientRecipe extends AbstractSkyblockClientRecipe
     @Override
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
-        Font font = Minecraft.getInstance().font;
-        int cursorY = renderLocationHeader(gfx, font);
-        renderLoreLines(gfx, font, cursorY);
+        int cursorY = renderLocationHeader(gfx, font());
+        renderLoreLines(gfx, font(), cursorY);
         maintainButtons(screen, pos);
     }
 
@@ -108,11 +108,11 @@ public class SkyblockNpcInfoClientRecipe extends AbstractSkyblockClientRecipe
         if (island.isEmpty()) return 2;
 
         int cursorY = 2;
-        gfx.drawString(font, Component.literal("§7" + formatIsland(island)),
-                TEXT_X, cursorY, 0xFFAAAAAA, false);
+        gfx.drawString(font, SkyblockRecipeUtil.gray(formatIsland(island)),
+                TEXT_X, cursorY, RecipeColors.PLACEHOLDER, false);
         cursorY += LINE_HEIGHT;
-        gfx.drawString(font, Component.literal("§8" + x + ", " + y + ", " + z),
-                TEXT_X, cursorY, 0xFF888888, false);
+        gfx.drawString(font, SkyblockRecipeUtil.darkGray(x + ", " + y + ", " + z),
+                TEXT_X, cursorY, RecipeColors.NPC_COORDS, false);
         return cursorY + LINE_HEIGHT + 2;
     }
 
@@ -126,7 +126,7 @@ public class SkyblockNpcInfoClientRecipe extends AbstractSkyblockClientRecipe
 
             for (FormattedCharSequence wrapped : font.split(Component.literal(line), maxTextWidth)) {
                 if (cursorY + LINE_HEIGHT > maxTextY) break;
-                gfx.drawString(font, wrapped, TEXT_X, cursorY, 0xFFFFFFFF, false);
+                gfx.drawString(font, wrapped, TEXT_X, cursorY, RecipeColors.WHITE, false);
                 cursorY += LINE_HEIGHT;
             }
         }
@@ -139,14 +139,14 @@ public class SkyblockNpcInfoClientRecipe extends AbstractSkyblockClientRecipe
         int btnX = pos.left() + 2;
 
         Button sentinel = placeWikiButton(screen, btnX, btnY);
-        if (sentinel != null) btnX += BUTTON_W + 4;
+        if (sentinel != null) btnX += RecipeLayoutConstants.WIKI_BUTTON_WIDTH + RecipeLayoutConstants.BUTTON_GAP;
 
         if (SKYHANNI_PRESENT) {
             Button navBtn = Button.builder(
                             Component.literal("⬈ Navigate"),
                             b -> sendNavigateCommand(npcDisplayName))
                     .pos(btnX, btnY)
-                    .size(NAV_BUTTON_W, BUTTON_H)
+                    .size(NAV_BUTTON_W, RecipeLayoutConstants.WIKI_BUTTON_HEIGHT)
                     .build();
             screen.addRecipeWidget(navBtn);
             if (sentinel == null) sentinel = navBtn;
@@ -156,9 +156,7 @@ public class SkyblockNpcInfoClientRecipe extends AbstractSkyblockClientRecipe
     }
 
     private static void sendNavigateCommand(String displayName) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.getConnection() == null) return;
-        mc.getConnection().sendCommand("shnav " + stripFormatting(displayName));
+        SkyblockRecipeUtil.sendCommand("shnav " + stripFormatting(displayName));
     }
 
     private static String stripFormatting(String displayName) {

@@ -28,9 +28,13 @@ public class ItemFiltersMixin {
     private static final Map<ItemStack, List<Component>> sbe$tooltipCache =
             new IdentityHashMap<>(8192);
 
-    @SuppressWarnings("MixinAnnotationTarget")
+    /**
+     * Caches tooltip lookups performed by {@code ItemFilters.getTooltipMatch()}.
+     * Targeted explicitly at that method rather than a wildcard so the mixin stays
+     * stable if RRV refactors other methods in this class.
+     */
     @Redirect(
-            method = "*",
+            method = "getTooltipMatch",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/screens/Screen;getTooltipFromItem"

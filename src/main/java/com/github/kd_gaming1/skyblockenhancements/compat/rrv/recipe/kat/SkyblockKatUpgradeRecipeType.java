@@ -5,6 +5,7 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 import net.minecraft.world.item.Items;
 
 /** Input pet (0) + up to 4 materials (1–4) → output pet (5); coins & duration in text. */
@@ -12,7 +13,7 @@ public class SkyblockKatUpgradeRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockKatUpgradeRecipeType INSTANCE = new SkyblockKatUpgradeRecipeType();
 
-    private static final int SLOT = 18;
+    
 
     private final ItemStack icon = new ItemStack(Items.BONE);
 

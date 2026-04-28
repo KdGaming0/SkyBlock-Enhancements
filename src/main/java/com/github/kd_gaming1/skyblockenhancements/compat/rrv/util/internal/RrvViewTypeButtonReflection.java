@@ -63,8 +63,7 @@ public final class RrvViewTypeButtonReflection {
 
             List<Object> rebuilt = new ArrayList<>(order.size());
             int buttonY = newTopPos - BTN_H - 1;
-            int rowWidth = BUTTONS_PER_ROW * BTN_W + (BUTTONS_PER_ROW - 1) * BTN_GAP + 4;
-            int rowStartX = screenWidth / 2 - rowWidth / 2;
+            int rowStartX = screenWidth / 2 - (5 * BTN_W + 4 * BTN_GAP) / 2;
 
             for (int i = 0; i < order.size(); i++) {
                 int column = i % BUTTONS_PER_ROW;

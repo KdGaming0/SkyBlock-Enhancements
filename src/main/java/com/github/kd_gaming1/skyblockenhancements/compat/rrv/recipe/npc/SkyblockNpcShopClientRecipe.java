@@ -6,8 +6,9 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
-import java.util.ArrayList;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.ArraySlotRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -15,15 +16,14 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
-public class SkyblockNpcShopClientRecipe extends AbstractSkyblockClientRecipe
+public class SkyblockNpcShopClientRecipe extends ArraySlotRecipe
         implements ReliableClientRecipe {
 
     /** Arrow sits between the 5-column cost grid and the result slot, vertically on the shared center. */
     private static final int ARROW_X = 84;
     private static final int ARROW_Y = 25;
     private static final int BUTTON_ROW_Y_OFFSET = 52;
-    private static final int BUTTON_W = 56;
-    private static final int BUTTON_H = 12;
+
     /** Max costs bindable; mirrors SkyblockNpcShopServerRecipe.MAX_COSTS. */
     private static final int MAX_COSTS = 10;
     /** Result slot index (costs occupy 0..MAX_COSTS-1). */
@@ -63,12 +63,8 @@ public class SkyblockNpcShopClientRecipe extends AbstractSkyblockClientRecipe
     }
 
     @Override
-    public List<SlotContent> getIngredients() {
-        List<SlotContent> list = new ArrayList<>();
-        for (SlotContent sc : costs) {
-            if (sc != null) list.add(sc);
-        }
-        return list;
+    protected SlotContent[] getInputSlots() {
+        return costs;
     }
 
     @Override
@@ -81,7 +77,7 @@ public class SkyblockNpcShopClientRecipe extends AbstractSkyblockClientRecipe
                              int mouseX, int mouseY, float partialTicks) {
         if (!npcDisplayName.isEmpty()) {
             gfx.drawString(Minecraft.getInstance().font,
-                    Component.literal(npcDisplayName), 0, 0, 0xFFFFFFFF, true);
+                    Component.literal(npcDisplayName), 0, 0, RecipeColors.WHITE, true);
         }
         renderArrow(gfx, ARROW_X, ARROW_Y);
         maintainButtons(screen, pos);
@@ -100,13 +96,13 @@ public class SkyblockNpcShopClientRecipe extends AbstractSkyblockClientRecipe
                             Component.literal("NPC Info"),
                             b -> RecipeViewOpener.open(infoRecipe))
                     .pos(leftX, btnY)
-                    .size(BUTTON_W, BUTTON_H)
+                    .size(RecipeLayoutConstants.WIKI_BUTTON_WIDTH, RecipeLayoutConstants.WIKI_BUTTON_HEIGHT)
                     .build();
             screen.addRecipeWidget(infoBtn);
             sentinel = infoBtn;
         }
 
-        Button wiki = placeWikiButton(screen, leftX + BUTTON_W + 6, btnY);
+        Button wiki = placeWikiButton(screen, leftX + RecipeLayoutConstants.WIKI_BUTTON_WIDTH + RecipeLayoutConstants.BUTTON_GAP + 2, btnY);
         if (sentinel == null) sentinel = wiki;
 
         return sentinel;

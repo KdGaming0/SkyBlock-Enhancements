@@ -7,6 +7,8 @@ import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import java.net.URI;
 import java.util.List;
 import com.github.kd_gaming1.skyblockenhancements.mixin.rrv.accessor.RecipeViewMenuAccessor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -15,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 
 public final class SkyblockRecipeUtil {
 
@@ -115,6 +118,66 @@ public final class SkyblockRecipeUtil {
         return seconds + "s";
     }
 
+    // ── Text formatting ──────────────────────────────────────────────────────────
+
+    /** Returns {@code Component.literal("§7" + text)}. */
+    public static Component gray(String text) {
+        return Component.literal("§7" + text);
+    }
+
+    /** Returns {@code Component.literal("§6" + text)}. */
+    public static Component gold(String text) {
+        return Component.literal("§6" + text);
+    }
+
+    /** Returns {@code Component.literal("§8" + text)}. */
+    public static Component darkGray(String text) {
+        return Component.literal("§8" + text);
+    }
+
+    /** Convenience: {@code Minecraft.getInstance().font}. */
+    public static Font font() {
+        return Minecraft.getInstance().font;
+    }
+
+    /**
+     * Truncates {@code text} to {@code maxWidth} pixels, appending {@code "…"} when clipped.
+     * Operates on plain strings; for formatted sequences see {@link #ellipsize(Font, FormattedCharSequence, int)}.
+     */
+    public static Component ellipsize(Font font, String text, int maxWidth) {
+        Component full = Component.literal(text);
+        if (font.width(full) <= maxWidth) return full;
+
+        String ellipsis = "…";
+        int ellipsisWidth = font.width(ellipsis);
+        int available = Math.max(0, maxWidth - ellipsisWidth);
+        String trimmed = font.substrByWidth(full, available).getString();
+        return Component.literal(trimmed + ellipsis);
+    }
+
+    /**
+     * Truncates a {@link FormattedCharSequence} to {@code maxWidth}, appending {@code "…"}.
+     */
+    public static net.minecraft.util.FormattedCharSequence ellipsize(Font font, net.minecraft.util.FormattedCharSequence line, int maxWidth) {
+        String ellipsis = "…";
+        int ellipsisWidth = font.width(ellipsis);
+        int available = Math.max(0, maxWidth - ellipsisWidth);
+        net.minecraft.util.FormattedCharSequence head = net.minecraft.util.FormattedCharSequence.composite(
+                (net.minecraft.util.FormattedCharSequence) font.substrByWidth((net.minecraft.network.chat.FormattedText) line, available));
+        return net.minecraft.util.FormattedCharSequence.composite(head,
+                net.minecraft.util.FormattedCharSequence.forward(ellipsis, net.minecraft.network.chat.Style.EMPTY));
+    }
+
+    // ── Command helpers ──────────────────────────────────────────────────────────
+
+    /** Sends a client-side command after null-checking the player and connection. */
+    public static void sendCommand(String command) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.getConnection() != null) {
+            mc.getConnection().sendCommand(command);
+        }
+    }
+
     // ── Wiki button ──────────────────────────────────────────────────────────────
 
     /**
@@ -128,7 +191,7 @@ public final class SkyblockRecipeUtil {
         String url = wikiUrls.length > 1 ? wikiUrls[1] : wikiUrls[0];
         Button btn = Button.builder(Component.literal("Wiki"), b -> openUri(url))
                 .pos(btnX, btnY)
-                .size(56, 12)
+                .size(RecipeLayoutConstants.WIKI_BUTTON_WIDTH, RecipeLayoutConstants.WIKI_BUTTON_HEIGHT)
                 .build();
         screen.addRecipeWidget(btn);
         return btn;

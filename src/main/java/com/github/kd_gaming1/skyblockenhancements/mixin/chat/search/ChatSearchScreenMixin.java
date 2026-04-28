@@ -1,4 +1,4 @@
-package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
+package com.github.kd_gaming1.skyblockenhancements.mixin.chat.search;
 
 import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;

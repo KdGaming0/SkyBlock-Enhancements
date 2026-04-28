@@ -1,4 +1,4 @@
-package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
+package com.github.kd_gaming1.skyblockenhancements.mixin.chat.search;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.ChatFeatureState;
@@ -10,7 +10,8 @@ import org.spongepowered.asm.mixin.Mixin;
 
 /**
  * Hides messages that don't match the active search query. Priority 1000 so it runs after
- * {@link ChatTabFilterMixin} (priority 900) — tab first, search second, display.
+ * {@link com.github.kd_gaming1.skyblockenhancements.mixin.chat.tab.ChatTabFilterMixin}
+ * (priority 900) — tab first, search second, display.
  */
 @Mixin(value = ChatComponent.class)
 public class ChatSearchFilterMixin {

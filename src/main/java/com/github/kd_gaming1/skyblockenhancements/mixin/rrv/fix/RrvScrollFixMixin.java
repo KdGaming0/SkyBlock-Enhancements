@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * <p>owdding-lib runs at default priority (1000) and calls
  * {@code cir.setReturnValue(...)}, which cancels the callback chain. RRV's
  * fix (priority = 900) is only available in a newer version. This mixin runs
- * last (priority = 1100) and ensures RRV's scroll logic always executes,
+ * last (priority = 900) and ensures RRV's scroll logic always executes,
  * regardless of cancellation by earlier mixins.
  *
  * <p>TODO: Remove once RRV is updated to the version containing the priority fix.

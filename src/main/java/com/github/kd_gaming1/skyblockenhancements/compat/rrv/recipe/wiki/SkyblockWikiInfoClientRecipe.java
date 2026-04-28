@@ -6,7 +6,9 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -28,7 +30,7 @@ public class SkyblockWikiInfoClientRecipe extends AbstractSkyblockClientRecipe
     private static final int MAX_NAME_LINES  = 2;
     private static final int RIGHT_PADDING   = 4;
     private static final int BUTTON_Y_OFFSET = 20;
-    private static final int TEXT_COLOR      = 0xFF404040;
+
     private static final String ELLIPSIS     = "…";
 
     private final @Nullable SlotContent displayItem;
@@ -76,13 +78,13 @@ public class SkyblockWikiInfoClientRecipe extends AbstractSkyblockClientRecipe
     @Override
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
-        Font font = Minecraft.getInstance().font;
+        Font font = font();
         int wrapWidth = getViewType().getDisplayWidth() - NAME_X - RIGHT_PADDING;
         List<FormattedCharSequence> lines = wrapName(font, itemName, wrapWidth);
 
         int startY = centeredStartY(lines.size());
         for (int i = 0; i < lines.size(); i++) {
-            gfx.drawString(font, lines.get(i), NAME_X, startY + i * LINE_HEIGHT, TEXT_COLOR, false);
+            gfx.drawString(font, lines.get(i), NAME_X, startY + i * LINE_HEIGHT, RecipeColors.DARK_TEXT, false);
         }
         maintainButtons(screen, pos);
     }
@@ -113,11 +115,7 @@ public class SkyblockWikiInfoClientRecipe extends AbstractSkyblockClientRecipe
 
     /** Truncates a single line to {@code wrapWidth} with a trailing ellipsis. */
     private static FormattedCharSequence ellipsize(Font font, FormattedCharSequence line, int wrapWidth) {
-        int ellipsisWidth = font.width(ELLIPSIS);
-        int available = Math.max(0, wrapWidth - ellipsisWidth);
-        FormattedCharSequence head = FormattedCharSequence.composite(
-                (FormattedCharSequence) font.substrByWidth((FormattedText) line, available));
-        return FormattedCharSequence.composite(head, FormattedCharSequence.forward(ELLIPSIS, net.minecraft.network.chat.Style.EMPTY));
+        return SkyblockRecipeUtil.ellipsize(font, line, wrapWidth);
     }
 
     @Override

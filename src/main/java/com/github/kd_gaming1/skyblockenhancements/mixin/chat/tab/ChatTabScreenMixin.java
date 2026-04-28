@@ -1,4 +1,4 @@
-package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
+package com.github.kd_gaming1.skyblockenhancements.mixin.chat.tab;
 
 import com.daqem.uilib.gui.widget.CustomButtonWidget;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;

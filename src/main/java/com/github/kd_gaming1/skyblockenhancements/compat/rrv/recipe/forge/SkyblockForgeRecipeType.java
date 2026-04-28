@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 import net.minecraft.world.item.Items;
 
 /** 2×4 input grid → single output with duration text. */
@@ -13,18 +14,18 @@ public class SkyblockForgeRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockForgeRecipeType INSTANCE = new SkyblockForgeRecipeType();
 
-    private static final int SLOT = 18;
+    
     private static final int COLS = 4;
     private static final int ROWS = 2;
     private static final int OUTPUT_INDEX = COLS * ROWS;
-    private static final int OUTPUT_X = COLS * SLOT + 12;
-    private static final int OUTPUT_Y = (ROWS * SLOT) / 2;
+    private static final int OUTPUT_X = COLS * RecipeLayoutConstants.SLOT_SIZE + 12;
+    private static final int OUTPUT_Y = (ROWS * RecipeLayoutConstants.SLOT_SIZE) / 2;
 
     private final ItemStack icon = new ItemStack(Items.ANVIL);
     private final List<ItemStack> craftReferences = List.of(icon);
 
     @Override public Component   getDisplayName()   { return Component.literal("SkyBlock Forge"); }
-    @Override public int         getDisplayWidth()  { return OUTPUT_X + SLOT; }
+    @Override public int         getDisplayWidth()  { return OUTPUT_X + RecipeLayoutConstants.SLOT_SIZE; }
     @Override public int         getDisplayHeight() { return 68; }
     @Override public Identifier  getGuiTexture()    { return null; }
     @Override public int         getSlotCount()     { return OUTPUT_INDEX + 1; }
@@ -35,7 +36,7 @@ public class SkyblockForgeRecipeType implements ReliableClientRecipeType {
     public void placeSlots(RecipeViewMenu.SlotDefinition def) {
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
-                def.addItemSlot(row * COLS + col, col * SLOT, row * SLOT + 9);
+                def.addItemSlot(row * COLS + col, col * RecipeLayoutConstants.SLOT_SIZE, row * RecipeLayoutConstants.SLOT_SIZE + 9);
             }
         }
         def.addItemSlot(OUTPUT_INDEX, OUTPUT_X, OUTPUT_Y);

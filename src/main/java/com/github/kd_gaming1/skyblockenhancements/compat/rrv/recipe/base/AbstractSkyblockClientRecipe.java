@@ -2,8 +2,10 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base;
 
 import cc.cassian.rrv.api.recipe.ReliableClientRecipe;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
@@ -101,7 +103,16 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
      * Draws the standard "→" arrow used between recipe inputs and outputs.
      * Subclasses call this from {@link #renderRecipe} with their recipe-specific coordinates.
      */
+    /** Convenience: {@code Minecraft.getInstance().font}. */
+    protected final Font font() {
+        return Minecraft.getInstance().font;
+    }
+
+    /**
+     * Draws the standard "→" arrow used between recipe inputs and outputs.
+     * Subclasses call this from {@link #renderRecipe} with their recipe-specific coordinates.
+     */
     protected final void renderArrow(GuiGraphics gfx, int x, int y) {
-        gfx.drawString(Minecraft.getInstance().font, Component.literal("→"), x, y, 0xFF404040, false);
+        gfx.drawString(Minecraft.getInstance().font, Component.literal("→"), x, y, RecipeColors.ARROW, false);
     }
 }
