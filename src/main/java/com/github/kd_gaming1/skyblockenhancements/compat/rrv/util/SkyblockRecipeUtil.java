@@ -17,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.RecipeTagCodec;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 
 public final class SkyblockRecipeUtil {
@@ -210,11 +211,11 @@ public final class SkyblockRecipeUtil {
         if (urls == null || urls.length == 0) return;
         ListTag list = new ListTag();
         for (String url : urls) list.add(StringTag.valueOf(url));
-        tag.put("wiki", list);
+        tag.put(RecipeTagCodec.KEY_WIKI_URLS, list);
     }
 
     public static String[] readWikiUrls(CompoundTag tag) {
-        ListTag list = tag.getListOrEmpty("wiki");
+        ListTag list = tag.getListOrEmpty(RecipeTagCodec.KEY_WIKI_URLS);
         if (list.isEmpty()) return new String[0];
         String[] urls = new String[list.size()];
         for (int i = 0; i < list.size(); i++) {

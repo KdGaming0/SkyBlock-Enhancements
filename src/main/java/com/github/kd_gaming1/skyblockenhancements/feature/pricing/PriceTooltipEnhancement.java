@@ -1,9 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.pricing;
 
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
-import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
-import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceDataFetcher.BazaarPrice;
-import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
+import com.github.kd_gaming1.skyblockenhancements.config.ModSettings;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -20,6 +18,9 @@ import net.minecraft.world.item.TooltipFlag;
 
 /**
  * Appends Auction House lowest-BIN and Bazaar price lines to Skyblock item tooltips.
+ *
+ * <p>Instance-based: created once during mod init and wired with {@link ModSettings}
+ * and {@link PriceStore}.
  */
 public final class PriceTooltipEnhancement {
 
@@ -31,54 +32,59 @@ public final class PriceTooltipEnhancement {
         COIN_FORMAT = new DecimalFormat("#,##0.#", symbols);
     }
 
-    // ── Identity cache ──────────────────────────────────────────────────────────
+    private final ModSettings settings;
+    private final PriceStore store;
 
-    private static ItemStack lastStack;
-    private static List<Component> cachedLines = List.of();
-
-    private PriceTooltipEnhancement() {}
+    public PriceTooltipEnhancement(ModSettings settings, PriceStore store) {
+        this.settings = settings;
+        this.store = store;
+    }
 
     /** Registers the tooltip callback. Call once during mod init. */
-    public static void init() {
-        ItemTooltipCallback.EVENT.register(PriceTooltipEnhancement::onTooltip);
+    public void register() {
+        ItemTooltipCallback.EVENT.register(this::onTooltip);
+    }
+
+    /** Clears expired tooltip-cache entries. Call from the client tick. */
+    public void tick() {
+        store.invalidateExpiredTooltipCache();
     }
 
     // ── Callback ────────────────────────────────────────────────────────────────
 
-    private static void onTooltip(ItemStack stack, Item.TooltipContext ctx, TooltipFlag flag, List<Component> lines) {
-        if (!SkyblockEnhancementsConfig.enablePriceTooltips) return;
-        if (!HypixelLocationState.isOnSkyblock()) return;
-        if (!PriceDataFetcher.hasData()) return;
+    private void onTooltip(ItemStack stack, Item.TooltipContext ctx, TooltipFlag flag, List<Component> lines) {
+        if (!settings.enablePriceTooltips()) return;
+        if (!com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState.isOnSkyblock()) return;
+        if (!store.hasData()) return;
         if (stack.isEmpty()) return;
 
-        // Identity cache: same object reference → reuse previous result.
-        if (stack == lastStack) {
-            if (!cachedLines.isEmpty()) {
-                lines.addAll(cachedLines);
+        String skyblockId = SkyblockRecipeUtil.extractSkyblockId(stack);
+        if (skyblockId == null) return;
+
+        Optional<PriceStore.PriceCacheEntry> cached = store.getTooltipCache(skyblockId);
+        List<Component> priceLines;
+        if (cached.isPresent()) {
+            priceLines = cached.get().lines();
+        } else {
+            priceLines = buildPriceLines(skyblockId);
+            if (!priceLines.isEmpty()) {
+                store.putTooltipCache(skyblockId, new PriceStore.PriceCacheEntry(priceLines, System.currentTimeMillis()));
             }
-            return;
         }
 
-        lastStack = stack;
-        cachedLines = buildPriceLines(stack);
-
-        if (!cachedLines.isEmpty()) {
-            lines.addAll(cachedLines);
+        if (!priceLines.isEmpty()) {
+            lines.addAll(priceLines);
         }
     }
 
     // ── Line building ───────────────────────────────────────────────────────────
 
-    private static List<Component> buildPriceLines(ItemStack stack) {
-        String skyblockId = SkyblockRecipeUtil.extractSkyblockId(stack);
-        if (skyblockId == null) return List.of();
-
-        Optional<Double> lowestBin = PriceDataFetcher.getLowestBin(skyblockId);
-        Optional<BazaarPrice> bazaar = PriceDataFetcher.getBazaarPrice(skyblockId);
+    private List<Component> buildPriceLines(String skyblockId) {
+        Optional<Double> lowestBin = store.getLowestBin(skyblockId);
+        Optional<BazaarPrice> bazaar = store.getBazaarPrice(skyblockId);
 
         if (lowestBin.isEmpty() && bazaar.isEmpty()) return List.of();
 
-        // Build lines: blank separator, then each available price.
         List<Component> builder = new ArrayList<>(4);
         builder.add(Component.empty());
 
@@ -94,7 +100,6 @@ public final class PriceTooltipEnhancement {
             }
         }
 
-        // If only the separator was added and nothing else, return empty.
         return builder.size() > 1 ? List.copyOf(builder) : List.of();
     }
 

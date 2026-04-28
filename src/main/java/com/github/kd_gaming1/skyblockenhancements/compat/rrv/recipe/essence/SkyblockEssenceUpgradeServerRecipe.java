@@ -50,7 +50,7 @@ public class SkyblockEssenceUpgradeServerRecipe extends AbstractSkyblockServerRe
         RecipeTagCodec.writeSlot(tag, RecipeTagCodec.KEY_INPUTS, input);
         RecipeTagCodec.writeSlot(tag, RecipeTagCodec.KEY_OUTPUT, output);
         RecipeTagCodec.writeSlot(tag, RecipeTagCodec.KEY_ESSENCE, essence);
-        RecipeTagCodec.writeSlotArray(tag, "compCount", "comp", companions);
+        RecipeTagCodec.writeSlotArray(tag, RecipeTagCodec.KEY_COMPANIONS_COUNT, RecipeTagCodec.KEY_COMPANIONS_PREFIX, companions);
         tag.putInt(RecipeTagCodec.KEY_STAR, starLevel);
         tag.putString(RecipeTagCodec.KEY_ESSENCE_TYPE, essenceType);
     }
@@ -60,7 +60,7 @@ public class SkyblockEssenceUpgradeServerRecipe extends AbstractSkyblockServerRe
         input       = RecipeTagCodec.readSlot(tag, RecipeTagCodec.KEY_INPUTS);
         output      = RecipeTagCodec.readSlot(tag, RecipeTagCodec.KEY_OUTPUT);
         essence     = RecipeTagCodec.readSlot(tag, RecipeTagCodec.KEY_ESSENCE);
-        companions  = RecipeTagCodec.readSlotArray(tag, "compCount", "comp", MAX_COMPANIONS);
+        companions  = RecipeTagCodec.readSlotArray(tag, RecipeTagCodec.KEY_COMPANIONS_COUNT, RecipeTagCodec.KEY_COMPANIONS_PREFIX, MAX_COMPANIONS);
         starLevel   = tag.getIntOr(RecipeTagCodec.KEY_STAR, 0);
         essenceType = tag.getStringOr(RecipeTagCodec.KEY_ESSENCE_TYPE, "");
     }

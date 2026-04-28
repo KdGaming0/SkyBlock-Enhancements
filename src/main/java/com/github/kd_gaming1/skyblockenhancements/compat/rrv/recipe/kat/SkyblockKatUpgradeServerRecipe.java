@@ -44,7 +44,7 @@ public class SkyblockKatUpgradeServerRecipe extends AbstractSkyblockServerRecipe
     protected void writeFields(CompoundTag tag) {
         RecipeTagCodec.writeSlot(tag, RecipeTagCodec.KEY_INPUTS, input);
         RecipeTagCodec.writeSlot(tag, RecipeTagCodec.KEY_OUTPUT, output);
-        RecipeTagCodec.writeSlotArray(tag, "matCount", "m", materials);
+        RecipeTagCodec.writeSlotArray(tag, RecipeTagCodec.KEY_MATERIALS_COUNT, RecipeTagCodec.KEY_MATERIALS_PREFIX, materials);
         tag.putLong(RecipeTagCodec.KEY_COINS, coins);
         tag.putInt(RecipeTagCodec.KEY_TIME, timeSeconds);
     }
@@ -53,7 +53,7 @@ public class SkyblockKatUpgradeServerRecipe extends AbstractSkyblockServerRecipe
     protected void readFields(CompoundTag tag) {
         input       = RecipeTagCodec.readSlot(tag, RecipeTagCodec.KEY_INPUTS);
         output      = RecipeTagCodec.readSlot(tag, RecipeTagCodec.KEY_OUTPUT);
-        materials   = RecipeTagCodec.readSlotArray(tag, "matCount", "m", MAX_MATERIALS);
+        materials   = RecipeTagCodec.readSlotArray(tag, RecipeTagCodec.KEY_MATERIALS_COUNT, RecipeTagCodec.KEY_MATERIALS_PREFIX, MAX_MATERIALS);
         coins       = tag.getLongOr(RecipeTagCodec.KEY_COINS, 0);
         timeSeconds = tag.getIntOr(RecipeTagCodec.KEY_TIME, 0);
     }

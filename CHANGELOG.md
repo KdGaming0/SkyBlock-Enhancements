@@ -3,6 +3,7 @@
 ### **RRV Integration**
 **Improvements**
 - Code refactors
+- More Code refactors
 - Added item name to wiki recipes, in addition to the item icon that already existed.
 
 ### **Chat Enhancements**
@@ -13,3 +14,7 @@
 **Fixes**
 - Fixed a bug that removed blank lines from some chat messages
 - Fixed a bug that reset scroll postion when new chat message where received.
+
+### **General Improvements**
+- Code refactors
+- Updated ah price-data endpoint to use v2 instead of v1.

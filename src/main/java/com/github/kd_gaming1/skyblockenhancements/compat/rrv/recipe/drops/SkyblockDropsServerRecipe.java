@@ -41,7 +41,7 @@ public class SkyblockDropsServerRecipe extends AbstractSkyblockServerRecipe {
     protected void writeFields(CompoundTag tag) {
         tag.putString(RecipeTagCodec.KEY_MOB, mobName);
         tag.putString(RecipeTagCodec.KEY_RENDER, renderRef);
-        RecipeTagCodec.writeSlotArray(tag, RecipeTagCodec.KEY_COUNT, "d", drops);
+        RecipeTagCodec.writeSlotArray(tag, RecipeTagCodec.KEY_COUNT, RecipeTagCodec.KEY_DROPS_PREFIX, drops);
         RecipeTagCodec.writeStringArray(tag, RecipeTagCodec.KEY_CHANCES, chances);
     }
 
@@ -49,7 +49,7 @@ public class SkyblockDropsServerRecipe extends AbstractSkyblockServerRecipe {
     protected void readFields(CompoundTag tag) {
         mobName   = tag.getStringOr(RecipeTagCodec.KEY_MOB, "");
         renderRef = tag.getStringOr(RecipeTagCodec.KEY_RENDER, "");
-        drops     = RecipeTagCodec.readSlotArray(tag, RecipeTagCodec.KEY_COUNT, "d", MAX_DROPS);
+        drops     = RecipeTagCodec.readSlotArray(tag, RecipeTagCodec.KEY_COUNT, RecipeTagCodec.KEY_DROPS_PREFIX, MAX_DROPS);
         chances   = RecipeTagCodec.readStringArray(tag, RecipeTagCodec.KEY_CHANCES, drops.length);
     }
 

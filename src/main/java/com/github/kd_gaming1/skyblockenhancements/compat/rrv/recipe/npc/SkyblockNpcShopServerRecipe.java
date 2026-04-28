@@ -38,7 +38,7 @@ public class SkyblockNpcShopServerRecipe extends AbstractSkyblockServerRecipe {
 
     @Override
     protected void writeFields(CompoundTag tag) {
-        RecipeTagCodec.writeSlotArray(tag, RecipeTagCodec.KEY_COUNT, "c", costs);
+        RecipeTagCodec.writeSlotArray(tag, RecipeTagCodec.KEY_COUNT, RecipeTagCodec.KEY_COSTS_PREFIX, costs);
         RecipeTagCodec.writeSlot(tag, RecipeTagCodec.KEY_OUTPUT, result);
         tag.putString(RecipeTagCodec.KEY_NPC, npcId);
         tag.putString(RecipeTagCodec.KEY_DISPLAY_NAME, npcDisplayName);
@@ -46,7 +46,7 @@ public class SkyblockNpcShopServerRecipe extends AbstractSkyblockServerRecipe {
 
     @Override
     protected void readFields(CompoundTag tag) {
-        costs          = RecipeTagCodec.readSlotArray(tag, RecipeTagCodec.KEY_COUNT, "c", MAX_COSTS);
+        costs          = RecipeTagCodec.readSlotArray(tag, RecipeTagCodec.KEY_COUNT, RecipeTagCodec.KEY_COSTS_PREFIX, MAX_COSTS);
         result         = RecipeTagCodec.readSlot(tag, RecipeTagCodec.KEY_OUTPUT);
         npcId          = tag.getStringOr(RecipeTagCodec.KEY_NPC, "");
         npcDisplayName = tag.getStringOr(RecipeTagCodec.KEY_DISPLAY_NAME, "");

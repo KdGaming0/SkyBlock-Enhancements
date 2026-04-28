@@ -11,7 +11,7 @@ import net.fabricmc.loader.api.FabricLoader;
 /**
  * SkyblockEnhancementsConfig
  */
-public class SkyblockEnhancementsConfig extends MidnightConfig {
+public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSettings {
 
     // Category IDs (used by MidnightLib to group entries into tabs)
     public static final String SKYBLOCK_ENHANCEMENTS = "skyblock_enhancements";
@@ -212,6 +212,17 @@ public class SkyblockEnhancementsConfig extends MidnightConfig {
 
     @Entry(category = GENERAL_ENHANCEMENTS, isSlider = true, min = 0, max = 100)
     public static double fullbrightStrength = 100.0;
+
+    // ------------------------
+    // ModSettings delegation (pilot for Phase-5 config abstraction)
+    // ------------------------
+
+    @Override public boolean enablePriceTooltips() { return enablePriceTooltips; }
+    @Override public int priceRefreshIntervalMinutes() { return priceRefreshIntervalMinutes; }
+    @Override public boolean enableReminderSound() { return enableReminderSound; }
+    @Override public ReminderSoundType reminderSound() { return reminderSound; }
+    @Override public double reminderSoundVolume() { return reminderSoundVolume; }
+    @Override public double reminderSoundPitch() { return reminderSoundPitch; }
 
     // ------------------------
     // DEV_TOOLS (developer-only category)

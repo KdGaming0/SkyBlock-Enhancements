@@ -10,8 +10,6 @@ import java.util.List;
 
 public class ReminderScreenState {
 
-    private int lastReminderStateHash = 0;
-
     public enum Tab {
         LIST,
         CREATE
@@ -79,6 +77,7 @@ public class ReminderScreenState {
         this.reminderManager = reminderManager;
         this.persistAction = persistAction;
         this.reminders = reminderManager.getActiveReminders();
+        reminderManager.addChangeListener(this::markListDirty);
     }
 
     public void resetReminderTime(int id) {
@@ -363,21 +362,6 @@ public class ReminderScreenState {
         nameText = "";
         repeatCountText = "";
         repeatMode = RepeatMode.ONCE;
-    }
-
-    public void pollReminderStateChanges() {
-        int hash = 1;
-        for (Reminder r : reminderManager.getActiveReminders()) {
-            hash = 31 * hash + r.getId();
-            hash = 31 * hash + (r.isPaused() ? 1 : 0);
-            hash = 31 * hash + r.getRepeatCount();
-            hash = 31 * hash + r.getTotalRepeats();
-            // REMOVED time hash - UI updates itself directly now!
-        }
-        if (hash != lastReminderStateHash) {
-            lastReminderStateHash = hash;
-            markListDirty();
-        }
     }
 
     public void showFeedback(String message) {

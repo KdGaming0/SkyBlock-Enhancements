@@ -50,6 +50,14 @@ public final class RecipeTagCodec {
     public static final String KEY_ESSENCE_TYPE = "essType";
     public static final String KEY_WIKI_URLS   = "wiki";
 
+    // Array prefixes / count keys for recipe-specific slot arrays
+    public static final String KEY_DROPS_PREFIX      = "d";
+    public static final String KEY_COSTS_PREFIX      = "c";
+    public static final String KEY_COMPANIONS_COUNT  = "compCount";
+    public static final String KEY_COMPANIONS_PREFIX = "comp";
+    public static final String KEY_MATERIALS_COUNT   = "matCount";
+    public static final String KEY_MATERIALS_PREFIX  = "m";
+
     private RecipeTagCodec() {}
 
     // ── Single slots ─────────────────────────────────────────────────────────────

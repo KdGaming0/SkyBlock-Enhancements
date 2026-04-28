@@ -10,8 +10,10 @@ import com.github.kd_gaming1.skyblockenhancements.feature.ItemGlowManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminderFeature;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceDataFetcher;
+import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceStore;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceTooltipEnhancement;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
+import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderNotifier;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
 import com.github.kd_gaming1.skyblockenhancements.feature.filter.LogFilterRegistry;
@@ -50,7 +52,11 @@ public class SkyblockEnhancements implements ClientModInitializer {
                             .getConfigDir()
                             .resolve(MOD_ID)
                             .resolve("reminders.json"));
-    private final ReminderManager reminderManager = new ReminderManager();
+    private final PriceStore priceStore = new PriceStore();
+    private final PriceDataFetcher priceFetcher = new PriceDataFetcher(new SkyblockEnhancementsConfig(), priceStore);
+    private final PriceTooltipEnhancement priceTooltip = new PriceTooltipEnhancement(new SkyblockEnhancementsConfig(), priceStore);
+    private final ReminderNotifier reminderNotifier = new ReminderNotifier(new SkyblockEnhancementsConfig());
+    private final ReminderManager reminderManager = new ReminderManager(reminderNotifier);
 
     /** Guards against double-saving reminders on disconnect + shutdown. */
     private final AtomicBoolean remindersSaved = new AtomicBoolean(false);
@@ -82,12 +88,13 @@ public class SkyblockEnhancements implements ClientModInitializer {
         MissingEnchants.init();
         ItemGlowManager.init();
         Fullbright.init();
-        PriceTooltipEnhancement.init();
-        PriceDataFetcher.init();
+        priceTooltip.register();
+        priceFetcher.start();
 
         ClientTickEvents.END_CLIENT_TICK.register(Fullbright::onTick);
         ClientTickEvents.END_CLIENT_TICK.register(client -> IrisCompat.tick());
-        ClientTickEvents.END_CLIENT_TICK.register(client -> PriceDataFetcher.tick());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> priceFetcher.tick());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> priceTooltip.tick());
 
         // Enchant data is independent of RRV — always fetch on startup.
         ClientLifecycleEvents.CLIENT_STARTED.register(
