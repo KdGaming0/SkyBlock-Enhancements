@@ -5,6 +5,7 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import com.github.kd_gaming1.skyblockenhancements.mixin.rrv.accessor.RecipeViewMenuAccessor;
 import net.minecraft.client.Minecraft;
@@ -14,6 +15,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
@@ -189,7 +191,8 @@ public final class SkyblockRecipeUtil {
             RecipeViewScreen screen, String[] wikiUrls, int btnX, int btnY) {
         if (wikiUrls == null || wikiUrls.length == 0) return null;
 
-        String url = wikiUrls.length > 1 ? wikiUrls[1] : wikiUrls[0];
+        String url = Arrays.stream(wikiUrls).filter(wUrl -> wUrl != null && wUrl.contains("hypixelskyblock.minecraft.wiki")).findFirst().orElse(wikiUrls[0]);
+
         Button btn = Button.builder(Component.literal("Wiki"), b -> openUri(url))
                 .pos(btnX, btnY)
                 .size(RecipeLayoutConstants.WIKI_BUTTON_WIDTH, RecipeLayoutConstants.WIKI_BUTTON_HEIGHT)

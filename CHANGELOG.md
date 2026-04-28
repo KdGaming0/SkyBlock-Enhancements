@@ -3,7 +3,8 @@
 ### **RRV Integration**
 **Improvements**
 - Code refactors
-- Added item name to wiki recipes, in addition to the item icon that already existed.
+- Added item name to wiki recipes.
+- Make the open wiki button prefer the hypixelskyblock.minecraft.wiki domain over wiki.hypixel.net
 
 ### **Chat Enhancements**
 **Improvements**
