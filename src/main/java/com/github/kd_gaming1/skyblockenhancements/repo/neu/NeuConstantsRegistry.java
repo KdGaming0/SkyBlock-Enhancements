@@ -7,10 +7,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * In-memory store for parsed NEU repo {@code constants/*.json} data.
@@ -31,7 +34,7 @@ public final class NeuConstantsRegistry {
 
     // ── Parents ─────────────────────────────────────────────────────────────────
 
-    private static volatile Map<String, List<String>> parentToChildren = Map.of();
+    private static volatile Map<String, Set<String>> parentToChildren = Map.of();
     private static volatile Map<String, String> childToParent = Map.of();
 
     // ── Essence costs ───────────────────────────────────────────────────────────
@@ -53,7 +56,7 @@ public final class NeuConstantsRegistry {
 
     /** Parses {@code { "PARENT_ID": ["CHILD_1", ...], ... }}. */
     public static void loadParents(JsonObject json) {
-        Map<String, List<String>> p2c = new HashMap<>(json.size());
+        Map<String, Set<String>> p2c = new HashMap<>(json.size());
         Map<String, String> c2p = new HashMap<>(json.size() * 3);
 
         for (var entry : json.entrySet()) {
@@ -61,14 +64,14 @@ public final class NeuConstantsRegistry {
             if (!val.isJsonArray()) continue;
 
             String parentId = entry.getKey();
-            List<String> children = new ArrayList<>();
+            Set<String> children = new HashSet<>();
             for (JsonElement child : val.getAsJsonArray()) {
                 String childId = child.getAsString();
                 children.add(childId);
                 c2p.put(childId, parentId);
             }
             if (!children.isEmpty()) {
-                p2c.put(parentId, Collections.unmodifiableList(children));
+                p2c.put(parentId, Collections.unmodifiableSet(children));
             }
         }
 
@@ -210,8 +213,8 @@ public final class NeuConstantsRegistry {
 
     // ── Queries ─────────────────────────────────────────────────────────────────
 
-    public static List<String> getChildren(String parentId) {
-        return parentToChildren.getOrDefault(parentId, List.of());
+    public static Collection<String> getChildren(String parentId) {
+        return parentToChildren.getOrDefault(parentId, Set.of());
     }
 
     public static String getParent(String childId) {

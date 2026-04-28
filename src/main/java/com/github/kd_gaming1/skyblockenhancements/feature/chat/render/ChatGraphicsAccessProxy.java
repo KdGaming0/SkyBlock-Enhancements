@@ -30,14 +30,14 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
     private static final int OUTLINE_RIGHT_INSET = 8;
     private static final int OFFSCREEN_Y = -10000;
 
-    private final ChatComponent.ChatGraphicsAccess delegate;
+    private ChatComponent.ChatGraphicsAccess delegate;
     private final SBEChatAccess chatAccess;
-    private final @Nullable GuiGraphics graphics;
-    private final Font font;
+    private @Nullable GuiGraphics graphics;
+    private Font font;
 
     // Sampled once per frame — chat line-spacing doesn't change during a render pass.
-    private final int entryHeight;
-    private final int entryBottomToMessageY;
+    private int entryHeight;
+    private int entryBottomToMessageY;
 
     // Per-line outline accumulation; reset between messages by handleMessage.
     private boolean outlineActive;
@@ -50,10 +50,23 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
             SBEChatAccess chatAccess,
             @Nullable GuiGraphics graphics,
             Font font) {
-        this.delegate = delegate;
         this.chatAccess = chatAccess;
+        prepareForFrame(delegate, graphics, font);
+    }
+
+    /**
+     * Resets mutable state and updates fields that may change between render passes.
+     * Call once before each chat render when reusing a proxy instance.
+     */
+    public void prepareForFrame(ChatComponent.ChatGraphicsAccess delegate,
+                                 @Nullable GuiGraphics graphics, Font font) {
+        this.delegate = delegate;
         this.graphics = graphics;
         this.font = font;
+        this.outlineActive = false;
+        this.outlineMinY = Integer.MAX_VALUE;
+        this.outlineMaxY = Integer.MIN_VALUE;
+        this.outlineOpacity = 0f;
 
         double lineSpacing = Minecraft.getInstance().options.chatLineSpacing().get();
         this.entryHeight = (int) (9.0 * (lineSpacing + 1.0));
@@ -74,16 +87,18 @@ public class ChatGraphicsAccessProxy implements ChatComponent.ChatGraphicsAccess
     public boolean handleMessage(int textTop, float opacity, @NonNull FormattedCharSequence message) {
         ChatLineTracker tracker = chatAccess.sbe$getLineTracker();
         CustomChatRenderer renderer = tracker.rendererFor(message);
-        GuiMessage parent = tracker.parentFor(message);
-
-        int entryBottom = textTop + entryBottomToMessageY;
-        int entryTop = entryBottom - entryHeight;
 
         boolean hovered = renderer == null
                 ? delegate.handleMessage(textTop, opacity, message)
                 : dispatchCustom(renderer, message, textTop, opacity);
 
-        maybeAccumulateOutline(parent, tracker.getSelectedMessage(), opacity, entryTop, entryBottom);
+        GuiMessage selected = tracker.getSelectedMessage();
+        if (selected != null) {
+            GuiMessage parent = tracker.parentFor(message);
+            int entryBottom = textTop + entryBottomToMessageY;
+            int entryTop = entryBottom - entryHeight;
+            maybeAccumulateOutline(parent, selected, opacity, entryTop, entryBottom);
+        }
         return hovered;
     }
 

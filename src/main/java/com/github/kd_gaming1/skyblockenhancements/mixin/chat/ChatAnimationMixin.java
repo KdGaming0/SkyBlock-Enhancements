@@ -39,14 +39,20 @@ public abstract class ChatAnimationMixin {
 
     @Unique private long sbe$lastMessageTime;
     @Unique private int sbe$displaySizeBefore;
+    @Unique private boolean sbe$animationIdle = true;
 
     @Unique
     private float sbe$displacement() {
         if (!SkyblockEnhancementsConfig.enableChatAnimation || chatScrollbarPos != 0) return 0f;
+        if (sbe$animationIdle) return 0f;
 
         int duration = SkyblockEnhancementsConfig.chatAnimationDurationMs;
         float elapsed = System.currentTimeMillis() - sbe$lastMessageTime;
-        float progress = Math.min(elapsed / (float) duration, 1f);
+        if (elapsed >= duration) {
+            sbe$animationIdle = true;
+            return 0f;
+        }
+        float progress = elapsed / (float) duration;
         float eased = 1f - (1f - progress) * (1f - progress); // ease-out quadratic
         return getLineHeight() * ANIMATION_LINE_FACTOR * (1f - eased);
     }
@@ -93,6 +99,7 @@ public abstract class ChatAnimationMixin {
         // Only start a new animation if the message actually produced visible lines.
         if (trimmedMessages.size() > sbe$displaySizeBefore) {
             sbe$lastMessageTime = System.currentTimeMillis();
+            sbe$animationIdle = false;
         }
     }
 }

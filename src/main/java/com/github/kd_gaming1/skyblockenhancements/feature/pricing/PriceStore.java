@@ -88,12 +88,6 @@ public final class PriceStore {
         tooltipCache.clear();
     }
 
-    /** Removes entries whose TTL has expired. Call from the client tick. */
-    public void invalidateExpiredTooltipCache() {
-        long now = System.currentTimeMillis();
-        tooltipCache.entrySet().removeIf(e -> now - e.getValue().timestamp() > CACHE_TTL_MS);
-    }
-
     // ── Cache entry ────────────────────────────────────────────────────────────
 
     public record PriceCacheEntry(List<Component> lines, long timestamp) {

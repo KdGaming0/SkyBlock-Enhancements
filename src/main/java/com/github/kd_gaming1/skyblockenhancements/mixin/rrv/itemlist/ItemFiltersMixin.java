@@ -42,9 +42,11 @@ public class ItemFiltersMixin {
                             + "Ljava/util/List;")
     )
     private static List<Component> sbe$cachedTooltip(Minecraft mc, ItemStack stack) {
-        // computeIfAbsent uses identity equality via IdentityHashMap
-        return sbe$tooltipCache.computeIfAbsent(
-                stack, s -> Screen.getTooltipFromItem(mc, s));
+        List<Component> cached = sbe$tooltipCache.get(stack);
+        if (cached != null) return cached;
+        List<Component> built = Screen.getTooltipFromItem(mc, stack);
+        sbe$tooltipCache.put(stack, built);
+        return built;
     }
 
     // ── Display name cache ───────────────────────────────────────────────────────

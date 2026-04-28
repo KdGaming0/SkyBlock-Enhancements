@@ -1,5 +1,6 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.chat.search;
 
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.ChatLineTracker;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.ChatTextHelper;
 import java.util.List;
 import java.util.Locale;
@@ -73,7 +74,24 @@ public final class ChatSearchController {
         return count;
     }
 
-    private static String toSearchable(Component content) {
+    public int countMatching(List<GuiMessage> messages, ChatLineTracker tracker) {
+        if (!isFiltering()) return messages.size();
+        int count = 0;
+        for (GuiMessage msg : messages) {
+            String plain = tracker.getSearchableText(msg);
+            if (matchesTokens(plain)) count++;
+        }
+        return count;
+    }
+
+    private boolean matchesTokens(String plain) {
+        for (String token : tokens) {
+            if (!plain.contains(token)) return false;
+        }
+        return true;
+    }
+
+    public static String toSearchable(Component content) {
         String plain = ChatFormatting.stripFormatting(content.getString());
         return ChatTextHelper.stripCompactSuffix(plain).toLowerCase(Locale.ROOT);
     }

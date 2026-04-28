@@ -50,6 +50,12 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
 
     @Unique private final ChatLineTracker sbe$lineTracker = new ChatLineTracker();
 
+    // Proxy reuse cache (3.11) — avoids per-frame allocation when delegate/font/line-spacing are stable.
+    @Unique private ChatGraphicsAccessProxy sbe$renderProxy;
+    @Unique private ChatComponent.ChatGraphicsAccess sbe$lastDelegate;
+    @Unique private Font sbe$lastProxyFont;
+    @Unique private double sbe$lastLineSpacing = -1.0;
+
     // ---------- SBEChatAccess ----------
 
     @Override public List<GuiMessage> sbe$getAllMessages() { return allMessages; }
@@ -103,7 +109,18 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
             @Local(argsOnly = true) GuiGraphics graphics,
             @Local(argsOnly = true) Font font) {
 
-        ChatGraphicsAccessProxy proxy = new ChatGraphicsAccessProxy(access, this, graphics, font);
+        double lineSpacing = Minecraft.getInstance().options.chatLineSpacing().get();
+        ChatGraphicsAccessProxy proxy = sbe$renderProxy;
+        if (proxy == null || sbe$lastDelegate != access || sbe$lastProxyFont != font
+                || sbe$lastLineSpacing != lineSpacing) {
+            proxy = new ChatGraphicsAccessProxy(access, this, graphics, font);
+            sbe$renderProxy = proxy;
+            sbe$lastDelegate = access;
+            sbe$lastProxyFont = font;
+            sbe$lastLineSpacing = lineSpacing;
+        } else {
+            proxy.prepareForFrame(access, graphics, font);
+        }
         original.call(instance, proxy, i, j, bl);
         proxy.finishOutline();
     }

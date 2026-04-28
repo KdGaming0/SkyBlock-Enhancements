@@ -30,6 +30,7 @@ public class ChatScreenAnimationMixin {
 
     @Unique private boolean sbe$initialized;
     @Unique private long sbe$openTime;
+    @Unique private boolean sbe$barIdle = true;
 
     @Unique
     private float sbe$barDisplacement() {
@@ -39,12 +40,19 @@ public class ChatScreenAnimationMixin {
         if (!sbe$initialized && mc.player != null && !mc.player.isSleeping()) {
             sbe$initialized = true;
             sbe$openTime = System.currentTimeMillis();
+            sbe$barIdle = false;
         }
+
+        if (sbe$barIdle) return 0f;
 
         float duration = Math.min(
                 SkyblockEnhancementsConfig.chatAnimationDurationMs * DURATION_MULTIPLIER,
                 MAX_DURATION_MS);
-        float elapsed = Math.min(System.currentTimeMillis() - sbe$openTime, duration);
+        float elapsed = System.currentTimeMillis() - sbe$openTime;
+        if (elapsed >= duration) {
+            sbe$barIdle = true;
+            return 0f;
+        }
         float t = 1f - elapsed / duration;
         float eased = 1f - t * t * t; // cubic ease-out
         float scale = (float) mc.getWindow().getGuiScale();
@@ -87,5 +95,6 @@ public class ChatScreenAnimationMixin {
     @Inject(method = "removed", at = @At("HEAD"))
     private void sbe$resetOnClose(CallbackInfo ci) {
         sbe$initialized = false;
+        sbe$barIdle = true;
     }
 }

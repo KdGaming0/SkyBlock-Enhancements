@@ -3,7 +3,6 @@
 ### **RRV Integration**
 **Improvements**
 - Code refactors
-- More Code refactors
 - Added item name to wiki recipes, in addition to the item icon that already existed.
 
 ### **Chat Enhancements**
@@ -17,4 +16,6 @@
 
 ### **General Improvements**
 - Code refactors
+- Optimized some code
 - Updated ah price-data endpoint to use v2 instead of v1.
+- Maybe fixed compatibility issues with chat patches and nofrills.

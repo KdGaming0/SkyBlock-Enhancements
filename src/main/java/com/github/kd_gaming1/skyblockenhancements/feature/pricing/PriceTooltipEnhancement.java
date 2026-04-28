@@ -45,11 +45,6 @@ public final class PriceTooltipEnhancement {
         ItemTooltipCallback.EVENT.register(this::onTooltip);
     }
 
-    /** Clears expired tooltip-cache entries. Call from the client tick. */
-    public void tick() {
-        store.invalidateExpiredTooltipCache();
-    }
-
     // ── Callback ────────────────────────────────────────────────────────────────
 
     private void onTooltip(ItemStack stack, Item.TooltipContext ctx, TooltipFlag flag, List<Component> lines) {

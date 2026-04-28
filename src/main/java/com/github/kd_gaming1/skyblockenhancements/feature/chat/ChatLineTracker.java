@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.chat;
 
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.render.CustomChatRenderer;
+import com.github.kd_gaming1.skyblockenhancements.feature.chat.search.ChatSearchController;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import java.util.Map;
 import net.minecraft.client.GuiMessage;
@@ -27,12 +28,14 @@ public final class ChatLineTracker {
     private record Entry(GuiMessage parent, @Nullable CustomChatRenderer renderer) {}
 
     private final Map<FormattedCharSequence, Entry> byContent = new Reference2ObjectOpenHashMap<>();
+    private final Reference2ObjectOpenHashMap<GuiMessage, String> searchableText = new Reference2ObjectOpenHashMap<>();
 
     private @Nullable GuiMessage pendingParent;
     private @Nullable GuiMessage selectedMessage;
 
     public void beginAddingLinesFor(GuiMessage parent) {
         this.pendingParent = parent;
+        this.searchableText.put(parent, ChatSearchController.toSearchable(parent.content()));
     }
 
     public void finishAddingLines() {
@@ -52,6 +55,7 @@ public final class ChatLineTracker {
     /** Discards all per-line state AND any active selection. Use on full history clear. */
     public void clearAll() {
         byContent.clear();
+        searchableText.clear();
         selectedMessage = null;
     }
 
@@ -61,6 +65,7 @@ public final class ChatLineTracker {
      */
     public void clearLineMappings() {
         byContent.clear();
+        searchableText.clear();
     }
 
     public @Nullable CustomChatRenderer rendererFor(FormattedCharSequence content) {
@@ -83,5 +88,12 @@ public final class ChatLineTracker {
 
     public @Nullable GuiMessage getSelectedMessage() {
         return selectedMessage;
+    }
+
+    /** Returns the pre-computed searchable plain text for a message, computing on demand if absent. */
+    public String getSearchableText(GuiMessage message) {
+        String cached = searchableText.get(message);
+        if (cached != null) return cached;
+        return ChatSearchController.toSearchable(message.content());
     }
 }

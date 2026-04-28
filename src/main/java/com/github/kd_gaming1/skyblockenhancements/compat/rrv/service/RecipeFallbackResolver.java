@@ -47,6 +47,8 @@ public final class RecipeFallbackResolver {
     public static boolean tryOpen(ItemStack stack, ActionType openType) {
         if (stack.isEmpty()) return false;
 
+        String skyblockId = null; // lazy — only extracted if a branch needs it
+
         // ── NPC handling (runs for any ActionType) ───────────────────────────────
         NeuItem npcItem = findNpcItem(stack);
         if (npcItem != null) {
@@ -70,13 +72,13 @@ public final class RecipeFallbackResolver {
                 List<ReliableClientRecipe> inputRecipes =
                         ClientRecipeCache.INSTANCE.getRecipesForCraftingInput(stack);
                 if (!inputRecipes.isEmpty()) {
-                    openWithTab(stack, inputRecipes, null,
-                            SkyblockRecipeUtil.extractSkyblockId(stack), ActionType.INPUT);
+                    if (skyblockId == null) skyblockId = SkyblockRecipeUtil.extractSkyblockId(stack);
+                    openWithTab(stack, inputRecipes, null, skyblockId, ActionType.INPUT);
                     return true;
                 }
             } else {
-                openWithTab(stack, resultRecipes, null,
-                        SkyblockRecipeUtil.extractSkyblockId(stack), ActionType.RESULT);
+                if (skyblockId == null) skyblockId = SkyblockRecipeUtil.extractSkyblockId(stack);
+                openWithTab(stack, resultRecipes, null, skyblockId, ActionType.RESULT);
                 return true;
             }
         }
@@ -86,8 +88,8 @@ public final class RecipeFallbackResolver {
             List<ReliableClientRecipe> inputRecipes =
                     ClientRecipeCache.INSTANCE.getRecipesForCraftingInput(stack);
             if (!inputRecipes.isEmpty()) {
-                openWithTab(stack, inputRecipes, null,
-                        SkyblockRecipeUtil.extractSkyblockId(stack), openType);
+                if (skyblockId == null) skyblockId = SkyblockRecipeUtil.extractSkyblockId(stack);
+                openWithTab(stack, inputRecipes, null, skyblockId, openType);
                 return true;
             }
         }

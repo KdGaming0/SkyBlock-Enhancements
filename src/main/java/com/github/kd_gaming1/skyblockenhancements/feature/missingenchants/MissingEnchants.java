@@ -67,6 +67,10 @@ public final class MissingEnchants {
     private static List<String> lastMissingNamesSorted = List.of();
     private static List<String> lastNotMaxedNamesSorted = List.of();
 
+    // --- Insert-index cache: valid while lastItemType / lastCurrentEnchants are unchanged ---
+    private static List<String> lastNormalizedTokens = null;
+    private static int lastInsertIndex = -1;
+
     // --- Render cache: the built Component list, valid while the missing list and expanded state are unchanged ---
     private static List<String> lastRenderedForMissing = List.of();
     private static boolean lastRenderedExpanded;
@@ -127,6 +131,8 @@ public final class MissingEnchants {
             lastItemType = hovered.itemType();
             lastCurrentEnchants = hovered.currentEnchants();
             lastRenderedForMissing = List.of(); // invalidate render cache for the new item
+            lastNormalizedTokens = null;        // invalidate token cache
+            lastInsertIndex = -1;               // invalidate index cache
         }
 
         // Commit the identity cache only after confirming this is an enchantable item.
@@ -224,10 +230,17 @@ public final class MissingEnchants {
     }
 
     private static int findInsertIndex(List<Component> tooltipLines, Set<String> enchantKeys) {
-        List<String> tokens = enchantKeys.stream()
-                .map(MissingEnchants::normalizeEnchantToken)
-                .filter(t -> !t.isEmpty())
-                .toList();
+        if (lastInsertIndex >= 0) return lastInsertIndex;
+
+        List<String> tokens = lastNormalizedTokens;
+        if (tokens == null) {
+            tokens = new ArrayList<>(enchantKeys.size());
+            for (String key : enchantKeys) {
+                String t = normalizeEnchantToken(key);
+                if (!t.isEmpty()) tokens.add(t);
+            }
+            lastNormalizedTokens = tokens;
+        }
 
         int lastRomanLine   = -1;
         int lastEnchantLine = -1;
@@ -243,7 +256,16 @@ public final class MissingEnchants {
                 continue;
             }
 
-            if (line.contains("enchant") || tokens.stream().anyMatch(line::contains)) {
+            boolean isEnchantLine = line.contains("enchant");
+            if (!isEnchantLine) {
+                for (String token : tokens) {
+                    if (line.contains(token)) {
+                        isEnchantLine = true;
+                        break;
+                    }
+                }
+            }
+            if (isEnchantLine) {
                 lastEnchantLine = i;
             }
         }
@@ -255,8 +277,12 @@ public final class MissingEnchants {
         int base = Math.min(anchor + 1, tooltipLines.size());
 
         for (int i = base; i < Math.min(tooltipLines.size(), base + 8); i++) {
-            if (tooltipLines.get(i).getString().isEmpty()) return i;
+            if (tooltipLines.get(i).getString().isEmpty()) {
+                lastInsertIndex = i;
+                return i;
+            }
         }
+        lastInsertIndex = base;
         return base;
     }
 
@@ -278,5 +304,8 @@ public final class MissingEnchants {
         lastRenderedForMissing = List.of();
         lastRenderedExpanded = false;
         lastRenderBlock = List.of();
+
+        lastNormalizedTokens = null;
+        lastInsertIndex = -1;
     }
 }

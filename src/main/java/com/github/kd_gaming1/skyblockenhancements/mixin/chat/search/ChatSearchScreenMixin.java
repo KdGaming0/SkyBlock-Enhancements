@@ -162,7 +162,7 @@ public abstract class ChatSearchScreenMixin extends Screen {
 
         SBEChatAccess access = (SBEChatAccess) Minecraft.getInstance().gui.getChat();
         int total = access.sbe$getAllMessages().size();
-        int matching = search.countMatching(access.sbe$getAllMessages());
+        int matching = search.countMatching(access.sbe$getAllMessages(), access.sbe$getLineTracker());
         String info = matching + "/" + total;
         int infoWidth = font.width(info);
         int infoX = sbe$searchBox.getX() + sbe$searchBox.getWidth() - infoWidth - 4;

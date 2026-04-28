@@ -2,6 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv.util;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,7 +53,7 @@ public final class ItemFamilyHelper {
         if (parentId == null || candidateId == null) return false;
         if (parentId.equals(candidateId)) return true;
 
-        List<String> children = NeuConstantsRegistry.getChildren(parentId);
+        Collection<String> children = NeuConstantsRegistry.getChildren(parentId);
         if (!children.isEmpty()) {
             return children.contains(candidateId);
         }
@@ -84,7 +85,7 @@ public final class ItemFamilyHelper {
         if (!shouldCompactFamily(parentId)) return null;
         if (displayName == null) return null;
 
-        List<String> children = NeuConstantsRegistry.getChildren(parentId);
+        Collection<String> children = NeuConstantsRegistry.getChildren(parentId);
         if (children.isEmpty()) return null;
 
         // Total family size = 1 (parent) + children count

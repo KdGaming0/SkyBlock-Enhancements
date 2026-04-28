@@ -12,11 +12,14 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCa
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCategoryState;
 import com.github.kd_gaming1.skyblockenhancements.mixin.rrv.accessor.AbstractRrvItemListOverlayAccessor;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
+
+import java.util.Objects; // Added import
 import java.util.Set;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique; // Added import
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -31,10 +34,21 @@ public abstract class RrvCategoryFilterMixin {
     @Shadow(remap = false)
     private SearchBar searchbar;
 
+    @Unique
+    private SkyblockItemCategory sbe$lastCategory = null;
+
+    @Unique
+    private String sbe$lastSubCategory = null;
+
+    @Unique
+    private String sbe$lastQuery = null;
+    // -----------------------------------
+
     // ── Search prefix parsing + stripping ────────────────────────────────────────
 
     @ModifyVariable(method = "updateQuery", at = @At("HEAD"), argsOnly = true, remap = false, name = "newQuery")
     private String sbe$parseAndStripCategoryPrefix(String newQuery) {
+        // [Existing code remains the same]
         if (!RrvCompat.isActive()) return newQuery;
 
         if (newQuery == null || !newQuery.startsWith("%")) {
@@ -84,7 +98,17 @@ public abstract class RrvCategoryFilterMixin {
 
         AbstractRrvItemListOverlay self = (AbstractRrvItemListOverlay) (Object) this;
 
-        ((AbstractRrvItemListOverlayAccessor) self).sbe$setStartIndex(0);
+        boolean filterChanged = sbe$lastCategory != target
+                || !Objects.equals(sbe$lastSubCategory, subCategory)
+                || !Objects.equals(sbe$lastQuery, newQuery);
+
+        if (filterChanged) {
+            ((AbstractRrvItemListOverlayAccessor) self).sbe$setStartIndex(0);
+
+            sbe$lastCategory = target;
+            sbe$lastSubCategory = subCategory;
+            sbe$lastQuery = newQuery;
+        }
 
         if (subCategory != null && !subCategory.isEmpty()) {
             self.availableItems().removeIf(

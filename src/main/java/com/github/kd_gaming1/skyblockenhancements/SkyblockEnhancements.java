@@ -94,7 +94,6 @@ public class SkyblockEnhancements implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(Fullbright::onTick);
         ClientTickEvents.END_CLIENT_TICK.register(client -> IrisCompat.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> priceFetcher.tick());
-        ClientTickEvents.END_CLIENT_TICK.register(client -> priceTooltip.tick());
 
         // Enchant data is independent of RRV — always fetch on startup.
         ClientLifecycleEvents.CLIENT_STARTED.register(
