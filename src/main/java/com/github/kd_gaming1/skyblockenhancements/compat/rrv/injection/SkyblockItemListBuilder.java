@@ -35,8 +35,8 @@ public final class SkyblockItemListBuilder {
     public static List<ItemStack> build() {
         boolean compact = SkyblockEnhancementsConfig.compactItemList;
 
-        // Pair stacks with their NeuItem for sorting without re-resolving.
-        record StackWithMeta(ItemStack stack, NeuItem neuItem) {}
+        // Pair stacks with their NeuItem and pre-computed sort key for zero-allocation sorting.
+        record StackWithMeta(ItemStack stack, NeuItem neuItem, SortKey sortKey) {}
 
         List<StackWithMeta> candidates = new ArrayList<>();
 
@@ -62,36 +62,85 @@ public final class SkyblockItemListBuilder {
             }
 
             if (!stack.isEmpty()) {
-                candidates.add(new StackWithMeta(stack, neuItem));
+                SortKey key = new SortKey(neuItem);
+                candidates.add(new StackWithMeta(stack, neuItem, key));
             }
         }
 
-        // Sort: primary = family prefix, secondary = rarity, tertiary = display name
-        candidates.sort(Comparator
-                .<StackWithMeta, String>comparing(s -> {
-                    String id = s.neuItem().internalName;
-                    if (id != null) {
-                        int semi = id.indexOf(';');
-                        if (semi >= 0) return id.substring(0, semi);
-                    }
-                    return "";
-                })
-                .thenComparing(
-                        s -> s.neuItem().rarity != null
-                                ? s.neuItem().rarity.ordinal() : Integer.MAX_VALUE)
-                .thenComparing(
-                        s -> s.neuItem().displayName != null
-                                ? s.neuItem().displayName.replaceAll("§.", "")
-                                : "")
-                .thenComparing(
-                        s -> s.neuItem().internalName != null
-                                ? s.neuItem().internalName
-                                : ""));
+        // Sort using pre-computed keys — zero allocations during comparison.
+        candidates.sort(Comparator.comparing(StackWithMeta::sortKey));
 
         List<ItemStack> items = new ArrayList<>(candidates.size());
         for (StackWithMeta s : candidates) {
             items.add(s.stack());
         }
         return items;
+    }
+
+    // ── Sort key ────────────────────────────────────────────────────────────────
+
+    /**
+     * Immutable, pre-computed sort key for a {@link NeuItem}. All expensive string
+     * operations (substring, color-code stripping) happen once at construction time,
+     * so the comparator performs only zero-allocation field comparisons.
+     */
+    private record SortKey(
+            String familyPrefix,
+            int rarityOrdinal,
+            String cleanDisplayName,
+            String internalName
+    ) implements Comparable<SortKey> {
+
+        SortKey(NeuItem item) {
+            this(
+                    familyPrefixOf(item.internalName),
+                    item.rarity != null ? item.rarity.ordinal() : Integer.MAX_VALUE,
+                    stripColorCodes(item.displayName),
+                    item.internalName != null ? item.internalName : ""
+            );
+        }
+
+        @Override
+        public int compareTo(SortKey other) {
+            int c = this.familyPrefix.compareTo(other.familyPrefix);
+            if (c != 0) return c;
+
+            c = Integer.compare(this.rarityOrdinal, other.rarityOrdinal);
+            if (c != 0) return c;
+
+            c = this.cleanDisplayName.compareTo(other.cleanDisplayName);
+            if (c != 0) return c;
+
+            return this.internalName.compareTo(other.internalName);
+        }
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────────
+
+    /** Returns the substring before the first {@code ';'}, or {@code ""} if absent. */
+    private static String familyPrefixOf(String internalName) {
+        if (internalName == null) return "";
+        int semi = internalName.indexOf(';');
+        return semi >= 0 ? internalName.substring(0, semi) : "";
+    }
+
+    /**
+     * Strips Minecraft color/formatting codes ({@code §x}) from a string.
+     * Faster than {@code replaceAll("§.", "")} because it avoids regex compilation
+     * and intermediate {@link String} objects.
+     */
+    private static String stripColorCodes(String raw) {
+        if (raw == null) return "";
+        int len = raw.length();
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++) {
+            char ch = raw.charAt(i);
+            if (ch == '§' && i + 1 < len) {
+                i++; // skip the formatting code character
+            } else {
+                sb.append(ch);
+            }
+        }
+        return sb.toString();
     }
 }

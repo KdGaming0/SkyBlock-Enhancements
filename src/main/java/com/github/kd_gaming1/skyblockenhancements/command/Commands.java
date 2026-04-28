@@ -4,7 +4,9 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.lit
 
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.DataReadinessTracker;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
+import com.github.kd_gaming1.skyblockenhancements.repo.DownloadSession;
 import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.io.AtomicFileWriter;
@@ -100,10 +102,13 @@ public class Commands {
         if (RrvCompat.isActive()) {
             ctx.getSource().sendFeedback(Component.literal(PREFIX + "Refreshing NEU item repo..."));
             ItemStackBuilder.clearCache();
-            SkyblockEnhancements.getInstance().getRepoDownloader().refresh().neuReady().thenRun(() ->
-                    ctx.getSource().sendFeedback(
-                            Component.literal(PREFIX + "Item repo refreshed ("
-                                    + NeuItemRegistry.getAll().size() + " items)")));
+            DownloadSession session = SkyblockEnhancements.getInstance().getRepoDownloader().refresh();
+            DataReadinessTracker.waitAndInject(session).thenRun(() -> {
+                ctx.getSource().sendFeedback(
+                        Component.literal(PREFIX + "Item repo refreshed ("
+                                + NeuItemRegistry.getAll().size() + " items)")
+                );
+            });
         }
 
         ctx.getSource().sendFeedback(

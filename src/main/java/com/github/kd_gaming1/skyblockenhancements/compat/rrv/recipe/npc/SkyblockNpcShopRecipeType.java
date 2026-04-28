@@ -55,6 +55,7 @@ public class SkyblockNpcShopRecipeType implements ReliableClientRecipeType {
 
     public void clearCache() {
         cachedNpcReferences = null;
+        NpcNameMatcher.clearCache();
     }
 
     @Override

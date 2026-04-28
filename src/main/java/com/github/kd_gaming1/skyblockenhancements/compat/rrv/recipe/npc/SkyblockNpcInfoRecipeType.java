@@ -41,6 +41,7 @@ public class SkyblockNpcInfoRecipeType implements ReliableClientRecipeType {
 
     public void clearCache() {
         cachedReferences = null;
+        NpcNameMatcher.clearCache();
     }
 
     @Override
