@@ -36,7 +36,7 @@
     "rrv.search.EditBoxCalculatorHintMixin",
     "rrv.itemlist.ItemFiltersMixin",
     "rrv.itemlist.ItemSlotTooltipMixin",
-    "rrv.recipe.QuickNavRecipeViewMixin",
+    "rrv.fix.QuickNavRecipeViewMixin",
     "rrv.recipe.RecipeViewCenterMixin",
     "rrv.recipe.RecipeViewFallbackMixin",
     "rrv.accessor.RecipeViewMenuAccessor",
