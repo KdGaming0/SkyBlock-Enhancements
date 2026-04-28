@@ -24,12 +24,14 @@ Recipe data is sourced from the **NEU repository**, downloaded and cached on fir
 - **SkyBlock Mob Drops**: Mob drop tables in a 4×3 grid with per-item drop chance tooltips.
 - **SkyBlock Trade**: Simple 1:1 trade recipes.
 - **Kat Pet Upgrade**: Kat upgrade recipes showing the input pet, materials, coin cost, upgrade time, and resulting pet.
+- **SkyBlock Essence Upgrade**: Essence upgrade recipes showing the input item, essence type and cost, any companion materials, and the resulting upgraded item.
 - **SkyBlock Wiki**: Fallback card for items with wiki URLs but no other recipe data, keeping every item clickable in the viewer.
 - **Search Calculator**: Evaluate math expressions directly in the RRV search bar with real-time "ghost text" results.
   - Supports basic operators (+, -, *, /, %), exponentiation (^), and parentheses.
   - SkyBlock Suffixes: Understands magnitude abbreviations (k, m, b, t) and the stack suffix (st) for bulk calculations (e.g., 1st * 25k).
   - Advanced Math: Support for scientific notation (e.g., 1.5e6) and functions like sqrt(), abs(), floor(), ceil(), and round().
-- Category filtering decides to only search and see items for a specific category, like armor or weapons.
+- **Category Filtering**: Filter the item list to only show items for a specific category, like armor or weapons.
+- **Compact Item List**: Compacts related items (such as dungeon star variants) into families to reduce clutter in the item list.
 - All recipe types include a **Wiki** button that opens the item's page on the SkyBlock wiki.
 
 ### Skyblock Enhancements
@@ -38,25 +40,34 @@ Recipe data is sourced from the **NEU repository**, downloaded and cached on fir
 - **Prevent Weapon Placement**: Stops weapons like Spirit Sceptre from being placed accidentally.
 - **Enter to Confirm Signs**: Press Enter to confirm Hypixel input signs (optionally all signs).
 - **Kat Pet Upgrade Reminders**: Set reminders for pet upgrades at Kat, with configurable sound alerts.
-- **Item Glow Outline**: Adds a customizable glow outline to items, with optional see-through-walls support.
+- **General Reminders** (`/remindme`): Create and manage custom reminders with real-time or play-time triggers, repeating options, and multiple output types (chat, title box, sound, or chat + title). Includes a graphical interface (`/remindme gui`) for easy management.
+- **Item Glow Outline**: Adds a customizable glow outline to dropped items, with optional see-through-walls support and a configurable color.
+- **Hide Cheap Coins**: Hides cheap coin ground drops (coin/coins player-head drops).
 
 ### Chat Enhancements
 - **Compact Duplicate Messages**: Merges repeated chat messages into a single line with an occurrence counter (×N).
   - Option to only compact consecutive duplicates.
+  - Configurable time window for how long to wait before resetting the compact counter.
 - **Centered Hypixel Text**: Properly centers space-padded Hypixel messages in the chat window.
 - **Smooth Separators**: Replaces dash/line separator characters with clean horizontal lines.
 - **Chat Tabs**: Adds Hypixel channel tab buttons (All, Party, Guild, PM, Co-op) above the chat input. (Button textures were made by [Bentcheesee](https://modrinth.com/user/Bentcheesee). Huge thanks!)
+- **Chat Context Menu**: Right-click a message to open a menu with options to Copy Text, Copy Message Body, Copy with Formatting Codes, or Delete the message.
+- **Right-Click to Copy**: Alternative simple right-click copying without the context menu.
+- **Chat Search**: Search through chat history with an in-chat search box. Option to always show the search field.
 - **Extended Chat History**: Increases the chat history limit from 100 to a configurable value (up to 2048).
-- **Chat Animation**: Smooth slide-up animation when new messages arrive and when the chat screen opens.
-- **Copy Message**: Right-Click a message to copy it.
+- **Chat Animation**: Smooth slide-up animation when new messages arrive and when the chat screen opens, with a configurable animation duration.
+
+### Tooltip Enhancements
+- **Price Tooltips**: Shows AH Lowest BIN and Bazaar prices in item tooltips while on SkyBlock.
+- **Tooltip Scroll**: Scroll long tooltips vertically with configurable speed, optional top anchoring, and inverted scroll direction. Optional horizontal scrolling is also available.
 
 ### General Enhancements
 - **Fullbright**: Configurable fullbright with keybind toggle (G key), adjustable strength, and Iris shader compatibility.
 - **No Double Sneak**: Prevents accidental double-sneak.
-- **Tooltip Scroll**: Scroll long tooltips vertically (and horizontally with Shift), with configurable speed and direction.
 - **Hide Item Frames**: Hides item frame entities.
 - **Disable Resource Pack Compatibility Warning**: Removes the compatibility warning when loading resource packs.
 - **Command Confirmation Disabler**: Hides "Command execution requires confirmation" prompts.
+- **Hide Texture Errors**: Suppresses texture signature errors in logs.
 
 ### Configuration
 - **In-Game Config**: Customize all features via the MidnightConfig menu or with `/skyblockenhancements config`.
@@ -107,5 +118,11 @@ Access the mod's features using the following commands:
 | `/skyblockenhancements` | Open the main configuration menu. |
 | `/skyblockenhancements config` | Alternate way to open the configuration menu. |
 | `/skyblockenhancements refresh repoData` | Manually refresh the internal data repository cache. |
+| `/remindme create <amount> <unit> <trigger> <output> message <message>` | Create a custom reminder. |
+| `/remindme gui` | Open the graphical reminder management interface. |
+| `/remindme list` | List all active reminders. |
+| `/remindme remove <id>` | Remove a specific reminder. |
+| `/remindme toggle <id>` | Toggle a reminder on or off. |
+| `/remindme snooze <id> <amount> <unit>` | Delay a reminder. |
 
 > Previously licensed under Polyform Shield, now MIT as of 08.04.2026
