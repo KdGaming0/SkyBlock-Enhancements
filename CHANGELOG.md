@@ -1,22 +1,5 @@
-## Changelog for 1.0.0-beta.1
+## Changelog for 1.0.0-beta.2
 
-### **RRV Integration**
-**Improvements**
-- Code refactors
-- Added item name to wiki recipes.
-- Make the open wiki button prefer the hypixelskyblock.minecraft.wiki domain over wiki.hypixel.net
-
-### **Chat Enhancements**
-**Improvements**
-- Code refactors
-- Compact chat messages have been improved to not leave behind empty separator lines without text in between them.
-
+### **Missing Enchants**
 **Fixes**
-- Fixed a bug that removed blank lines from some chat messages
-- Fixed a bug that reset scroll postion when new chat message where received.
-
-### **General Improvements**
-- Code refactors
-- Optimized some code
-- Updated ah price-data endpoint to use v2 instead of v1.
-- Maybe fixed compatibility issues with chat patches and nofrills.
+- Fixed an `IndexOutOfBoundsException` game crash caused by dynamic tooltip lengths changing while the cached insert index was being reused.

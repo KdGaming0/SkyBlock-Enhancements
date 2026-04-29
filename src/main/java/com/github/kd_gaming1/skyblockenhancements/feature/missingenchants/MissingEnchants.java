@@ -230,7 +230,7 @@ public final class MissingEnchants {
     }
 
     private static int findInsertIndex(List<Component> tooltipLines, Set<String> enchantKeys) {
-        if (lastInsertIndex >= 0) return lastInsertIndex;
+        if (lastInsertIndex >= 0 && lastInsertIndex <= tooltipLines.size()) return lastInsertIndex;
 
         List<String> tokens = lastNormalizedTokens;
         if (tokens == null) {
