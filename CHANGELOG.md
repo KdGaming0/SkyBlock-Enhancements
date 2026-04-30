@@ -10,3 +10,4 @@
 **Fixes**
 - Fixed an issue where special horses (like the Headless Horseman's skeleton horse) would incorrectly show up as normal horses.
 - Fixed riders not sitting correctly on their mounts within the preview window.
+- Fixed a bug where custom skull items in recipe previews were rendering completely off-screen and appearing invisible.

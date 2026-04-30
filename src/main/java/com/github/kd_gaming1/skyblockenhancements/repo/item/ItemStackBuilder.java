@@ -174,6 +174,7 @@ public final class ItemStackBuilder {
 
     private static void applyItemModel(ItemStack stack, NeuItem item) {
         if (item.itemModel == null) return;
+        if (stack.getItem() == Items.PLAYER_HEAD) return;
         Identifier modelRl = Identifier.tryParse(item.itemModel);
         if (modelRl != null) stack.set(DataComponents.ITEM_MODEL, modelRl);
     }

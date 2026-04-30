@@ -20,6 +20,7 @@ import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -391,6 +392,7 @@ public final class MobPreviewRenderer {
         int centerY = recipeTop + yBase + (BOX_SIZE - 16) / 2;
 
         gfx.pose().pushMatrix();
+        gfx.pose().identity();
         gfx.pose().translate(centerX + 8, centerY + 8);
         gfx.pose().scale(SKULL_SCALE, SKULL_SCALE);
         gfx.pose().translate(-8, -8);
