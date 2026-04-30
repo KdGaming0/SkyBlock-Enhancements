@@ -25,13 +25,13 @@ public class SkyblockDropsRecipeType implements ReliableClientRecipeType {
     static final int NAME_CAPTION_TOP = PREVIEW_BOX_TOP + PREVIEW_BOX_SIZE + 3;
 
     static final int SLOT_GRID_TOP = NAME_CAPTION_TOP + 12;
-    static final int SLOT_GRID_LEFT = 6;
+    private static final int DISPLAY_WIDTH = 140;
+    static final int SLOT_GRID_LEFT = (DISPLAY_WIDTH - COLS * SLOT) / 2;
 
     static final int WIKI_BUTTON_HEIGHT = 20;
     static final int WIKI_BUTTON_MARGIN_TOP = 4;
     static final int WIKI_BUTTON_TOP = SLOT_GRID_TOP + ROWS * SLOT + WIKI_BUTTON_MARGIN_TOP;
 
-    private static final int DISPLAY_WIDTH = COLS * SLOT + SLOT_GRID_LEFT * 2;
     private static final int DISPLAY_HEIGHT = WIKI_BUTTON_TOP + WIKI_BUTTON_HEIGHT + 2;
 
     private final ItemStack icon = new ItemStack(Items.DIAMOND_SWORD);

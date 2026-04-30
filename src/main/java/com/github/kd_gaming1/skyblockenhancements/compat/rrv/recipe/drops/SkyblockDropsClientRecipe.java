@@ -8,6 +8,7 @@ import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import java.util.ArrayList;
@@ -88,8 +89,10 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
         for (int i = 0; i < limit; i++) {
             String chance = chances[i];
             if (chance == null || chance.isEmpty()) continue;
-            ctx.addAdditionalStackModifier(i, (stack, tooltip) ->
-                    tooltip.add(Component.literal("§7Drop chance: §e" + chance)));
+            ctx.addAdditionalStackModifier(i, (stack, tooltip) -> {
+                tooltip.addLast(Component.literal(""));
+                tooltip.addLast(Component.literal("§7Drop chance: §e§l" + chance));
+            });
         }
     }
 
@@ -152,9 +155,9 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
         Component line = SkyblockRecipeUtil.ellipsize(font(), mobName, maxWidth);
 
         int textWidth = font().width(line);
-        int x = pos.left() + NAME_SIDE_PADDING + (maxWidth - textWidth) / 2;
-        int y = pos.top() + NAME_CAPTION_Y;
-        gfx.drawString(font(), line, x, y, RecipeColors.DARK_TEXT, true);
+        int x = NAME_SIDE_PADDING + (maxWidth - textWidth) / 2;
+
+        gfx.drawString(font(), line, x, NAME_CAPTION_Y, RecipeColors.WHITE, true);
     }
 
     private void renderHoverTooltipIfNeeded(GuiGraphics gfx, RecipeViewScreen screen,
@@ -174,6 +177,7 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
     @Override
     @Nullable
     protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
-        return placeWikiButton(screen, pos.left(), pos.top() + BUTTON_ROW_Y_OFFSET);
+        int btnX = (SkyblockDropsRecipeType.displayWidth() - RecipeLayoutConstants.WIKI_BUTTON_WIDTH) / 2;
+        return placeWikiButton(screen, pos.left() + btnX, pos.top() + BUTTON_ROW_Y_OFFSET);
     }
 }

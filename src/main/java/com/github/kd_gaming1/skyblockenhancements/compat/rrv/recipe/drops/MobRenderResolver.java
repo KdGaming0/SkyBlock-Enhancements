@@ -77,7 +77,22 @@ public final class MobRenderResolver {
             }
             return MobPreview.playerSkin(def.skinPath());
         }
+        if ("Horse".equals(def.entityKind()) && def.horseKind() != null) {
+            EntityType<?> horseType = resolveHorseKind(def.horseKind());
+            if (horseType != null) {
+                return MobPreview.vanilla(horseType);
+            }
+        }
         return resolveVanilla(def.entityKind());
+    }
+
+    @Nullable
+    private static EntityType<?> resolveHorseKind(String horseKind) {
+        return switch (horseKind.toLowerCase()) {
+            case "skeleton" -> EntityType.SKELETON_HORSE;
+            case "zombie" -> EntityType.ZOMBIE_HORSE;
+            default -> null;
+        };
     }
 
     @Nullable

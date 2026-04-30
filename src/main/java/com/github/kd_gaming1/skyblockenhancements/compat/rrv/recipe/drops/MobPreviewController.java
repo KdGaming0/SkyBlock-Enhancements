@@ -1,5 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops;
 
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
@@ -16,9 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class MobPreviewController {
 
     private final MobPreview preview;
-
-    @Nullable private LivingEntity mountEntity;
-    @Nullable private LivingEntity riderEntity;
+    private final List<LivingEntity> entityStack = new ArrayList<>();
 
     private int animationTick;
     private boolean hovered;
@@ -32,14 +32,20 @@ public class MobPreviewController {
     /** Spawns living entities when the recipe becomes visible. Safe to call when {@code preview} is null. */
     public void init(ClientLevel level) {
         if (preview == null || !preview.needsLivingEntity()) return;
+        spawnRecursive(level, preview, null);
+    }
 
-        mountEntity = spawnForLayer(level, preview.entityType());
-        MobPreview rider = preview.rider();
-        if (rider != null) {
-            riderEntity = spawnForLayer(level, rider.entityType());
-            if (riderEntity != null && mountEntity != null) {
-                riderEntity.startRiding(mountEntity);
+    private void spawnRecursive(ClientLevel level, MobPreview current, @Nullable LivingEntity mount) {
+        LivingEntity entity = spawnForLayer(level, current.entityType());
+        if (entity != null) {
+            if (mount != null) {
+                entity.startRiding(mount);
+                mount.positionRider(entity);
             }
+            entityStack.add(entity);
+        }
+        if (current.rider() != null) {
+            spawnRecursive(level, current.rider(), entity != null ? entity : mount);
         }
     }
 
@@ -55,14 +61,10 @@ public class MobPreviewController {
 
     /** Discards spawned entities when the recipe is hidden. */
     public void fade() {
-        if (mountEntity != null) {
-            mountEntity.remove(Entity.RemovalReason.DISCARDED);
-            mountEntity = null;
+        for (LivingEntity entity : entityStack) {
+            entity.remove(Entity.RemovalReason.DISCARDED);
         }
-        if (riderEntity != null) {
-            riderEntity.remove(Entity.RemovalReason.DISCARDED);
-            riderEntity = null;
-        }
+        entityStack.clear();
     }
 
     // ── Animation ────────────────────────────────────────────────────────────────
@@ -84,11 +86,23 @@ public class MobPreviewController {
      */
     public void render(GuiGraphics gfx, int x, int y, int mouseX, int mouseY, float partialTicks) {
         hovered = MobPreviewRenderer.isPointInPreviewBox(mouseX, mouseY);
+        syncPassengerPositions();
 
         if (preview != null) {
-            MobPreviewRenderer.render(preview, gfx, x, y, mountEntity, riderEntity, animationTick, partialTicks);
+            MobPreviewRenderer.render(preview, gfx, x, y, entityStack, animationTick, partialTicks);
         } else {
             MobPreviewRenderer.renderPlaceholder(gfx, x, y);
+        }
+    }
+
+    /** Re-applies vanilla passenger positioning so riders sit at the correct attachment point. */
+    private void syncPassengerPositions() {
+        for (int i = 0; i < entityStack.size() - 1; i++) {
+            LivingEntity mount = entityStack.get(i);
+            LivingEntity rider = entityStack.get(i + 1);
+            if (rider.getVehicle() == mount) {
+                mount.positionRider(rider);
+            }
         }
     }
 
