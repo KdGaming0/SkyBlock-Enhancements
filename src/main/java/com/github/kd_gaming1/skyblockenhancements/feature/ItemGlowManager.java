@@ -71,6 +71,8 @@ public class ItemGlowManager {
      */
     private static final Queue<ItemEntity> spawnQueue = new ArrayDeque<>();
 
+    private static int tickCounter = 0;
+
     /** Registers entity load/unload listeners and the per-tick update loop. */
     public static void init() {
         ClientEntityEvents.ENTITY_LOAD.register((entity, world) -> {
@@ -103,7 +105,8 @@ public class ItemGlowManager {
 
     /** Returns the RGB glow color for a tracked item, or white if not found. */
     public static int getGlowColor(UUID uuid) {
-        return glowColors.getOrDefault(uuid, parseColor(SkyblockEnhancementsConfig.defaultGlowColor));
+        Integer color = glowColors.get(uuid);
+        return color != null ? color : parseColor(SkyblockEnhancementsConfig.defaultGlowColor);
     }
 
     /**
@@ -112,8 +115,9 @@ public class ItemGlowManager {
     public static int getGlowColorIfActive(UUID uuid) {
         if (!onSkyblock) return -1;
         if (uuid == null || !SkyblockEnhancementsConfig.enableItemGlowOutline) return -1;
-        if (SkyblockEnhancementsConfig.showThroughWalls) return glowColors.getOrDefault(uuid, -1);
-        return lineOfSightVisible.contains(uuid) ? glowColors.getOrDefault(uuid, -1) : -1;
+        if (!SkyblockEnhancementsConfig.showThroughWalls && !lineOfSightVisible.contains(uuid)) return -1;
+        Integer color = glowColors.get(uuid);
+        return color != null ? color : -1;
     }
 
     /** Clears all tracking state (called on world change or disconnect). */
@@ -159,7 +163,9 @@ public class ItemGlowManager {
 
         if (SkyblockEnhancementsConfig.showThroughWalls) return;
 
-        updateLineOfSight(client.player);
+        if (tickCounter++ % 10 == 0) {
+            updateLineOfSight(client.player);
+        }
     }
 
     /** Rebuilds the set of items visible to the player this tick. */

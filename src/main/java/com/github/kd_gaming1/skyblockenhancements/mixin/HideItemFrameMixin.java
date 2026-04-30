@@ -39,9 +39,9 @@ public class HideItemFrameMixin {
             CallbackInfo ci) {
         if (!SkyblockEnhancementsConfig.hideItemFrames) return;
 
-        // Invalidate cache each game tick
+        // Invalidate cache every 10 ticks
         long gameTime = entity.level().getGameTime();
-        if (gameTime != lastGameTime) {
+        if (Math.abs(gameTime - lastGameTime) > 10) {
             hideCache.clear();
             lastGameTime = gameTime;
         }
@@ -50,8 +50,8 @@ public class HideItemFrameMixin {
         Boolean cached = hideCache.get(key);
         if (cached == null) {
             AABB box = entity.getBoundingBox().inflate(0.1);
-            List<ItemFrame> framesAtPos = entity.level().getEntitiesOfClass(ItemFrame.class, box);
-            cached = framesAtPos.stream().anyMatch(f -> !f.getItem().isEmpty());
+            List<ItemFrame> framesAtPos = entity.level().getEntitiesOfClass(ItemFrame.class, box, f -> !f.getItem().isEmpty());
+            cached = !framesAtPos.isEmpty();
             hideCache.put(key, cached);
         }
 
