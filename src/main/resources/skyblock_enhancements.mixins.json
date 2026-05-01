@@ -43,6 +43,7 @@
     "rrv.itemlist.RrvCategoryFilterMixin",
     "rrv.itemlist.RrvItemListMixin",
     "rrv.fix.RrvRecipeRequestMixin",
+    "rrv.fix.RrvReturnToCacheFixMixin",
     "rrv.fix.RrvScrollFixMixin",
     "rrv.search.RrvSearchCalculatorMixin",
     "rrv.recipe.VisitorHelperRecipeViewMixin",

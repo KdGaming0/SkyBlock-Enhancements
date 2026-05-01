@@ -103,13 +103,27 @@ public class SkyblockWikiInfoClientRecipe extends AbstractSkyblockClientRecipe
      * If the full text doesn't fit, the last visible line is truncated with an ellipsis.
      */
     private static List<FormattedCharSequence> wrapName(Font font, Component name, int wrapWidth) {
-        List<FormattedCharSequence> all = font.split(name, wrapWidth);
-        if (all.size() <= SkyblockWikiInfoClientRecipe.MAX_NAME_LINES) return all;
+        var splitter = font.getSplitter();
+        List<FormattedText> lines = splitter.splitLines(name, wrapWidth, net.minecraft.network.chat.Style.EMPTY);
 
-        // Overflow: keep (maxLines - 1) untouched, ellipsize the last visible line.
-        List<FormattedCharSequence> trimmed = new java.util.ArrayList<>(SkyblockWikiInfoClientRecipe.MAX_NAME_LINES);
-        for (int i = 0; i < SkyblockWikiInfoClientRecipe.MAX_NAME_LINES - 1; i++) trimmed.add(all.get(i));
-        trimmed.add(ellipsize(font, all.get(SkyblockWikiInfoClientRecipe.MAX_NAME_LINES - 1), wrapWidth));
+        if (lines.size() <= MAX_NAME_LINES) {
+            return lines.stream().map(net.minecraft.locale.Language.getInstance()::getVisualOrder).toList();
+        }
+
+        List<FormattedCharSequence> trimmed = new java.util.ArrayList<>(MAX_NAME_LINES);
+        for (int i = 0; i < MAX_NAME_LINES - 1; i++) {
+            trimmed.add(net.minecraft.locale.Language.getInstance().getVisualOrder(lines.get(i)));
+        }
+
+        FormattedText lastLine = lines.get(MAX_NAME_LINES - 1);
+
+        String ellipsis = "…";
+        int available = Math.max(0, wrapWidth - font.width(ellipsis));
+
+        FormattedText head = font.substrByWidth(lastLine, available);
+        FormattedText ellipsized = FormattedText.composite(head, FormattedText.of(ellipsis));
+
+        trimmed.add(net.minecraft.locale.Language.getInstance().getVisualOrder(ellipsized));
         return trimmed;
     }
 
