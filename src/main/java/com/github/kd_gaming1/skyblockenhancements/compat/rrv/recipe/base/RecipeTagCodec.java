@@ -50,6 +50,17 @@ public final class RecipeTagCodec {
     public static final String KEY_ESSENCE_TYPE = "essType";
     public static final String KEY_WIKI_URLS   = "wiki";
 
+    // Reforge recipe keys
+    public static final String KEY_REFORGE_NAME   = "rfn";
+    public static final String KEY_IS_BLACKSMITH  = "blk";
+    public static final String KEY_STONE_NAME     = "stn";
+    public static final String KEY_ITEM_RARITY    = "rar";
+    public static final String KEY_STATS          = "sts";
+    public static final String KEY_REFORGE_COST   = "cst";
+    public static final String KEY_ABILITY        = "abl";
+    public static final String KEY_ITEM_TYPE      = "itp";
+    public static final String KEY_NBT_MODIFIER   = "nbt";
+
     // Array prefixes / count keys for recipe-specific slot arrays
     public static final String KEY_DROPS_PREFIX      = "d";
     public static final String KEY_COSTS_PREFIX      = "c";

@@ -39,13 +39,14 @@ import org.jetbrains.annotations.Nullable;
 public final class RepoDiskCache {
 
     /** Bump whenever {@link NeuItem} schema or parser output changes. */
-    public static final int CACHE_VERSION = 12;
+    public static final int CACHE_VERSION = 13;
 
     private static final Gson GSON = new GsonBuilder().create();
 
     /** Keys used in the cache document's {@code constants} object. */
     private static final String[] CONSTANT_KEYS = {
-            "parents", "essencecosts", "museum", "pets", "petnums"
+            "parents", "essencecosts", "museum", "pets", "petnums",
+            "reforges", "reforgestones"
     };
 
     private final Path cacheFile;
@@ -153,6 +154,8 @@ public final class RepoDiskCache {
         if (constants.has("museum"))       NeuConstantsRegistry.loadMuseum(constants.getAsJsonObject("museum"));
         if (constants.has("pets"))         NeuConstantsRegistry.loadPetTypes(constants.getAsJsonObject("pets"));
         if (constants.has("petnums"))      NeuConstantsRegistry.loadPetNums(constants.getAsJsonObject("petnums"));
+        if (constants.has("reforges"))     NeuConstantsRegistry.loadReforges(constants.getAsJsonObject("reforges"));
+        if (constants.has("reforgestones")) NeuConstantsRegistry.loadReforgeStones(constants.getAsJsonObject("reforgestones"));
     }
 
     // ── Save ────────────────────────────────────────────────────────────────────

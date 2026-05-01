@@ -15,6 +15,8 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops.Skyblo
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.essence.SkyblockEssenceUpgradeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.essence.SkyblockEssenceUpgradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.forge.SkyblockForgeClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.forge.SkyblockForgeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.kat.SkyblockKatUpgradeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.kat.SkyblockKatUpgradeServerRecipe;
@@ -151,5 +153,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
                 r -> new SkyblockEssenceUpgradeClientRecipe(
                         r.getInput(), r.getOutput(), r.getEssence(), r.getCompanions(),
                         r.getStarLevel(), r.getEssenceType(), r.getWikiUrls()));
+
+        register(SkyblockReforgeServerRecipe.TYPE, SkyblockReforgeClientRecipe::new);
     }
 }

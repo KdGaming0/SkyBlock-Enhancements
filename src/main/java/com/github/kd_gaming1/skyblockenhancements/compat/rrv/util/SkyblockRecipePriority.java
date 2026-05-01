@@ -32,6 +32,9 @@ public final class SkyblockRecipePriority {
     /** Mob drop tables. */
     public static final int DROPS = 40;
 
+    /** Reforge recipes (blacksmith + stones). */
+    public static final int REFORGE = 30;
+
     /** NPC information cards. */
     public static final int NPC_INFO = 20;
 

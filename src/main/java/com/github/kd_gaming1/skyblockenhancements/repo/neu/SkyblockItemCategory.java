@@ -205,7 +205,7 @@ public enum SkyblockItemCategory {
      * Returns the uppercase type portion ({@code "SWORD"}), or {@code null} if the lore
      * doesn't follow this pattern or yields an unrecognized type.
      */
-    static String extractLoreType(NeuItem item) {
+    public static String extractLoreType(NeuItem item) {
         if (item.lore == null || item.lore.isEmpty()) return null;
 
         String lastLine = item.lore.getLast();

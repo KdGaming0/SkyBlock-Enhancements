@@ -42,7 +42,9 @@ public final class RepoZipParser {
             "essencecosts.json",
             "museum.json",
             "pets.json",
-            "petnums.json"
+            "petnums.json",
+            "reforges.json",
+            "reforgestones.json"
     );
 
     private RepoZipParser() {}

@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -49,6 +50,11 @@ public final class NeuConstantsRegistry {
     // ── Pet types ───────────────────────────────────────────────────────────────
 
     private static volatile Map<String, String> petTypes = Map.of();
+
+    // ── Reforges ────────────────────────────────────────────────────────────────
+
+    private static volatile Map<String, ReforgeData> reforges = Map.of();
+    private static volatile Map<String, ReforgeStoneData> reforgeStones = Map.of();
 
     private NeuConstantsRegistry() {}
 
@@ -200,6 +206,130 @@ public final class NeuConstantsRegistry {
         PetStatResolver.load(json);
     }
 
+    /** Parses {@code reforges.json}. */
+    public static void loadReforges(JsonObject json) {
+        Map<String, ReforgeData> map = new HashMap<>(json.size());
+        for (var entry : json.entrySet()) {
+            JsonElement val = entry.getValue();
+            if (!val.isJsonObject()) continue;
+            ReforgeData parsed = parseReforgeData(val.getAsJsonObject());
+            if (parsed != null) map.put(entry.getKey(), parsed);
+        }
+        reforges = Collections.unmodifiableMap(map);
+        LOGGER.info("Loaded {} blacksmith reforges", map.size());
+    }
+
+    /** Parses {@code reforgestones.json}. */
+    public static void loadReforgeStones(JsonObject json) {
+        Map<String, ReforgeStoneData> map = new HashMap<>(json.size());
+        for (var entry : json.entrySet()) {
+            JsonElement val = entry.getValue();
+            if (!val.isJsonObject()) continue;
+            ReforgeStoneData parsed = parseReforgeStoneData(val.getAsJsonObject());
+            if (parsed != null) map.put(entry.getKey(), parsed);
+        }
+        reforgeStones = Collections.unmodifiableMap(map);
+        LOGGER.info("Loaded {} reforge stones", map.size());
+    }
+
+    private static ReforgeData parseReforgeData(JsonObject obj) {
+        String reforgeName = JsonUtil.getString(obj, "reforgeName");
+        String itemTypes = JsonUtil.getString(obj, "itemTypes");
+        if (reforgeName == null || itemTypes == null) return null;
+
+        List<String> requiredRarities = List.of(JsonUtil.getStringArray(obj, "requiredRarities"));
+        Map<String, Map<String, Double>> stats = parseReforgeStats(obj.get("reforgeStats"));
+        Optional<String> nbtModifier = Optional.ofNullable(JsonUtil.getString(obj, "nbtModifier"));
+
+        return new ReforgeData(reforgeName, itemTypes, requiredRarities, stats, nbtModifier);
+    }
+
+    private static ReforgeStoneData parseReforgeStoneData(JsonObject obj) {
+        String internalName = JsonUtil.getString(obj, "internalName");
+        String reforgeName = JsonUtil.getString(obj, "reforgeName");
+        if (internalName == null || reforgeName == null) return null;
+
+        List<String> requiredRarities = List.of(JsonUtil.getStringArray(obj, "requiredRarities"));
+        Map<String, Integer> costs = new HashMap<>();
+        if (obj.has("reforgeCosts") && obj.get("reforgeCosts").isJsonObject()) {
+            for (var e : obj.getAsJsonObject("reforgeCosts").entrySet()) {
+                try {
+                    costs.put(e.getKey(), e.getValue().getAsInt());
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+
+        Optional<String> itemTypes = Optional.empty();
+        Optional<List<String>> specificInternalNames = Optional.empty();
+        Optional<List<String>> specificItemIds = Optional.empty();
+
+        if (obj.has("itemTypes")) {
+            JsonElement it = obj.get("itemTypes");
+            if (it.isJsonPrimitive()) {
+                itemTypes = Optional.of(it.getAsString());
+            } else if (it.isJsonObject()) {
+                JsonObject itObj = it.getAsJsonObject();
+                if (itObj.has("internalName") && itObj.get("internalName").isJsonArray()) {
+                    List<String> list = new ArrayList<>();
+                    for (JsonElement el : itObj.getAsJsonArray("internalName")) {
+                        if (el.isJsonPrimitive()) list.add(el.getAsString());
+                    }
+                    specificInternalNames = Optional.of(Collections.unmodifiableList(list));
+                }
+                if (itObj.has("itemId") && itObj.get("itemId").isJsonArray()) {
+                    List<String> list = new ArrayList<>();
+                    for (JsonElement el : itObj.getAsJsonArray("itemId")) {
+                        if (el.isJsonPrimitive()) list.add(el.getAsString());
+                    }
+                    specificItemIds = Optional.of(Collections.unmodifiableList(list));
+                }
+            }
+        }
+
+        Optional<String> ability = Optional.empty();
+        Map<String, String> abilityByRarity = new HashMap<>();
+        if (obj.has("reforgeAbility")) {
+            JsonElement ab = obj.get("reforgeAbility");
+            if (ab.isJsonPrimitive()) {
+                ability = Optional.of(ab.getAsString());
+            } else if (ab.isJsonObject()) {
+                for (var e : ab.getAsJsonObject().entrySet()) {
+                    if (e.getValue().isJsonPrimitive()) {
+                        abilityByRarity.put(e.getKey(), e.getValue().getAsString());
+                    }
+                }
+            }
+        }
+
+        Map<String, Map<String, Double>> stats = parseReforgeStats(obj.get("reforgeStats"));
+        Optional<String> nbtModifier = Optional.ofNullable(JsonUtil.getString(obj, "nbtModifier"));
+
+        return new ReforgeStoneData(
+                internalName, reforgeName, itemTypes,
+                specificInternalNames, specificItemIds,
+                requiredRarities, Collections.unmodifiableMap(costs),
+                ability, Collections.unmodifiableMap(abilityByRarity),
+                stats, nbtModifier);
+    }
+
+    private static Map<String, Map<String, Double>> parseReforgeStats(JsonElement el) {
+        if (el == null || !el.isJsonObject()) return Map.of();
+        JsonObject obj = el.getAsJsonObject();
+        Map<String, Map<String, Double>> out = new HashMap<>();
+        for (var rarityEntry : obj.entrySet()) {
+            if (!rarityEntry.getValue().isJsonObject()) continue;
+            JsonObject statObj = rarityEntry.getValue().getAsJsonObject();
+            Map<String, Double> statMap = new HashMap<>();
+            for (var statEntry : statObj.entrySet()) {
+                try {
+                    statMap.put(statEntry.getKey(), statEntry.getValue().getAsDouble());
+                } catch (NumberFormatException ignored) {}
+            }
+            out.put(rarityEntry.getKey(), Collections.unmodifiableMap(statMap));
+        }
+        return Collections.unmodifiableMap(out);
+    }
+
     /** Clears all loaded data. */
     public static void clear() {
         parentToChildren = Map.of();
@@ -208,6 +338,8 @@ public final class NeuConstantsRegistry {
         museumCategories = Map.of();
         itemToMuseumWing = Map.of();
         petTypes = Map.of();
+        reforges = Map.of();
+        reforgeStones = Map.of();
         PetStatResolver.clear();
     }
 
@@ -241,8 +373,17 @@ public final class NeuConstantsRegistry {
         return petTypes.get(petId);
     }
 
+    public static Map<String, ReforgeData> getAllReforges() {
+        return reforges;
+    }
+
+    public static Map<String, ReforgeStoneData> getAllReforgeStones() {
+        return reforgeStones;
+    }
+
     public static boolean isLoaded() {
-        return !parentToChildren.isEmpty() || !essenceUpgrades.isEmpty();
+        return !parentToChildren.isEmpty() || !essenceUpgrades.isEmpty()
+                || !reforges.isEmpty() || !reforgeStones.isEmpty();
     }
 
     // ── Data record ─────────────────────────────────────────────────────────────

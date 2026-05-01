@@ -329,5 +329,11 @@ public class NeuRepoDownloader {
 
         JsonObject petNums = constants.get("petnums.json");
         if (petNums != null) NeuConstantsRegistry.loadPetNums(petNums);
+
+        JsonObject reforges = constants.get("reforges.json");
+        if (reforges != null) NeuConstantsRegistry.loadReforges(reforges);
+
+        JsonObject reforgeStones = constants.get("reforgestones.json");
+        if (reforgeStones != null) NeuConstantsRegistry.loadReforgeStones(reforgeStones);
     }
 }
