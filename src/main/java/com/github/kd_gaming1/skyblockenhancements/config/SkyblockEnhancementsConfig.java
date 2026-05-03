@@ -2,36 +2,35 @@ package com.github.kd_gaming1.skyblockenhancements.config;
 
 import com.github.kd_gaming1.skyblockenhancements.access.LightTextureAccessor;
 import eu.midnightdust.lib.config.MidnightConfig;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 
-// Fabric dev check
-import net.fabricmc.loader.api.FabricLoader;
-
 /**
- * SkyblockEnhancementsConfig
+ * MidnightConfig-based configuration for Skyblock Enhancements.
+ *
+ * <p>All options are {@code public static} and annotated with {@link Entry}
+ * or {@link Comment} so MidnightLib recognises them. The class implements
+ * {@link ModSettings} so services receive a narrow interface instead of
+ * touching static fields directly.
  */
 public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSettings {
 
-    // Category IDs (used by MidnightLib to group entries into tabs)
-    public static final String SKYBLOCK_ENHANCEMENTS = "skyblock_enhancements";
-    public static final String RRV_INTEGRATION = "rrv_integration";
-    public static final String CHAT_ENHANCEMENTS = "chat_enhancements";
-    public static final String TOOLTIP_ENHANCEMENTS = "tooltip_enhancements";
-    public static final String GENERAL_ENHANCEMENTS = "general_enhancements";
-    public static final String DEV_TOOLS = "dev_tools";
+    // ── Category IDs ────────────────────────────────────────────────────────────
 
-    // ------------------------
-    // SKYBLOCK_ENHANCEMENTS
-    // ------------------------
+    public static final String SKYBLOCK_ENHANCEMENTS = "skyblock_enhancements";
+    public static final String RRV_INTEGRATION       = "rrv_integration";
+    public static final String CHAT_ENHANCEMENTS     = "chat_enhancements";
+    public static final String TOOLTIP_ENHANCEMENTS  = "tooltip_enhancements";
+    public static final String GENERAL_ENHANCEMENTS  = "general_enhancements";
+    public static final String DEV_TOOLS             = "dev_tools";
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  Skyblock Enhancements
+    // ═══════════════════════════════════════════════════════════════════════════
+
     @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
     public static Comment text;
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean showMissingEnchantments = true;
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean showNotMaxedEnchantments = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean preventWeaponPlacement = true;
@@ -76,19 +75,12 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static double reminderSoundPitch = 1.0;
 
     public enum ReminderSoundType {
-        UI,
-        BELL,
-        CHIME,
-        LEVEL_UP,
-        EXPERIENCE,
-        HARP,
-        PLING,
-        SUCCESS
+        UI, BELL, CHIME, LEVEL_UP, EXPERIENCE, HARP, PLING, SUCCESS
     }
 
-    // ------------------------
-    // RRV_INTEGRATION
-    // ------------------------
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  RRV Integration
+    // ═══════════════════════════════════════════════════════════════════════════
 
     @Entry(category = RRV_INTEGRATION)
     public static boolean enableRecipeViewer = true;
@@ -102,9 +94,10 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = RRV_INTEGRATION)
     public static boolean enableRecipeDiagnostics = false;
 
-    // ------------------------
-    // CHAT_ENHANCEMENTS
-    // ------------------------
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  Chat Enhancements
+    // ═══════════════════════════════════════════════════════════════════════════
+
     @Comment(category = CHAT_ENHANCEMENTS, centered = true)
     public static Comment chatEnhancementsText;
 
@@ -150,17 +143,27 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 50, max = 500)
     public static int chatAnimationDurationMs = 150;
 
-    // ------------------------
-    // TOOLTIP_ENHANCEMENTS
-    // ------------------------
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  Tooltip Enhancements
+    // ═══════════════════════════════════════════════════════════════════════════
+
     @Comment(category = TOOLTIP_ENHANCEMENTS, centered = true)
     public static Comment tooltipEnhancementsText;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS)
-    public static boolean enablePriceTooltips = false;
+    public static boolean showMissingEnchantments = true;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean showNotMaxedEnchantments = true;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean enablePriceTooltips = true;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS, isSlider = true, min = 5, max = 60)
     public static int priceRefreshIntervalMinutes = 15;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean enablePriceTickerText = true;
 
     @Comment(category = TOOLTIP_ENHANCEMENTS)
     public static Comment tooltipScrollText;
@@ -180,9 +183,10 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = TOOLTIP_ENHANCEMENTS)
     public static boolean enableHorizontalScroll = false;
 
-    // ------------------------
-    // GENERAL_ENHANCEMENTS
-    // ------------------------
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  General Enhancements
+    // ═══════════════════════════════════════════════════════════════════════════
+
     @Comment(category = GENERAL_ENHANCEMENTS, centered = true)
     public static Comment text2;
 
@@ -213,20 +217,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = GENERAL_ENHANCEMENTS, isSlider = true, min = 0, max = 100)
     public static double fullbrightStrength = 100.0;
 
-    // ------------------------
-    // ModSettings delegation (pilot for Phase-5 config abstraction)
-    // ------------------------
-
-    @Override public boolean enablePriceTooltips() { return enablePriceTooltips; }
-    @Override public int priceRefreshIntervalMinutes() { return priceRefreshIntervalMinutes; }
-    @Override public boolean enableReminderSound() { return enableReminderSound; }
-    @Override public ReminderSoundType reminderSound() { return reminderSound; }
-    @Override public double reminderSoundVolume() { return reminderSoundVolume; }
-    @Override public double reminderSoundPitch() { return reminderSoundPitch; }
-
-    // ------------------------
-    // DEV_TOOLS (developer-only category)
-    // ------------------------
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  Dev Tools
+    // ═══════════════════════════════════════════════════════════════════════════
 
     @Entry(category = DEV_TOOLS)
     public static boolean devMode = FabricLoader.getInstance().isDevelopmentEnvironment();
@@ -251,13 +244,26 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = DEV_TOOLS, isSlider = true, min = 1, max = 200)
     public static int groundItemDebugIntervalTicks = 20;
 
-    // ------------------------
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  ModSettings delegation
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    @Override public boolean enablePriceTooltips()        { return enablePriceTooltips; }
+    @Override public int     priceRefreshIntervalMinutes() { return priceRefreshIntervalMinutes; }
+    @Override public boolean enableReminderSound()          { return enableReminderSound; }
+    @Override public ReminderSoundType reminderSound()      { return reminderSound; }
+    @Override public double  reminderSoundVolume()          { return reminderSoundVolume; }
+    @Override public double  reminderSoundPitch()           { return reminderSoundPitch; }
+    @Override public boolean enablePriceTickerText()        { return enablePriceTickerText; }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  Lightmap dirty-flag on save (fullbright immediate refresh)
+    // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
     public void writeChanges() {
         super.writeChanges();
 
-        // BadOptimizations caches the lightmap aggressively — force a rebuild so fullbright changes take effect immediately.
         var mc = Minecraft.getInstance();
         //noinspection ConstantValue
         if (mc.gameRenderer == null) return;

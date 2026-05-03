@@ -43,6 +43,14 @@ public final class FullStackListCache {
 
     private FullStackListCache() {}
 
+    // ── RRV callback registration ───────────────────────────────────────────────
+
+    /** Registers the RRV client-reload invalidation callback.
+     *  Call only after confirming RRV is active. */
+    public static void registerRrvReloadCallback() {
+        ItemView.addClientReloadCallback(FullStackListCache::invalidate);
+    }
+
     // ── Primary population path ──────────────────────────────────────────────────
 
     /**
@@ -237,9 +245,5 @@ public final class FullStackListCache {
         if (data == null) return null;
         String id = data.copyTag().getStringOr("id", "");
         return id.isEmpty() ? null : id;
-    }
-
-    static {
-        ItemView.addClientReloadCallback(FullStackListCache::invalidate);
     }
 }

@@ -95,7 +95,7 @@
   "skyblock_enhancements.midnightconfig.enablePriceTooltips.tooltip": "Shows AH Lowest BIN and Bazaar prices in item tooltips while on SkyBlock.",
 
   "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes": "Price Refresh Interval (minutes)",
-  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes.tooltip": "How often price data is refreshed from the API.\nRange: 1–30 minutes. Default: 5.",
+  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes.tooltip": "How often price data is refreshed from the API.\nRange: 5–60 minutes. Default: 15.",
 
   "skyblock_enhancements.midnightconfig.tooltipScrollText": "Tooltip Scroll Settings",
 
@@ -168,5 +168,10 @@
   "skyblock_enhancements.midnightconfig.groundItemDebugRadius.tooltip": "Radius around the player to scan when nearby-only mode is enabled.",
 
   "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks": "Debug Log Interval (ticks)",
-  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks.tooltip": "How often ground item debug logs are emitted."
+  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks.tooltip": "How often ground item debug logs are emitted.",
+
+  "skyblock_enhancements.midnightconfig.enablePriceTickerText": "Enable Price Ticker Text",
+  "skyblock_enhancements.midnightconfig.enablePriceTickerText.tooltip": "Makes coin values in price tooltips bold for better visibility.",
+  "key.skyblock_enhancements.full_stack_price": "Full Stack BZ Price Modifier",
+  "key.skyblock_enhancements.current_amount_price": "Current Amount BZ Price Modifier"
 }

@@ -24,4 +24,8 @@ public interface ModSettings {
     double reminderSoundVolume();
 
     double reminderSoundPitch();
+
+    // ── Tooltip price formatting ───────────────────────────────────────────────
+
+    boolean enablePriceTickerText();
 }

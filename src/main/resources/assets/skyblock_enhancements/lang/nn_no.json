@@ -95,7 +95,7 @@
   "skyblock_enhancements.midnightconfig.enablePriceTooltips.tooltip": "Viser rimelegaste BIN på AH og Bazaar-prisar i verktøytips mens du er på SkyBlock.",
 
   "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes": "Prisoppdateringsintervall (minutt)",
-  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes.tooltip": "Kor ofte prisdata blir oppdatert frå API-et.\nOmråde: 1–30 minutt. Standard: 5.",
+  "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes.tooltip": "Kor ofte prisdata blir oppdatert frå API-et.\nOmråde: 5–60 minutt. Standard: 15.",
 
   "skyblock_enhancements.midnightconfig.tooltipScrollText": "Rulleinnstillingar for verktøytips",
 
@@ -168,5 +168,10 @@
   "skyblock_enhancements.midnightconfig.groundItemDebugRadius.tooltip": "Radius rundt spelaren å skanne når berre-i-nærleiken-modus er aktivert.",
 
   "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks": "Loggintervall for feilsøking (ticks)",
-  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks.tooltip": "Kor ofte feilsøkingsloggar for gjenstandar på bakken blir sende ut."
+  "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks.tooltip": "Kor ofte feilsøkingsloggar for gjenstandar på bakken blir sende ut.",
+
+  "skyblock_enhancements.midnightconfig.enablePriceTickerText": "Aktiver pris-tikkartekst",
+  "skyblock_enhancements.midnightconfig.enablePriceTickerText.tooltip": "Gjer myntverdiar i pris-verktøytips fet for betre synlegheit.",
+  "key.skyblock_enhancements.full_stack_price": "Full stabel-prismodifikator",
+  "key.skyblock_enhancements.current_amount_price": "Gjeldande mengde-prismodifikator"
 }

@@ -3,6 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements;
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.DataReadinessTracker;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
@@ -12,6 +13,7 @@ import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.Missin
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceDataFetcher;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceStore;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceTooltipEnhancement;
+import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceTooltipKeybinds;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderNotifier;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
@@ -88,6 +90,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
         MissingEnchants.init();
         ItemGlowManager.init();
         Fullbright.init();
+        PriceTooltipKeybinds.init();
         priceTooltip.register();
         priceFetcher.start();
 
@@ -119,6 +122,9 @@ public class SkyblockEnhancements implements ClientModInitializer {
     private void initRecipeViewer() {
         Commands.register();
         if (!RrvCompat.isActive()) return;
+
+        // Register cache invalidation with RRV so overlays stay in sync on reload.
+        FullStackListCache.registerRrvReloadCallback();
 
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             LOGGER.info("Starting NEU repo download...");
