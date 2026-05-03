@@ -9,9 +9,14 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Generates reforge template recipes from NEU constants.
- * One server recipe is created per reforge (blacksmith) and per reforge stone.
- * The client dynamically resolves the viewed item's rarity and applicable stats.
+ * Generates reforge recipes from NEU constants.
+ *
+ * <p>One server recipe is created per (reforge, rarity) pair. When a player clicks an item
+ * in RRV, only recipes whose rarity matches the item's rarity and whose item type applies to
+ * the item will be shown in the reforge tab.
+ *
+ * <p>Blacksmith reforges and reforge stones are both expanded across their
+ * {@code requiredRarities} list. The client renders each recipe as a compact stat card.
  */
 public final class ReforgeRecipeGenerator {
 
@@ -22,41 +27,50 @@ public final class ReforgeRecipeGenerator {
         Map<String, ReforgeStoneData> stones = NeuConstantsRegistry.getAllReforgeStones();
         if (reforges.isEmpty() && stones.isEmpty()) return;
 
-        // Blacksmith reforges (one recipe per reforge)
+        // Blacksmith reforges — one recipe per supported rarity
         for (ReforgeData reforge : reforges.values()) {
-            out.add(new SkyblockReforgeServerRecipe(
-                    reforge.reforgeName(),
-                    true,
-                    "",
-                    reforge.itemTypes(),
-                    reforge.requiredRarities(),
-                    reforge.reforgeStats(),
-                    Map.of(),
-                    Optional.empty(),
-                    Map.of(),
-                    List.of(),
-                    List.of(),
-                    reforge.nbtModifier(),
-                    new String[0]));
+            for (String rarity : reforge.requiredRarities()) {
+                Map<String, Double> rarityStats = reforge.statsForRarity(rarity);
+                out.add(new SkyblockReforgeServerRecipe(
+                        reforge.reforgeName(),
+                        true,
+                        "",
+                        reforge.itemTypes(),
+                        rarity,
+                        reforge.requiredRarities(),
+                        rarityStats,
+                        0,
+                        Optional.empty(),
+                        List.of(),
+                        List.of(),
+                        reforge.nbtModifier(),
+                        new String[0]));
+            }
         }
 
-        // Reforge stones (one recipe per stone)
+        // Reforge stones — one recipe per supported rarity
         for (ReforgeStoneData stone : stones.values()) {
             String itemType = stone.itemTypes().orElse("");
-            out.add(new SkyblockReforgeServerRecipe(
-                    stone.reforgeName(),
-                    false,
-                    stone.internalName(),
-                    itemType,
-                    stone.requiredRarities(),
-                    stone.reforgeStats(),
-                    stone.reforgeCosts(),
-                    stone.reforgeAbility(),
-                    stone.reforgeAbilityByRarity(),
-                    stone.specificInternalNames().orElse(List.of()),
-                    stone.specificItemIds().orElse(List.of()),
-                    stone.nbtModifier(),
-                    new String[0]));
+            for (String rarity : stone.requiredRarities()) {
+                Map<String, Double> rarityStats = stone.statsForRarity(rarity);
+                int rarityCost = stone.costForRarity(rarity).orElse(0);
+                Optional<String> rarityAbility = stone.abilityForRarity(rarity);
+
+                out.add(new SkyblockReforgeServerRecipe(
+                        stone.reforgeName(),
+                        false,
+                        stone.internalName(),
+                        itemType,
+                        rarity,
+                        stone.requiredRarities(),
+                        rarityStats,
+                        rarityCost,
+                        rarityAbility,
+                        stone.specificInternalNames().orElse(List.of()),
+                        stone.specificItemIds().orElse(List.of()),
+                        stone.nbtModifier(),
+                        new String[0]));
+            }
         }
     }
 }

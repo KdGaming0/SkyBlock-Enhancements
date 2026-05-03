@@ -10,14 +10,29 @@ import net.minecraft.world.item.Items;
 
 /**
  * RRV recipe type for SkyBlock reforges (blacksmith + reforge stones).
- * Compact layout: one item slot (stone or empty for blacksmith) + text stats.
+ *
+ * <p>Tall card layout that displays the full stat list for one (reforge, rarity) pair.
+ * One card per page — necessary to fit all stats and the ability text without truncation.
+ *
+ * <p>Clicking a reforgable item matches via {@code redirectsAsResult} (rarity + item type).
+ * Clicking a reforge stone matches via {@code redirectsAsIngredient} (stone internal name).
  */
 public class SkyblockReforgeRecipeType implements ReliableClientRecipeType {
 
     public static final SkyblockReforgeRecipeType INSTANCE = new SkyblockReforgeRecipeType();
 
-    public static final int DISPLAY_WIDTH = 140;
-    public static final int DISPLAY_HEIGHT = 90;
+    /**
+     * Width expanded from 132 to 156 so longer stat names
+     * (e.g. "Bonus Attack Speed") fit without ellipsis.
+     */
+    public static final int DISPLAY_WIDTH = 156;
+
+    /**
+     * Height expanded from 66 to 146 to fit all stat lines:
+     * header (30px) + ability line (9px) + up to 8 stat lines (72px) + padding + button.
+     * <p>RRV viewport: 214px. One card: 146 + 16 + 24 + 24 = 210 ≤ 214.
+     */
+    public static final int DISPLAY_HEIGHT = 146;
 
     private static final int SLOT_X = 4;
     private static final int SLOT_Y = 4;

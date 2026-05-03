@@ -14,8 +14,14 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.resources.Identifier;
 
 /**
- * Server-side reforge template recipe. One recipe per reforge (blacksmith or stone).
- * The client dynamically resolves the viewed item's rarity and displays the matching stats.
+ * Server-side reforge recipe for one specific rarity.
+ *
+ * <p>One recipe is created per (reforge, rarity) pair. The client shows a compact card
+ * with the stat boosts that applying this reforge would give to an item of this rarity.
+ *
+ * <p>When a player clicks an item in RRV, only reforge recipes whose {@code rarity}
+ * matches the item's rarity <em>and</em> whose {@code itemType} applies to the item
+ * will match via {@link SkyblockReforgeClientRecipe#redirectsAsResult}.
  */
 public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
 
@@ -23,28 +29,27 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
             ReliableServerRecipeType.register(
                     Identifier.fromNamespaceAndPath("skyblock_enhancements", "skyblock_reforge"),
                     () -> new SkyblockReforgeServerRecipe(
-                            "", true, "", "", List.of(),
-                            Map.of(), Map.of(), Optional.empty(), Map.of(),
+                            "", true, "", "", "COMMON", List.of(),
+                            Map.of(), 0, Optional.empty(),
                             List.of(), List.of(), Optional.empty(), new String[0]));
 
     private String reforgeName;
     private boolean isBlacksmith;
     private String stoneInternalName;
     private String itemType;
+    private String rarity;
     private List<String> requiredRarities;
-    private Map<String, Map<String, Double>> stats;
-    private Map<String, Integer> costs;
+    private Map<String, Double> stats;
+    private int cost;
     private Optional<String> ability;
-    private Map<String, String> abilitiesByRarity;
     private List<String> specificInternalNames;
     private List<String> specificItemIds;
     private Optional<String> nbtModifier;
 
     public SkyblockReforgeServerRecipe(
             String reforgeName, boolean isBlacksmith, String stoneInternalName,
-            String itemType, List<String> requiredRarities,
-            Map<String, Map<String, Double>> stats, Map<String, Integer> costs,
-            Optional<String> ability, Map<String, String> abilitiesByRarity,
+            String itemType, String rarity, List<String> requiredRarities,
+            Map<String, Double> stats, int cost, Optional<String> ability,
             List<String> specificInternalNames, List<String> specificItemIds,
             Optional<String> nbtModifier, String[] wikiUrls) {
         super(wikiUrls);
@@ -52,22 +57,14 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
         this.isBlacksmith = isBlacksmith;
         this.stoneInternalName = stoneInternalName != null ? stoneInternalName : "";
         this.itemType = itemType != null ? itemType : "";
+        this.rarity = rarity != null ? rarity : "COMMON";
         this.requiredRarities = requiredRarities != null ? List.copyOf(requiredRarities) : List.of();
-        this.stats = stats != null ? deepCopyStats(stats) : Map.of();
-        this.costs = costs != null ? Map.copyOf(costs) : Map.of();
+        this.stats = stats != null ? Collections.unmodifiableMap(new HashMap<>(stats)) : Map.of();
+        this.cost = cost;
         this.ability = ability;
-        this.abilitiesByRarity = abilitiesByRarity != null ? Map.copyOf(abilitiesByRarity) : Map.of();
         this.specificInternalNames = specificInternalNames != null ? List.copyOf(specificInternalNames) : List.of();
         this.specificItemIds = specificItemIds != null ? List.copyOf(specificItemIds) : List.of();
         this.nbtModifier = nbtModifier;
-    }
-
-    private static Map<String, Map<String, Double>> deepCopyStats(Map<String, Map<String, Double>> src) {
-        Map<String, Map<String, Double>> out = new HashMap<>();
-        for (var e : src.entrySet()) {
-            out.put(e.getKey(), new HashMap<>(e.getValue()));
-        }
-        return Collections.unmodifiableMap(out);
     }
 
     @Override
@@ -81,13 +78,13 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
         tag.putBoolean(RecipeTagCodec.KEY_IS_BLACKSMITH, isBlacksmith);
         tag.putString(RecipeTagCodec.KEY_STONE_NAME, stoneInternalName);
         tag.putString(RecipeTagCodec.KEY_ITEM_TYPE, itemType);
+        tag.putString(RecipeTagCodec.KEY_ITEM_RARITY, rarity);
         writeStringList(tag, "rar", requiredRarities);
         writeStats(tag, RecipeTagCodec.KEY_STATS, stats);
-        writeCosts(tag, RecipeTagCodec.KEY_REFORGE_COST, costs);
+        tag.putInt(RecipeTagCodec.KEY_REFORGE_COST, cost);
         if (ability.isPresent()) {
             tag.putString(RecipeTagCodec.KEY_ABILITY, ability.get());
         }
-        writeAbilities(tag, "ablMap", abilitiesByRarity);
         writeStringList(tag, "specIn", specificInternalNames);
         writeStringList(tag, "specId", specificItemIds);
         if (nbtModifier.isPresent()) {
@@ -101,13 +98,13 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
         isBlacksmith = tag.getBooleanOr(RecipeTagCodec.KEY_IS_BLACKSMITH, true);
         stoneInternalName = tag.getStringOr(RecipeTagCodec.KEY_STONE_NAME, "");
         itemType = tag.getStringOr(RecipeTagCodec.KEY_ITEM_TYPE, "");
+        rarity = tag.getStringOr(RecipeTagCodec.KEY_ITEM_RARITY, "COMMON");
         requiredRarities = readStringList(tag, "rar");
         stats = readStats(tag, RecipeTagCodec.KEY_STATS);
-        costs = readCosts(tag, RecipeTagCodec.KEY_REFORGE_COST);
+        cost = tag.getIntOr(RecipeTagCodec.KEY_REFORGE_COST, 0);
         ability = tag.contains(RecipeTagCodec.KEY_ABILITY)
                 ? Optional.of(tag.getStringOr(RecipeTagCodec.KEY_ABILITY, ""))
                 : Optional.empty();
-        abilitiesByRarity = readAbilities(tag, "ablMap");
         specificInternalNames = readStringList(tag, "specIn");
         specificItemIds = readStringList(tag, "specId");
         nbtModifier = tag.contains(RecipeTagCodec.KEY_NBT_MODIFIER)
@@ -132,62 +129,21 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
         return List.of(out);
     }
 
-    private static void writeStats(CompoundTag tag, String key, Map<String, Map<String, Double>> stats) {
+    /** Writes a flat stat map (rarity-specific, not nested). */
+    private static void writeStats(CompoundTag tag, String key, Map<String, Double> stats) {
         CompoundTag root = new CompoundTag();
-        for (var rarityEntry : stats.entrySet()) {
-            CompoundTag statTag = new CompoundTag();
-            for (var statEntry : rarityEntry.getValue().entrySet()) {
-                statTag.putDouble(statEntry.getKey(), statEntry.getValue());
-            }
-            root.put(rarityEntry.getKey(), statTag);
+        for (var entry : stats.entrySet()) {
+            root.putDouble(entry.getKey(), entry.getValue());
         }
         tag.put(key, root);
     }
 
-    private static Map<String, Map<String, Double>> readStats(CompoundTag tag, String key) {
+    /** Reads a flat stat map. */
+    private static Map<String, Double> readStats(CompoundTag tag, String key) {
         CompoundTag root = tag.getCompoundOrEmpty(key);
-        Map<String, Map<String, Double>> out = new HashMap<>();
-        for (String rarityKey : root.keySet()) {
-            CompoundTag statTag = root.getCompoundOrEmpty(rarityKey);
-            Map<String, Double> statMap = new HashMap<>();
-            for (String statKey : statTag.keySet()) {
-                statMap.put(statKey, statTag.getDoubleOr(statKey, 0.0));
-            }
-            out.put(rarityKey, statMap);
-        }
-        return Collections.unmodifiableMap(out);
-    }
-
-    private static void writeCosts(CompoundTag tag, String key, Map<String, Integer> costs) {
-        CompoundTag root = new CompoundTag();
-        for (var e : costs.entrySet()) {
-            root.putInt(e.getKey(), e.getValue());
-        }
-        tag.put(key, root);
-    }
-
-    private static Map<String, Integer> readCosts(CompoundTag tag, String key) {
-        CompoundTag root = tag.getCompoundOrEmpty(key);
-        Map<String, Integer> out = new HashMap<>();
-        for (String k : root.keySet()) {
-            out.put(k, root.getIntOr(k, 0));
-        }
-        return Collections.unmodifiableMap(out);
-    }
-
-    private static void writeAbilities(CompoundTag tag, String key, Map<String, String> abilities) {
-        CompoundTag root = new CompoundTag();
-        for (var e : abilities.entrySet()) {
-            root.putString(e.getKey(), e.getValue());
-        }
-        tag.put(key, root);
-    }
-
-    private static Map<String, String> readAbilities(CompoundTag tag, String key) {
-        CompoundTag root = tag.getCompoundOrEmpty(key);
-        Map<String, String> out = new HashMap<>();
-        for (String k : root.keySet()) {
-            out.put(k, root.getStringOr(k, ""));
+        Map<String, Double> out = new HashMap<>();
+        for (String statKey : root.keySet()) {
+            out.put(statKey, root.getDoubleOr(statKey, 0.0));
         }
         return Collections.unmodifiableMap(out);
     }
@@ -198,11 +154,11 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
     public boolean isBlacksmith()                     { return isBlacksmith; }
     public String getStoneInternalName()              { return stoneInternalName; }
     public String getItemType()                       { return itemType; }
+    public String getRarity()                         { return rarity; }
     public List<String> getRequiredRarities()         { return requiredRarities; }
-    public Map<String, Map<String, Double>> getStats() { return stats; }
-    public Map<String, Integer> getCosts()            { return costs; }
+    public Map<String, Double> getStats()             { return stats; }
+    public int getCost()                              { return cost; }
     public Optional<String> getAbility()              { return ability; }
-    public Map<String, String> getAbilitiesByRarity() { return abilitiesByRarity; }
     public List<String> getSpecificInternalNames()    { return specificInternalNames; }
     public List<String> getSpecificItemIds()          { return specificItemIds; }
     public Optional<String> getNbtModifier()          { return nbtModifier; }
