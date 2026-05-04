@@ -2,12 +2,11 @@ package com.github.kd_gaming1.skyblockenhancements.feature.tooltipscroll;
 
 import com.github.kd_gaming1.skyblockenhancements.mixin.tooltipscroll.ClientTextTooltipAccessor;
 import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTextTooltip;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 
-/**
- * Tracks scroll offset state for tooltip scrolling.
- */
 public final class TooltipScrollState {
 
     private static double targetX;
@@ -15,10 +14,15 @@ public final class TooltipScrollState {
     private static double currentX;
     private static double currentY;
 
-    /** The tooltip components from the previous frame, used for identity comparison. */
-    private static List<ClientTooltipComponent> lastComponents;
+    // ── Hover identity (replaces lastComponents) ─────────────────────────────
+    private static String lastScreenClass;
+    private static int lastMouseX = Integer.MIN_VALUE;
+    private static int lastMouseY = Integer.MIN_VALUE;
+    private static String lastFirstLine;
 
     private static final double SMOOTHING = 0.3;
+    /** How many pixels the mouse can move before we consider it a new slot/item. */
+    private static final int POSITION_THRESHOLD = 20;
 
     private TooltipScrollState() {}
 
@@ -36,14 +40,35 @@ public final class TooltipScrollState {
     }
 
     /**
-     * Checks whether the current tooltip matches the previous one.
-     * If the tooltip changed (different item hovered), resets all scroll offsets.
+     * Determines whether we're still hovering the same item/element.
+     * Resets scroll only when the screen, position, or item name changes.
      */
-    public static void trackTooltip(List<ClientTooltipComponent> components) {
-        if (!isEqual(lastComponents, components)) {
-            reset();
-            lastComponents = components;
+    public static void trackTooltip(List<ClientTooltipComponent> components, int mouseX, int mouseY) {
+        Screen screen = Minecraft.getInstance().screen;
+        String screenClass = screen != null ? screen.getClass().getName() : "null";
+
+        // Extract the first text line — usually the item name, which is stable.
+        String firstLine = "";
+        if (!components.isEmpty() && components.get(0) instanceof ClientTextTooltip textComp) {
+            firstLine = FormattedCharSequenceReader.read(
+                    ((ClientTextTooltipAccessor) textComp).getText());
         }
+
+        boolean sameScreen = screenClass.equals(lastScreenClass);
+        boolean samePosition = lastMouseX != Integer.MIN_VALUE
+                && Math.abs(mouseX - lastMouseX) < POSITION_THRESHOLD
+                && Math.abs(mouseY - lastMouseY) < POSITION_THRESHOLD;
+        boolean sameItem = firstLine.equals(lastFirstLine);
+
+        // Only reset when we actually moved to a different item/screen.
+        if (!sameScreen || !samePosition || !sameItem) {
+            reset();
+        }
+
+        lastScreenClass = screenClass;
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+        lastFirstLine = firstLine;
     }
 
     public static float getXOffset() {
@@ -54,13 +79,12 @@ public final class TooltipScrollState {
         return (float) currentY;
     }
 
-    /**
-     * Resets all scroll state. Called when a screen closes or when
-     * a new tooltip is detected.
-     */
     public static void resetAll() {
         reset();
-        lastComponents = null;
+        lastScreenClass = null;
+        lastMouseX = Integer.MIN_VALUE;
+        lastMouseY = Integer.MIN_VALUE;
+        lastFirstLine = null;
     }
 
     private static void reset() {
@@ -68,34 +92,5 @@ public final class TooltipScrollState {
         targetY = 0;
         currentX = 0;
         currentY = 0;
-    }
-
-    /**
-     * Compares two tooltip component lists by actual text content.
-     *
-     * <p>Adapted from Provismet's tooltip-scroll mod (MIT license).</p>
-     */
-    private static boolean isEqual(List<ClientTooltipComponent> a, List<ClientTooltipComponent> b) {
-        if (a == null || b == null || a.size() != b.size()) return false;
-
-        for (int i = 0; i < a.size(); i++) {
-            ClientTooltipComponent compA = a.get(i);
-            ClientTooltipComponent compB = b.get(i);
-
-            boolean aIsText = compA instanceof ClientTextTooltip;
-            boolean bIsText = compB instanceof ClientTextTooltip;
-
-            if (aIsText != bIsText) return false;
-            if (!aIsText) continue;
-
-            String textA = FormattedCharSequenceReader.read(
-                    ((ClientTextTooltipAccessor) compA).getText());
-            String textB = FormattedCharSequenceReader.read(
-                    ((ClientTextTooltipAccessor) compB).getText());
-
-            if (!textA.equals(textB)) return false;
-        }
-
-        return true;
     }
 }

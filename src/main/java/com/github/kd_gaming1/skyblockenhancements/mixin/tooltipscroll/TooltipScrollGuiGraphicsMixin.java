@@ -83,8 +83,7 @@ public abstract class TooltipScrollGuiGraphicsMixin {
         skyblockenhancements$matrixPushed = false;
         if (!SkyblockEnhancementsConfig.enableTooltipScroll) return;
 
-        // Detect tooltip change and reset offsets when hovering a different item.
-        TooltipScrollState.trackTooltip(components);
+        TooltipScrollState.trackTooltip(components, x, y);
         TooltipScrollState.update();
 
         float xOffset = TooltipScrollState.getXOffset();
