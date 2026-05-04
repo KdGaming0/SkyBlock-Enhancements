@@ -3,6 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements.command;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
+import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageFeature;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.DataReadinessTracker;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
@@ -31,14 +32,21 @@ public class Commands {
     private Commands() {}
 
     public static void register() {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-                dispatcher.register(literal("skyblockenhancements")
-                        .executes(Commands::executeOpenConfig)
-                        .then(literal("config")
-                                .executes(Commands::executeOpenConfig))
-                        .then(literal("refresh")
-                                .then(literal("repoData")
-                                        .executes(Commands::executeRefreshRepoData)))));
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            var root = literal("skyblockenhancements")
+                    .executes(Commands::executeOpenConfig)
+                    .then(literal("config")
+                            .executes(Commands::executeOpenConfig))
+                    .then(literal("refresh")
+                            .then(literal("repoData")
+                                    .executes(Commands::executeRefreshRepoData)))
+                    .then(literal("storage")
+                            .then(literal("clear-cache")
+                                    .executes(Commands::executeClearStorageCache)));
+
+            var rootNode = dispatcher.register(root);
+            dispatcher.register(literal("sbe").redirect(rootNode));
+        });
     }
 
     /**
@@ -88,6 +96,12 @@ public class Commands {
             SkyblockEnhancements.LOGGER.error("Failed to refresh enchants data", e);
             ctx.getSource().sendError(Component.literal(PREFIX_ERROR + "Failed to refresh enchants data."));
         }
+    }
+
+    private static int executeClearStorageCache(CommandContext<FabricClientCommandSource> ctx) {
+        StorageFeature.clearCache();
+        ctx.getSource().sendFeedback(Component.literal(PREFIX + "Storage cache cleared."));
+        return 1;
     }
 
     private static int executeRefreshRepoData(CommandContext<FabricClientCommandSource> ctx) {

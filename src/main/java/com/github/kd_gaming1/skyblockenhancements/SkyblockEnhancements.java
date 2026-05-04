@@ -18,6 +18,7 @@ import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManag
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderNotifier;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
+import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageFeature;
 import com.github.kd_gaming1.skyblockenhancements.feature.filter.LogFilterRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.DownloadSession;
 import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsRegistry;
@@ -110,6 +111,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
         initRecipeViewer();
         initReminders();
+        StorageFeature.init();
     }
 
     /**

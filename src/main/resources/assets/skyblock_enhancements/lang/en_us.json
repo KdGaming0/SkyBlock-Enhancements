@@ -34,6 +34,15 @@
   "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns": "Apply Enter confirm to all signs",
   "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns.tooltip": "Ignores the Hypixel input sign check and applies Enter to confirm on every sign editor. Shift plus Enter always makes a new line.",
 
+  "skyblock_enhancements.midnightconfig.enableStorageDashboard": "Enable Storage Dashboard",
+  "skyblock_enhancements.midnightconfig.enableStorageDashboard.tooltip": "Transforms Hypixel storage GUIs into a unified, browsable dashboard with all cached pages visible at once.",
+
+  "skyblock_enhancements.midnightconfig.persistStorageSnapshots": "Persist Storage Snapshots",
+  "skyblock_enhancements.midnightconfig.persistStorageSnapshots.tooltip": "Saves captured storage pages to disk so they persist between game sessions.",
+
+  "skyblock_enhancements.midnightconfig.storageSnapshotHistoryPages": "Storage Snapshot History",
+  "skyblock_enhancements.midnightconfig.storageSnapshotHistoryPages.tooltip": "Maximum number of cached pages per storage type. Older snapshots are discarded first.",
+
   "skyblock_enhancements.midnightconfig.enableItemGlowOutline": "Enable item glow outline",
   "skyblock_enhancements.midnightconfig.enableItemGlowOutline.tooltip": "Shows a glow outline on item drops near you.",
 

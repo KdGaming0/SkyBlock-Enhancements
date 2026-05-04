@@ -48,6 +48,7 @@
     "rrv.search.RrvSearchCalculatorMixin",
     "rrv.recipe.VisitorHelperRecipeViewMixin",
     "rrv.accessor.AbstractRrvItemListOverlayAccessor",
+    "storage.StorageScreenMixin",
     "tooltipscroll.ClientTextTooltipAccessor",
     "tooltipscroll.TooltipScrollGuiGraphicsMixin",
     "tooltipscroll.TooltipScrollMouseMixin"
