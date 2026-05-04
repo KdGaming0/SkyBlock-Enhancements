@@ -150,11 +150,17 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Comment(category = TOOLTIP_ENHANCEMENTS, centered = true)
     public static Comment tooltipEnhancementsText;
 
+    @Comment(category = TOOLTIP_ENHANCEMENTS)
+    public static Comment enchantmentsText;
+
     @Entry(category = TOOLTIP_ENHANCEMENTS)
     public static boolean showMissingEnchantments = true;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS)
     public static boolean showNotMaxedEnchantments = true;
+
+    @Comment(category = TOOLTIP_ENHANCEMENTS)
+    public static Comment priceTooltipsText;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS)
     public static boolean enablePriceTooltips = true;
@@ -164,6 +170,12 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = TOOLTIP_ENHANCEMENTS)
     public static boolean enablePriceTickerText = true;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean showBazaarBuySell = true;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean showBazaarSpread = false;
 
     @Comment(category = TOOLTIP_ENHANCEMENTS)
     public static Comment tooltipScrollText;
@@ -255,6 +267,8 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Override public double  reminderSoundVolume()          { return reminderSoundVolume; }
     @Override public double  reminderSoundPitch()           { return reminderSoundPitch; }
     @Override public boolean enablePriceTickerText()        { return enablePriceTickerText; }
+    @Override public boolean showBazaarBuySell()            { return showBazaarBuySell; }
+    @Override public boolean showBazaarSpread()             { return showBazaarSpread; }
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  Lightmap dirty-flag on save (fullbright immediate refresh)

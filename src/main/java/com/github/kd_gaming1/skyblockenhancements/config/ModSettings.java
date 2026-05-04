@@ -28,4 +28,8 @@ public interface ModSettings {
     // ── Tooltip price formatting ───────────────────────────────────────────────
 
     boolean enablePriceTickerText();
+
+    boolean showBazaarBuySell();
+
+    boolean showBazaarSpread();
 }

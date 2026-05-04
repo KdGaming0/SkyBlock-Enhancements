@@ -111,6 +111,7 @@ public final class PriceDataFetcher {
 
         Map<String, Double> tempBuy = new ConcurrentHashMap<>(products.size());
         Map<String, Double> tempSell = new ConcurrentHashMap<>(products.size());
+        Map<String, Double> tempSpread = new ConcurrentHashMap<>(products.size());
 
         for (Map.Entry<String, JsonElement> entry : products.entrySet()) {
             if (!entry.getValue().isJsonObject()) continue;
@@ -118,9 +119,10 @@ public final class PriceDataFetcher {
 
             readDouble(product, "buy").ifPresent(p -> tempBuy.put(entry.getKey(), p));
             readDouble(product, "sell").ifPresent(p -> tempSell.put(entry.getKey(), p));
+            readDouble(product, "spread").ifPresent(p -> tempSpread.put(entry.getKey(), p));
         }
 
-        store.updateBazaar(tempBuy, tempSell);
+        store.updateBazaar(tempBuy, tempSell, tempSpread);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────

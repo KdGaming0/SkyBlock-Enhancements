@@ -17,6 +17,7 @@ public final class PriceStore {
     private final Map<String, Double> lowestBinPrices = new ConcurrentHashMap<>(4096);
     private final Map<String, Double> bazaarBuyPrices = new ConcurrentHashMap<>(1024);
     private final Map<String, Double> bazaarSellPrices = new ConcurrentHashMap<>(1024);
+    private final Map<String, Double> bazaarSpreadPrices = new ConcurrentHashMap<>(1024);
 
     private volatile long lastFetchTimestamp;
 
@@ -36,10 +37,12 @@ public final class PriceStore {
         if (skyblockId == null) return Optional.empty();
         Double buy = bazaarBuyPrices.get(skyblockId);
         Double sell = bazaarSellPrices.get(skyblockId);
-        if (buy == null && sell == null) return Optional.empty();
+        Double spread = bazaarSpreadPrices.get(skyblockId);
+        if (buy == null && sell == null && spread == null) return Optional.empty();
         return Optional.of(new BazaarPrice(
                 buy != null ? buy : 0.0,
-                sell != null ? sell : 0.0));
+                sell != null ? sell : 0.0,
+                spread != null ? spread : 0.0));
     }
 
     public boolean hasData() {
@@ -53,11 +56,13 @@ public final class PriceStore {
         lowestBinPrices.putAll(prices);
     }
 
-    public void updateBazaar(Map<String, Double> buyPrices, Map<String, Double> sellPrices) {
+    public void updateBazaar(Map<String, Double> buyPrices, Map<String, Double> sellPrices, Map<String, Double> spreadPrices) {
         bazaarBuyPrices.clear();
         bazaarBuyPrices.putAll(buyPrices);
         bazaarSellPrices.clear();
         bazaarSellPrices.putAll(sellPrices);
+        bazaarSpreadPrices.clear();
+        bazaarSpreadPrices.putAll(spreadPrices);
     }
 
     public void setLastFetchTimestamp(long timestamp) {

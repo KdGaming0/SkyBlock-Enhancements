@@ -91,6 +91,10 @@
 
   "skyblock_enhancements.midnightconfig.tooltipEnhancementsText": "Tooltip Enhancements",
 
+  "skyblock_enhancements.midnightconfig.enchantmentsText": "Enchantments Settings",
+
+  "skyblock_enhancements.midnightconfig.priceTooltipsText": "Price Tooltips Settings",
+
   "skyblock_enhancements.midnightconfig.enablePriceTooltips": "Show Price Tooltips",
   "skyblock_enhancements.midnightconfig.enablePriceTooltips.tooltip": "Shows AH Lowest BIN and Bazaar prices in item tooltips while on SkyBlock.",
 
@@ -172,6 +176,13 @@
 
   "skyblock_enhancements.midnightconfig.enablePriceTickerText": "Enable Price Ticker Text",
   "skyblock_enhancements.midnightconfig.enablePriceTickerText.tooltip": "Makes coin values in price tooltips bold for better visibility.",
+
+  "skyblock_enhancements.midnightconfig.showBazaarBuySell": "Show Bazaar Buy/Sell",
+  "skyblock_enhancements.midnightconfig.showBazaarBuySell.tooltip": "Shows the traditional buy and sell order prices for items on the Bazaar.",
+
+  "skyblock_enhancements.midnightconfig.showBazaarSpread": "Show Bazaar Spread",
+  "skyblock_enhancements.midnightconfig.showBazaarSpread.tooltip": "Shows the profit spread (difference between buy and sell prices) for items on the Bazaar.",
+
   "key.skyblock_enhancements.full_stack_price": "Full Stack BZ Price Modifier",
   "key.skyblock_enhancements.current_amount_price": "Current Amount BZ Price Modifier"
 }

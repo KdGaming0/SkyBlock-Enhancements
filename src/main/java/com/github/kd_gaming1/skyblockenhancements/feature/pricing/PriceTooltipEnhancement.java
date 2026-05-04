@@ -110,26 +110,28 @@ public final class PriceTooltipEnhancement {
         String fullKey  = PriceTooltipKeybinds.getFullStackKeyName();
         String amountKey = PriceTooltipKeybinds.getCurrentAmountKeyName();
 
-        boolean showFullHint  = !fullStackHeld
-                && !fullKey.isEmpty()
-                && stack.getMaxStackSize() > 1;
+        boolean showFullHint  = !fullStackHeld && !fullKey.isEmpty() && stack.getMaxStackSize() > 1;
+        boolean showAmountHint = !currentHeld && !amountKey.isEmpty() && stack.getCount() > 1;
 
-        boolean showAmountHint = !currentHeld
-                && !amountKey.isEmpty()
-                && stack.getCount() > 1;
-
-        if (showFullHint) {
-            lines.add(
-                    Component.literal("Hold ").withStyle(ChatFormatting.DARK_GRAY)
-                            .append(Component.literal(fullKey).withStyle(ChatFormatting.GRAY))
-                            .append(Component.literal(" for full stack").withStyle(ChatFormatting.DARK_GRAY)));
+        // Both hints are available: combine them into one line
+        if (showFullHint && showAmountHint) {
+            lines.add(Component.literal("Hold ").withStyle(ChatFormatting.DARK_GRAY)
+                    .append(Component.literal(fullKey).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(" for stack, ").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(amountKey).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(" for amount").withStyle(ChatFormatting.DARK_GRAY)));
         }
-
-        if (showAmountHint) {
-            lines.add(
-                    Component.literal("Hold ").withStyle(ChatFormatting.DARK_GRAY)
-                            .append(Component.literal(amountKey).withStyle(ChatFormatting.GRAY))
-                            .append(Component.literal(" for amount").withStyle(ChatFormatting.DARK_GRAY)));
+        // Only the full stack hint is available
+        else if (showFullHint) {
+            lines.add(Component.literal("Hold ").withStyle(ChatFormatting.DARK_GRAY)
+                    .append(Component.literal(fullKey).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(" for full stack").withStyle(ChatFormatting.DARK_GRAY)));
+        }
+        // Only the current amount hint is available
+        else if (showAmountHint) {
+            lines.add(Component.literal("Hold ").withStyle(ChatFormatting.DARK_GRAY)
+                    .append(Component.literal(amountKey).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(" for amount").withStyle(ChatFormatting.DARK_GRAY)));
         }
     }
 
@@ -155,11 +157,8 @@ public final class PriceTooltipEnhancement {
         return lines;
     }
 
-    private static String buildCacheKey(String skyblockId, int multiplier, boolean tickerText) {
-        if (multiplier == 1 && !tickerText) {
-            return skyblockId;
-        }
-        return skyblockId + "|m=" + multiplier + "|t=" + tickerText;
+    private String buildCacheKey(String skyblockId, int multiplier, boolean tickerText) {
+        return skyblockId + "|m=" + multiplier + "|t=" + tickerText + "|bzBS=" + settings.showBazaarBuySell() + "|bzS=" + settings.showBazaarSpread();
     }
 
     // ── Line building ───────────────────────────────────────────────────────────
@@ -177,11 +176,18 @@ public final class PriceTooltipEnhancement {
 
         if (bazaar.isPresent()) {
             BazaarPrice bz = bazaar.get();
-            if (bz.buyPrice() > 0) {
-                builder.add(priceLine("BZ Buy Price", bz.buyPrice(), multiplier, tickerText));
+            if (settings.showBazaarBuySell()) {
+                if (bz.buyPrice() > 0) {
+                    builder.add(priceLine("BZ Buy Price", bz.buyPrice(), multiplier, tickerText));
+                }
+                if (bz.sellPrice() > 0) {
+                    builder.add(priceLine("BZ Sell Price", bz.sellPrice(), multiplier, tickerText));
+                }
             }
-            if (bz.sellPrice() > 0) {
-                builder.add(priceLine("BZ Sell Price", bz.sellPrice(), multiplier, tickerText));
+            if (settings.showBazaarSpread()) {
+                if (bz.spread() > 0) {
+                    builder.add(priceLine("BZ Spread", bz.spread(), multiplier, tickerText));
+                }
             }
         }
 
