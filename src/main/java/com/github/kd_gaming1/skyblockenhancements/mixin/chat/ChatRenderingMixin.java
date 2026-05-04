@@ -69,6 +69,17 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
      * This prevents mod features that refresh the display (compact chat, message
      * deletion, tab/search filters) from force-snapping the chat back to the bottom.
      */
+    @Unique
+    private void sbe$clampScroll() {
+        int linesPerPage = ((ChatComponent) (Object) this).getLinesPerPage();
+        int maxScroll = Math.max(0, this.trimmedMessages.size() - linesPerPage);
+        this.chatScrollbarPos = Math.min(this.chatScrollbarPos, maxScroll);
+        if (this.chatScrollbarPos <= 0) {
+            this.chatScrollbarPos = 0;
+            this.newMessageSinceScroll = false;
+        }
+    }
+
     @Override
     public void sbe$refreshMessages() {
         int savedScroll = this.chatScrollbarPos;
@@ -81,16 +92,9 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
 
         refreshTrimmedMessages();
 
-        // Restore scroll, clamped to the new message bounds.
-        int linesPerPage = ((ChatComponent) (Object) this).getLinesPerPage();
-        int maxScroll = Math.max(0, this.trimmedMessages.size() - linesPerPage);
-        this.chatScrollbarPos = Math.min(savedScroll, maxScroll);
+        this.chatScrollbarPos = savedScroll;
         this.newMessageSinceScroll = savedNewMessage;
-
-        if (this.chatScrollbarPos <= 0) {
-            this.chatScrollbarPos = 0;
-            this.newMessageSinceScroll = false;
-        }
+        sbe$clampScroll();
     }
 
     // ---------- Render proxy ----------
@@ -225,10 +229,28 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
         sbe$lineTracker.clearAll();
     }
 
+    @Inject(method = "clearMessages", at = @At("TAIL"))
+    private void sbe$clampScrollAfterClear(boolean clearHistory, CallbackInfo ci) {
+        this.chatScrollbarPos = 0;
+        this.newMessageSinceScroll = false;
+    }
+
     @Inject(method = "refreshTrimmedMessages", at = @At("HEAD"))
     private void sbe$clearOnRefresh(CallbackInfo ci) {
         // Preserve selection across refresh: the selected GuiMessage still exists in
         // allMessages, so re-deriving its lines is enough to restore the outline.
         sbe$lineTracker.clearLineMappings();
+    }
+
+    @Inject(method = "refreshTrimmedMessages", at = @At("TAIL"))
+    private void sbe$clampScrollAfterRefresh(CallbackInfo ci) {
+        sbe$clampScroll();
+    }
+
+    @Inject(
+            method = "render(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/gui/Font;IIIZZ)V",
+            at = @At("HEAD"))
+    private void sbe$clampScrollBeforeRender(CallbackInfo ci) {
+        sbe$clampScroll();
     }
 }

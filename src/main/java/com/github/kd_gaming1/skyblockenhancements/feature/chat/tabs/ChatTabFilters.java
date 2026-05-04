@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.chat.tabs;
 
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 /**
  * Named, self-contained predicates describing which messages belong to each Hypixel channel.
@@ -19,6 +20,17 @@ public final class ChatTabFilters {
     public static final Predicate<String> GUILD = ChatTabFilters::isGuildMessage;
     public static final Predicate<String> PRIVATE_MESSAGE = ChatTabFilters::isPrivateMessage;
     public static final Predicate<String> COOP = ChatTabFilters::isCoopMessage;
+    public static final Predicate<String> USER = ChatTabFilters::isUserMessage;
+
+    // ── User ─────────────────────────────────────────────────────────────
+
+    private static final Pattern USER_MESSAGE_PATTERN = Pattern.compile(
+            "^(?:(?:Party|Guild|Co-op|Officer) > |(?:To|From) |Friend > )?(?:\\[[^]]+] )*[a-zA-Z0-9_]{1,16}(?: \\[[^]]+])?: .*"
+    );
+
+    private static boolean isUserMessage(String s) {
+        return USER_MESSAGE_PATTERN.matcher(s).matches();
+    }
 
     // ── Party ────────────────────────────────────────────────────────────
 
