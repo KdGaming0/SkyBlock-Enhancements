@@ -29,6 +29,8 @@ public interface ModSettings {
 
     boolean enablePriceTickerText();
 
+    boolean roundPriceNumbers();
+
     boolean showBazaarBuySell();
 
     boolean showBazaarSpread();

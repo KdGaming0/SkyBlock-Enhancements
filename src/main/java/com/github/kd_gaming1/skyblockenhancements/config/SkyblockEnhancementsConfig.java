@@ -181,6 +181,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static boolean enablePriceTickerText = true;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean roundPriceNumbers = false;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
     public static boolean showBazaarBuySell = true;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS)
@@ -276,6 +279,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Override public double  reminderSoundVolume()          { return reminderSoundVolume; }
     @Override public double  reminderSoundPitch()           { return reminderSoundPitch; }
     @Override public boolean enablePriceTickerText()        { return enablePriceTickerText; }
+    @Override public boolean roundPriceNumbers()            { return roundPriceNumbers; }
     @Override public boolean showBazaarBuySell()            { return showBazaarBuySell; }
     @Override public boolean showBazaarSpread()             { return showBazaarSpread; }
 

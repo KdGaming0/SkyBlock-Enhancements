@@ -172,6 +172,9 @@
 
   "skyblock_enhancements.midnightconfig.enablePriceTickerText": "Aktiver pris-tikkartekst",
   "skyblock_enhancements.midnightconfig.enablePriceTickerText.tooltip": "Gjer myntverdiar i pris-verktøytips fet for betre synlegheit.",
+
+  "skyblock_enhancements.midnightconfig.roundPriceNumbers": "Rund av prisnummer",
+  "skyblock_enhancements.midnightconfig.roundPriceNumbers.tooltip": "Formaterer pris-verktøytips med avrunda snarverdiar som 1.2M. Slå dette av for å vise heile talet i staden.",
   "key.skyblock_enhancements.full_stack_price": "Full stabel-prismodifikator",
   "key.skyblock_enhancements.current_amount_price": "Gjeldande mengde-prismodifikator"
 }

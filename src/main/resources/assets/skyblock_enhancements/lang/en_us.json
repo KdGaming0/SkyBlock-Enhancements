@@ -186,6 +186,9 @@
   "skyblock_enhancements.midnightconfig.enablePriceTickerText": "Enable Price Ticker Text",
   "skyblock_enhancements.midnightconfig.enablePriceTickerText.tooltip": "Makes coin values in price tooltips bold for better visibility.",
 
+  "skyblock_enhancements.midnightconfig.roundPriceNumbers": "Round Price Numbers",
+  "skyblock_enhancements.midnightconfig.roundPriceNumbers.tooltip": "Formats price tooltips with rounded shorthand values like 1.2M. Disable this to show the full number instead.",
+
   "skyblock_enhancements.midnightconfig.showBazaarBuySell": "Show Bazaar Buy/Sell",
   "skyblock_enhancements.midnightconfig.showBazaarBuySell.tooltip": "Shows the traditional buy and sell order prices for items on the Bazaar.",
 

@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.pricing;
 
 import com.github.kd_gaming1.skyblockenhancements.config.ModSettings;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -23,7 +24,8 @@ import net.minecraft.world.item.TooltipFlag;
  * <p>Supports two live-modifier keybinds that multiply displayed prices by the
  * hovered item's max stack size or current stack count. When no modifier is held,
  * small gray hint lines display the currently-bound keys so the feature is discoverable.
- * A ticker-text option makes the coin value bold for better visibility.
+ * A ticker-text option makes the coin value bold for better visibility, and an
+ * optional formatting toggle can show the raw full number instead of rounded shorthand.
  *
  * <p>Instance-based: created once during mod init and wired with {@link ModSettings}
  * and {@link PriceStore}.
@@ -158,7 +160,7 @@ public final class PriceTooltipEnhancement {
     }
 
     private String buildCacheKey(String skyblockId, int multiplier, boolean tickerText) {
-        return skyblockId + "|m=" + multiplier + "|t=" + tickerText + "|bzBS=" + settings.showBazaarBuySell() + "|bzS=" + settings.showBazaarSpread();
+        return skyblockId + "|m=" + multiplier + "|t=" + tickerText + "|round=" + settings.roundPriceNumbers() + "|bzBS=" + settings.showBazaarBuySell() + "|bzS=" + settings.showBazaarSpread();
     }
 
     // ── Line building ───────────────────────────────────────────────────────────
@@ -166,27 +168,28 @@ public final class PriceTooltipEnhancement {
     private List<Component> buildPriceLines(String skyblockId, int multiplier, boolean tickerText) {
         Optional<Double> lowestBin = store.getLowestBin(skyblockId);
         Optional<BazaarPrice> bazaar = store.getBazaarPrice(skyblockId);
+        boolean roundNumbers = settings.roundPriceNumbers();
 
         if (lowestBin.isEmpty() && bazaar.isEmpty()) return List.of();
 
         List<Component> builder = new ArrayList<>(4);
         builder.add(Component.empty());
 
-        lowestBin.ifPresent(price -> builder.add(priceLine("AH Lowest BIN", price, 1, tickerText)));
+        lowestBin.ifPresent(price -> builder.add(priceLine("AH Lowest BIN", price, 1, tickerText, roundNumbers)));
 
         if (bazaar.isPresent()) {
             BazaarPrice bz = bazaar.get();
             if (settings.showBazaarBuySell()) {
                 if (bz.buyPrice() > 0) {
-                    builder.add(priceLine("BZ Buy Price", bz.buyPrice(), multiplier, tickerText));
+                    builder.add(priceLine("BZ Buy Price", bz.buyPrice(), multiplier, tickerText, roundNumbers));
                 }
                 if (bz.sellPrice() > 0) {
-                    builder.add(priceLine("BZ Sell Price", bz.sellPrice(), multiplier, tickerText));
+                    builder.add(priceLine("BZ Sell Price", bz.sellPrice(), multiplier, tickerText, roundNumbers));
                 }
             }
             if (settings.showBazaarSpread()) {
                 if (bz.spread() > 0) {
-                    builder.add(priceLine("BZ Spread", bz.spread(), multiplier, tickerText));
+                    builder.add(priceLine("BZ Spread", bz.spread(), multiplier, tickerText, roundNumbers));
                 }
             }
         }
@@ -200,9 +203,9 @@ public final class PriceTooltipEnhancement {
      * When {@code multiplier} is greater than 1, appends {@code (xN)} in dark gray
      * to indicate the price represents that many items.
      */
-    private static MutableComponent priceLine(String label, double price, int multiplier, boolean tickerText) {
+    private static MutableComponent priceLine(String label, double price, int multiplier, boolean tickerText, boolean roundNumbers) {
         double displayPrice = price * multiplier;
-        String formatted = formatCoins(displayPrice);
+        String formatted = formatCoins(displayPrice, roundNumbers);
 
         MutableComponent coins = Component.literal(formatted + " coins");
         if (tickerText) {
@@ -227,6 +230,13 @@ public final class PriceTooltipEnhancement {
      * (e.g. 1.2M, 3.5B) and comma-separated notation for smaller ones.
      */
     static String formatCoins(double value) {
+        return formatCoins(value, true);
+    }
+
+    static String formatCoins(double value, boolean roundNumbers) {
+        if (!roundNumbers) {
+            return formatRawCoins(value);
+        }
         if (value >= 1_000_000_000) {
             return String.format(Locale.US, "%.1fB", value / 1_000_000_000);
         }
@@ -234,5 +244,28 @@ public final class PriceTooltipEnhancement {
             return String.format(Locale.US, "%.1fM", value / 1_000_000);
         }
         return COIN_FORMAT.format(value);
+    }
+
+    private static String formatRawCoins(double value) {
+        String plain = BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+        int decimalIndex = plain.indexOf('.');
+        String integerPart = decimalIndex >= 0 ? plain.substring(0, decimalIndex) : plain;
+        String fractionPart = decimalIndex >= 0 ? plain.substring(decimalIndex) : "";
+
+        String sign = "";
+        if (integerPart.startsWith("-") || integerPart.startsWith("+")) {
+            sign = integerPart.substring(0, 1);
+            integerPart = integerPart.substring(1);
+        }
+
+        StringBuilder grouped = new StringBuilder(integerPart.length() + integerPart.length() / 3);
+        for (int i = 0; i < integerPart.length(); i++) {
+            if (i > 0 && (integerPart.length() - i) % 3 == 0) {
+                grouped.append(',');
+            }
+            grouped.append(integerPart.charAt(i));
+        }
+
+        return sign + grouped + fractionPart;
     }
 }
