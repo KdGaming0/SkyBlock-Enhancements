@@ -1,4 +1,4 @@
-## Changelog for 1.0.0-beta.5
+## Changelog for 1.0.0-beta.6
 
 ### **Storage Enhancements**
 **Added**
@@ -25,12 +25,12 @@ New config options added:
 - `storageSnapshotHistoryPages` - Number of snapshot history pages to keep (default: 10)
 
 **Known Limitations:**
-- Drag-and-drop and shift-click operations on the dashboard are not yet supported
 - Custom textured sprites will be added in a future update (currently uses colored backgrounds)
 
 ### **Tooltip Enhancements**
 **Added**
 - `roundPriceNumbers` - Round price tooltip numbers for easier readability (default: false)
+- Changed the default keybind for showing full-stack prices from `Left Shift` to `Left Control`, and `Left Shift` to show the current amount.
 
 ### **Chat Enhancements**
 **Improvements**

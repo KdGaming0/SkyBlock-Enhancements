@@ -2,6 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.feature.pricing;
 
 import com.github.kd_gaming1.skyblockenhancements.config.ModSettings;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -247,7 +248,11 @@ public final class PriceTooltipEnhancement {
     }
 
     private static String formatRawCoins(double value) {
-        String plain = BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+        String plain = BigDecimal.valueOf(value)
+                .setScale(2, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .toPlainString();
+
         int decimalIndex = plain.indexOf('.');
         String integerPart = decimalIndex >= 0 ? plain.substring(0, decimalIndex) : plain;
         String fractionPart = decimalIndex >= 0 ? plain.substring(decimalIndex) : "";

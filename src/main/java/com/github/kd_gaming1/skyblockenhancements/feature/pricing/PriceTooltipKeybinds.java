@@ -34,13 +34,13 @@ public final class PriceTooltipKeybinds {
         fullStackKey = KeyBindingHelper.registerKeyBinding(
                 new KeyMapping(
                         "key.skyblock_enhancements.full_stack_price",
-                        GLFW.GLFW_KEY_LEFT_SHIFT,
+                        GLFW.GLFW_KEY_LEFT_CONTROL,
                         CATEGORY));
 
         currentAmountKey = KeyBindingHelper.registerKeyBinding(
                 new KeyMapping(
                         "key.skyblock_enhancements.current_amount_price",
-                        GLFW.GLFW_KEY_LEFT_CONTROL,
+                        GLFW.GLFW_KEY_LEFT_SHIFT,
                         CATEGORY));
     }
 
