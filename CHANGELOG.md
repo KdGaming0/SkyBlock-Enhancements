@@ -32,3 +32,7 @@ New config options added:
 **Added**
 - `roundPriceNumbers` - Round price tooltip numbers for easier readability (default: false)
 
+### **Chat Enhancements**
+**Improvements**
+- Messages that can be clicked now longer compact, can be disabled in settings.
+

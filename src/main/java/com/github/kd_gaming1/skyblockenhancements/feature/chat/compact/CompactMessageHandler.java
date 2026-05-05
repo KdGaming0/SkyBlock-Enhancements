@@ -88,6 +88,8 @@ public final class CompactMessageHandler {
     public Component process(Component message) {
         if (!SkyblockEnhancementsConfig.compactDuplicateMessages) return message;
 
+        if (SkyblockEnhancementsConfig.compactIgnoreInteractable && isInteractable(message)) return message;
+
         String raw = ChatTextHelper.stripCompactSuffix(message.getString());
         if (raw.trim().isEmpty() || isSeparator(raw.trim())) return message;
 
@@ -138,6 +140,18 @@ public final class CompactMessageHandler {
         MutableComponent result = message.copy();
         result.append(Component.literal(COUNT_PREFIX + count + COUNT_SUFFIX).setStyle(COUNT_STYLE));
         return result;
+    }
+
+    private static boolean isInteractable(Component component) {
+        if (component.getStyle().getClickEvent() != null) {
+            return true;
+        }
+        for (Component sibling : component.getSiblings()) {
+            if (isInteractable(sibling)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ---------------------------------------------------------------------

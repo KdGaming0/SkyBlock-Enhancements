@@ -120,6 +120,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static boolean compactDuplicateMessages = true;
 
     @Entry(category = CHAT_ENHANCEMENTS)
+    public static boolean compactIgnoreInteractable = true;
+
+    @Entry(category = CHAT_ENHANCEMENTS)
     public static boolean onlyCompactConsecutive = false;
 
     @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 0, max = 60)
