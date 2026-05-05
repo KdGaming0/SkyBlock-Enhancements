@@ -213,12 +213,27 @@ public class StorageDashboardComponent extends AbstractComponent {
         }
     }
 
-    StoragePageGridComponent findActiveGrid() {
+    public StoragePageGridComponent findActiveGrid() {
         for (var rowComp : scrollContainer.getComponents()) {
             if (rowComp instanceof StoragePageRowComponent row) {
                 for (var gridComp : row.getComponents()) {
                     if (gridComp instanceof StoragePageGridComponent grid && grid.isActive()) {
                         return grid;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public StoragePageRowComponent findActiveRow() {
+        StoragePageGridComponent active = findActiveGrid();
+        if (active == null) return null;
+        for (var rowComp : scrollContainer.getComponents()) {
+            if (rowComp instanceof StoragePageRowComponent row) {
+                for (var gridComp : row.getComponents()) {
+                    if (gridComp == active) {
+                        return row;
                     }
                 }
             }

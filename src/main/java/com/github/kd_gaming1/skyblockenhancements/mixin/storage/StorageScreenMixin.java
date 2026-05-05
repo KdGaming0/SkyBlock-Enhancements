@@ -8,9 +8,11 @@ import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageOverlay
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageTitleParser;
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StoragePageType;
 import com.github.kd_gaming1.skyblockenhancements.gui.storage.StorageDashboardComponent;
-import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.gui.storage.StoragePageGridComponent;
 import com.github.kd_gaming1.skyblockenhancements.gui.storage.StorageSlotComponent;
+import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,9 +38,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * Transforms Hypixel storage screens into a unified dashboard overlay.
  *
  * <p>Chest slots are hidden (render suppressed), player inventory remains vanilla,
- * and a custom UI-Lib component tree is drawn on top. Clicks inside the active
- * page's mini grid are translated back to vanilla slot indices so the server
- * handles item movement.
+ * and a custom UI-Lib component tree is drawn on top. Vanilla slot hit-testing is
+ * redirected to the active page's mini-grid via {@link #isHovering(Slot, double, double)},
+ * so pick, drag, release, double-click, and quick-craft all work natively.
  */
 @Mixin(AbstractContainerScreen.class)
 public abstract class StorageScreenMixin extends Screen {
@@ -50,6 +52,7 @@ public abstract class StorageScreenMixin extends Screen {
     @Shadow protected int imageHeight;
     @Shadow protected Slot hoveredSlot;
     @Shadow protected abstract void slotClicked(Slot slot, int slotId, int buttonNum, ClickType clickType);
+    @Shadow private Slot getHoveredSlot(double x, double y) { throw new AssertionError(); }
 
     @Unique
     private boolean sbe$isStorageScreen = false;
@@ -73,6 +76,8 @@ public abstract class StorageScreenMixin extends Screen {
     private static boolean sbe$navigatingBetweenPages = false;
     @Unique
     private int sbe$openContainerId = -1;
+    @Unique
+    private final Int2ObjectMap<StorageSlotComponent> sbe$activeSlotMap = new Int2ObjectOpenHashMap<>();
 
     @Unique
     private static final int DASHBOARD_PADDING = 6;
@@ -84,7 +89,6 @@ public abstract class StorageScreenMixin extends Screen {
     private static final int DASHBOARD_MARGIN_X = 20;
     @Unique
     private static final int DASHBOARD_MARGIN_Y = 10;
-    // Raw coords are kept for fallback; overlay now anchors to leftPos/topPos.
 
     protected StorageScreenMixin(Component title) {
         super(title);
@@ -114,7 +118,6 @@ public abstract class StorageScreenMixin extends Screen {
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null) {
-            // Skip capturing the /storage overview screen — it holds selector buttons, not real items.
             boolean isOverview = parsed.get().type() == StoragePageType.STORAGE
                     && "Storage".equalsIgnoreCase(parsed.get().rawTitle());
             if (!isOverview) {
@@ -131,6 +134,7 @@ public abstract class StorageScreenMixin extends Screen {
         sbe$buildDashboard();
         sbe$buildSearchBox();
         sbe$navigatingBetweenPages = false;
+        sbe$rebuildActiveSlotMap();
     }
 
     @Unique
@@ -139,10 +143,8 @@ public abstract class StorageScreenMixin extends Screen {
 
         int dashboardY = DASHBOARD_MARGIN_Y;
 
-        // Give the dashboard the full available horizontal space and let the scroll
-        // container handle overflow.
         int gridWidth = 9 * MINI_SLOT_SIZE + (9 - 1) * MINI_SLOT_GAP
-                + 2 * StoragePageGridComponent.BORDER_THICKNESS;
+                + 2 * com.github.kd_gaming1.skyblockenhancements.gui.storage.StoragePageGridComponent.BORDER_THICKNESS;
         int maxPagesPerRow = StorageDashboardComponent.PAGES_PER_ROW;
         int dashboardX = DASHBOARD_MARGIN_X;
         int dashboardWidth = this.width - 2 * DASHBOARD_MARGIN_X;
@@ -152,15 +154,11 @@ public abstract class StorageScreenMixin extends Screen {
                         / (gridWidth + StorageDashboardComponent.PAGE_GRID_GAP));
         pagesPerRow = Math.min(pagesPerRow, maxPagesPerRow);
 
-        // Height: use ALL space above the player inventory.
         int dashboardHeight = Math.max(60, firstInvY - dashboardY - DASHBOARD_PADDING);
 
         int scrollW = dashboardWidth;
         int scrollH = Math.max(60, dashboardHeight - StorageDashboardComponent.TOP_BAR_HEIGHT);
 
-        // Save the current scroll position BEFORE recreating the scroll container.
-        // When navigating between pages, use the preserved scroll; otherwise keep
-        // the previous scroll (or 0 if this is the first build).
         double scrollToRestore = 0.0;
         if (sbe$navigatingBetweenPages) {
             scrollToRestore = sbe$preservedScrollAmount;
@@ -182,9 +180,7 @@ public abstract class StorageScreenMixin extends Screen {
                 sbe$scrollContainer,
                 pagesPerRow);
 
-        // Immediately restore the scroll position. It now has content so the max bounds are computed.
         sbe$scrollContainer.setScrollAmount(scrollToRestore);
-
         sbe$dashboard.updateParentPosition(0, 0, this.width, this.height);
     }
 
@@ -217,7 +213,6 @@ public abstract class StorageScreenMixin extends Screen {
                 minY = Math.min(minY, slot.y);
             }
         }
-        // slot.y is a local texture coordinate; convert to screen space
         return minY == Integer.MAX_VALUE ? this.topPos + this.imageHeight - 96 : this.topPos + minY;
     }
 
@@ -239,8 +234,8 @@ public abstract class StorageScreenMixin extends Screen {
         }
     }
 
-    @Inject(method = "render", at = @At("TAIL"))
-    private void sbe$renderDashboard(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+    @Inject(method = "render", at = @At("HEAD"))
+    private void sbe$preRender(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if (!sbe$isStorageScreen || sbe$dashboard == null) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -254,12 +249,18 @@ public abstract class StorageScreenMixin extends Screen {
             Slot slot = this.menu.getSlot(idx);
             return slot != null ? slot.getItem() : ItemStack.EMPTY;
         });
+    }
+
+    @Inject(method = "render", at = @At("TAIL"))
+    private void sbe$renderDashboard(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+        if (!sbe$isStorageScreen || sbe$dashboard == null) return;
+
         sbe$dashboard.renderBase(graphics, mouseX, mouseY, partialTick, 0, 0);
 
-        // Explicit render required — addWidget does NOT auto-render inside renderBase
-        if (sbe$scrollContainer != null) {
-            sbe$scrollContainer.render(graphics, mouseX, mouseY, partialTick);
-        }
+        // Post-render coordinate sync so parent positions match the scrolled layout
+        // for next frame's input handling.
+        sbe$dashboard.updateParentPosition(0, 0, this.width, this.height);
+        sbe$rebuildActiveSlotMap();
 
         // Re-render carried item on top so it isn't covered by the dashboard panel
         ItemStack carried = this.menu.getCarried();
@@ -272,67 +273,111 @@ public abstract class StorageScreenMixin extends Screen {
         if (hovered != null && !hovered.getStack().isEmpty()) {
             graphics.setTooltipForNextFrame(Minecraft.getInstance().font, hovered.getStack(), mouseX, mouseY);
         }
+
+        sbe$renderHoverHighlight(graphics, mouseX, mouseY);
+    }
+
+    /**
+     * Redirects vanilla slot hit-testing to the active mini-grid coordinates.
+     * This makes pick, drag, release, double-click and quick-craft work natively
+     * on the mini-grid without manual event emulation.
+     */
+    @Inject(method = "isHovering(Lnet/minecraft/world/inventory/Slot;DD)Z",
+            at = @At("HEAD"), cancellable = true)
+    private void sbe$onIsHoveringSlot(Slot slot, double mx, double my,
+                                      CallbackInfoReturnable<Boolean> cir) {
+        if (!sbe$isStorageScreen) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (slot.container == mc.player.getInventory()) return;
+
+        StorageSlotComponent slotComp = sbe$activeSlotMap.get(slot.index);
+        if (slotComp != null) {
+            int absX = slotComp.getTotalX();
+            int absY = slotComp.getTotalY();
+            int size = slotComp.getWidth();
+            // Vanilla uses an 18x18 hit box (-1 .. +17) around the 16x16 slot
+            cir.setReturnValue(
+                    mx >= absX - 1 && mx < absX + size + 1
+                            && my >= absY - 1 && my < absY + size + 1);
+        } else {
+            // Non-active chest slots are moved off-screen conceptually
+            cir.setReturnValue(false);
+        }
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    private void sbe$onMouseClicked(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
+    private void sbe$onMouseClicked(MouseButtonEvent event, boolean doubleClick,
+                                    CallbackInfoReturnable<Boolean> cir) {
         if (!sbe$isStorageScreen || sbe$dashboard == null) return;
 
         double mouseX = event.x();
         double mouseY = event.y();
+
+        // 1. Let vanilla children (search box etc.) handle the click
         for (var child : this.children()) {
             if (child.isMouseOver(mouseX, mouseY)) {
                 return;
             }
         }
 
+        // 2. If clicking an active mini-grid slot, let vanilla handle it
+        Slot hovered = this.getHoveredSlot(mouseX, mouseY);
+        if (hovered != null && hovered.container != Minecraft.getInstance().player.getInventory()) {
+            return;
+        }
+
         ScrollContainerWidget scroll = sbe$dashboard.getScrollContainer();
-        if (scroll != null && scroll.isMouseOver(mouseX, mouseY)) {
+        boolean overScroll = scroll != null && scroll.isMouseOver(mouseX, mouseY);
+
+        // 3. Scroll container scrollbar click
+        if (overScroll) {
             if (scroll.mouseClicked(event, false)) {
                 cir.setReturnValue(true);
                 return;
             }
         }
 
-        int scrollOffset = sbe$dashboard.getScrollOffset();
-        if (sbe$dashboard.isInsideActiveGrid((int) mouseX, (int) mouseY, scrollOffset)) {
-            int slotIndex = sbe$dashboard.translateActiveGridClick((int) mouseX, (int) mouseY, scrollOffset);
-            if (slotIndex >= 0) {
-                Slot vanillaSlot = this.menu.getSlot(slotIndex);
-                if (vanillaSlot != null && this.menu.containerId == sbe$openContainerId) {
-                    this.slotClicked(vanillaSlot, vanillaSlot.index, event.button(), ClickType.PICKUP);
-                    cir.setReturnValue(true);
-                }
+        // 4. Inactive grid navigation
+        if (overScroll) {
+            StoragePageGridComponent clickedGrid = sbe$dashboard.findGridAt((int) mouseX, (int) mouseY);
+            if (clickedGrid != null && !clickedGrid.isActive()) {
+                sbe$sendNavigationCommand(clickedGrid);
+                cir.setReturnValue(true);
+                return;
             }
-            return;
         }
 
-        StoragePageGridComponent clickedGrid = sbe$dashboard.findGridAt((int) mouseX, (int) mouseY);
-        if (clickedGrid != null && !clickedGrid.isActive()) {
-            sbe$sendNavigationCommand(clickedGrid);
-            cir.setReturnValue(true);
-            return;
-        }
-
-        // Prevent interaction with hidden vanilla slots behind the dashboard
-        int dx = sbe$dashboard.getTotalX();
-        int dy = sbe$dashboard.getTotalY();
-        int dw = sbe$dashboard.getWidth();
-        int dh = sbe$dashboard.getHeight();
-        if (mouseX >= dx && mouseX < dx + dw && mouseY >= dy && mouseY < dy + dh) {
+        // 4. Block interaction with the dashboard background to prevent clicks
+        //    falling through to hidden vanilla slots.
+        if (sbe$isOverDashboardBackground(mouseX, mouseY)) {
+            if (this.isDragging()) {
+                this.setDragging(false);
+            }
             cir.setReturnValue(true);
         }
     }
 
     @Inject(method = "mouseDragged", at = @At("HEAD"), cancellable = true)
-    private void sbe$onMouseDragged(MouseButtonEvent event, double dragX, double dragY, CallbackInfoReturnable<Boolean> cir) {
+    private void sbe$onMouseDragged(MouseButtonEvent event, double dragX, double dragY,
+                                    CallbackInfoReturnable<Boolean> cir) {
         if (!sbe$isStorageScreen || sbe$dashboard == null) return;
 
         ScrollContainerWidget scroll = sbe$dashboard.getScrollContainer();
         if (scroll != null && scroll.isMouseOver(event.x(), event.y())) {
             if (scroll.mouseDragged(event, dragX, dragY)) {
                 cir.setReturnValue(true);
+                return;
             }
+        }
+
+        // Let vanilla handle drags over active mini-grid slots
+        Slot hovered = this.getHoveredSlot(event.x(), event.y());
+        if (hovered != null && hovered.container != Minecraft.getInstance().player.getInventory()) {
+            return;
+        }
+
+        if (sbe$isOverDashboardBackground(event.x(), event.y())) {
+            cir.setReturnValue(true);
         }
     }
 
@@ -344,23 +389,34 @@ public abstract class StorageScreenMixin extends Screen {
         if (scroll != null) {
             if (scroll.mouseReleased(event)) {
                 cir.setReturnValue(true);
+                return;
             }
+        }
+
+        // Let vanilla handle releases over active mini-grid slots or inventory
+        Slot hovered = this.getHoveredSlot(event.x(), event.y());
+        if (hovered != null && hovered.container != Minecraft.getInstance().player.getInventory()) {
+            return;
+        }
+
+        if (sbe$isOverDashboardBackground(event.x(), event.y())) {
+            if (!this.menu.getCarried().isEmpty()) {
+                this.slotClicked(null, -999, event.button(), ClickType.PICKUP);
+            }
+            if (this.isDragging()) {
+                this.setDragging(false);
+            }
+            cir.setReturnValue(true);
         }
     }
 
     @Inject(method = "mouseScrolled", at = @At("HEAD"), cancellable = true)
-    private void sbe$onMouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY, CallbackInfoReturnable<Boolean> cir) {
+    private void sbe$onMouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY,
+                                     CallbackInfoReturnable<Boolean> cir) {
         if (!sbe$isStorageScreen || sbe$dashboard == null) return;
 
         ScrollContainerWidget scroll = sbe$dashboard.getScrollContainer();
-        if (scroll == null) return;
-
-        int sx = sbe$dashboard.getTotalX();
-        int sy = sbe$dashboard.getTotalY() + StorageDashboardComponent.TOP_BAR_HEIGHT;
-        int sw = sbe$dashboard.getWidth();
-        int sh = sbe$dashboard.getHeight() - StorageDashboardComponent.TOP_BAR_HEIGHT;
-
-        if (mouseX >= sx && mouseX < sx + sw && mouseY >= sy && mouseY < sy + sh) {
+        if (scroll != null && scroll.isMouseOver(mouseX, mouseY)) {
             if (scroll.mouseScrolled(mouseX, mouseY, scrollX, scrollY)) {
                 cir.setReturnValue(true);
             }
@@ -380,6 +436,26 @@ public abstract class StorageScreenMixin extends Screen {
     }
 
     @Unique
+    private void sbe$rebuildActiveSlotMap() {
+        sbe$activeSlotMap.clear();
+        StoragePageGridComponent active = sbe$dashboard.findActiveGrid();
+        if (active != null) {
+            for (StorageSlotComponent slotComp : active.getSlotComponents()) {
+                sbe$activeSlotMap.put(slotComp.getSlotIndex(), slotComp);
+            }
+        }
+    }
+
+    @Unique
+    private boolean sbe$isOverDashboardBackground(double mouseX, double mouseY) {
+        int dx = sbe$dashboard.getTotalX();
+        int dy = sbe$dashboard.getTotalY();
+        int dw = sbe$dashboard.getWidth();
+        int dh = sbe$dashboard.getHeight();
+        return mouseX >= dx && mouseX < dx + dw && mouseY >= dy && mouseY < dy + dh;
+    }
+
+    @Unique
     private StorageSlotComponent sbe$findHoveredSlot(int mouseX, int mouseY) {
         for (StorageSlotComponent slot : sbe$hoverableSlots) {
             int tx = slot.getTotalX();
@@ -390,6 +466,25 @@ public abstract class StorageScreenMixin extends Screen {
             }
         }
         return null;
+    }
+
+    @Unique
+    private void sbe$renderHoverHighlight(GuiGraphics graphics, int mouseX, int mouseY) {
+        Slot hovered = this.getHoveredSlot(mouseX, mouseY);
+        if (hovered == null || hovered.container == Minecraft.getInstance().player.getInventory()) return;
+
+        StorageSlotComponent slotComp = sbe$activeSlotMap.get(hovered.index);
+        if (slotComp == null) return;
+
+        int x = slotComp.getTotalX();
+        int y = slotComp.getTotalY();
+        int size = slotComp.getWidth();
+
+        // 1px white border around the hovered slot
+        graphics.fill(x - 1, y - 1, x + size + 1, y, 0xFFFFFFFF);
+        graphics.fill(x - 1, y + size, x + size + 1, y + size + 1, 0xFFFFFFFF);
+        graphics.fill(x - 1, y, x, y + size, 0xFFFFFFFF);
+        graphics.fill(x + size, y, x + size + 1, y + size, 0xFFFFFFFF);
     }
 
     @Unique
