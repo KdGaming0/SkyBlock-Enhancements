@@ -16,10 +16,11 @@ import java.util.regex.Pattern;
  */
 public final class StorageTitleParser {
 
-    private static final Pattern STORAGE_PATTERN = Pattern.compile("Storage \\((\\d+)/(\\d+)\\)");
-    private static final Pattern ENDER_CHEST_PATTERN = Pattern.compile("Ender Chest \\((\\d+)/(\\d+)\\)");
-    private static final Pattern BACKPACK_NUMBERED_PATTERN = Pattern.compile("Backpack.*\\((\\d+)\\)");
-    private static final Pattern BACKPACK_SIMPLE_PATTERN = Pattern.compile(".*Backpack");
+    private static final Pattern STORAGE_PATTERN = Pattern.compile(".*[Ss]torage.*\\((\\d+)/(\\d+)\\)");
+    private static final Pattern STORAGE_SIMPLE_PATTERN = Pattern.compile("^[Ss]torage$");
+    private static final Pattern ENDER_CHEST_PATTERN = Pattern.compile(".*[Ee]nder [Cc]hest.*\\((\\d+)/(\\d+)\\)");
+    private static final Pattern BACKPACK_NUMBERED_PATTERN = Pattern.compile(".*[Bb]ackpack.*\\((\\d+)\\)");
+    private static final Pattern BACKPACK_SIMPLE_PATTERN = Pattern.compile(".*[Bb]ackpack.*");
 
     private StorageTitleParser() {}
 
@@ -36,6 +37,11 @@ public final class StorageTitleParser {
         if (m.find()) {
             int page = Integer.parseInt(m.group(1));
             return Optional.of(new ParsedTitle(StoragePageType.STORAGE, "storage_" + page, page, plain));
+        }
+
+        m = STORAGE_SIMPLE_PATTERN.matcher(plain);
+        if (m.matches()) {
+            return Optional.of(new ParsedTitle(StoragePageType.STORAGE, "storage_1", 1, plain));
         }
 
         m = ENDER_CHEST_PATTERN.matcher(plain);

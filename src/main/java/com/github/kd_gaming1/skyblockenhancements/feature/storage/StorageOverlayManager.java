@@ -86,7 +86,9 @@ public class StorageOverlayManager {
         for (Slot slot : slots) {
             ItemStack stack = slot.getItem();
             String base64 = NbtItemStackCodec.encode(stack, lookup);
-            slotData.add(new StorageSlotData(slot.index, base64));
+            StorageSlotData data = new StorageSlotData(slot.index, base64);
+            data.setCachedStack(stack.copy());
+            slotData.add(data);
         }
 
         StorageSnapshot snap = new StorageSnapshot(
@@ -119,14 +121,19 @@ public class StorageOverlayManager {
 
     /** Resolves lazy ItemStacks for all slots in all snapshots. */
     public void resolveAllStacks(HolderLookup.Provider lookup) {
+        boolean anyResolved = false;
         synchronized (snapshotMap) {
             for (StorageSnapshot snap : snapshotMap.values()) {
                 for (StorageSlotData slot : snap.slots) {
                     if (!slot.isResolved() && !slot.isEmpty()) {
                         ItemStack stack = NbtItemStackCodec.decode(slot.itemBase64, lookup);
                         slot.setCachedStack(stack);
+                        anyResolved = true;
                     }
                 }
+            }
+            if (anyResolved) {
+                snapshotVersion++;
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.gui.storage;
 
 import com.daqem.uilib.gui.component.AbstractComponent;
+import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageSlotData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.ItemStack;
@@ -13,21 +14,32 @@ import net.minecraft.world.item.ItemStack;
  */
 public class StorageSlotComponent extends AbstractComponent {
 
-    private final ItemStack stack;
+    private final StorageSlotData slotData;
+    private ItemStack overrideStack;
+    private boolean hasOverride = false;
     private final int slotIndex;
 
-    public StorageSlotComponent(int x, int y, int size, ItemStack stack, int slotIndex) {
+    public StorageSlotComponent(int x, int y, int size, StorageSlotData slotData) {
         super(x, y, size, size);
-        this.stack = stack != null ? stack : ItemStack.EMPTY;
-        this.slotIndex = slotIndex;
+        this.slotData = slotData;
+        this.slotIndex = slotData.slotIndex;
+        this.overrideStack = ItemStack.EMPTY;
     }
 
     public ItemStack getStack() {
-        return stack;
+        if (hasOverride) {
+            return overrideStack;
+        }
+        return slotData != null ? slotData.getCachedStack() : ItemStack.EMPTY;
     }
 
     public int getSlotIndex() {
         return slotIndex;
+    }
+
+    public void setStack(ItemStack stack) {
+        this.overrideStack = stack != null ? stack : ItemStack.EMPTY;
+        this.hasOverride = true;
     }
 
     public boolean isHovered(int mouseX, int mouseY) {
@@ -42,6 +54,8 @@ public class StorageSlotComponent extends AbstractComponent {
         int x = getTotalX();
         int y = getTotalY();
         int size = getWidth();
+
+        ItemStack stack = getStack();
 
         // Background
         g.fill(x, y, x + size, y + size, stack.isEmpty() ? StorageColors.SLOT_BG_EMPTY : 0xFF3A3A4E);

@@ -28,3 +28,7 @@ New config options added:
 - Drag-and-drop and shift-click operations on the dashboard are not yet supported
 - Custom textured sprites will be added in a future update (currently uses colored backgrounds)
 
+### **Tooltip Enhancements**
+**Added**
+- `roundPriceNumbers` - Round price tooltip numbers for easier readability (default: false)
+

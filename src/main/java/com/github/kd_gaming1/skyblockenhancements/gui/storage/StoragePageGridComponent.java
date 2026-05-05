@@ -2,7 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.gui.storage;
 
 import com.daqem.uilib.gui.component.AbstractComponent;
 import com.daqem.uilib.gui.component.color.ColorComponent;
-import com.daqem.uilib.gui.component.text.TextComponent;
+import com.daqem.uilib.gui.component.text.TruncatedTextComponent;
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageSlotData;
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageSnapshot;
 import java.util.ArrayList;
@@ -19,8 +19,8 @@ import net.minecraft.world.item.ItemStack;
  */
 public class StoragePageGridComponent extends AbstractComponent {
 
-    private static final int TITLE_HEIGHT = 10;
-    private static final int BORDER_THICKNESS = 1;
+    public static final int TITLE_HEIGHT = 10;
+    public static final int BORDER_THICKNESS = 1;
 
     private final StorageSnapshot snapshot;
     private final boolean active;
@@ -28,6 +28,12 @@ public class StoragePageGridComponent extends AbstractComponent {
     private final int slotGap;
     private final String searchQuery;
     private final List<StorageSlotComponent> slotComponents;
+    private final List<StorageSlotComponent> slotCollector;
+
+    private int gridRows;
+    private int gridCols;
+    private int gridInnerOffsetX;
+    private int gridInnerOffsetY;
 
     public StoragePageGridComponent(
             int x, int y,
@@ -44,23 +50,28 @@ public class StoragePageGridComponent extends AbstractComponent {
         this.slotGap = slotGap;
         this.searchQuery = searchQuery != null ? searchQuery.toLowerCase() : "";
         this.slotComponents = new ArrayList<>();
+        this.slotCollector = slotCollector;
 
-        int cols = 9;
-        int rows = Math.max(1, (snapshot.slots.size() + cols - 1) / cols);
+        gridCols = 9;
+        gridRows = Math.max(1, (snapshot.slots.size() + gridCols - 1) / gridCols);
 
-        int gridW = cols * slotSize + (cols - 1) * slotGap;
-        int gridH = rows * slotSize + (rows - 1) * slotGap;
+        int gridW = gridCols * slotSize + (gridCols - 1) * slotGap;
+        int gridH = gridRows * slotSize + (gridRows - 1) * slotGap;
         int width = gridW + BORDER_THICKNESS * 2;
         int height = TITLE_HEIGHT + gridH + BORDER_THICKNESS * 2 + 2;
 
         setWidth(width);
         setHeight(height);
 
-        build(rows, cols, gridW, gridH, slotCollector);
+        gridInnerOffsetX = BORDER_THICKNESS;
+        gridInnerOffsetY = TITLE_HEIGHT + BORDER_THICKNESS + 1;
+
+        build(gridW, gridH);
     }
 
-    private void build(int rows, int cols, int gridW, int gridH, List<StorageSlotComponent> slotCollector) {
+    private void build(int gridW, int gridH) {
         this.clear();
+        slotComponents.clear();
 
         int borderColor = active ? StorageColors.PAGE_BORDER_ACTIVE : StorageColors.PAGE_BORDER_INACTIVE;
 
@@ -77,7 +88,8 @@ public class StoragePageGridComponent extends AbstractComponent {
         String title = snapshot.titleText != null && !snapshot.titleText.isEmpty()
                 ? snapshot.titleText
                 : snapshot.pageId;
-        addComponent(new TextComponent(BORDER_THICKNESS, 0,
+        addComponent(new TruncatedTextComponent(BORDER_THICKNESS, 0,
+                getWidth() - BORDER_THICKNESS * 2,
                 Component.literal(title).withStyle(net.minecraft.ChatFormatting.BOLD),
                 StorageColors.TEXT_TITLE));
 
@@ -87,8 +99,8 @@ public class StoragePageGridComponent extends AbstractComponent {
 
         for (int i = 0; i < snapshot.slots.size(); i++) {
             StorageSlotData slotData = snapshot.slots.get(i);
-            int col = i % cols;
-            int row = i / cols;
+            int col = i % gridCols;
+            int row = i / gridCols;
             int sx = gridStartX + col * (slotSize + slotGap);
             int sy = gridStartY + row * (slotSize + slotGap);
 
@@ -98,7 +110,7 @@ public class StoragePageGridComponent extends AbstractComponent {
             }
 
             StorageSlotComponent slotComp = new StorageSlotComponent(
-                    sx, sy, slotSize, slotData.getCachedStack(), slotData.slotIndex);
+                    sx, sy, slotSize, slotData);
             addComponent(slotComp);
             slotComponents.add(slotComp);
             slotCollector.add(slotComp);
@@ -112,6 +124,49 @@ public class StoragePageGridComponent extends AbstractComponent {
 
         String name = stack.getHoverName().getString().toLowerCase();
         return name.contains(searchQuery);
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public int getGridInnerOffsetX() {
+        return gridInnerOffsetX;
+    }
+
+    public int getGridInnerOffsetY() {
+        return gridInnerOffsetY;
+    }
+
+    public int getGridInnerWidth() {
+        return gridCols * slotSize + (gridCols - 1) * slotGap;
+    }
+
+    public int getGridInnerHeight() {
+        return gridRows * slotSize + (gridRows - 1) * slotGap;
+    }
+
+    public int getSlotSize() {
+        return slotSize;
+    }
+
+    public int getSlotGap() {
+        return slotGap;
+    }
+
+    public StorageSnapshot getSnapshot() {
+        return snapshot;
+    }
+
+    public List<StorageSlotComponent> getSlotComponents() {
+        return slotComponents;
+    }
+
+    public void refreshLiveStacks(java.util.function.IntFunction<ItemStack> provider) {
+        if (!active || provider == null) return;
+        for (StorageSlotComponent slotComp : slotComponents) {
+            slotComp.setStack(provider.apply(slotComp.getSlotIndex()));
+        }
     }
 
     @Override

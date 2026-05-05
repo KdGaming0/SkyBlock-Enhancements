@@ -39,9 +39,7 @@ public final class StorageFeature {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             cachedProfileId = StorageOverlayManager.resolveProfileId();
             manager.loadProfile(cachedProfileId);
-            if (client.level != null) {
-                manager.resolveAllStacks(client.level.registryAccess());
-            }
+            // Resolution is deferred to the first render tick when the registry is guaranteed ready.
         });
 
         // Persist on disconnect and shutdown.
