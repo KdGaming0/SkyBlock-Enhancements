@@ -96,7 +96,7 @@ public abstract class StorageScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void sbe$onInit(CallbackInfo ci) {
-        if (!SkyblockEnhancementsConfig.enableStorageDashboard) return;
+        if (!SkyblockEnhancementsConfig.enableStorageDashboard_CHANGEwhenRELASE) return;
 
         StorageOverlayManager manager = StorageFeature.getManager();
         if (manager == null) return;

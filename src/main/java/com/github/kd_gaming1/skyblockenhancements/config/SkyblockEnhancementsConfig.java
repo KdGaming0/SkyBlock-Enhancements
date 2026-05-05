@@ -50,12 +50,15 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean enterToConfirmAllSigns = false;
 
+    @Hidden
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean enableStorageDashboard = true;
+    public static boolean enableStorageDashboard_CHANGEwhenRELASE = false;
 
+    @Hidden
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean persistStorageSnapshots = true;
 
+    @Hidden
     @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 20)
     public static int storageSnapshotHistoryPages = 5;
 
