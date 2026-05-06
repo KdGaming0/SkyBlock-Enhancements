@@ -4,6 +4,7 @@ import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageFeature
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageOverlayManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StoragePageType;
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageTitleParser;
+import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +27,8 @@ public class ContainerPacketMixin {
 
     @Inject(method = "handleContainerContent", at = @At("TAIL"))
     private void sbe$onContainerContent(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
+        if (!SkyblockEnhancementsConfig.enableStorageDashboard_CHANGEwhenRELASE) return;
+
         Minecraft mc = Minecraft.getInstance();
         if (!(mc.screen instanceof AbstractContainerScreen<?> screen)) return;
         if (screen.getMenu().containerId != packet.containerId()) return;

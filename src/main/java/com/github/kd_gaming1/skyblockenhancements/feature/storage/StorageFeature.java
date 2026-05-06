@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 
 /**
  * Lifecycle manager for the Storage Dashboard feature.
@@ -37,6 +38,7 @@ public final class StorageFeature {
 
         // Load persisted data when joining a server / world.
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            if (!SkyblockEnhancementsConfig.enableStorageDashboard_CHANGEwhenRELASE) return;
             cachedProfileId = StorageOverlayManager.resolveProfileId();
             manager.loadProfile(cachedProfileId);
             // Resolution is deferred to the first render tick when the registry is guaranteed ready.
@@ -54,6 +56,7 @@ public final class StorageFeature {
 
     /** Persists the current cache to disk using the current player's profile ID. */
     public static void save() {
+        if (!SkyblockEnhancementsConfig.enableStorageDashboard_CHANGEwhenRELASE) return;
         StorageOverlayManager manager = MANAGER_REF.get();
         if (manager == null) return;
         manager.saveToStorage(cachedProfileId);
