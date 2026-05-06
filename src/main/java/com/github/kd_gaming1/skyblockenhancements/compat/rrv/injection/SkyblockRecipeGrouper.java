@@ -18,6 +18,8 @@ import net.minecraft.resources.Identifier;
  */
 public final class SkyblockRecipeGrouper {
 
+    private static final String ID_PREFIX = "skyblock_enhancements:recipe_";
+
     private SkyblockRecipeGrouper() {}
 
     /**
@@ -35,8 +37,7 @@ public final class SkyblockRecipeGrouper {
         for (ReliableServerRecipe recipe : allRecipes) {
             grouped.computeIfAbsent(recipe.getRecipeType(), k -> new ArrayList<>())
                     .add(new ServerRecipeEntry(
-                            Identifier.fromNamespaceAndPath(
-                                    "skyblock_enhancements", "recipe_" + (idCounter++)),
+                            Identifier.tryParse(ID_PREFIX + (idCounter++)),
                             recipe));
         }
         return grouped;

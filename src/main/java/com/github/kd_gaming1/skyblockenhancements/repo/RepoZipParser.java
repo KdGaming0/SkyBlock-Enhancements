@@ -2,11 +2,16 @@ package com.github.kd_gaming1.skyblockenhancements.repo;
 
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 
+import com.github.kd_gaming1.skyblockenhancements.repo.io.TeeInputStream;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemParser;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -14,15 +19,12 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemParser;
 
 /**
  * Downloads and stream-parses the NEU repo ZIP archive. Dispatches individual entries
@@ -65,6 +67,9 @@ public final class RepoZipParser {
      * all entries in a single pass. SNBT overrides are applied after the stream completes.
      * Category and rarity are resolved once at the end.
      *
+     * <p>Uses a {@link TeeInputStream} so the archive is written to disk while it is
+     * being parsed, eliminating the redundant second read of the old implementation.
+     *
      * @param http        the shared HttpClient
      * @param zipSavePath where to persist the raw ZIP for later mob-data re-parsing
      * @return parsed items, constants, and ETag
@@ -87,16 +92,17 @@ public final class RepoZipParser {
 
         String etag = resp.headers().firstValue("ETag").orElse(null);
 
-        // Save the raw ZIP to disk so mob data can be re-parsed on cache-only startups.
-        Files.copy(resp.body(), zipSavePath, StandardCopyOption.REPLACE_EXISTING);
-
-        Map<String, NeuItem> items = new HashMap<>(5000);
+        Map<String, NeuItem> items = new HashMap<>(6000);
         Map<String, String> snbtIds = new HashMap<>();
         Map<String, Boolean> snbtGlints = new HashMap<>();
         Map<String, JsonObject> constants = new HashMap<>();
 
-        try (InputStream fileStream = Files.newInputStream(zipSavePath)) {
-            parseZipStream(fileStream, items, snbtIds, snbtGlints, constants);
+        try (InputStream httpBody = resp.body();
+             OutputStream fileOut = Files.newOutputStream(zipSavePath);
+             TeeInputStream tee = new TeeInputStream(httpBody, fileOut);
+             ZipInputStream zis = new ZipInputStream(
+                     new BufferedInputStream(tee, 1 << 16), StandardCharsets.UTF_8)) {
+            parseZipStream(zis, items, snbtIds, snbtGlints, constants);
         }
 
         applySnbtOverrides(items, snbtIds, snbtGlints);
@@ -128,19 +134,7 @@ public final class RepoZipParser {
         try (ZipInputStream zis = new ZipInputStream(
                 new BufferedInputStream(Files.newInputStream(zipFile), 1 << 16),
                 StandardCharsets.UTF_8)) {
-
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                if (entry.isDirectory()) continue;
-                String name = entry.getName();
-                if (name.contains("..")) continue;
-
-                if (!MobEntryProcessor.process(name, zis)) {
-                    MobPngEntryProcessor.process(name, zis);
-                }
-
-                zis.closeEntry();
-            }
+            parseMobsOnly(zis);
         } catch (IOException e) {
             LOGGER.error("Failed to parse mob data from saved ZIP: {}", zipFile, e);
         }
@@ -151,45 +145,45 @@ public final class RepoZipParser {
 
     // ── ZIP stream processing ───────────────────────────────────────────────────
 
-    private static void parseZipStream(
-            InputStream body,
-            Map<String, NeuItem> items,
-            Map<String, String> snbtIds,
-            Map<String, Boolean> snbtGlints,
-            Map<String, JsonObject> constants) throws IOException {
+    private static void parseZipStream(ZipInputStream zis,
+                                       Map<String, NeuItem> items,
+                                       Map<String, String> snbtIds,
+                                       Map<String, Boolean> snbtGlints,
+                                       Map<String, JsonObject> constants) throws IOException {
+        ZipEntry entry;
+        while ((entry = zis.getNextEntry()) != null) {
+            if (entry.isDirectory()) continue;
+            String name = entry.getName();
+            if (isUnsafePath(name)) continue;
 
-        MobEntryProcessor.resetCounters();
-        MobPngEntryProcessor.resetCounters();
-
-        try (ZipInputStream zis = new ZipInputStream(
-                new BufferedInputStream(body, 1 << 16), StandardCharsets.UTF_8)) {
-
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                if (entry.isDirectory()) continue;
-                String name = entry.getName();
-                if (name.contains("..")) continue;
-
-                if (!processItemEntry(name, zis, items)
-                        && !processSnbtEntry(name, zis, snbtIds, snbtGlints)
-                        && !processConstantsEntry(name, zis, constants)
-                        && !MobEntryProcessor.process(name, zis)) {
-                    MobPngEntryProcessor.process(name, zis);
-                }
-
-                zis.closeEntry();
+            if (!processItemEntry(name, zis, items)
+                    && !processSnbtEntry(name, zis, snbtIds, snbtGlints)
+                    && !processConstantsEntry(name, zis, constants)
+                    && !MobEntryProcessor.process(name, zis)) {
+                MobPngEntryProcessor.process(name, zis);
             }
-        }
 
-        MobEntryProcessor.logSummary();
-        MobPngEntryProcessor.logSummary();
+            zis.closeEntry();
+        }
+    }
+
+    private static void parseMobsOnly(ZipInputStream zis) throws IOException {
+        ZipEntry entry;
+        while ((entry = zis.getNextEntry()) != null) {
+            if (entry.isDirectory()) continue;
+            String name = entry.getName();
+            if (isUnsafePath(name)) continue;
+
+            if (!MobEntryProcessor.process(name, zis)) {
+                MobPngEntryProcessor.process(name, zis);
+            }
+
+            zis.closeEntry();
+        }
     }
 
     // ── Entry dispatchers ───────────────────────────────────────────────────────
 
-    /**
-     * Processes a {@code /items/*.json} entry. Returns {@code true} if the entry matched.
-     */
     private static boolean processItemEntry(String name, ZipInputStream zis,
                                             Map<String, NeuItem> items) throws IOException {
         int itemsIdx = name.indexOf("/items/");
@@ -209,9 +203,6 @@ public final class RepoZipParser {
         return true;
     }
 
-    /**
-     * Processes a {@code /itemsOverlay/*&#47;*.snbt} entry. Returns {@code true} if matched.
-     */
     private static boolean processSnbtEntry(String name, ZipInputStream zis,
                                             Map<String, String> snbtIds,
                                             Map<String, Boolean> snbtGlints) throws IOException {
@@ -235,9 +226,6 @@ public final class RepoZipParser {
         return true;
     }
 
-    /**
-     * Processes a {@code /constants/*.json} entry. Returns {@code true} if matched.
-     */
     private static boolean processConstantsEntry(String name, ZipInputStream zis,
                                                  Map<String, JsonObject> constants) throws IOException {
         int constantsIdx = name.indexOf("/constants/");
@@ -246,13 +234,25 @@ public final class RepoZipParser {
         String fileName = name.substring(constantsIdx + 11);
         if (!CONSTANTS_TO_EXTRACT.contains(fileName)) return false;
 
-        String content = new String(zis.readAllBytes(), StandardCharsets.UTF_8);
         try {
-            constants.put(fileName, NeuItemParser.GSON.fromJson(content, JsonObject.class));
+            JsonObject obj = NeuItemParser.GSON.fromJson(
+                    new InputStreamReader(zis, StandardCharsets.UTF_8), JsonObject.class);
+            constants.put(fileName, obj);
         } catch (JsonSyntaxException e) {
             LOGGER.warn("Skipping malformed constants file: {}", fileName);
         }
         return true;
+    }
+
+    // ── Safety helpers ──────────────────────────────────────────────────────────
+
+    /**
+     * Rejects paths that contain {@code ".."} or start with {@code "/"}.
+     * This is a lightweight guard against ZIP slip when entries are later used
+     * as file names in memory caches.
+     */
+    private static boolean isUnsafePath(String name) {
+        return name.startsWith("/") || name.contains("../") || name.contains("..\\");
     }
 
     // ── SNBT override application ───────────────────────────────────────────────

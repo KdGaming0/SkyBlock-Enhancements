@@ -6,14 +6,17 @@ import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.ClientRecipeCache;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoRecipeType;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcShopRecipeType;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -98,21 +101,27 @@ public final class RecipeFallbackResolver {
 
     /**
      * Appends reforge recipes from {@code candidates} that are not already present
-     * in {@code base}. Preserves original behavior for all other recipe types.
+     * in {@code base}. Uses an {@link IdentityHashMap} set for O(1) containment checks
+     * instead of the previous O(n²) {@link List#contains} approach.
      */
     private static List<ReliableClientRecipe> appendReforgeRecipes(
             List<ReliableClientRecipe> base,
             List<ReliableClientRecipe> candidates) {
         if (candidates.isEmpty()) return base;
 
+        Set<ReliableClientRecipe> baseSet =
+                Collections.newSetFromMap(new IdentityHashMap<>(base.size()));
+        baseSet.addAll(base);
+
         List<ReliableClientRecipe> additions = candidates.stream()
                 .filter(r -> r instanceof SkyblockReforgeClientRecipe)
-                .filter(r -> !base.contains(r))
+                .filter(r -> !baseSet.contains(r))
                 .toList();
 
         if (additions.isEmpty()) return base;
 
-        List<ReliableClientRecipe> merged = new ArrayList<>(base);
+        List<ReliableClientRecipe> merged = new ArrayList<>(base.size() + additions.size());
+        merged.addAll(base);
         merged.addAll(additions);
         return merged;
     }
@@ -120,7 +129,7 @@ public final class RecipeFallbackResolver {
     private static NeuItem findNpcItem(ItemStack stack) {
         Component displayName = stack.get(DataComponents.CUSTOM_NAME);
         if (displayName == null) return null;
-        return NeuItemRegistry.getNpcByDisplayName(displayName);
+        return NeuItemRegistry.getNpcByDisplayName(displayName.getString());
     }
 
     private static void openWithTab(
@@ -132,6 +141,7 @@ public final class RecipeFallbackResolver {
 
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return;
+        if (recipes == null || recipes.isEmpty()) return;
 
         Screen parent = Minecraft.getInstance().screen;
         ArrayList<RecipeViewScreen> viewHistory = new ArrayList<>();

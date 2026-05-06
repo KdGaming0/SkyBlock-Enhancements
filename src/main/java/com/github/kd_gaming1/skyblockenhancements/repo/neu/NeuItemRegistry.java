@@ -1,19 +1,16 @@
 package com.github.kd_gaming1.skyblockenhancements.repo.neu;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader;
-import net.minecraft.network.chat.Component;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Thread-safe registry of all parsed NEU items. Populated by {@link NeuRepoDownloader}.
+ * Thread-safe registry of all parsed NEU items. Populated by {@link com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader}.
  *
  * <p>Also maintains a secondary index mapping NPC display names to their {@link NeuItem},
- * enabling O(1) lookups in the recipe-view fallback mixin.
+ * enabling O(1) lookups in the recipe-view fallback resolver.
  *
  * <p>Downstream systems (e.g. RRV integration) can register invalidation listeners via
  * {@link #addClearListener(Runnable)} to react to registry clears without introducing
@@ -21,19 +18,19 @@ import net.minecraft.network.chat.Component;
  */
 public final class NeuItemRegistry {
 
-    private static final Map<String, NeuItem> ITEMS = new ConcurrentHashMap<>(5000);
+    private static final Map<String, NeuItem> ITEMS = new ConcurrentHashMap<>(6000);
 
     /**
-     * Secondary index: NPC display name Component → NeuItem. Only populated for items
+     * Secondary index: NPC display name → NeuItem. Only populated for items
      * whose internal name ends with {@code "_NPC"}.
      */
-    private static final Map<Component, NeuItem> NPC_BY_DISPLAY_NAME = new ConcurrentHashMap<>(256);
+    private static final Map<String, NeuItem> NPC_BY_DISPLAY_NAME = new ConcurrentHashMap<>(256);
 
     /**
-     * Listeners invoked after the registry is cleared. Used by downstream systems
-     * (e.g. cache invalidation) without requiring this class to import their types.
+     * Listeners invoked after the registry is cleared. A {@link CopyOnWriteArrayList}
+     * guarantees thread-safe registration and iteration without explicit synchronisation.
      */
-    private static final List<Runnable> CLEAR_LISTENERS = new ArrayList<>();
+    private static final List<Runnable> CLEAR_LISTENERS = new CopyOnWriteArrayList<>();
 
     private static volatile boolean loaded = false;
 
@@ -52,9 +49,14 @@ public final class NeuItemRegistry {
     // ── Registration ─────────────────────────────────────────────────────────────
 
     public static void register(String internalName, NeuItem item) {
-        ITEMS.put(internalName, item);
+        NeuItem previous = ITEMS.put(internalName, item);
+        if (previous != null) {
+            // In a healthy repo this should not happen, but if it does we want to know.
+            com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER
+                    .warn("Duplicate NEU item '{}' — latest entry wins", internalName);
+        }
         if (internalName.endsWith("_NPC") && item.displayName != null) {
-            NPC_BY_DISPLAY_NAME.put(Component.literal(item.displayName), item);
+            NPC_BY_DISPLAY_NAME.put(item.displayName, item);
         }
     }
 
@@ -64,12 +66,17 @@ public final class NeuItemRegistry {
         return ITEMS.get(internalName);
     }
 
-    public static NeuItem getNpcByDisplayName(Component displayName) {
-        return NPC_BY_DISPLAY_NAME.get(displayName);
+    public static NeuItem getNpcByDisplayName(String displayName) {
+        return displayName != null ? NPC_BY_DISPLAY_NAME.get(displayName) : null;
     }
 
+    /**
+     * Returns a snapshot copy of the current items map. The snapshot is immutable and
+     * will not reflect subsequent registry changes, avoiding concurrent-modification issues
+     * for callers that iterate over a long period.
+     */
     public static Map<String, NeuItem> getAll() {
-        return Collections.unmodifiableMap(ITEMS);
+        return Map.copyOf(ITEMS);
     }
 
     // ── Lifecycle ────────────────────────────────────────────────────────────────

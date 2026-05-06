@@ -9,7 +9,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemParser;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -41,7 +41,7 @@ public final class RepoDiskCache {
     /** Bump whenever {@link NeuItem} schema or parser output changes. */
     public static final int CACHE_VERSION = 13;
 
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Gson GSON = NeuItemParser.GSON;
 
     /** Keys used in the cache document's {@code constants} object. */
     private static final String[] CONSTANT_KEYS = {
@@ -68,6 +68,9 @@ public final class RepoDiskCache {
     /**
      * Streams the cache file into {@link NeuItemRegistry} and {@link NeuConstantsRegistry}.
      * Returns {@code false} if the cache is outdated, missing required sections, or malformed.
+     *
+     * <p>All top-level fields are read before validation so that field order in the JSON
+     * does not matter (e.g. {@code "items"} may appear before {@code "cacheVersion"}).
      */
     public boolean loadFromCache() {
         try (BufferedReader br = Files.newBufferedReader(cacheFile, StandardCharsets.UTF_8);
@@ -77,25 +80,18 @@ public final class RepoDiskCache {
 
             int version = 0;
             int itemCount = 0;
+            JsonObject constants = null;
             boolean itemsLoaded = false;
-            boolean constantsLoaded = false;
 
             reader.beginObject();
             while (reader.hasNext()) {
                 switch (reader.nextName()) {
                     case "cacheVersion" -> version = reader.nextInt();
-
                     case "items" -> {
-                        if (!ensureVersionCompatible(version)) return false;
                         itemCount = readItems(reader);
                         itemsLoaded = true;
                     }
-
-                    case "constants" -> {
-                        loadConstantsFromJson(GSON.fromJson(reader, JsonObject.class));
-                        constantsLoaded = true;
-                    }
-
+                    case "constants" -> constants = GSON.fromJson(reader, JsonObject.class);
                     default -> reader.skipValue();
                 }
             }
@@ -106,17 +102,15 @@ public final class RepoDiskCache {
                 LOGGER.warn("Cache file contained no items section — will re-download");
                 return false;
             }
-            if (!constantsLoaded) {
-                LOGGER.warn("Cache file contained no constants section — constants will be "
-                        + "missing until the next re-download");
-            }
+
+            loadConstantsFromJson(constants);
 
             NeuItemRegistry.markLoaded();
             LOGGER.info("Loaded {} SkyBlock items from cache (version {})", itemCount, version);
             RecipeDiagnostic.run();
             return true;
 
-        } catch (Exception e) {
+        } catch (IOException | RuntimeException e) {
             LOGGER.error("Cache load failed — will re-download", e);
             return false;
         }
@@ -149,13 +143,18 @@ public final class RepoDiskCache {
         NeuConstantsRegistry.clear();
         if (constants == null) return;
 
-        if (constants.has("parents"))      NeuConstantsRegistry.loadParents(constants.getAsJsonObject("parents"));
-        if (constants.has("essencecosts")) NeuConstantsRegistry.loadEssenceCosts(constants.getAsJsonObject("essencecosts"));
-        if (constants.has("museum"))       NeuConstantsRegistry.loadMuseum(constants.getAsJsonObject("museum"));
-        if (constants.has("pets"))         NeuConstantsRegistry.loadPetTypes(constants.getAsJsonObject("pets"));
-        if (constants.has("petnums"))      NeuConstantsRegistry.loadPetNums(constants.getAsJsonObject("petnums"));
-        if (constants.has("reforges"))     NeuConstantsRegistry.loadReforges(constants.getAsJsonObject("reforges"));
-        if (constants.has("reforgestones")) NeuConstantsRegistry.loadReforgeStones(constants.getAsJsonObject("reforgestones"));
+        loadConstant(constants, "parents",      NeuConstantsRegistry::loadParents);
+        loadConstant(constants, "essencecosts", NeuConstantsRegistry::loadEssenceCosts);
+        loadConstant(constants, "museum",       NeuConstantsRegistry::loadMuseum);
+        loadConstant(constants, "pets",         NeuConstantsRegistry::loadPetTypes);
+        loadConstant(constants, "petnums",      NeuConstantsRegistry::loadPetNums);
+        loadConstant(constants, "reforges",     NeuConstantsRegistry::loadReforges);
+        loadConstant(constants, "reforgestones", NeuConstantsRegistry::loadReforgeStones);
+    }
+
+    private static void loadConstant(JsonObject constants, String key,
+                                     java.util.function.Consumer<JsonObject> loader) {
+        if (constants.has(key)) loader.accept(constants.getAsJsonObject(key));
     }
 
     // ── Save ────────────────────────────────────────────────────────────────────
@@ -197,9 +196,10 @@ public final class RepoDiskCache {
             jw.flush();
         }
 
-        java.nio.file.AtomicMoveNotSupportedException fallback = null;
         try {
-            Files.move(tempPath, cacheFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            Files.move(tempPath, cacheFile,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
         } catch (java.nio.file.AtomicMoveNotSupportedException e) {
             Files.move(tempPath, cacheFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         }

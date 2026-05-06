@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -57,6 +58,15 @@ public class NeuRepoDownloader {
     private final Path repoZipFile;
     private final RepoDiskCache diskCache;
 
+    /** Guards against concurrent downloads racing on shared registries and file writes. */
+    private final AtomicBoolean downloadInProgress = new AtomicBoolean(false);
+
+    /**
+     * In-memory copy of the last known cache timestamp. Updated whenever meta is written
+     * or read, so {@link #needsRefreshMinutes} avoids blocking file I/O on the client thread.
+     */
+    private volatile long cachedTimestamp = -1;
+
     public NeuRepoDownloader() {
         this.cacheDir = FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("repo");
         this.hypixelCacheFile = cacheDir.resolve("hypixel-items-cache.json");
@@ -72,21 +82,32 @@ public class NeuRepoDownloader {
      * Kicks off an async download + parse and returns an immutable {@link DownloadSession}
      * containing the futures that signal when NEU and Hypixel data are ready.
      *
+     * <p>If a download is already running, the existing session is returned so callers
+     * share the same result instead of spawning duplicate work.
+     *
      * <p>Callers should not block on these futures directly; instead, pass the session to
      * {@link com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.DataReadinessTracker}.
      */
     public DownloadSession startDownload(boolean startup) {
+        if (!downloadInProgress.compareAndSet(false, true)) {
+            LOGGER.info("Download already in progress — returning existing session.");
+            return currentSession;
+        }
+
         CompletableFuture<Boolean> neuReady = new CompletableFuture<>();
         CompletableFuture<Boolean> hypixelReady = new CompletableFuture<>();
         DownloadSession session = new DownloadSession(neuReady, hypixelReady, Instant.now());
+        this.currentSession = session;
 
         CompletableFuture.runAsync(() -> {
             try {
                 download(startup, session);
             } catch (Exception e) {
                 LOGGER.error("Failed to download/load NEU repo data", e);
-                neuReady.complete(false);
-                hypixelReady.complete(false);
+                completeIfPending(neuReady, false);
+                completeIfPending(hypixelReady, false);
+            } finally {
+                downloadInProgress.set(false);
             }
         });
 
@@ -97,18 +118,30 @@ public class NeuRepoDownloader {
         return startDownload(true);
     }
 
+    /**
+     * Returns {@code true} when the cached data is older than {@code minutes} or no cache exists.
+     * This method is safe to call from the client thread — it uses an in-memory timestamp
+     * and only falls back to disk when the memory cache has not been populated yet.
+     */
     public boolean needsRefreshMinutes(int minutes) {
-        try {
-            String ts = diskCache.readMeta("timestamp");
-            if (ts == null) return true;
-            long elapsed = System.currentTimeMillis() - Long.parseLong(ts);
-            return elapsed > (long) minutes * 60_000L;
-        } catch (Exception e) {
-            return true;
+        long ts = cachedTimestamp;
+        if (ts < 0) {
+            try {
+                String meta = diskCache.readMeta("timestamp");
+                if (meta == null) return true;
+                ts = Long.parseLong(meta);
+                cachedTimestamp = ts;
+            } catch (Exception e) {
+                return true;
+            }
         }
+        long elapsed = System.currentTimeMillis() - ts;
+        return elapsed > (long) minutes * 60_000L;
     }
 
     // ── Pipeline orchestration ──────────────────────────────────────────────────
+
+    private DownloadSession currentSession;
 
     private void download(boolean startup, DownloadSession session) throws Exception {
         Files.createDirectories(cacheDir);
@@ -136,16 +169,15 @@ public class NeuRepoDownloader {
         String cachedEtag = diskCache.readMeta("etag");
         boolean cacheExists = diskCache.cacheExists();
 
-        // ── ETag + cache available → check if remote has changed ─────────────────
         if (cachedEtag != null && cacheExists) {
             return resolveWithEtag(cachedEtag, startup, session);
         }
 
-        // ── No ETag but cache exists → try loading it ────────────────────────────
         if (cacheExists) {
             LOGGER.info("No ETag cached, checking cache validity...");
             if (diskCache.loadFromCache()) {
                 loadMobData();
+                updateCachedTimestamp();
                 diskCache.saveMeta(null);
                 session.neuReady().complete(true);
                 fetchHypixelAndSignal(session, false);
@@ -198,6 +230,7 @@ public class NeuRepoDownloader {
             LOGGER.info("Loading from cache...");
             if (diskCache.loadFromCache()) {
                 loadMobData();
+                updateCachedTimestamp();
                 diskCache.saveMeta(cachedEtag);
                 session.neuReady().complete(true);
                 fetchHypixelAndSignal(session, false);
@@ -207,8 +240,8 @@ public class NeuRepoDownloader {
             return FetchAction.DOWNLOAD;
         }
 
-        // Runtime check → nothing changed
         LOGGER.info("No NEU repo updates found.");
+        updateCachedTimestamp();
         diskCache.saveMeta(cachedEtag);
         session.neuReady().complete(true);
         fetchHypixelAndSignal(session, false);
@@ -221,6 +254,7 @@ public class NeuRepoDownloader {
     private FetchAction handleHeadCheckFailure(boolean startup, DownloadSession session) {
         if (startup && diskCache.loadFromCache()) {
             loadMobData();
+            updateCachedTimestamp();
             session.neuReady().complete(true);
             fetchHypixelAndSignal(session, false);
             return FetchAction.USE_CACHE;
@@ -242,7 +276,6 @@ public class NeuRepoDownloader {
     private void performFreshDownload(DownloadSession session) throws Exception {
         ItemStackBuilder.clearCache();
 
-        // Fire Hypixel fetch in parallel with the ZIP download.
         CompletableFuture<Void> hypixelParallelFuture = CompletableFuture.runAsync(
                 () -> fetchHypixelAndSignal(session, true));
 
@@ -254,22 +287,16 @@ public class NeuRepoDownloader {
         NeuItemParser.resolvePetStats(result.items());
         NeuItemRegistry.markLoaded();
 
-        // Signal NEU ready now — independently of Hypixel.
         session.neuReady().complete(true);
 
         LOGGER.info("Loaded {} SkyBlock items and {} constants files from NEU repo",
                 result.items().size(), result.constants().size());
 
-        // Wait for Hypixel to finish (it signals hypixelReadyFuture internally).
-        try {
-            hypixelParallelFuture.join();
-        } catch (Exception e) {
-            LOGGER.warn("Hypixel items fetch encountered an error during join", e);
-            session.hypixelReady().complete(false);
-        }
+        hypixelParallelFuture.join();
 
         RecipeDiagnostic.run();
         diskCache.saveCache(result.items(), result.constants(), result.etag());
+        updateCachedTimestamp();
         diskCache.saveMeta(result.etag());
     }
 
@@ -279,9 +306,6 @@ public class NeuRepoDownloader {
      * Populates {@link com.github.kd_gaming1.skyblockenhancements.repo.neu.mob.MobRenderRegistry}
      * and {@link com.github.kd_gaming1.skyblockenhancements.repo.neu.mob.MobSkinRegistry} from
      * the saved repo ZIP. Called on cache-load paths where the full ZIP parse did not run.
-     *
-     * <p>If the ZIP file does not exist (first run with this code version, or user deleted it),
-     * mob previews degrade to placeholders until the next fresh download saves the ZIP.
      */
     private void loadMobData() {
         RepoZipParser.parseMobsFromFile(repoZipFile);
@@ -306,7 +330,7 @@ public class NeuRepoDownloader {
             }
         } catch (Exception e) {
             LOGGER.warn("Hypixel items fetch failed", e);
-            session.hypixelReady().complete(false);
+            completeIfPending(session.hypixelReady(), false);
         }
     }
 
@@ -315,25 +339,35 @@ public class NeuRepoDownloader {
     private void loadConstants(Map<String, JsonObject> constants) {
         NeuConstantsRegistry.clear();
 
-        JsonObject parents = constants.get("parents.json");
-        if (parents != null) NeuConstantsRegistry.loadParents(parents);
+        loadConstant(constants, "parents.json", NeuConstantsRegistry::loadParents);
+        loadConstant(constants, "essencecosts.json", NeuConstantsRegistry::loadEssenceCosts);
+        loadConstant(constants, "museum.json", NeuConstantsRegistry::loadMuseum);
+        loadConstant(constants, "pets.json", NeuConstantsRegistry::loadPetTypes);
+        loadConstant(constants, "petnums.json", NeuConstantsRegistry::loadPetNums);
+        loadConstant(constants, "reforges.json", NeuConstantsRegistry::loadReforges);
+        loadConstant(constants, "reforgestones.json", NeuConstantsRegistry::loadReforgeStones);
+    }
 
-        JsonObject essenceCosts = constants.get("essencecosts.json");
-        if (essenceCosts != null) NeuConstantsRegistry.loadEssenceCosts(essenceCosts);
+    private static void loadConstant(Map<String, JsonObject> constants, String key,
+                                     java.util.function.Consumer<JsonObject> loader) {
+        JsonObject value = constants.get(key);
+        if (value != null) loader.accept(value);
+    }
 
-        JsonObject museum = constants.get("museum.json");
-        if (museum != null) NeuConstantsRegistry.loadMuseum(museum);
+    // ── Helpers ─────────────────────────────────────────────────────────────────
 
-        JsonObject pets = constants.get("pets.json");
-        if (pets != null) NeuConstantsRegistry.loadPetTypes(pets);
+    private void updateCachedTimestamp() {
+        try {
+            String ts = diskCache.readMeta("timestamp");
+            if (ts != null) cachedTimestamp = Long.parseLong(ts);
+        } catch (Exception ignored) {
+            // Best-effort; next call will retry.
+        }
+    }
 
-        JsonObject petNums = constants.get("petnums.json");
-        if (petNums != null) NeuConstantsRegistry.loadPetNums(petNums);
-
-        JsonObject reforges = constants.get("reforges.json");
-        if (reforges != null) NeuConstantsRegistry.loadReforges(reforges);
-
-        JsonObject reforgeStones = constants.get("reforgestones.json");
-        if (reforgeStones != null) NeuConstantsRegistry.loadReforgeStones(reforgeStones);
+    private static void completeIfPending(CompletableFuture<Boolean> future, boolean value) {
+        if (!future.isDone()) {
+            future.complete(value);
+        }
     }
 }

@@ -8,8 +8,9 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops.DropsR
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.forge.ForgeRecipeParser;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.kat.KatUpgradeRecipeParser;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.NpcInfoRecipeBuilder;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.ReforgeRecipeGenerator;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.NpcShopRecipeParser;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoRegistry;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.ReforgeRecipeGenerator;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.trade.TradeRecipeParser;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.wiki.WikiInfoRecipeBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
@@ -42,6 +43,9 @@ public final class SkyblockRecipeGenerator {
             LOGGER.debug("NEU repo not yet loaded — skipping recipe generation");
             return out;
         }
+
+        // NPC recipes are rebuilt every generation — clear stale entries first.
+        SkyblockNpcInfoRegistry.clear();
 
         for (NeuItem item : NeuItemRegistry.getAll().values()) {
             int before = out.size();

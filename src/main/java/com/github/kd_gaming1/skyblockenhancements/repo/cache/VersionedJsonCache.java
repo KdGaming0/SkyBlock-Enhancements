@@ -5,9 +5,10 @@ import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LO
 import com.github.kd_gaming1.skyblockenhancements.repo.io.AtomicFileWriter;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import java.io.BufferedReader;
-import java.nio.charset.StandardCharsets;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,7 @@ public final class VersionedJsonCache<T> {
 
             T payload = gson.fromJson(root.get("data"), payloadType);
             return new CachedResult<>(payload, new Metadata(etag, timestamp, version));
-        } catch (Exception e) {
+        } catch (IOException | JsonSyntaxException e) {
             LOGGER.warn("Failed to load versioned cache from {}: {}", file, e.getMessage());
             return null;
         }
@@ -91,15 +92,16 @@ public final class VersionedJsonCache<T> {
     public Metadata readMeta(Path metaFile) {
         try {
             if (!Files.exists(metaFile)) return null;
-            JsonObject meta = gson.fromJson(
-                    Files.readString(metaFile, StandardCharsets.UTF_8), JsonObject.class);
+            String text = Files.readString(metaFile, StandardCharsets.UTF_8);
+            JsonObject meta = gson.fromJson(text, JsonObject.class);
             if (meta == null) return null;
 
             String etag = meta.has("etag") ? meta.get("etag").getAsString() : null;
             long timestamp = meta.has("timestamp") ? meta.get("timestamp").getAsLong() : 0L;
             int schemaVersion = meta.has("schemaVersion") ? meta.get("schemaVersion").getAsInt() : 0;
             return new Metadata(etag, timestamp, schemaVersion);
-        } catch (Exception ignored) {
+        } catch (IOException | JsonSyntaxException e) {
+            LOGGER.debug("Meta read failed for {}: {}", metaFile, e.getMessage());
             return null;
         }
     }

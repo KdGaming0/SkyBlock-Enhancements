@@ -35,11 +35,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class FullStackListCache {
 
-    private static volatile List<ItemStack> cachedList;
-    private static volatile Map<ItemStack, String> cachedNames;
-    private static volatile Map<ItemStack, String> cachedIds;
-    private static volatile Map<ItemStack, NeuItem> cachedNeuItems;
-    private static volatile Map<SkyblockItemCategory, Set<ItemStack>> cachedByCategory;
+    @Nullable private static volatile List<ItemStack> cachedList;
+    @Nullable private static volatile Map<ItemStack, String> cachedNames;
+    @Nullable private static volatile Map<ItemStack, String> cachedIds;
+    @Nullable private static volatile Map<ItemStack, NeuItem> cachedNeuItems;
+    @Nullable private static volatile Map<SkyblockItemCategory, Set<ItemStack>> cachedByCategory;
 
     private FullStackListCache() {}
 
@@ -57,10 +57,6 @@ public final class FullStackListCache {
      * Populates all caches directly from the given item list. Called from
      * {@link SkyblockInjectionCache#buildCache()} on the background thread, using
      * the exact same stack references that will be injected into RRV.
-     *
-     * <p>This ensures identity consistency: the stacks in this cache are the same
-     * object references as those in RRV's {@code ClientRecipeCache}, so identity
-     * map lookups never miss.
      */
     public static void populateFromInjected(List<ItemStack> items) {
         buildDerivedCaches(items);
@@ -137,7 +133,6 @@ public final class FullStackListCache {
 
         Map<SkyblockItemCategory, Set<ItemStack>> map = cachedByCategory;
         if (map == null) {
-            // Fallback: trigger a registry-based build if populateFromInjected wasn't called.
             buildCacheFromRegistry();
             map = cachedByCategory;
         }
@@ -160,10 +155,13 @@ public final class FullStackListCache {
 
     /**
      * Builds all derived caches (names, IDs, NeuItems, category sets) from a list
-     * of stacks. Used by both the primary path ({@link #populateFromInjected}) and
-     * the fallback path ({@link #buildCacheFromRegistry}).
+     * of stacks. Synchronised to prevent races when the fallback path and the primary
+     * path run concurrently.
      */
-    private static void buildDerivedCaches(List<ItemStack> items) {
+    private static synchronized void buildDerivedCaches(List<ItemStack> items) {
+        // Double-checked: another thread may have built the cache while we waited.
+        if (cachedList != null) return;
+
         int size = items.size();
         Map<ItemStack, String> names = new IdentityHashMap<>(size);
         Map<ItemStack, String> ids = new IdentityHashMap<>(size);
@@ -185,7 +183,6 @@ public final class FullStackListCache {
                 if (neuItem != null) {
                     neuItems.put(stack, neuItem);
 
-                    // Category is already resolved at parse time — just read it.
                     if (neuItem.category != null) {
                         byCategory.get(neuItem.category).add(stack);
                     }
@@ -193,19 +190,17 @@ public final class FullStackListCache {
             }
         }
 
-        // Wrap as unmodifiable.
         EnumMap<SkyblockItemCategory, Set<ItemStack>> immutableByCategory =
                 new EnumMap<>(SkyblockItemCategory.class);
         for (var entry : byCategory.entrySet()) {
             immutableByCategory.put(entry.getKey(), Collections.unmodifiableSet(entry.getValue()));
         }
 
-        List<ItemStack> immutable = Collections.unmodifiableList(items);
-        cachedNames = names;
-        cachedIds = ids;
-        cachedNeuItems = neuItems;
+        cachedNames = Collections.unmodifiableMap(names);
+        cachedIds = Collections.unmodifiableMap(ids);
+        cachedNeuItems = Collections.unmodifiableMap(neuItems);
         cachedByCategory = Collections.unmodifiableMap(immutableByCategory);
-        cachedList = immutable; // publish last — readers use this as the "cache ready" signal
+        cachedList = Collections.unmodifiableList(items); // publish last — readers use this as the ready signal
     }
 
     // ── Fallback: registry scan ─────────────────────────────────────────────────
@@ -216,7 +211,7 @@ public final class FullStackListCache {
      * called (shouldn't happen in normal flow).
      */
     @SuppressWarnings("UnstableApiUsage")
-    private static List<ItemStack> buildCacheFromRegistry() {
+    private static synchronized List<ItemStack> buildCacheFromRegistry() {
         LOGGER.warn("FullStackListCache.buildCacheFromRegistry() fallback triggered — "
                 + "populateFromInjected() was expected to run first. "
                 + "Please report this if it happens consistently.");
@@ -230,7 +225,7 @@ public final class FullStackListCache {
         });
 
         buildDerivedCaches(results);
-        return Collections.unmodifiableList(results);
+        return cachedList != null ? cachedList : Collections.emptyList();
     }
 
     // ── ID extraction ───────────────────────────────────────────────────────────

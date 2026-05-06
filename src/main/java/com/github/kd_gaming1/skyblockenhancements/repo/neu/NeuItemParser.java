@@ -51,68 +51,16 @@ public final class NeuItemParser {
         item.displayName = str(json, "displayname", internalName);
         item.damage = json.has("damage") ? json.get("damage").getAsInt() : 0;
 
-        if (json.has("lore") && json.get("lore").isJsonArray()) {
-            item.lore = new ArrayList<>();
-            for (JsonElement e : json.getAsJsonArray("lore")) {
-                item.lore.add(e.getAsString());
-            }
-        } else {
-            item.lore = List.of();
-        }
-
-        if (json.has("nbttag")) {
-            String nbtStr = json.get("nbttag").getAsString();
-            Matcher m = ITEM_MODEL_PATTERN.matcher(nbtStr);
-            item.itemModel = m.find() ? m.group(1) : null;
-
-            Matcher texMatcher = TEXTURE_VALUE_PATTERN.matcher(nbtStr);
-            if (texMatcher.find()) {
-                StringBuilder b64 = new StringBuilder(texMatcher.group(1).replaceAll("[^A-Za-z0-9+/=]", ""));
-                while (b64.length() % 4 != 0) b64.append("=");
-                item.skullTexture = b64.toString();
-            }
-
-            Matcher colorMatcher = DISPLAY_COLOR_PATTERN.matcher(nbtStr);
-            if (colorMatcher.find()) {
-                item.leatherColor = Integer.parseInt(colorMatcher.group(1));
-            }
-        }
-
-        item.island = str(json, "island", "");
-        item.x = json.has("x") ? json.get("x").getAsInt() : 0;
-        item.y = json.has("y") ? json.get("y").getAsInt() : 0;
-        item.z = json.has("z") ? json.get("z").getAsInt() : 0;
+        item.lore = parseStringList(json, "lore");
+        parseNbt(item, json);
+        parseCoordinates(item, json);
         item.infoType = str(json, "infoType", "");
-
-        if (json.has("info") && json.get("info").isJsonArray()) {
-            item.info = new ArrayList<>();
-            for (JsonElement e : json.getAsJsonArray("info")) {
-                item.info.add(e.getAsString());
-            }
-        } else {
-            item.info = List.of();
-        }
-
+        item.info = parseStringList(json, "info");
         item.clickcommand = str(json, "clickcommand", "");
         item.parent = json.has("parent") ? json.get("parent").getAsString() : null;
-
-        // Requirement metadata
         item.crafttext = str(json, "crafttext", "");
         item.slayerReq = str(json, "slayer_req", "");
-
-        if (json.has("recipe") && json.get("recipe").isJsonObject()) {
-            item.recipe = new LinkedHashMap<>();
-            for (var e : json.getAsJsonObject("recipe").entrySet()) {
-                item.recipe.put(e.getKey(), e.getValue().getAsString());
-            }
-        }
-
-        if (json.has("recipes") && json.get("recipes").isJsonArray()) {
-            item.recipes = new ArrayList<>();
-            for (JsonElement e : json.getAsJsonArray("recipes")) {
-                item.recipes.add(e.getAsJsonObject().deepCopy());
-            }
-        }
+        parseRecipes(item, json);
 
         return item;
     }
@@ -172,7 +120,87 @@ public final class NeuItemParser {
         LOGGER.info("Resolved stat placeholders on {} pet items", resolved);
     }
 
-    // ── Internal ────────────────────────────────────────────────────────────────
+    // ── Internal helpers ────────────────────────────────────────────────────────
+
+    private static void parseNbt(NeuItem item, JsonObject json) {
+        if (!json.has("nbttag")) return;
+
+        String nbtStr = json.get("nbttag").getAsString();
+
+        Matcher modelMatcher = ITEM_MODEL_PATTERN.matcher(nbtStr);
+        item.itemModel = modelMatcher.find() ? modelMatcher.group(1) : null;
+
+        Matcher texMatcher = TEXTURE_VALUE_PATTERN.matcher(nbtStr);
+        if (texMatcher.find()) {
+            item.skullTexture = cleanBase64(texMatcher.group(1));
+        }
+
+        Matcher colorMatcher = DISPLAY_COLOR_PATTERN.matcher(nbtStr);
+        if (colorMatcher.find()) {
+            item.leatherColor = Integer.parseInt(colorMatcher.group(1));
+        }
+    }
+
+    /**
+     * Strips invalid characters from a Base64 texture string and re-applies padding.
+     * Faster than {@code replaceAll} because it avoids regex compilation.
+     */
+    private static String cleanBase64(String raw) {
+        StringBuilder sb = new StringBuilder(raw.length());
+        for (int i = 0; i < raw.length(); i++) {
+            char c = raw.charAt(i);
+            if (isBase64Char(c)) sb.append(c);
+        }
+        while (sb.length() % 4 != 0) sb.append('=');
+        return sb.toString();
+    }
+
+    private static boolean isBase64Char(char c) {
+        return (c >= 'A' && c <= 'Z')
+                || (c >= 'a' && c <= 'z')
+                || (c >= '0' && c <= '9')
+                || c == '+' || c == '/' || c == '=';
+    }
+
+    private static void parseCoordinates(NeuItem item, JsonObject json) {
+        item.island = str(json, "island", "");
+        item.x = getIntOrDefault(json, "x", 0);
+        item.y = getIntOrDefault(json, "y", 0);
+        item.z = getIntOrDefault(json, "z", 0);
+    }
+
+    private static void parseRecipes(NeuItem item, JsonObject json) {
+        if (json.has("recipe") && json.get("recipe").isJsonObject()) {
+            item.recipe = new LinkedHashMap<>();
+            for (var e : json.getAsJsonObject("recipe").entrySet()) {
+                item.recipe.put(e.getKey(), e.getValue().getAsString());
+            }
+        }
+
+        if (json.has("recipes") && json.get("recipes").isJsonArray()) {
+            item.recipes = new ArrayList<>();
+            for (JsonElement e : json.getAsJsonArray("recipes")) {
+                // Reference to the original JsonObject is safe: recipes are read-only
+                // after parsing and are later nulled out via NeuItemRegistry.trimRecipes().
+                item.recipes.add(e.getAsJsonObject());
+            }
+        }
+    }
+
+    private static List<String> parseStringList(JsonObject json, String key) {
+        if (!json.has(key) || !json.get(key).isJsonArray()) {
+            return List.of();
+        }
+        List<String> list = new ArrayList<>();
+        for (JsonElement e : json.getAsJsonArray(key)) {
+            list.add(e.getAsString());
+        }
+        return list;
+    }
+
+    private static int getIntOrDefault(JsonObject json, String key, int fallback) {
+        return json.has(key) ? json.get(key).getAsInt() : fallback;
+    }
 
     static String str(JsonObject obj, String key, String fallback) {
         return obj.has(key) ? obj.get(key).getAsString() : fallback;

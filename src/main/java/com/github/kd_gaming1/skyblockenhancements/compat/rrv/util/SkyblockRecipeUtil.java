@@ -18,6 +18,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
+import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.RecipeTagCodec;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
@@ -191,7 +192,11 @@ public final class SkyblockRecipeUtil {
             RecipeViewScreen screen, String[] wikiUrls, int btnX, int btnY) {
         if (wikiUrls == null || wikiUrls.length == 0) return null;
 
-        String url = Arrays.stream(wikiUrls).filter(wUrl -> wUrl != null && wUrl.contains("hypixelskyblock.minecraft.wiki")).findFirst().orElse(wikiUrls[0]);
+        String url = Arrays.stream(wikiUrls)
+                .filter(wUrl -> wUrl != null && !wUrl.isEmpty())
+                .findFirst()
+                .orElse(null);
+        if (url == null) return null;
 
         Button btn = Button.builder(Component.literal("Wiki"), b -> openUri(url))
                 .pos(btnX, btnY)
@@ -202,9 +207,11 @@ public final class SkyblockRecipeUtil {
     }
 
     public static void openUri(String uri) {
+        if (uri == null || uri.isEmpty()) return;
         try {
             Util.getPlatform().openUri(URI.create(uri));
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.warn("Failed to open URI: {}", uri);
         }
     }
 

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.item.ItemStack;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Isolates all direct calls to RRV internal cache classes behind a single facade.
@@ -33,7 +34,7 @@ public final class RrvCacheInjector {
      */
     private static final String EXPECTED_RRV_VERSION = "6.6.2";
 
-    private static boolean versionChecked = false;
+    private static final AtomicBoolean VERSION_CHECKED = new AtomicBoolean(false);
 
     private RrvCacheInjector() {}
 
@@ -52,13 +53,8 @@ public final class RrvCacheInjector {
 
         checkVersionOnce();
 
-        // Items: direct injection, no task queue needed.
         injectItems(items);
-
-        // Recipes: queue per-type batches then processRecipes at the end.
         queueRecipeInjection(grouped);
-
-        // Trigger async execution of all queued recipe tasks.
         ClientRecipeManager.INSTANCE.runTasks();
     }
 
@@ -87,11 +83,9 @@ public final class RrvCacheInjector {
     private static void queueRecipeInjection(
             Map<ReliableServerRecipeType<?>, List<ServerRecipeEntry>> grouped) {
 
-        // cacheStartRecieved tells LowEndRecipeCache how many types to expect.
         ClientRecipeManager.INSTANCE.queueTask(
                 () -> LowEndRecipeCache.INSTANCE.cacheStartRecieved(grouped.size()));
 
-        // Each type's full cycle is one task — startCaching, all recipes, endCaching.
         for (var entry : grouped.entrySet()) {
             ReliableServerRecipeType<?> type = entry.getKey();
             List<ServerRecipeEntry> recipes = entry.getValue();
@@ -105,7 +99,6 @@ public final class RrvCacheInjector {
             });
         }
 
-        // processRecipes wraps, indexes, and clears the cache — must run last.
         ClientRecipeManager.INSTANCE.queueTask(
                 ClientRecipeManager.INSTANCE::processRecipes);
     }
@@ -113,8 +106,7 @@ public final class RrvCacheInjector {
     // ── Version check ───────────────────────────────────────────────────────────
 
     private static void checkVersionOnce() {
-        if (versionChecked) return;
-        versionChecked = true;
+        if (!VERSION_CHECKED.compareAndSet(false, true)) return;
 
         FabricLoader.getInstance().getModContainer("rrv").ifPresent(mod -> {
             String installed = mod.getMetadata().getVersion().getFriendlyString();

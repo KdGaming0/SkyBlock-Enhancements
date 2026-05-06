@@ -7,6 +7,10 @@ import cc.cassian.rrv.api.recipe.ReliableClientRecipe;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipeType;
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCategoryFilter;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.RrvCacheInjector;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockInjectionCache;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting.SkyblockCraftingClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting.SkyblockCraftingServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops.MobPreviewRenderer;
@@ -15,12 +19,18 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops.Skyblo
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.essence.SkyblockEssenceUpgradeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.essence.SkyblockEssenceUpgradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.forge.SkyblockForgeClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.forge.SkyblockForgeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.kat.SkyblockKatUpgradeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.kat.SkyblockKatUpgradeServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.*;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoRecipeType;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoRegistry;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcShopClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcShopRecipeType;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcShopServerRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.trade.SkyblockTradeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.trade.SkyblockTradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.wiki.SkyblockWikiInfoClientRecipe;
@@ -28,18 +38,10 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.wiki.Skybloc
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.mob.MobRenderRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.mob.MobSkinRegistry;
-
 import cc.cassian.rrv.api.ReliableRecipeViewerClientPlugin;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.RrvCacheInjector;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCategoryFilter;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockInjectionCache;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoRegistry;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoServerRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcShopClientRecipe;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcShopServerRecipe;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * RRV client plugin entry point. Registers recipe wrappers and handles reload callbacks.
@@ -49,6 +51,9 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.Skyblock
  */
 public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin {
 
+    /** Guards against concurrent injection into RRV's internal caches. */
+    private static final AtomicBoolean INJECTING = new AtomicBoolean(false);
+
     @Override
     public void onIntegrationInitialize() {
         if (!RrvCompat.isActive()) return;
@@ -57,6 +62,9 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
         NeuItemRegistry.addClearListener(SkyblockInjectionCache::invalidate);
         NeuItemRegistry.addClearListener(SkyblockCategoryFilter::invalidateIndex);
         NeuItemRegistry.addClearListener(SkyblockRrvClientPlugin::clearMobCaches);
+        NeuItemRegistry.addClearListener(SkyblockNpcShopRecipeType.INSTANCE::clearCache);
+        NeuItemRegistry.addClearListener(SkyblockNpcInfoRecipeType.INSTANCE::clearCache);
+        NeuItemRegistry.addClearListener(SkyblockNpcInfoRegistry::clear);
 
         registerRecipeWrappers();
 
@@ -66,7 +74,6 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
             if (future.isDone()) {
                 injectIfReady();
             } else {
-                // Repo is still downloading — injection will happen when it completes.
                 SkyblockInjectionCache.markNotInjected();
             }
         });
@@ -85,6 +92,9 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
     /**
      * Injects cached data into RRV if the cache is ready and not already injected.
      * Called from the reload callback and from the startup pipeline.
+     *
+     * <p>The method is idempotent and thread-safe: concurrent callers are coalesced
+     * into a single injection attempt.
      */
     public static void injectIfReady() {
         if (!NeuItemRegistry.isLoaded()) return;
@@ -93,20 +103,29 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
             return;
         }
 
-        var items = SkyblockInjectionCache.getCachedItems();
-        var grouped = SkyblockInjectionCache.getCachedGrouped();
-
-        if (items == null || items.isEmpty() || grouped == null) {
-            LOGGER.warn("Injection skipped — cache not yet built.");
+        if (!INJECTING.compareAndSet(false, true)) {
+            LOGGER.debug("Injection already in progress — skipping duplicate call.");
             return;
         }
 
-        RrvCacheInjector.inject(items, grouped);
-        SkyblockInjectionCache.markInjected();
+        try {
+            var items = SkyblockInjectionCache.getCachedItems();
+            var grouped = SkyblockInjectionCache.getCachedGrouped();
 
-        LOGGER.info("Injected {} items and {} recipes into RRV.",
-                items.size(),
-                grouped.values().stream().mapToInt(List::size).sum());
+            if (items == null || items.isEmpty() || grouped == null) {
+                LOGGER.warn("Injection skipped — cache not yet built.");
+                return;
+            }
+
+            RrvCacheInjector.inject(items, grouped);
+            SkyblockInjectionCache.markInjected();
+
+            LOGGER.info("Injected {} items and {} recipes into RRV.",
+                    items.size(),
+                    grouped.values().stream().mapToInt(List::size).sum());
+        } finally {
+            INJECTING.set(false);
+        }
     }
 
     // ── Recipe wrappers (server → client) ────────────────────────────────────────

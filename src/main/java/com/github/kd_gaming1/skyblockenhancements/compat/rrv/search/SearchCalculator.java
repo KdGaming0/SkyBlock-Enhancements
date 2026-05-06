@@ -34,15 +34,19 @@ public final class SearchCalculator {
 
     // ── Cache ─────────────────────────────────────────────────────────────────
 
-    /** Last query that was evaluated. */
-    private static String cachedQuery = null;
-    /** Result string for {@link #cachedQuery}, or {@code null} if it was not a math expression. */
-    private static @Nullable String cachedResult = null;
+    /** Last query that was evaluated. Volatile for safe multi-thread visibility. */
+    private static volatile String cachedQuery = null;
+    /** Result string for {@link #cachedQuery}. */
+    private static volatile @Nullable String cachedResult = null;
 
     // ── Formatting ────────────────────────────────────────────────────────────
 
-    private static final DecimalFormat GUI_FORMAT =
-            new DecimalFormat("###,###.##", DecimalFormatSymbols.getInstance(Locale.ROOT));
+    /**
+     * {@link DecimalFormat} is not thread-safe, so we keep one per thread.
+     * The formatter is lightweight to create; ThreadLocal avoids synchronization.
+     */
+    private static final ThreadLocal<DecimalFormat> GUI_FORMAT = ThreadLocal.withInitial(() ->
+            new DecimalFormat("###,###.##", DecimalFormatSymbols.getInstance(Locale.ROOT)));
 
     // ── Parser state ──────────────────────────────────────────────────────────
 
@@ -419,7 +423,7 @@ public final class SearchCalculator {
         else if (abs >= 1e3)  { scaled = abs / 1e3;  suffix = "K"; }
         else                  { scaled = abs;         suffix = "";  }
 
-        String formatted = GUI_FORMAT.format(scaled) + suffix;
+        String formatted = GUI_FORMAT.get().format(scaled) + suffix;
         return negative ? "-" + formatted : formatted;
     }
 }

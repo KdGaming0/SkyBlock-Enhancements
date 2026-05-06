@@ -3,12 +3,9 @@ package com.github.kd_gaming1.skyblockenhancements.repo.hypixel;
 import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 
 import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsRegistry.HypixelUpgradeCost;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import java.io.BufferedInputStream;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -29,6 +26,9 @@ import org.jetbrains.annotations.Nullable;
  * Fetches {@code /v2/resources/skyblock/items} from the Hypixel public API and parses the
  * response into a {@link HypixelItemsSnapshot}.
  *
+ * <p>Uses streaming {@link JsonReader} instead of materialising the entire response as a Gson
+ * tree, cutting peak heap usage by roughly half for a several-megabyte payload.
+ *
  * <p>Endpoint is public and requires no API key.
  */
 public final class HypixelItemsFetcher {
@@ -36,7 +36,9 @@ public final class HypixelItemsFetcher {
     private static final String ENDPOINT = "https://api.hypixel.net/v2/resources/skyblock/items";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
     private static final int STREAM_BUFFER_SIZE = 1 << 16;
-    private static final Gson GSON = new GsonBuilder().create();
+
+    /** Expected item count — used to pre-size maps and avoid rehashing. */
+    private static final int EXPECTED_ITEM_COUNT = 4000;
 
     private HypixelItemsFetcher() {}
 
@@ -62,10 +64,10 @@ public final class HypixelItemsFetcher {
                 return null;
             }
 
-            try (InputStream body = new BufferedInputStream(response.body(), STREAM_BUFFER_SIZE)) {
-                JsonObject root = GSON.fromJson(
-                        new InputStreamReader(body, StandardCharsets.UTF_8), JsonObject.class);
-                return parseResponse(root);
+            try (InputStream body = response.body();
+                 JsonReader reader = new JsonReader(
+                         new InputStreamReader(body, StandardCharsets.UTF_8))) {
+                return parseResponse(reader);
             }
         } catch (Exception e) {
             LOGGER.warn("Failed to fetch Hypixel items API: {}", e.getMessage());
@@ -73,30 +75,24 @@ public final class HypixelItemsFetcher {
         }
     }
 
-    // ── JSON → snapshot ─────────────────────────────────────────────────────────
+    // ── JSON → snapshot (streaming) ─────────────────────────────────────────────
 
     @Nullable
-    private static HypixelItemsSnapshot parseResponse(JsonObject root) {
-        if (!root.has("items") || !root.get("items").isJsonArray()) {
-            LOGGER.warn("Hypixel items response missing 'items' array");
-            return null;
+    private static HypixelItemsSnapshot parseResponse(JsonReader reader) throws IOException {
+        Map<String, Map<String, Integer>> baseStats = new HashMap<>(EXPECTED_ITEM_COUNT);
+        Map<String, Map<String, int[]>> tieredStats = new HashMap<>(512);
+        Map<String, List<List<HypixelUpgradeCost>>> upgradeCosts = new HashMap<>(EXPECTED_ITEM_COUNT);
+
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String name = reader.nextName();
+            if ("items".equals(name)) {
+                parseItemsArray(reader, baseStats, tieredStats, upgradeCosts);
+            } else {
+                reader.skipValue();
+            }
         }
-
-        Map<String, Map<String, Integer>> baseStats = new HashMap<>(512);
-        Map<String, Map<String, int[]>> tieredStats = new HashMap<>(128);
-        Map<String, List<List<HypixelUpgradeCost>>> upgradeCosts = new HashMap<>(512);
-
-        for (JsonElement element : root.getAsJsonArray("items")) {
-            if (!element.isJsonObject()) continue;
-            JsonObject item = element.getAsJsonObject();
-
-            String id = item.has("id") ? item.get("id").getAsString() : null;
-            if (id == null || id.isEmpty()) continue;
-
-            parseBaseStats(id, item, baseStats);
-            parseTieredStats(id, item, tieredStats);
-            parseUpgradeCosts(id, item, upgradeCosts);
-        }
+        reader.endObject();
 
         return new HypixelItemsSnapshot(
                 Collections.unmodifiableMap(baseStats),
@@ -104,74 +100,163 @@ public final class HypixelItemsFetcher {
                 Collections.unmodifiableMap(upgradeCosts));
     }
 
-    /** API {@code stats} uses lower_snake keys — normalise to UPPER_SNAKE. */
-    private static void parseBaseStats(String id, JsonObject item,
-                                       Map<String, Map<String, Integer>> out) {
-        if (!item.has("stats") || !item.get("stats").isJsonObject()) return;
+    private static void parseItemsArray(JsonReader reader,
+                                        Map<String, Map<String, Integer>> baseStats,
+                                        Map<String, Map<String, int[]>> tieredStats,
+                                        Map<String, List<List<HypixelUpgradeCost>>> upgradeCosts)
+            throws IOException {
+        reader.beginArray();
+        while (reader.hasNext()) {
+            parseItem(reader, baseStats, tieredStats, upgradeCosts);
+        }
+        reader.endArray();
+    }
 
+    private static void parseItem(JsonReader reader,
+                                  Map<String, Map<String, Integer>> baseStats,
+                                  Map<String, Map<String, int[]>> tieredStats,
+                                  Map<String, List<List<HypixelUpgradeCost>>> upgradeCosts)
+            throws IOException {
+        String id = null;
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String key = reader.nextName();
+            switch (key) {
+                case "id" -> id = reader.nextString();
+                case "stats" -> {
+                    if (id != null) parseBaseStats(reader, id, baseStats);
+                    else reader.skipValue();
+                }
+                case "tiered_stats" -> {
+                    if (id != null) parseTieredStats(reader, id, tieredStats);
+                    else reader.skipValue();
+                }
+                case "upgrade_costs" -> {
+                    if (id != null) parseUpgradeCosts(reader, id, upgradeCosts);
+                    else reader.skipValue();
+                }
+                default -> reader.skipValue();
+            }
+        }
+        reader.endObject();
+    }
+
+    private static void parseBaseStats(JsonReader reader, String id,
+                                       Map<String, Map<String, Integer>> out) throws IOException {
         Map<String, Integer> stats = new HashMap<>();
-        for (var entry : item.getAsJsonObject("stats").entrySet()) {
-            if (!entry.getValue().isJsonPrimitive()) continue;
-            try {
-                stats.put(entry.getKey().toUpperCase(Locale.ROOT), entry.getValue().getAsInt());
-            } catch (NumberFormatException ignored) {
-                // non-numeric stat — skip
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String key = reader.nextName();
+            if (reader.peek() == JsonToken.NUMBER) {
+                try {
+                    stats.put(key.toUpperCase(Locale.ROOT), reader.nextInt());
+                } catch (NumberFormatException e) {
+                    reader.skipValue();
+                }
+            } else {
+                reader.skipValue();
             }
         }
-        if (!stats.isEmpty()) out.put(id, Collections.unmodifiableMap(stats));
+        reader.endObject();
+        if (!stats.isEmpty()) out.put(id, stats);
     }
 
-    private static void parseTieredStats(String id, JsonObject item,
-                                         Map<String, Map<String, int[]>> out) {
-        if (!item.has("tiered_stats") || !item.get("tiered_stats").isJsonObject()) return;
-
+    private static void parseTieredStats(JsonReader reader, String id,
+                                         Map<String, Map<String, int[]>> out) throws IOException {
         Map<String, int[]> stats = new HashMap<>();
-        for (var entry : item.getAsJsonObject("tiered_stats").entrySet()) {
-            if (!entry.getValue().isJsonArray()) continue;
-            JsonArray arr = entry.getValue().getAsJsonArray();
-
-            // Skip single-value arrays: the stat doesn't change across tiers.
-            if (arr.size() < 2) continue;
-
-            int[] values = new int[arr.size()];
-            for (int i = 0; i < arr.size(); i++) values[i] = arr.get(i).getAsInt();
-            stats.put(entry.getKey(), values);
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String key = reader.nextName();
+            List<Integer> values = readIntArray(reader);
+            if (values.size() >= 2) {
+                int[] arr = new int[values.size()];
+                for (int i = 0; i < values.size(); i++) arr[i] = values.get(i);
+                stats.put(key, arr);
+            }
         }
+        reader.endObject();
         if (!stats.isEmpty()) out.put(id, Collections.unmodifiableMap(stats));
     }
 
-    private static void parseUpgradeCosts(String id, JsonObject item,
-                                          Map<String, List<List<HypixelUpgradeCost>>> out) {
-        if (!item.has("upgrade_costs") || !item.get("upgrade_costs").isJsonArray()) return;
-
-        List<List<HypixelUpgradeCost>> perStar = new ArrayList<>();
-        for (JsonElement starEl : item.getAsJsonArray("upgrade_costs")) {
-            if (!starEl.isJsonArray()) { perStar.add(List.of()); continue; }
-            List<HypixelUpgradeCost> starCosts = new ArrayList<>();
-            for (JsonElement costEl : starEl.getAsJsonArray()) {
-                HypixelUpgradeCost cost = parseCost(costEl);
-                if (cost != null) starCosts.add(cost);
+    private static List<Integer> readIntArray(JsonReader reader) throws IOException {
+        List<Integer> list = new ArrayList<>();
+        reader.beginArray();
+        while (reader.hasNext()) {
+            if (reader.peek() == JsonToken.NUMBER) {
+                try {
+                    list.add(reader.nextInt());
+                } catch (NumberFormatException e) {
+                    reader.skipValue();
+                }
+            } else {
+                reader.skipValue();
             }
-            perStar.add(Collections.unmodifiableList(starCosts));
         }
+        reader.endArray();
+        return list;
+    }
+
+    private static void parseUpgradeCosts(JsonReader reader, String id,
+                                          Map<String, List<List<HypixelUpgradeCost>>> out)
+            throws IOException {
+        List<List<HypixelUpgradeCost>> perStar = new ArrayList<>();
+        reader.beginArray();
+        while (reader.hasNext()) {
+            perStar.add(readCostArray(reader));
+        }
+        reader.endArray();
         if (!perStar.isEmpty()) out.put(id, Collections.unmodifiableList(perStar));
     }
 
-    @Nullable
-    static HypixelUpgradeCost parseCost(JsonElement el) {
-        if (!el.isJsonObject()) return null;
-        JsonObject obj = el.getAsJsonObject();
-        if (!obj.has("type") || !obj.has("amount")) return null;
+    private static List<HypixelUpgradeCost> readCostArray(JsonReader reader) throws IOException {
+        List<HypixelUpgradeCost> costs = new ArrayList<>();
+        reader.beginArray();
+        while (reader.hasNext()) {
+            HypixelUpgradeCost cost = parseCost(reader);
+            if (cost != null) costs.add(cost);
+        }
+        reader.endArray();
+        return costs;
+    }
 
-        String type = obj.get("type").getAsString();
-        int amount = obj.get("amount").getAsInt();
+    @Nullable
+    private static HypixelUpgradeCost parseCost(JsonReader reader) throws IOException {
+        String type = null;
+        String essenceType = null;
+        String itemId = null;
+        Integer amount = null;
+
+        reader.beginObject();
+        while (reader.hasNext()) {
+            String key = reader.nextName();
+            switch (key) {
+                case "type" -> type = reader.nextString();
+                case "essence_type" -> essenceType = reader.nextString();
+                case "item_id" -> itemId = reader.nextString();
+                case "amount" -> {
+                    if (reader.peek() == JsonToken.NUMBER) {
+                        try {
+                            amount = reader.nextInt();
+                        } catch (NumberFormatException e) {
+                            reader.skipValue();
+                        }
+                    } else {
+                        reader.skipValue();
+                    }
+                }
+                default -> reader.skipValue();
+            }
+        }
+        reader.endObject();
+
+        if (type == null || amount == null) return null;
 
         return switch (type) {
-            case "ESSENCE" -> obj.has("essence_type")
-                    ? new HypixelUpgradeCost(type, obj.get("essence_type").getAsString(), null, amount)
+            case "ESSENCE" -> essenceType != null
+                    ? new HypixelUpgradeCost(type, essenceType, null, amount)
                     : null;
-            case "ITEM" -> obj.has("item_id")
-                    ? new HypixelUpgradeCost(type, null, obj.get("item_id").getAsString(), amount)
+            case "ITEM" -> itemId != null
+                    ? new HypixelUpgradeCost(type, null, itemId, amount)
                     : null;
             default -> null;
         };

@@ -4,8 +4,7 @@ import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LO
 
 import com.github.kd_gaming1.skyblockenhancements.repo.RepoDiskCache;
 import com.github.kd_gaming1.skyblockenhancements.repo.cache.VersionedJsonCache;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemParser;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.jetbrains.annotations.Nullable;
@@ -16,14 +15,16 @@ import org.jetbrains.annotations.Nullable;
  * Hypixel cache.
  *
  * <p>All JSON I/O is delegated to {@link VersionedJsonCache} for atomic writes and schema
- * validation.
+ * validation. A single {@link VersionedJsonCache} instance is reused across calls to avoid
+ * repeatedly constructing Gson and generic type metadata.
  */
 public final class HypixelItemsCacheStore {
 
     /** Skip re-fetching when the cache file was written within this period. */
     private static final long CACHE_TTL_MS = 24L * 60L * 60L * 1_000L;
 
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final VersionedJsonCache<HypixelItemsSnapshot> CACHE =
+            new VersionedJsonCache<>(NeuItemParser.GSON, HypixelItemsSnapshot.class);
 
     private HypixelItemsCacheStore() {}
 
@@ -44,21 +45,25 @@ public final class HypixelItemsCacheStore {
      */
     @Nullable
     public static HypixelItemsSnapshot tryLoad(Path cacheFile) {
-        VersionedJsonCache<HypixelItemsSnapshot> cache = new VersionedJsonCache<>(GSON, HypixelItemsSnapshot.class);
-        VersionedJsonCache.CachedResult<HypixelItemsSnapshot> result = cache.load(cacheFile, RepoDiskCache.CACHE_VERSION);
-        if (result == null) return null;
-        return result.payload();
+        VersionedJsonCache.CachedResult<HypixelItemsSnapshot> result =
+                CACHE.load(cacheFile, RepoDiskCache.CACHE_VERSION);
+        return result != null ? result.payload() : null;
     }
 
-    /** Writes the snapshot atomically. Swallows I/O errors with a warn log. */
-    public static void save(Path cacheFile, HypixelItemsSnapshot data) {
+    /**
+     * Writes the snapshot atomically.
+     *
+     * @return {@code true} on success, {@code false} on I/O failure (logged)
+     */
+    public static boolean save(Path cacheFile, HypixelItemsSnapshot data) {
         try {
-            VersionedJsonCache<HypixelItemsSnapshot> cache = new VersionedJsonCache<>(GSON, HypixelItemsSnapshot.class);
             VersionedJsonCache.Metadata meta = new VersionedJsonCache.Metadata(
                     null, System.currentTimeMillis(), RepoDiskCache.CACHE_VERSION);
-            cache.save(cacheFile, data, meta);
+            CACHE.save(cacheFile, data, meta);
+            return true;
         } catch (Exception e) {
             LOGGER.warn("Failed to save Hypixel items cache: {}", e.getMessage());
+            return false;
         }
     }
 }

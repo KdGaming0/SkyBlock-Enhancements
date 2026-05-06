@@ -9,6 +9,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -16,8 +18,8 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>Both NEU and Hypixel data expose a {@link CompletableFuture<Boolean>} signal from
  * {@link com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader} via an immutable
- * {@link DownloadSession}. This class composes those futures asynchronously rather than blocking
- * a {@link java.util.concurrent.ForkJoinPool} thread.
+ * {@link DownloadSession}. This class composes those futures asynchronously on a dedicated
+ * single-thread executor to avoid starving the shared {@code ForkJoinPool.commonPool()}.
  */
 public final class DataReadinessTracker {
 
@@ -27,6 +29,13 @@ public final class DataReadinessTracker {
      * only a safety net against an unforeseen bug leaving a future dangling.
      */
     private static final long HARD_TIMEOUT_SECONDS = 120L;
+
+    /** Dedicated executor for cache-build and injection work. */
+    private static final Executor BACKGROUND = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "SkyblockEnhancements-DataReadiness");
+        t.setDaemon(true);
+        return t;
+    });
 
     private DataReadinessTracker() {}
 
@@ -41,8 +50,13 @@ public final class DataReadinessTracker {
         return session.neuReady()
                 .thenAcceptBothAsync(session.hypixelReady(), (neuOk, hypixelOk) -> {
                     resolveReadinessAndInject(session, neuOk, hypixelOk);
-                })
-                .orTimeout(HARD_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                }, BACKGROUND)
+                .orTimeout(HARD_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .whenComplete((unused, throwable) -> {
+                    if (throwable != null) {
+                        LOGGER.error("Data readiness pipeline failed", throwable);
+                    }
+                });
     }
 
     /**
@@ -57,8 +71,13 @@ public final class DataReadinessTracker {
                     } else {
                         LOGGER.warn("Hypixel retry failed — essence upgrades still unavailable.");
                     }
-                })
-                .orTimeout(HARD_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                }, BACKGROUND)
+                .orTimeout(HARD_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .whenComplete((unused, throwable) -> {
+                    if (throwable != null) {
+                        LOGGER.error("Hypixel retry pipeline failed", throwable);
+                    }
+                });
     }
 
     /**
@@ -74,8 +93,13 @@ public final class DataReadinessTracker {
                     } else {
                         LOGGER.warn("NEU repo retry failed — item list still unavailable.");
                     }
-                })
-                .orTimeout(HARD_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                }, BACKGROUND)
+                .orTimeout(HARD_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .whenComplete((unused, throwable) -> {
+                    if (throwable != null) {
+                        LOGGER.error("NEU retry pipeline failed", throwable);
+                    }
+                });
     }
 
     // ── Core wait + inject ───────────────────────────────────────────────────────

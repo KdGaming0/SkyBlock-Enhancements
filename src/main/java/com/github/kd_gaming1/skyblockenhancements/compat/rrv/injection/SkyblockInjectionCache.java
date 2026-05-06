@@ -5,17 +5,15 @@ import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LO
 import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.api.recipe.ReliableServerRecipeType;
 import cc.cassian.rrv.common.recipe.ServerRecipeManager.ServerRecipeEntry;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoRecipeType;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoRegistry;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcShopRecipeType;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.generator.SkyblockRecipeGenerator;
 import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.generator.SkyblockRecipeGenerator;
 
 /**
  * Owns the cached SkyBlock item list and recipe map that gets injected into RRV.
@@ -69,8 +67,6 @@ public final class SkyblockInjectionCache {
         cachedItems = null;
         cachedGrouped = null;
         injected = false;
-        SkyblockNpcShopRecipeType.INSTANCE.clearCache();
-        SkyblockNpcInfoRecipeType.INSTANCE.clearCache();
         FullStackListCache.invalidate();
     }
 
@@ -88,22 +84,26 @@ public final class SkyblockInjectionCache {
             return;
         }
 
-        SkyblockNpcInfoRegistry.clear();
+        try {
+            List<ItemStack> items = SkyblockItemListBuilder.build();
+            Map<ReliableServerRecipeType<?>, List<ServerRecipeEntry>> grouped =
+                    SkyblockRecipeGrouper.group(SkyblockRecipeGenerator.generateAll());
 
-        List<ItemStack> items = SkyblockItemListBuilder.build();
-        Map<ReliableServerRecipeType<?>, List<ServerRecipeEntry>> grouped =
-                SkyblockRecipeGrouper.group(SkyblockRecipeGenerator.generateAll());
+            FullStackListCache.populateFromInjected(items);
 
-        FullStackListCache.populateFromInjected(items);
+            cachedGrouped = Collections.unmodifiableMap(new HashMap<>(grouped));
+            cachedItems = Collections.unmodifiableList(items);
 
-        cachedGrouped = new HashMap<>(grouped);
-        cachedItems = items;
+            // Raw recipe JSON is no longer needed after generation — free the memory.
+            NeuItemRegistry.trimRecipes();
 
-        // Raw recipe JSON is no longer needed after generation — free the memory.
-        NeuItemRegistry.trimRecipes();
-
-        LOGGER.info("Built injection cache: {} items, {} recipes.",
-                items.size(), countRecipes(grouped));
+            LOGGER.info("Built injection cache: {} items, {} recipes.",
+                    items.size(), countRecipes(grouped));
+        } catch (Exception e) {
+            LOGGER.error("Failed to build injection cache", e);
+            cachedItems = null;
+            cachedGrouped = null;
+        }
     }
 
     /**
@@ -120,22 +120,32 @@ public final class SkyblockInjectionCache {
             return;
         }
 
-        List<ReliableServerRecipe> essenceRecipes = SkyblockRecipeGenerator.generateEssenceOnly();
-        if (essenceRecipes.isEmpty()) {
-            LOGGER.warn("buildEssenceRecipesOnly: no essence recipes generated.");
-            return;
+        try {
+            List<ReliableServerRecipe> essenceRecipes = SkyblockRecipeGenerator.generateEssenceOnly();
+            if (essenceRecipes.isEmpty()) {
+                LOGGER.warn("buildEssenceRecipesOnly: no essence recipes generated.");
+                return;
+            }
+
+            Map<ReliableServerRecipeType<?>, List<ServerRecipeEntry>> essenceGrouped =
+                    SkyblockRecipeGrouper.group(essenceRecipes);
+
+            cachedGrouped = mergeMaps(cachedGrouped, essenceGrouped);
+
+            LOGGER.info("Delta-injecting {} essence upgrade recipes into RRV.", essenceRecipes.size());
+            RrvCacheInjector.inject(cachedItems, essenceGrouped);
+        } catch (Exception e) {
+            LOGGER.error("Failed to build essence recipes", e);
         }
-
-        Map<ReliableServerRecipeType<?>, List<ServerRecipeEntry>> essenceGrouped =
-                SkyblockRecipeGrouper.group(essenceRecipes);
-
-        cachedGrouped.putAll(essenceGrouped);
-
-        LOGGER.info("Delta-injecting {} essence upgrade recipes into RRV.", essenceRecipes.size());
-        RrvCacheInjector.inject(cachedItems, essenceGrouped);
     }
 
     private static int countRecipes(Map<?, ? extends List<?>> grouped) {
         return grouped.values().stream().mapToInt(List::size).sum();
+    }
+
+    private static <K, V> Map<K, V> mergeMaps(Map<K, V> base, Map<K, V> delta) {
+        Map<K, V> merged = new HashMap<>(base);
+        merged.putAll(delta);
+        return Collections.unmodifiableMap(merged);
     }
 }
