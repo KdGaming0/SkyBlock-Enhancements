@@ -28,6 +28,9 @@ import net.minecraft.world.item.TooltipFlag;
  * A ticker-text option makes the coin value bold for better visibility, and an
  * optional formatting toggle can show the raw full number instead of rounded shorthand.
  *
+ * <p>When the API is down or data hasn't loaded yet, shows "Can't load data"
+ * instead of hiding the price section entirely.
+ *
  * <p>Instance-based: created once during mod init and wired with {@link ModSettings}
  * and {@link PriceStore}.
  */
@@ -59,7 +62,6 @@ public final class PriceTooltipEnhancement {
     private void onTooltip(ItemStack stack, Item.TooltipContext ctx, TooltipFlag flag, List<Component> lines) {
         if (!settings.enablePriceTooltips()) return;
         if (!com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState.isOnSkyblock()) return;
-        if (!store.hasData()) return;
         if (stack.isEmpty()) return;
 
         String skyblockId = SkyblockItemUtil.extractSkyblockId(stack);
@@ -71,7 +73,8 @@ public final class PriceTooltipEnhancement {
         List<Component> priceLines = resolvePriceLines(skyblockId, multiplier, tickerText);
         if (!priceLines.isEmpty()) {
             lines.addAll(priceLines);
-            if (store.getBazaarPrice(skyblockId).isPresent()) {
+            // Only show hint lines when we have actual price data (not error state)
+            if (!store.isLastFetchFailed() && store.hasData() && store.getBazaarPrice(skyblockId).isPresent()) {
                 appendHintLines(lines, stack);
             }
         }
@@ -161,12 +164,17 @@ public final class PriceTooltipEnhancement {
     }
 
     private String buildCacheKey(String skyblockId, int multiplier, boolean tickerText) {
-        return skyblockId + "|m=" + multiplier + "|t=" + tickerText + "|round=" + settings.roundPriceNumbers() + "|bzBS=" + settings.showBazaarBuySell() + "|bzS=" + settings.showBazaarSpread();
+        return skyblockId + "|m=" + multiplier + "|t=" + tickerText + "|round=" + settings.roundPriceNumbers() + "|bzBS=" + settings.showBazaarBuySell() + "|bzS=" + settings.showBazaarSpread() + "|failed=" + store.isLastFetchFailed();
     }
 
     // ── Line building ───────────────────────────────────────────────────────────
 
     private List<Component> buildPriceLines(String skyblockId, int multiplier, boolean tickerText) {
+        // If API is down or data hasn't loaded yet, show error state
+        if (!store.hasData() || store.isLastFetchFailed()) {
+            return buildErrorLines();
+        }
+
         Optional<Double> lowestBin = store.getLowestBin(skyblockId);
         Optional<BazaarPrice> bazaar = store.getBazaarPrice(skyblockId);
         boolean roundNumbers = settings.roundPriceNumbers();
@@ -196,6 +204,18 @@ public final class PriceTooltipEnhancement {
         }
 
         return builder.size() > 1 ? List.copyOf(builder) : List.of();
+    }
+
+    /**
+     * Builds a single compact error line shown when the API is unreachable.
+     */
+    private List<Component> buildErrorLines() {
+        return List.of(
+                Component.empty(),
+                Component.literal("Prices: ")
+                        .withStyle(ChatFormatting.GOLD)
+                        .append(Component.literal("Can't load data")
+                                .withStyle(ChatFormatting.RED)));
     }
 
     /**

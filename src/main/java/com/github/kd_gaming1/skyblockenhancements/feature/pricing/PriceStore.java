@@ -20,6 +20,7 @@ public final class PriceStore {
     private final Map<String, Double> bazaarSpreadPrices = new ConcurrentHashMap<>(1024);
 
     private volatile long lastFetchTimestamp;
+    private volatile boolean lastFetchFailed;
 
     /** Tooltip-line cache keyed by SkyBlock internal item ID. */
     private final Map<String, PriceCacheEntry> tooltipCache = new ConcurrentHashMap<>(128);
@@ -47,6 +48,21 @@ public final class PriceStore {
 
     public boolean hasData() {
         return lastFetchTimestamp > 0;
+    }
+
+    /** Returns true if the most recent fetch attempt failed. */
+    public boolean isLastFetchFailed() {
+        return lastFetchFailed;
+    }
+
+    /** Clears the failure flag before a new fetch attempt. */
+    public void clearFetchFailed() {
+        this.lastFetchFailed = false;
+    }
+
+    /** Sets the failure flag when a fetch fails. */
+    public void setFetchFailed() {
+        this.lastFetchFailed = true;
     }
 
     // ── Bulk updates (called by fetcher) ───────────────────────────────────────

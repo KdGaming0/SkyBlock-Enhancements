@@ -74,6 +74,7 @@ public final class PriceDataFetcher {
     private void refreshAsync() {
         if (!fetching.compareAndSet(false, true)) return;
 
+        store.clearFetchFailed();
         CompletableFuture.runAsync(() -> {
             try {
                 store.setLastFetchTimestamp(System.currentTimeMillis());
@@ -81,6 +82,7 @@ public final class PriceDataFetcher {
                 fetchBazaar();
                 LOGGER.info("Price data refreshed");
             } catch (Exception e) {
+                store.setFetchFailed();
                 LOGGER.error("Failed to refresh price data", e);
             } finally {
                 fetching.set(false);
