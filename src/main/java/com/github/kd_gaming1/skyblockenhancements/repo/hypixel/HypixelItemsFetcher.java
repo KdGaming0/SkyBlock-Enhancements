@@ -112,37 +112,48 @@ public final class HypixelItemsFetcher {
         reader.endArray();
     }
 
+    /**
+     * Parses a single item object. Fields are buffered into locals because the {@code "id"}
+     * field may appear in any order (often after the stats/costs fields). Everything is
+     * committed to the output maps only once {@code id} is known.
+     */
     private static void parseItem(JsonReader reader,
                                   Map<String, Map<String, Integer>> baseStats,
                                   Map<String, Map<String, int[]>> tieredStats,
                                   Map<String, List<List<HypixelUpgradeCost>>> upgradeCosts)
             throws IOException {
         String id = null;
+        Map<String, Integer> localBaseStats = null;
+        Map<String, int[]> localTieredStats = null;
+        List<List<HypixelUpgradeCost>> localUpgradeCosts = null;
+
         reader.beginObject();
         while (reader.hasNext()) {
             String key = reader.nextName();
             switch (key) {
                 case "id" -> id = reader.nextString();
-                case "stats" -> {
-                    if (id != null) parseBaseStats(reader, id, baseStats);
-                    else reader.skipValue();
-                }
-                case "tiered_stats" -> {
-                    if (id != null) parseTieredStats(reader, id, tieredStats);
-                    else reader.skipValue();
-                }
-                case "upgrade_costs" -> {
-                    if (id != null) parseUpgradeCosts(reader, id, upgradeCosts);
-                    else reader.skipValue();
-                }
+                case "stats" -> localBaseStats = readBaseStats(reader);
+                case "tiered_stats" -> localTieredStats = readTieredStats(reader);
+                case "upgrade_costs" -> localUpgradeCosts = readUpgradeCosts(reader);
                 default -> reader.skipValue();
             }
         }
         reader.endObject();
+
+        if (id == null || id.isEmpty()) return;
+
+        if (localBaseStats != null && !localBaseStats.isEmpty()) {
+            baseStats.put(id, Collections.unmodifiableMap(localBaseStats));
+        }
+        if (localTieredStats != null && !localTieredStats.isEmpty()) {
+            tieredStats.put(id, Collections.unmodifiableMap(localTieredStats));
+        }
+        if (localUpgradeCosts != null && !localUpgradeCosts.isEmpty()) {
+            upgradeCosts.put(id, Collections.unmodifiableList(localUpgradeCosts));
+        }
     }
 
-    private static void parseBaseStats(JsonReader reader, String id,
-                                       Map<String, Map<String, Integer>> out) throws IOException {
+    private static Map<String, Integer> readBaseStats(JsonReader reader) throws IOException {
         Map<String, Integer> stats = new HashMap<>();
         reader.beginObject();
         while (reader.hasNext()) {
@@ -158,11 +169,10 @@ public final class HypixelItemsFetcher {
             }
         }
         reader.endObject();
-        if (!stats.isEmpty()) out.put(id, stats);
+        return stats.isEmpty() ? null : stats;
     }
 
-    private static void parseTieredStats(JsonReader reader, String id,
-                                         Map<String, Map<String, int[]>> out) throws IOException {
+    private static Map<String, int[]> readTieredStats(JsonReader reader) throws IOException {
         Map<String, int[]> stats = new HashMap<>();
         reader.beginObject();
         while (reader.hasNext()) {
@@ -175,7 +185,7 @@ public final class HypixelItemsFetcher {
             }
         }
         reader.endObject();
-        if (!stats.isEmpty()) out.put(id, Collections.unmodifiableMap(stats));
+        return stats.isEmpty() ? null : stats;
     }
 
     private static List<Integer> readIntArray(JsonReader reader) throws IOException {
@@ -196,16 +206,14 @@ public final class HypixelItemsFetcher {
         return list;
     }
 
-    private static void parseUpgradeCosts(JsonReader reader, String id,
-                                          Map<String, List<List<HypixelUpgradeCost>>> out)
-            throws IOException {
+    private static List<List<HypixelUpgradeCost>> readUpgradeCosts(JsonReader reader) throws IOException {
         List<List<HypixelUpgradeCost>> perStar = new ArrayList<>();
         reader.beginArray();
         while (reader.hasNext()) {
             perStar.add(readCostArray(reader));
         }
         reader.endArray();
-        if (!perStar.isEmpty()) out.put(id, Collections.unmodifiableList(perStar));
+        return perStar.isEmpty() ? null : perStar;
     }
 
     private static List<HypixelUpgradeCost> readCostArray(JsonReader reader) throws IOException {

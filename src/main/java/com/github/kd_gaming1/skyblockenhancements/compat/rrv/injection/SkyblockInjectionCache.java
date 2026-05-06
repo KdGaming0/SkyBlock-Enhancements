@@ -33,6 +33,7 @@ public final class SkyblockInjectionCache {
 
     /** {@code true} once RRV has received the current cache, preventing double-injection. */
     private static volatile boolean injected;
+    private static volatile boolean cacheIncludesHypixel = false;
 
     private SkyblockInjectionCache() {}
 
@@ -67,6 +68,7 @@ public final class SkyblockInjectionCache {
         cachedItems = null;
         cachedGrouped = null;
         injected = false;
+        cacheIncludesHypixel = false;
         FullStackListCache.invalidate();
     }
 
@@ -77,7 +79,13 @@ public final class SkyblockInjectionCache {
      * is already built, or if the NEU registry hasn't been populated yet.
      */
     public static synchronized void buildCache() {
-        if (cachedItems != null && cachedGrouped != null) return;
+        if (cachedItems != null && cachedGrouped != null) {
+            if (!cacheIncludesHypixel && HypixelItemsRegistry.isLoaded()) {
+                // fall through to rebuild
+            } else {
+                return;
+            }
+        }
 
         if (NeuItemRegistry.getAll().isEmpty()) {
             LOGGER.warn("buildCache called with empty registry — skipping.");
@@ -93,6 +101,7 @@ public final class SkyblockInjectionCache {
 
             cachedGrouped = Collections.unmodifiableMap(new HashMap<>(grouped));
             cachedItems = Collections.unmodifiableList(items);
+            cacheIncludesHypixel = HypixelItemsRegistry.isLoaded();
 
             // Raw recipe JSON is no longer needed after generation — free the memory.
             NeuItemRegistry.trimRecipes();
@@ -103,6 +112,7 @@ public final class SkyblockInjectionCache {
             LOGGER.error("Failed to build injection cache", e);
             cachedItems = null;
             cachedGrouped = null;
+            cacheIncludesHypixel = false;
         }
     }
 
@@ -131,9 +141,10 @@ public final class SkyblockInjectionCache {
                     SkyblockRecipeGrouper.group(essenceRecipes);
 
             cachedGrouped = mergeMaps(cachedGrouped, essenceGrouped);
+            cacheIncludesHypixel = true;
 
             LOGGER.info("Delta-injecting {} essence upgrade recipes into RRV.", essenceRecipes.size());
-            RrvCacheInjector.inject(cachedItems, essenceGrouped);
+            RrvCacheInjector.inject(cachedItems, cachedGrouped);
         } catch (Exception e) {
             LOGGER.error("Failed to build essence recipes", e);
         }

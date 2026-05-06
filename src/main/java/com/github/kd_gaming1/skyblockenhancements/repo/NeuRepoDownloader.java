@@ -289,6 +289,8 @@ public class NeuRepoDownloader {
 
         session.neuReady().complete(true);
 
+        loadMobData();
+
         LOGGER.info("Loaded {} SkyBlock items and {} constants files from NEU repo",
                 result.items().size(), result.constants().size());
 
