@@ -26,10 +26,9 @@ import org.jspecify.annotations.Nullable;
  *   <li><b>Unlimited</b> — every duplicate collapses regardless of distance or age.</li>
  * </ol>
  *
- * <p>When a duplicate is removed, every separator, blank line, and accompanying line that
- * arrived on the same tick is removed with it. This treats each Hypixel block (banner, profile
- * view, summary card) as an atomic unit: the separators that bordered it are part of the same
- * logical message and share its {@link GuiMessage#addedTime()}.
+ * <p>When a duplicate is removed, only the duplicate line itself and directly adjacent
+ * separator/blank lines that share the same tick are removed. This cleans up Hypixel
+ * separator blocks without affecting unrelated messages sent by other mods in the same tick.
  *
  * <p>The {@link #entries} map uses <b>access-order</b> {@link LinkedHashMap}: every
  * {@link Map#get} promotes the entry to the most-recently-used position, so the eldest entry
@@ -81,9 +80,9 @@ public final class CompactMessageHandler {
 
     /**
      * Inspects an incoming message. If it qualifies as a compactable duplicate, removes the
-     * prior occurrence (along with its tick-group companions) from history and returns a new
-     * component with a {@code (×N)} suffix appended; otherwise returns the original message
-     * unchanged.
+     * prior occurrence (along with directly adjacent separator/blank lines) from history
+     * and returns a new component with a {@code (×N)} suffix appended; otherwise returns the
+     * original message unchanged.
      */
     public Component process(Component message) {
         if (!SkyblockEnhancementsConfig.compactDuplicateMessages) return message;
@@ -159,10 +158,8 @@ public final class CompactMessageHandler {
     // ---------------------------------------------------------------------
 
     /**
-     * Removes the most-recent prior occurrence of {@code raw} and every other message that
-     * arrived on the same tick. Hypixel emits multi-line blocks (banners, profile views,
-     * separator borders) atomically within one tick, so the tick is the authoritative
-     * grouping signal for "everything that belongs to this message".
+     * Removes the prior occurrence of {@code raw} and any separator/blank lines that are
+     * directly adjacent AND share the same tick.
      */
     private void removePreviousDuplicate(String raw) {
         List<GuiMessage> msgs = chatAccess.sbe$getAllMessages();
@@ -170,32 +167,29 @@ public final class CompactMessageHandler {
             String candidate = ChatTextHelper.stripCompactSuffix(msgs.get(i).content().getString());
             if (!candidate.equals(raw)) continue;
 
-            removeTickGroupAt(msgs, i);
+            int anchorTick = msgs.get(i).addedTime();
+            int lower = i;
+            int upper = i;
+
+            while (lower - 1 >= 0
+                    && msgs.get(lower - 1).addedTime() == anchorTick
+                    && isAuxiliaryLine(msgs.get(lower - 1))) {
+                lower--;
+            }
+            while (upper + 1 < msgs.size()
+                    && msgs.get(upper + 1).addedTime() == anchorTick
+                    && isAuxiliaryLine(msgs.get(upper + 1))) {
+                upper++;
+            }
+
+            msgs.subList(lower, upper + 1).clear();
             return;
         }
     }
 
-    /**
-     * Removes the message at {@code anchorIndex} and every contiguous neighbour sharing its
-     * {@link GuiMessage#addedTime()}. The scan stops at the first timestamp mismatch in each
-     * direction, so the cost is proportional to the group size — a handful of messages for
-     * typical Hypixel blocks.
-     */
-// CompactMessageHandler.java
-
-    private static void removeTickGroupAt(List<GuiMessage> msgs, int anchorIndex) {
-        int anchorTick = msgs.get(anchorIndex).addedTime();
-
-        int upper = anchorIndex;
-        while (upper + 1 < msgs.size() && msgs.get(upper + 1).addedTime() == anchorTick) {
-            upper++;
-        }
-        int lower = anchorIndex;
-        while (lower - 1 >= 0 && msgs.get(lower - 1).addedTime() == anchorTick) {
-            lower--;
-        }
-
-        msgs.subList(lower, upper + 1).clear();
+    private static boolean isAuxiliaryLine(GuiMessage message) {
+        String text = message.content().getString().trim();
+        return text.isEmpty() || isSeparator(text);
     }
 
     private static boolean isSeparator(String trimmed) {
