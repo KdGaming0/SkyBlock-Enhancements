@@ -64,7 +64,7 @@ public final class PriceTooltipEnhancement {
         if (!com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState.isOnSkyblock()) return;
         if (stack.isEmpty()) return;
 
-        String skyblockId = SkyblockItemUtil.extractSkyblockId(stack);
+        String skyblockId = SkyblockItemUtil.getPriceLookupId(stack);
         if (skyblockId == null) return;
 
         int multiplier = computeMultiplier(stack);
@@ -94,7 +94,8 @@ public final class PriceTooltipEnhancement {
     private static int computeMultiplier(ItemStack stack) {
         int multiplier = 1;
         if (PriceTooltipKeybinds.isFullStackHeld()) {
-            multiplier *= stack.getMaxStackSize();
+            int maxStack = stack.getMaxStackSize();
+            multiplier *= (maxStack > 1) ? maxStack : 64;
         }
         if (PriceTooltipKeybinds.isCurrentAmountHeld()) {
             multiplier *= stack.getCount();
@@ -116,7 +117,7 @@ public final class PriceTooltipEnhancement {
         String fullKey  = PriceTooltipKeybinds.getFullStackKeyName();
         String amountKey = PriceTooltipKeybinds.getCurrentAmountKeyName();
 
-        boolean showFullHint  = !fullStackHeld && !fullKey.isEmpty() && stack.getMaxStackSize() > 1;
+        boolean showFullHint  = !fullStackHeld && !fullKey.isEmpty();
         boolean showAmountHint = !currentHeld && !amountKey.isEmpty() && stack.getCount() > 1;
 
         // Both hints are available: combine them into one line
@@ -212,10 +213,8 @@ public final class PriceTooltipEnhancement {
     private List<Component> buildErrorLines() {
         return List.of(
                 Component.empty(),
-                Component.literal("Prices: ")
-                        .withStyle(ChatFormatting.GOLD)
-                        .append(Component.literal("Can't load data")
-                                .withStyle(ChatFormatting.RED)));
+                Component.literal("Prices: ").withStyle(ChatFormatting.GOLD)
+                        .append(Component.literal("API unreachable — last fetch failed (SBE)").withStyle(ChatFormatting.RED)));
     }
 
     /**

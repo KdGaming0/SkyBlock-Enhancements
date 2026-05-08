@@ -12,6 +12,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.io.AtomicFileWriter;
 import com.github.kd_gaming1.skyblockenhancements.repo.network.JsonHttpClient;
+import com.github.kd_gaming1.skyblockenhancements.util.ItemDebugHelper;
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -40,6 +41,8 @@ public class Commands {
                     .then(literal("refresh")
                             .then(literal("repoData")
                                     .executes(Commands::executeRefreshRepoData)))
+                    .then(literal("debugitem")
+                            .executes(Commands::executeDebugItem))
                     .then(literal("storage")
                             .then(literal("clear-cache")
                                     .executes(Commands::executeClearStorageCache)));
@@ -96,6 +99,21 @@ public class Commands {
             SkyblockEnhancements.LOGGER.error("Failed to refresh enchants data", e);
             ctx.getSource().sendError(Component.literal(PREFIX_ERROR + "Failed to refresh enchants data."));
         }
+    }
+
+    private static int executeDebugItem(CommandContext<FabricClientCommandSource> ctx) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return 0;
+
+        // Use the stack the player is currently holding in main hand
+        var stack = mc.player.getMainHandItem();
+        if (stack.isEmpty()) {
+            // Fall back to offhand
+            stack = mc.player.getOffhandItem();
+        }
+
+        ItemDebugHelper.dumpToChat(stack);
+        return 1;
     }
 
     private static int executeClearStorageCache(CommandContext<FabricClientCommandSource> ctx) {

@@ -83,7 +83,7 @@ public final class PriceDataFetcher {
                 LOGGER.info("Price data refreshed");
             } catch (Exception e) {
                 store.setFetchFailed();
-                LOGGER.error("Failed to refresh price data", e);
+                LOGGER.error("Failed to refresh price data (api may be down)", e);
             } finally {
                 fetching.set(false);
             }
