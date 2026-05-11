@@ -50,17 +50,32 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean enterToConfirmAllSigns = false;
 
-    @Hidden
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean enableStorageDashboard_CHANGEwhenRELASE = false;
+    public static boolean enableStorageDashboard = false;
 
-    @Hidden
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean persistStorageSnapshots = true;
 
-    @Hidden
-    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 20)
-    public static int storageSnapshotHistoryPages = 5;
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 8)
+    public static int storageOverlayColumns = 3;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 100, max = 600)
+    public static int storageOverlayHeight = 300;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 50)
+    public static int storageScrollSpeed = 10;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean storageInverseScroll = false;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
+    public static String storageSearchHighlightColor = "#00B000CC";
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
+    public static String storageActivePageOutlineColor = "#FFD700FF";
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
+    public static String storageInactivePageBorderColor = "#4A4A6AFF";
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean enableItemGlowOutline = true;

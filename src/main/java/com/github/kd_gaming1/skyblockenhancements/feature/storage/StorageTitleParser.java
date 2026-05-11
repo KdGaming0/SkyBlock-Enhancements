@@ -9,9 +9,9 @@ import java.util.regex.Pattern;
  *
  * <p>Supported patterns:
  * <ul>
- *   <li>{@code Storage (n/m)} → {@link StoragePageType#STORAGE}</li>
- *   <li>{@code Ender Chest (n/m)} → {@link StoragePageType#ENDER_CHEST}</li>
- *   <li>{@code Backpack.*(n)} or {@code .*Backpack} → {@link StoragePageType#BACKPACK}</li>
+ *   <li>{@code Storage (n/m)} → overview / Ender Chest page n</li>
+ *   <li>{@code Ender Chest (n/m)} → Ender Chest page n</li>
+ *   <li>{@code Backpack.*(n)} or {@code .*Backpack} → Backpack page n</li>
  * </ul>
  */
 public final class StorageTitleParser {
@@ -36,47 +36,56 @@ public final class StorageTitleParser {
         Matcher m = STORAGE_PATTERN.matcher(plain);
         if (m.find()) {
             int page = Integer.parseInt(m.group(1));
-            return Optional.of(new ParsedTitle(StoragePageType.STORAGE, "storage_" + page, page, plain));
+            StoragePageSlot slot = StoragePageSlot.ofEnderChest(page);
+            return Optional.of(new ParsedTitle(slot, plain));
         }
 
         m = STORAGE_SIMPLE_PATTERN.matcher(plain);
         if (m.matches()) {
-            return Optional.of(new ParsedTitle(StoragePageType.STORAGE, "storage_1", 1, plain));
+            // Storage hub overview — no specific page
+            return Optional.of(new ParsedTitle(null, plain));
         }
 
         m = ENDER_CHEST_PATTERN.matcher(plain);
         if (m.find()) {
             int page = Integer.parseInt(m.group(1));
-            return Optional.of(new ParsedTitle(StoragePageType.ENDER_CHEST, "ender_" + page, page, plain));
+            StoragePageSlot slot = StoragePageSlot.ofEnderChest(page);
+            return Optional.of(new ParsedTitle(slot, plain));
         }
 
         m = BACKPACK_NUMBERED_PATTERN.matcher(plain);
         if (m.find()) {
             int page = Integer.parseInt(m.group(1));
-            return Optional.of(new ParsedTitle(StoragePageType.BACKPACK, "backpack_" + page, page, plain));
+            StoragePageSlot slot = StoragePageSlot.ofBackpack(page);
+            return Optional.of(new ParsedTitle(slot, plain));
         }
 
         m = BACKPACK_SIMPLE_PATTERN.matcher(plain);
         if (m.matches()) {
-            String id = "backpack_" + Integer.toHexString(plain.hashCode());
-            return Optional.of(new ParsedTitle(StoragePageType.BACKPACK, id, 0, plain));
+            // Simple backpack without number — we can't determine the slot reliably.
+            // Return null slot so caller can decide (e.g., skip or hash).
+            return Optional.of(new ParsedTitle(null, plain));
         }
 
         return Optional.empty();
     }
 
     private static String stripFormatting(String input) {
-        // Strip all Minecraft formatting codes: § followed by any character
         return input.replaceAll("§.", "");
     }
 
     /**
      * Result of parsing a storage screen title.
+     *
+     * @param slot the resolved page slot, or null for overview / unknown
+     * @param rawTitle the cleaned title text
      */
     public record ParsedTitle(
-            StoragePageType type,
-            String pageId,
-            int pageNumber,
+            StoragePageSlot slot,
             String rawTitle
-    ) {}
+    ) {
+        public boolean isOverview() {
+            return slot == null && "Storage".equalsIgnoreCase(rawTitle);
+        }
+    }
 }

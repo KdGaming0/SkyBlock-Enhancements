@@ -12,4 +12,7 @@ public interface ScreenAccessor {
 
     @Invoker("removeWidget")
     void sbe$removeWidget(GuiEventListener listener);
+
+    @Invoker("addWidget")
+    <T extends GuiEventListener & net.minecraft.client.gui.narration.NarratableEntry> T sbe$addWidget(T widget);
 }

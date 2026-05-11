@@ -1,133 +1,132 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.storage;
 
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
-import com.github.kd_gaming1.skyblockenhancements.feature.reminder.JsonFileUtil;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Base64;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.HolderLookup;
 
 /**
- * JSON persistence for storage snapshots.
+ * JSON persistence for the in-memory {@link StorageData} cache.
  *
- * <p>Thread-safe via {@link AtomicReference}. Broken files are backed up
- * with a {@code .broken} suffix before resetting.
+ * <p>Version 2 format (simplified, no DTOs):
+ * <pre>
+ * {
+ *   "profileId": "...",
+ *   "version": 2,
+ *   "pages": [
+ *     {"slotIndex": 0, "title": "Ender Chest #1", "inventoryBase64": "..."},
+ *     ...
+ *   ]
+ * }
+ * </pre>
  */
-public class StorageSnapshotStorage {
-
+public final class StorageSnapshotStorage {
     private final Path baseDir;
-    private final AtomicReference<StorageSnapshotsFileData> dataRef =
-            new AtomicReference<>(new StorageSnapshotsFileData());
 
     public StorageSnapshotStorage(Path baseDir) {
         this.baseDir = baseDir;
     }
 
-    public void load(String profileId) {
-        Path filePath = baseDir.resolve(profileId + ".json");
+    public void save(String profileId, StorageData data) {
+        Path file = baseDir.resolve(profileId + ".json");
+        JsonObject root = new JsonObject();
+        root.addProperty("profileId", profileId);
+        root.addProperty("version", 2);
+
+        JsonArray pages = new JsonArray();
+        for (var entry : data.getInventories().entrySet()) {
+            JsonObject page = new JsonObject();
+            page.addProperty("slotIndex", entry.getKey().index());
+            page.addProperty("title", entry.getValue().title());
+
+            VirtualInventory inv = entry.getValue().inventory();
+            if (inv != null) {
+                try {
+                    byte[] bytes = inv.getSerializationFuture().get();
+                    if (bytes.length > 0) {
+                        page.addProperty("inventoryBase64",
+                                Base64.getEncoder().encodeToString(bytes));
+                    }
+                } catch (Exception e) {
+                    SkyblockEnhancements.LOGGER.warn("Failed to serialize inventory for page {}", entry.getKey(), e);
+                }
+            }
+            pages.add(page);
+        }
+        root.add("pages", pages);
+
         try {
-            StorageSnapshotsFileData loaded =
-                    JsonFileUtil.readOrCreate(filePath, StorageSnapshotsFileData.class, new StorageSnapshotsFileData());
-            dataRef.set(loaded != null ? loaded : new StorageSnapshotsFileData());
+            Files.createDirectories(baseDir);
+            String json = new Gson().toJson(root);
+            Path temp = file.resolveSibling(file.getFileName() + ".tmp");
+            Files.writeString(temp, json);
+            Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            SkyblockEnhancements.LOGGER.error("Failed to save storage data", e);
+        }
+    }
+
+    public void load(String profileId, StorageData target) {
+        Path file = baseDir.resolve(profileId + ".json");
+        if (!Files.exists(file)) return;
+
+        try {
+            String json = Files.readString(file);
+            JsonObject root = new Gson().fromJson(json, JsonObject.class);
+            if (root == null) return;
+
+            int version = root.has("version") ? root.get("version").getAsInt() : 1;
+            JsonArray pages = root.getAsJsonArray("pages");
+            if (pages == null) return;
+
+            HolderLookup.Provider lookup = null;
+            if (Minecraft.getInstance().level != null) {
+                lookup = Minecraft.getInstance().level.registryAccess();
+            }
+
+            for (JsonElement el : pages) {
+                if (!el.isJsonObject()) continue;
+                JsonObject page = el.getAsJsonObject();
+                int idx = page.get("slotIndex").getAsInt();
+                String title = page.has("title") ? page.get("title").getAsString() : null;
+                if (title == null) title = new StoragePageSlot(idx).defaultName();
+
+                StoragePageSlot slot = new StoragePageSlot(idx);
+
+                // SKIP pages that already have live data (don't overwrite fresh captures with stale file data)
+                if (target.hasInventory(slot) && target.getInventory(slot).inventory() != null) {
+                    continue;
+                }
+
+                VirtualInventory inv = null;
+                if (page.has("inventoryBase64")) {
+                    String b64 = page.get("inventoryBase64").getAsString();
+                    if (lookup != null) {
+                        try {
+                            byte[] bytes = Base64.getDecoder().decode(b64);
+                            inv = VirtualInventory.deserialize(bytes, lookup);
+                        } catch (Exception e) {
+                            SkyblockEnhancements.LOGGER.warn("Failed to deserialize inventory for page {}", slot, e);
+                        }
+                    }
+                }
+                target.updateInventory(slot, title, inv);
+            }
         } catch (JsonParseException e) {
-            backupBrokenFile(filePath);
-            dataRef.set(new StorageSnapshotsFileData());
+            backupBrokenFile(file);
             SkyblockEnhancements.LOGGER.error("Storage snapshots file is invalid JSON and was reset. A backup was created.", e);
-        } catch (IOException e) {
-            dataRef.set(new StorageSnapshotsFileData());
-            SkyblockEnhancements.LOGGER.error("Failed to load storage snapshots, starting fresh", e);
+        } catch (Exception e) {
+            SkyblockEnhancements.LOGGER.error("Failed to load storage data, starting fresh", e);
         }
-    }
-
-    public void save(String profileId) {
-        Path filePath = baseDir.resolve(profileId + ".json");
-        try {
-            JsonFileUtil.writeAtomic(filePath, dataRef.get());
-        } catch (IOException e) {
-            SkyblockEnhancements.LOGGER.error("Failed to save storage snapshots", e);
-        }
-    }
-
-    public StorageSnapshotsFileData getData() {
-        return dataRef.get();
-    }
-
-    public void setData(StorageSnapshotsFileData data) {
-        dataRef.set(data != null ? data : new StorageSnapshotsFileData());
-    }
-
-    public List<StorageSnapshot> toSnapshots() {
-        StorageSnapshotsFileData data = dataRef.get();
-        if (data == null || data.snapshots == null) {
-            return Collections.emptyList();
-        }
-
-        List<StorageSnapshot> result = new ArrayList<>(data.snapshots.size());
-        for (StorageSnapshotsFileData.StorageSnapshotJson json : data.snapshots) {
-            List<StorageSlotData> slots = new ArrayList<>(json.slots.size());
-            for (StorageSnapshotsFileData.StorageSlotJson slotJson : json.slots) {
-                slots.add(new StorageSlotData(slotJson.slotIndex, slotJson.itemBase64));
-            }
-
-            StoragePageType type;
-            try {
-                type = StoragePageType.valueOf(json.type);
-            } catch (IllegalArgumentException e) {
-                type = StoragePageType.STORAGE;
-            }
-
-            result.add(new StorageSnapshot(
-                    json.pageId, type, json.pageNumber, json.titleText, json.capturedAt, slots));
-        }
-        return result;
-    }
-
-    public void fromSnapshots(String profileId, List<StorageSnapshot> snapshots, int maxPagesPerType) {
-        StorageSnapshotsFileData data = new StorageSnapshotsFileData();
-        data.profileId = profileId;
-
-        // Trim to max pages per type to prevent unbounded growth
-        if (maxPagesPerType > 0) {
-            snapshots = trimByType(snapshots, maxPagesPerType);
-        }
-
-        for (StorageSnapshot snap : snapshots) {
-            StorageSnapshotsFileData.StorageSnapshotJson json = new StorageSnapshotsFileData.StorageSnapshotJson();
-            json.pageId = snap.pageId;
-            json.type = snap.type.name();
-            json.pageNumber = snap.pageNumber;
-            json.titleText = snap.titleText;
-            json.capturedAt = snap.capturedAt;
-
-            for (StorageSlotData slot : snap.slots) {
-                StorageSnapshotsFileData.StorageSlotJson slotJson = new StorageSnapshotsFileData.StorageSlotJson();
-                slotJson.slotIndex = slot.slotIndex;
-                slotJson.itemBase64 = slot.itemBase64;
-                json.slots.add(slotJson);
-            }
-            data.snapshots.add(json);
-        }
-        dataRef.set(data);
-    }
-
-    private static List<StorageSnapshot> trimByType(List<StorageSnapshot> snapshots, int max) {
-        java.util.Map<StoragePageType, List<StorageSnapshot>> byType = new java.util.EnumMap<>(StoragePageType.class);
-        for (StorageSnapshot s : snapshots) {
-            byType.computeIfAbsent(s.type, k -> new ArrayList<>()).add(s);
-        }
-
-        List<StorageSnapshot> trimmed = new ArrayList<>();
-        for (List<StorageSnapshot> list : byType.values()) {
-            // Keep most recent
-            list.sort((a, b) -> Long.compare(b.capturedAt, a.capturedAt));
-            trimmed.addAll(list.subList(0, Math.min(list.size(), max)));
-        }
-        return trimmed;
     }
 
     private void backupBrokenFile(Path filePath) {

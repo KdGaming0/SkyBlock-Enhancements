@@ -1,28 +1,24 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.storage;
 
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
-import java.util.concurrent.atomic.AtomicReference;
+import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 
 /**
- * Lifecycle manager for the Storage Dashboard feature.
- *
- * <p>Initialises the overlay manager, wires save-on-disconnect, and provides
- * a singleton accessor so the mixin can reach the manager without tight coupling.
+ * Lifecycle manager for the Storage Overlay feature.
  */
 public final class StorageFeature {
 
-    private static final AtomicReference<StorageOverlayManager> MANAGER_REF = new AtomicReference<>();
+    private static final AtomicReference<StorageSnapshotStorage> STORAGE_REF = new AtomicReference<>();
     private static volatile String cachedProfileId = "unknown";
     private static volatile boolean initialised = false;
 
     private StorageFeature() {}
 
-    /** Creates the storage layer and hooks lifecycle events. */
     public static void init() {
         if (initialised) return;
         initialised = true;
@@ -33,40 +29,33 @@ public final class StorageFeature {
                 .resolve("storage");
 
         StorageSnapshotStorage storage = new StorageSnapshotStorage(storageDir);
-        StorageOverlayManager manager = new StorageOverlayManager(storage);
-        MANAGER_REF.set(manager);
+        STORAGE_REF.set(storage);
 
-        // Load persisted data when joining a server / world.
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            if (!SkyblockEnhancementsConfig.enableStorageDashboard_CHANGEwhenRELASE) return;
-            cachedProfileId = StorageOverlayManager.resolveProfileId();
-            manager.loadProfile(cachedProfileId);
-            // Resolution is deferred to the first render tick when the registry is guaranteed ready.
+            if (!SkyblockEnhancementsConfig.enableStorageDashboard) return;
+            cachedProfileId = resolveProfileId();
+            storage.load(cachedProfileId, StorageData.INSTANCE);
         });
 
-        // Persist on disconnect and shutdown.
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> save());
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> save());
     }
 
-    /** Returns the overlay manager, or {@code null} if the feature is not initialised. */
-    public static StorageOverlayManager getManager() {
-        return MANAGER_REF.get();
-    }
-
-    /** Persists the current cache to disk using the current player's profile ID. */
     public static void save() {
-        if (!SkyblockEnhancementsConfig.enableStorageDashboard_CHANGEwhenRELASE) return;
-        StorageOverlayManager manager = MANAGER_REF.get();
-        if (manager == null) return;
-        manager.saveToStorage(cachedProfileId);
+        if (!SkyblockEnhancementsConfig.enableStorageDashboard) return;
+        StorageSnapshotStorage storage = STORAGE_REF.get();
+        if (storage == null) return;
+        storage.save(cachedProfileId, StorageData.INSTANCE);
     }
 
-    /** Clears both the in-memory cache and persisted data for the current profile. */
     public static void clearCache() {
-        StorageOverlayManager manager = MANAGER_REF.get();
-        if (manager == null) return;
-        manager.clearCache();
+        StorageData.INSTANCE.clear();
         save();
+    }
+
+    public static String resolveProfileId() {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player == null) return "unknown";
+        return mc.player.getUUID().toString();
     }
 }

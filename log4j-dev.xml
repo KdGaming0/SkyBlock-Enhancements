@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="SysOut" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d{HH:mm:ss}] [%t/%level] (%logger{1}) %msg%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <!-- Your mod logs at DEBUG -->
+        <Logger name="com.github.kd_gaming1.skyblockenhancements" level="debug" additivity="false">
+            <AppenderRef ref="SysOut"/>
+        </Logger>
+        <Logger name="skyblock_enhancements" level="debug" additivity="false">
+            <AppenderRef ref="SysOut"/>
+        </Logger>
+
+        <!-- Everything else at INFO -->
+        <Root level="info">
+            <AppenderRef ref="SysOut"/>
+        </Root>
+    </Loggers>
+</Configuration>

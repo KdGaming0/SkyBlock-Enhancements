@@ -1,10 +1,11 @@
 package com.github.kd_gaming1.skyblockenhancements.mixin.storage;
 
-import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageFeature;
-import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageOverlayManager;
-import com.github.kd_gaming1.skyblockenhancements.feature.storage.StoragePageType;
-import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageTitleParser;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageData;
+import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageOverlayLifecycle;
+import com.github.kd_gaming1.skyblockenhancements.feature.storage.StoragePageSlot;
+import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageTitleParser;
+import com.github.kd_gaming1.skyblockenhancements.feature.storage.VirtualInventory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,32 +29,47 @@ public class ContainerPacketMixin {
 
     @Inject(method = "handleContainerContent", at = @At("TAIL"))
     private void sbe$onContainerContent(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
-        if (!SkyblockEnhancementsConfig.enableStorageDashboard_CHANGEwhenRELASE) return;
+        if (!SkyblockEnhancementsConfig.enableStorageDashboard) return;
 
         Minecraft mc = Minecraft.getInstance();
-        if (!(mc.screen instanceof AbstractContainerScreen<?> screen)) return;
-        if (screen.getMenu().containerId != packet.containerId()) return;
         if (mc.level == null) return;
 
-        StorageOverlayManager manager = StorageFeature.getManager();
-        if (manager == null) return;
+        // Accept both the live chest screen AND overview (which replaces it)
+        AbstractContainerScreen<?> screen = null;
+        if (mc.screen instanceof AbstractContainerScreen<?> s) {
+            screen = s;
+        } else if (StorageOverlayLifecycle.getStashedScreen() instanceof AbstractContainerScreen<?> s) {
+            screen = s; // use the screen stored before it was replaced
+        }
+        if (screen == null) return;
+        if (screen.getMenu().containerId != packet.containerId()) return;
 
         String rawTitle = screen.getTitle().getString();
-        Optional<StorageTitleParser.ParsedTitle> parsed = manager.classifyTitle(rawTitle);
+        Optional<StorageTitleParser.ParsedTitle> parsed = StorageTitleParser.parse(rawTitle);
         if (parsed.isEmpty()) return;
 
-        // Skip the /storage overview screen — it contains selector buttons, not real items.
-        if (parsed.get().type() == StoragePageType.STORAGE
-                && "Storage".equalsIgnoreCase(parsed.get().rawTitle())) {
+        if (parsed.get().isOverview()) {
+            StorageOverlayLifecycle.onOverviewPacketReceived(screen);
             return;
         }
 
-        List<Slot> containerSlots = new ArrayList<>();
-        for (Slot slot : screen.getMenu().slots) {
-            if (slot.container != mc.player.getInventory()) {
-                containerSlots.add(slot);
+        StoragePageSlot slot = parsed.get().slot();
+        if (slot == null) return;
+
+        List<ItemStack> stacks = new ArrayList<>();
+        for (Slot s : screen.getMenu().slots) {
+            if (s.container != mc.player.getInventory()) {
+                while (stacks.size() <= s.index) stacks.add(ItemStack.EMPTY);
+                stacks.set(s.index, s.getItem().copy());
             }
         }
-        manager.capturePage(parsed.get(), containerSlots, mc.level.registryAccess());
+        int rows = Math.max(1, Math.min(5, (stacks.size() + 8) / 9));
+        int target = rows * 9;
+        while (stacks.size() < target) stacks.add(ItemStack.EMPTY);
+        if (stacks.size() > target) stacks = stacks.subList(0, target);
+
+        VirtualInventory vinv = new VirtualInventory(stacks);
+        StorageData.INSTANCE.updateInventory(slot, rawTitle, vinv);
+        StorageData.INSTANCE.markDirty(vinv.getSerializationFuture());
     }
 }
