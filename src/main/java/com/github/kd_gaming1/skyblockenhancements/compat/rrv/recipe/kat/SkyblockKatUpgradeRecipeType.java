@@ -19,7 +19,7 @@ public class SkyblockKatUpgradeRecipeType implements ReliableClientRecipeType {
 
     @Override public Component  getDisplayName()   { return Component.literal("Kat Pet Upgrade"); }
     @Override public int        getDisplayWidth()  { return 140; }
-    @Override public int        getDisplayHeight() { return 68; }
+    @Override public int        getDisplayHeight() { return 64; }
     @Override public Identifier getGuiTexture()    { return null; }
     @Override public int        getSlotCount()     { return 6; }
     @Override public ItemStack  getIcon()          { return icon; }

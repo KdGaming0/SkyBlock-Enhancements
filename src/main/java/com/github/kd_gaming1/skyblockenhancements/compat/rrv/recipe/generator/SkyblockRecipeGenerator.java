@@ -17,6 +17,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -47,7 +48,10 @@ public final class SkyblockRecipeGenerator {
         // NPC recipes are rebuilt every generation — clear stale entries first.
         SkyblockNpcInfoRegistry.clear();
 
-        for (NeuItem item : NeuItemRegistry.getAll().values()) {
+        List<NeuItem> sortedItems = new ArrayList<>(NeuItemRegistry.getAll().values());
+        sortedItems.sort(Comparator.comparing(item -> item.internalName != null ? item.internalName : ""));
+
+        for (NeuItem item : sortedItems) {
             int before = out.size();
 
             addIfNotNull(out, CraftingRecipeParser.parseLegacy(item));

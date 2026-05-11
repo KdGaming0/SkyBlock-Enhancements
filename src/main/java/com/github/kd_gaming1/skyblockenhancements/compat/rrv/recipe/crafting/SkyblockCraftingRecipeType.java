@@ -23,7 +23,7 @@ public class SkyblockCraftingRecipeType implements ReliableClientRecipeType {
 
     @Override public Component   getDisplayName() { return Component.literal("SkyBlock Crafting"); }
     @Override public int         getDisplayWidth()  { return 118; }
-    @Override public int         getDisplayHeight() { return 68; }
+    @Override public int         getDisplayHeight() { return 66; }
     @Override public Identifier  getGuiTexture()    { return null; }
     @Override public int         getSlotCount()     { return 10; }
     @Override public ItemStack   getIcon()          { return icon; }

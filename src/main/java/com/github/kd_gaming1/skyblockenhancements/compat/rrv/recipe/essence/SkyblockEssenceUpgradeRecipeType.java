@@ -29,7 +29,7 @@ public class SkyblockEssenceUpgradeRecipeType implements ReliableClientRecipeTyp
 
     @Override public Component  getDisplayName()   { return Component.literal("Essence Upgrade"); }
     @Override public int        getDisplayWidth()  { return 130; }
-    @Override public int        getDisplayHeight() { return 68; }
+    @Override public int        getDisplayHeight() { return 64; }
     @Override public Identifier getGuiTexture()    { return null; }
     @Override public int        getSlotCount()     { return 7; }
     @Override public ItemStack  getIcon()          { return icon; }

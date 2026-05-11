@@ -29,33 +29,6 @@ public final class SkyblockRecipeUtil {
 
     // ── Item matching ────────────────────────────────────────────────────────────
 
-    public static boolean matchesAny(ItemStack query, List<SlotContent> slots) {
-        String queryId = extractSkyblockId(query);
-        if (queryId == null) return false;
-
-        for (SlotContent slot : slots) {
-            for (ItemStack candidate : slot.getValidContents()) {
-                if (queryId.equals(extractSkyblockId(candidate))) return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean matchesAnyOrFamily(ItemStack query, List<SlotContent> slots) {
-        String queryId = extractSkyblockId(query);
-        if (queryId == null) return false;
-
-        for (SlotContent slot : slots) {
-            for (ItemStack candidate : slot.getValidContents()) {
-                String candidateId = extractSkyblockId(candidate);
-                if (candidateId == null) continue;
-                if (queryId.equals(candidateId)) return true;
-                if (ItemFamilyHelper.isFamilyMember(queryId, candidateId)) return true;
-            }
-        }
-        return false;
-    }
-
     public static String extractSkyblockId(ItemStack stack) {
         return FullStackListCache.getCachedId(stack);
     }

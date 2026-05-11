@@ -1,9 +1,12 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.category;
 
+import cc.cassian.rrv.common.overlay.BlockingGuiComponent;
 import cc.cassian.rrv.common.overlay.OverlayManager;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
 import java.util.ArrayList;
 import java.util.List;
+
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,10 +27,21 @@ public final class SkyblockCategoryButtons {
     /** Horizontal gap between adjacent buttons in pixels. */
     private static final int BTN_GAP = 2;
 
+    private static final Identifier ROW_ID = Identifier.fromNamespaceAndPath("skyblock_enhancements", "category_buttons_row");
+
+    /** Last position we registered a blocking component for — avoids redundant RRV updates. */
+    private static int lastStartX = Integer.MIN_VALUE;
+    private static int lastBtnY    = Integer.MIN_VALUE;
+    private static int lastWidth   = Integer.MIN_VALUE;
+
     private SkyblockCategoryButtons() {}
 
     /**
      * Builds and positions icon buttons centered above the search bar.
+     *
+     * <p>The {@link BlockingGuiComponent} is only re-registered with RRV when the
+     * search-bar geometry changes (e.g. window resize). This prevents the expensive
+     * {@code OverlayManager.updateOverlaysAndWidgets()} cascade on every inventory open.
      *
      * @param searchBarX     left edge of the search bar in screen pixels
      * @param searchBarY     top edge of the search bar in screen pixels
@@ -55,6 +69,15 @@ public final class SkyblockCategoryButtons {
                     b -> onToggle(category));
             buttons.add(btn);
             x += BTN_SIZE + BTN_GAP;
+        }
+
+        if (startX != lastStartX || btnY != lastBtnY || totalWidth != lastWidth) {
+            lastStartX = startX;
+            lastBtnY = btnY;
+            lastWidth = totalWidth;
+            BlockingGuiComponent rowBlocking =
+                    new BlockingGuiComponent(ROW_ID, startX, btnY, totalWidth, BTN_SIZE + 2);
+            OverlayManager.INSTANCE.setGuiBlocking(rowBlocking);
         }
 
         return buttons;

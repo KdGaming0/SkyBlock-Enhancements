@@ -37,6 +37,8 @@ public final class NeuConstantsRegistry {
 
     private static volatile Map<String, Set<String>> parentToChildren = Map.of();
     private static volatile Map<String, String> childToParent = Map.of();
+    /** Maps every item (parent or child) to its canonical family root. Built from parents.json. */
+    private static volatile Map<String, String> canonicalFamily = Map.of();
 
     // ── Essence costs ───────────────────────────────────────────────────────────
 
@@ -81,8 +83,18 @@ public final class NeuConstantsRegistry {
             }
         }
 
+        Map<String, String> cf = new HashMap<>(p2c.size() + c2p.size());
+        for (var entry : p2c.entrySet()) {
+            String parentId = entry.getKey();
+            cf.put(parentId, parentId);
+            for (String childId : entry.getValue()) {
+                cf.put(childId, parentId);
+            }
+        }
+
         parentToChildren = Collections.unmodifiableMap(p2c);
         childToParent = Collections.unmodifiableMap(c2p);
+        canonicalFamily = Collections.unmodifiableMap(cf);
         LOGGER.info("Loaded {} parent→children mappings ({} total children)", p2c.size(), c2p.size());
     }
 
@@ -334,6 +346,7 @@ public final class NeuConstantsRegistry {
     public static void clear() {
         parentToChildren = Map.of();
         childToParent = Map.of();
+        canonicalFamily = Map.of();
         essenceUpgrades = Map.of();
         museumCategories = Map.of();
         itemToMuseumWing = Map.of();
@@ -379,6 +392,15 @@ public final class NeuConstantsRegistry {
 
     public static Map<String, ReforgeStoneData> getAllReforgeStones() {
         return reforgeStones;
+    }
+
+    /**
+     * Returns the canonical family root for the given item ID.
+     * If the item is a parent, returns itself. If it is a child, returns its parent.
+     * Returns {@code null} for standalone items with no family.
+     */
+    public static String getCanonicalFamily(String itemId) {
+        return canonicalFamily.get(itemId);
     }
 
     public static boolean isLoaded() {

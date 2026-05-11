@@ -4,6 +4,7 @@ import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LO
 
 import cc.cassian.rrv.api.recipe.ItemView;
 import cc.cassian.rrv.common.recipe.ClientRecipeCache;
+import com.github.kd_gaming1.skyblockenhancements.mixin.access.CustomDataAccessor;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,15 +33,34 @@ import org.jetbrains.annotations.Nullable;
  * will be injected into RRV. This eliminates the redundant registry scan that the old
  * {@link #buildCacheFromRegistry()} performed.
  *
+ * <p>A secondary bounded LRU cache (equality-keyed) handles arbitrary stacks that are
+ * not in the overlay list — e.g. player inventory items and recipe ingredient copies.
+ *
  * <p>All caches are invalidated together on RRV client reload or NEU repo change.
  */
 public final class FullStackListCache {
+
+    /** Maximum entries in the fallback LRU cache for non-overlay stacks. */
+    private static final int FALLBACK_CACHE_CAPACITY = 2048;
 
     @Nullable private static volatile List<ItemStack> cachedList;
     @Nullable private static volatile Map<ItemStack, String> cachedNames;
     @Nullable private static volatile Map<ItemStack, String> cachedIds;
     @Nullable private static volatile Map<ItemStack, NeuItem> cachedNeuItems;
     @Nullable private static volatile Map<SkyblockItemCategory, Set<ItemStack>> cachedByCategory;
+
+    /**
+     * Equality-keyed LRU cache for stacks that are not in {@link #cachedIds}.
+     * Player inventory stacks and recipe ingredient copies hit this path.
+     */
+    @SuppressWarnings("serial")
+    private static final Map<ItemStack, String> fallbackIdCache =
+            Collections.synchronizedMap(new LinkedHashMap<>(FALLBACK_CACHE_CAPACITY, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<ItemStack, String> eldest) {
+                    return size() > FALLBACK_CACHE_CAPACITY;
+                }
+            });
 
     private FullStackListCache() {}
 
@@ -88,21 +109,29 @@ public final class FullStackListCache {
     }
 
     /**
-     * Returns the pre-extracted SkyBlock internal ID for the given stack without
-     * allocating an NBT copy. Falls back to a live {@code copyTag()} call for stacks
-     * that are not in the overlay cache (e.g. recipe ingredient/result stacks).
+     * Returns the pre-extracted SkyBlock internal ID for the given stack.
+     * Uses the identity cache for overlay stacks and a bounded LRU cache for
+     * arbitrary stacks, falling back to a live extraction only on cache miss.
      */
     @Nullable
     public static String getCachedId(ItemStack stack) {
         if (stack.isEmpty()) return null;
 
+        // Fast path: overlay stacks are identity-stable
         Map<ItemStack, String> ids = cachedIds;
         if (ids != null) {
             String id = ids.get(stack);
             if (id != null) return id;
         }
 
-        return extractIdFromStack(stack);
+        // Second path: equality-based LRU cache for inventory / recipe stacks
+        String cached = fallbackIdCache.get(stack);
+        if (cached != null) return cached;
+
+        // Fallback: extract without copying NBT
+        String extracted = extractIdFromStack(stack);
+        fallbackIdCache.put(stack, extracted);
+        return extracted;
     }
 
     /**
@@ -149,6 +178,7 @@ public final class FullStackListCache {
         cachedIds = null;
         cachedNeuItems = null;
         cachedByCategory = null;
+        fallbackIdCache.clear();
     }
 
     // ── Shared cache construction ───────────────────────────────────────────────
@@ -232,13 +262,13 @@ public final class FullStackListCache {
 
     /**
      * Extracts the SkyBlock internal ID directly from a stack's {@code CUSTOM_DATA}
-     * component. Allocates an NBT copy — only for the non-cached fallback path.
+     * component without copying the underlying NBT compound.
      */
     @Nullable
     private static String extractIdFromStack(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null) return null;
-        String id = data.copyTag().getStringOr("id", "");
+        String id = ((CustomDataAccessor) (Object) data).getRawTag().getStringOr("id", "");
         return id.isEmpty() ? null : id;
     }
 }

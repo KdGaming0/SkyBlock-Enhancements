@@ -26,7 +26,7 @@ public class SkyblockForgeRecipeType implements ReliableClientRecipeType {
 
     @Override public Component   getDisplayName()   { return Component.literal("SkyBlock Forge"); }
     @Override public int         getDisplayWidth()  { return OUTPUT_X + RecipeLayoutConstants.SLOT_SIZE; }
-    @Override public int         getDisplayHeight() { return 68; }
+    @Override public int         getDisplayHeight() { return 64; }
     @Override public Identifier  getGuiTexture()    { return null; }
     @Override public int         getSlotCount()     { return OUTPUT_INDEX + 1; }
     @Override public ItemStack   getIcon()          { return icon; }

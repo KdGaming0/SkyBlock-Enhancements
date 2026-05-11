@@ -2,8 +2,13 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base;
 
 import cc.cassian.rrv.api.recipe.ReliableClientRecipe;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
+import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.ItemFamilyHelper;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -34,6 +39,11 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
     private boolean buttonsDirty = true;
     @Nullable private Button sentinelButton;
 
+    /** Lazily-built list of every SkyBlock internal ID present in {@link #getIngredients()}. */
+    @Nullable private List<String> precomputedIngredientIds;
+    /** Lazily-built list of every SkyBlock internal ID present in {@link #getResults()}. */
+    @Nullable private List<String> precomputedResultIds;
+
     protected AbstractSkyblockClientRecipe(String[] wikiUrls) {
         this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
     }
@@ -55,15 +65,23 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
 
     @Override
     public boolean redirectsAsResult(ItemStack stack) {
-        return isVisualOnly()
-                ? SkyblockRecipeUtil.matchesAny(stack, getResults())
-                : SkyblockRecipeUtil.matchesAnyOrFamily(stack, getResults());
+        if (isVisualOnly()) {
+            return redirectsAgainstPrecomputed(stack, precomputedResultIds());
+        }
+        String queryId = SkyblockRecipeUtil.extractSkyblockId(stack);
+        if (queryId == null) return false;
+
+        for (String candidateId : precomputedResultIds()) {
+            if (queryId.equals(candidateId)) return true;
+            if (ItemFamilyHelper.isFamilyMember(queryId, candidateId)) return true;
+        }
+        return false;
     }
 
     @Override
     public boolean redirectsAsIngredient(ItemStack stack) {
         if (isVisualOnly()) return false;
-        return SkyblockRecipeUtil.matchesAnyOrFamily(stack, getIngredients());
+        return redirectsAgainstPrecomputed(stack, precomputedIngredientIds());
     }
 
     // ── Button lifecycle ─────────────────────────────────────────────────────────
@@ -99,10 +117,6 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
 
     // ── Render utilities ────────────────────────────────────────────────────────
 
-    /**
-     * Draws the standard "→" arrow used between recipe inputs and outputs.
-     * Subclasses call this from {@link #renderRecipe} with their recipe-specific coordinates.
-     */
     /** Convenience: {@code Minecraft.getInstance().font}. */
     protected final Font font() {
         return Minecraft.getInstance().font;
@@ -114,5 +128,62 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
      */
     protected final void renderArrow(GuiGraphics gfx, int x, int y) {
         gfx.drawString(Minecraft.getInstance().font, Component.literal("→"), x, y, RecipeColors.ARROW, false);
+    }
+
+    // ── Internal ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Shared logic for {@link #redirectsAsResult} and {@link #redirectsAsIngredient}.
+     * Extracts the query stack's ID once, then tests it against a precomputed candidate list.
+     */
+    private boolean redirectsAgainstPrecomputed(ItemStack stack, List<String> candidateIds) {
+        String queryId = SkyblockRecipeUtil.extractSkyblockId(stack);
+        if (queryId == null) return false;
+
+        if (candidateIds.isEmpty()) return false;
+
+        for (String candidateId : candidateIds) {
+            if (queryId.equals(candidateId)) return true;
+            if (ItemFamilyHelper.isFamilyMember(queryId, candidateId)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Lazily extracts and caches the SkyBlock internal IDs of all stacks returned by
+     * {@link #getIngredients()}. The list is immutable once built.
+     */
+    private List<String> precomputedIngredientIds() {
+        List<String> snapshot = precomputedIngredientIds;
+        if (snapshot != null) return snapshot;
+
+        precomputedIngredientIds = collectIdsFromSlots(getIngredients());
+        return precomputedIngredientIds;
+    }
+
+    /**
+     * Lazily extracts and caches the SkyBlock internal IDs of all stacks returned by
+     * {@link #getResults()}. The list is immutable once built.
+     */
+    private List<String> precomputedResultIds() {
+        List<String> snapshot = precomputedResultIds;
+        if (snapshot != null) return snapshot;
+
+        precomputedResultIds = collectIdsFromSlots(getResults());
+        return precomputedResultIds;
+    }
+
+    /** Collects all non-null SkyBlock internal IDs from the given slot contents. */
+    private static List<String> collectIdsFromSlots(List<SlotContent> slots) {
+        List<String> ids = new ArrayList<>();
+        for (SlotContent slot : slots) {
+            for (ItemStack candidate : slot.getValidContents()) {
+                String id = SkyblockRecipeUtil.extractSkyblockId(candidate);
+                if (id != null && !id.isEmpty()) {
+                    ids.add(id);
+                }
+            }
+        }
+        return Collections.unmodifiableList(ids);
     }
 }

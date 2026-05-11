@@ -23,7 +23,7 @@ public class SkyblockEssenceUpgradeClientRecipe extends AbstractSkyblockClientRe
     private static final int HEADER_Y  = 2;
     private static final int ARROW_X   = 82;
     private static final int ARROW_Y   = 22;
-    private static final int BUTTON_ROW_Y_OFFSET = 56;
+    private static final int BUTTON_ROW_Y_OFFSET = 60;
 
     private final SlotContent input;
     private final SlotContent output;

@@ -42,29 +42,20 @@ public final class ItemFamilyHelper {
     }
 
     /**
-     * Returns {@code true} if {@code candidateId} is in the same item family as
-     * {@code parentId}. A family consists of the parent itself plus all its children
-     * from {@code parents.json}.
+     * Returns {@code true} if {@code a} and {@code b} belong to the same item family.
+     * A family consists of a parent and all its children from {@code parents.json}.
      *
      * <p>Only returns {@code true} when compact mode is enabled — in expanded mode,
      * each item stands alone and should only match its own recipes.
      */
-    public static boolean isFamilyMember(String parentId, String candidateId) {
-        if (parentId == null || candidateId == null) return false;
-        if (parentId.equals(candidateId)) return true;
+    public static boolean isFamilyMember(String a, String b) {
+        if (a == null || b == null) return false;
+        if (a.equals(b)) return true;
 
-        Collection<String> children = NeuConstantsRegistry.getChildren(parentId);
-        if (!children.isEmpty()) {
-            return children.contains(candidateId);
-        }
-
-        String realParent = NeuConstantsRegistry.getParent(parentId);
-        if (realParent != null) {
-            if (realParent.equals(candidateId)) return true;
-            return NeuConstantsRegistry.getChildren(realParent).contains(candidateId);
-        }
-
-        return false;
+        String familyA = NeuConstantsRegistry.getCanonicalFamily(a);
+        String familyB = NeuConstantsRegistry.getCanonicalFamily(b);
+        if (familyA == null || familyB == null) return false;
+        return familyA.equals(familyB);
     }
 
     /**
