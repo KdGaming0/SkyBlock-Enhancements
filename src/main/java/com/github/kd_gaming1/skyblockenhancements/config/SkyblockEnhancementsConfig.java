@@ -19,6 +19,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     // ── Category IDs ────────────────────────────────────────────────────────────
 
     public static final String SKYBLOCK_ENHANCEMENTS = "skyblock_enhancements";
+    public static final String STORAGE_OVERLAY       = "storage_overlay";
     public static final String RRV_INTEGRATION       = "rrv_integration";
     public static final String CHAT_ENHANCEMENTS     = "chat_enhancements";
     public static final String TOOLTIP_ENHANCEMENTS  = "tooltip_enhancements";
@@ -51,33 +52,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static boolean enterToConfirmAllSigns = false;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean enableStorageDashboard = false;
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean persistStorageSnapshots = true;
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 8)
-    public static int storageOverlayColumns = 3;
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 100, max = 600)
-    public static int storageOverlayHeight = 300;
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 1, max = 50)
-    public static int storageScrollSpeed = 10;
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean storageInverseScroll = false;
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
-    public static String storageSearchHighlightColor = "#00B000CC";
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
-    public static String storageActivePageOutlineColor = "#FFD700FF";
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
-    public static String storageInactivePageBorderColor = "#4A4A6AFF";
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean enableItemGlowOutline = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
@@ -104,6 +78,40 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public enum ReminderSoundType {
         UI, BELL, CHIME, LEVEL_UP, EXPERIENCE, HARP, PLING, SUCCESS
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  Storage Overlay
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    @Comment(category = STORAGE_OVERLAY, centered = true)
+    public static Comment storageOverlayText;
+
+    @Entry(category = STORAGE_OVERLAY)
+    public static boolean enableStorageDashboard = false;
+
+    @Entry(category = STORAGE_OVERLAY)
+    public static boolean persistStorageSnapshots = true;
+
+    @Entry(category = STORAGE_OVERLAY, isSlider = true, min = 1, max = 8)
+    public static int storageOverlayColumns = 3;
+
+    @Entry(category = STORAGE_OVERLAY, isSlider = true, min = 100, max = 600)
+    public static int storageOverlayHeight = 300;
+
+    @Entry(category = STORAGE_OVERLAY, isSlider = true, min = 1, max = 50)
+    public static int storageScrollSpeed = 10;
+
+    @Entry(category = STORAGE_OVERLAY)
+    public static boolean storageInverseScroll = false;
+
+    @Entry(category = STORAGE_OVERLAY, isColor = true)
+    public static String storageSearchHighlightColor = "#00B000CC";
+
+    @Entry(category = STORAGE_OVERLAY, isColor = true)
+    public static String storageActivePageOutlineColor = "#FFD700FF";
+
+    @Entry(category = STORAGE_OVERLAY, isColor = true)
+    public static String storageInactivePageBorderColor = "#4A4A6AFF";
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  RRV Integration
