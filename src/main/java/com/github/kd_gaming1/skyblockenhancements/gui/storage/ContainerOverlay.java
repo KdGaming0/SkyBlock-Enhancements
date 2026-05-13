@@ -2,6 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.gui.storage;
 
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -61,7 +62,7 @@ public abstract class ContainerOverlay {
     }
 
     /** Return the search field widget so the mixin can register it with the screen. */
-    public net.minecraft.client.gui.components.EditBox getSearchField() {
+    public EditBox getSearchField() {
         return null;
     }
 

@@ -6,20 +6,14 @@ import java.util.Optional;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.gui.storage.ContainerOverlay;
 import com.github.kd_gaming1.skyblockenhancements.gui.storage.StorageOverlayGui;
-import com.github.kd_gaming1.skyblockenhancements.gui.storage.StorageOverviewScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Orchestrates transitions between the storage overlay, overview screen, and vanilla GUIs.
+ * Creates and caches storage overlays when a recognised container screen opens.
  */
 public final class StorageOverlayLifecycle {
-
-    private static boolean navigatingBetweenPages = false;
-    private static boolean openingOverview = false;
-
-    private static AbstractContainerScreen<?> stashedOverviewScreen = null;
 
     private StorageOverlayLifecycle() {}
 
@@ -27,8 +21,7 @@ public final class StorageOverlayLifecycle {
      * Called by the mixin when a container screen initializes.
      * If the screen is a recognised storage page, creates and returns an overlay.
      */
-    public static ContainerOverlay createOverlay(
-            AbstractContainerScreen<?> screen) {
+    public static ContainerOverlay createOverlay(AbstractContainerScreen<?> screen) {
         if (!SkyblockEnhancementsConfig.enableStorageDashboard) {
             return null;
         }
@@ -50,15 +43,7 @@ public final class StorageOverlayLifecycle {
                 }
             }
             rememberOverview(screen);
-            if (!navigatingBetweenPages) {
-                stashedOverviewScreen = screen;
-                mc.execute(() -> {
-                    if (mc.screen == screen) {
-                        requestOverview();
-                    }
-                });
-                return null;
-            }
+            return new StorageOverlayGui(screen, null);
         }
 
         // Capture the live page data
@@ -67,40 +52,6 @@ public final class StorageOverlayLifecycle {
         }
 
         return new StorageOverlayGui(screen, activeSlot);
-    }
-
-    /** Called when the user explicitly wants to open the overview (e.g. pressing Escape). */
-    public static void requestOverview() {
-        openingOverview = true;
-        Minecraft.getInstance().setScreen(new StorageOverviewScreen());
-    }
-
-    public static AbstractContainerScreen<?> getStashedScreen() {
-        return stashedOverviewScreen;
-    }
-
-    /** Called when the overlay mixin detects the screen is being removed. */
-    public static void onOverlayClosed() {
-        if (openingOverview) {
-            openingOverview = false;
-            return;
-        }
-        if (navigatingBetweenPages) {
-            navigatingBetweenPages = false;
-            return;
-        }
-        // Normal close (e.g. server closed container) — don't force overview
-    }
-
-    /** Called when the overview screen itself is closed. */
-    public static void onOverviewClosed() {
-        navigatingBetweenPages = false;
-        openingOverview = false;
-    }
-
-    /** Called before sending a navigation command so the backflip is skipped. */
-    public static void onNavigateToPage(StoragePageSlot slot) {
-        navigatingBetweenPages = true;
     }
 
     private static void rememberPage(AbstractContainerScreen<?> screen, StoragePageSlot slot, String title) {
@@ -144,6 +95,5 @@ public final class StorageOverlayLifecycle {
 
     public static void onOverviewPacketReceived(AbstractContainerScreen<?> screen) {
         rememberOverview(screen);
-        stashedOverviewScreen = null;
     }
 }

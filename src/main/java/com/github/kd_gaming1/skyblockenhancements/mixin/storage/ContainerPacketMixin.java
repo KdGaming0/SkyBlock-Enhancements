@@ -34,14 +34,7 @@ public class ContainerPacketMixin {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
 
-        // Accept both the live chest screen AND overview (which replaces it)
-        AbstractContainerScreen<?> screen = null;
-        if (mc.screen instanceof AbstractContainerScreen<?> s) {
-            screen = s;
-        } else if (StorageOverlayLifecycle.getStashedScreen() instanceof AbstractContainerScreen<?> s) {
-            screen = s; // use the screen stored before it was replaced
-        }
-        if (screen == null) return;
+        if (!(mc.screen instanceof AbstractContainerScreen<?> screen)) return;
         if (screen.getMenu().containerId != packet.containerId()) return;
 
         String rawTitle = screen.getTitle().getString();

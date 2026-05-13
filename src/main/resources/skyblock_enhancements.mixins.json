@@ -50,6 +50,7 @@
     "rrv.recipe.VisitorHelperRecipeViewMixin",
     "rrv.search.EditBoxCalculatorHintMixin",
     "rrv.search.RrvSearchCalculatorMixin",
+    "rrv.storage.RrvStorageOverlayMixin",
     "storage.ContainerPacketMixin",
     "storage.ContainerScreenOverlayMixin",
     "tooltipscroll.ClientTextTooltipAccessor",

@@ -5,6 +5,7 @@ import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageData;
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageOverlayLifecycle;
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StoragePageSlot;
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.VirtualInventory;
+import com.github.kd_gaming1.skyblockenhancements.mixin.access.AbstractContainerScreenAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -20,6 +21,8 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -41,6 +44,20 @@ public class StorageOverlayGui extends ContainerOverlay {
     private static final int PADDING = 10;
     private static final int SCROLL_BAR_WIDTH = 8;
     private static final int TOP_BAR_HEIGHT = 24;
+
+    // Color palette
+    private static final int OVERLAY_BACKGROUND = 0xFF1A1A2E;
+    private static final int PAGE_INNER_BG = 0xFF252538;
+    private static final int SLOT_EMPTY_BG = 0x30151525;
+    private static final int SLOT_OCCUPIED_BG = 0x30354550;
+    private static final int SLOT_HOVERED_BG = 0x50AAAAAA;
+    private static final int TITLE_ACTIVE = 0xFFFFD700;
+    private static final int TITLE_INACTIVE = 0xFFCCCCCC;
+    private static final int PLACEHOLDER_TEXT = 0xFF666677;
+
+    // Texture sprites (optional, falls back to colors)
+    private static final Identifier OVERLAY_BG_SPRITE =
+            Identifier.fromNamespaceAndPath("skyblock_enhancements", "storage/overlay_background");
 
     private final AbstractContainerScreen<?> screen;
     private final StoragePageSlot activeSlot;
@@ -87,7 +104,7 @@ public class StorageOverlayGui extends ContainerOverlay {
                 added++;
             }
         }
-        LOGGER.info("StorageOverlayGui.onInit() added {} placeholder pages. Map now has {} entries.",
+        LOGGER.debug("StorageOverlayGui.onInit() added {} placeholder pages. Map now has {} entries.",
                 added, StorageData.INSTANCE.getInventories().size());
 
         recalculateMeasurements();
@@ -111,13 +128,22 @@ public class StorageOverlayGui extends ContainerOverlay {
         innerScrollPanelWidth = PAGE_WIDTH * pageWidthCount + (pageWidthCount - 1) * PADDING;
         overviewWidth = innerScrollPanelWidth + 3 * PADDING + SCROLL_BAR_WIDTH;
 
-        int maxHeight = screen.height - PADDING * 6 - TOP_BAR_HEIGHT - 96; // leave room for inventory
+        overviewX = screen.width / 2 - overviewWidth / 2;
+        overviewY = PADDING * 2;
+
+        // Cap height so the overlay never overlaps the vanilla player inventory texture
+        int inventoryStartY = screen.height;
+        try {
+            AbstractContainerScreenAccessor accessor = (AbstractContainerScreenAccessor) screen;
+            int topPos = accessor.sbe$getTopPos();
+            int imageHeight = accessor.sbe$getImageHeight();
+            inventoryStartY = topPos + (imageHeight - 96); // 96 = inventory texture height
+        } catch (Exception ignored) {
+        }
+        int maxHeight = inventoryStartY - overviewY - PADDING;
         overviewHeight = Math.min(maxHeight, SkyblockEnhancementsConfig.storageOverlayHeight);
         overviewHeight = Math.max(120, overviewHeight);
         innerScrollPanelHeight = overviewHeight - PADDING * 2 - TOP_BAR_HEIGHT;
-
-        overviewX = screen.width / 2 - overviewWidth / 2;
-        overviewY = PADDING * 2;
 
         updateSearchFieldPosition();
     }
@@ -135,28 +161,46 @@ public class StorageOverlayGui extends ContainerOverlay {
         activeSlotPositions.clear();
         if (activeSlot == null) return;
 
+        Rect activeRect = findActivePageRect();
+        if (activeRect == null) return;
+
+        List<ItemStack> stacks = getLiveStacks();
+        int slotCount = Math.min(stacks.size(), 5 * 9);
+
+        for (int i = 0; i < slotCount; i++) {
+            int slotX = activeRect.x + 2 + (i % 9) * SLOT_RENDER_SIZE;
+            int slotY = activeRect.y + mc.font.lineHeight + 6 + (i / 9) * SLOT_RENDER_SIZE - (int) scroll;
+            Slot realSlot = findSlotByIndex(i);
+            if (realSlot != null) {
+                activeSlotPositions.put(realSlot,
+                        new Rect(slotX, slotY, SLOT_RENDER_SIZE, SLOT_RENDER_SIZE));
+            }
+        }
+    }
+
+    private Rect findActivePageRect() {
         Set<StoragePageSlot> filter = getFilteredPages();
         StorageData data = StorageData.INSTANCE;
+        Rect[] result = { null };
 
-        layoutedForEach(data, filter, (rect, pageSlot, inventory) -> {
-            if (!pageSlot.equals(activeSlot)) return;
-            if (inventory == null || inventory.inventory() == null) return;
-            VirtualInventory vinv = inventory.inventory();
-            for (int i = 0; i < vinv.stacks().size(); i++) {
-                int slotX = rect.x + 2 + (i % 9) * SLOT_RENDER_SIZE;
-                int slotY = rect.y + mc.font.lineHeight + 6 + (i / 9) * SLOT_RENDER_SIZE;
-                Slot realSlot = findSlotByIndex(i);
-                if (realSlot != null) {
-                    activeSlotPositions.put(realSlot,
-                            new Rect(slotX, slotY, SLOT_RENDER_SIZE, SLOT_RENDER_SIZE));
+        if (!data.getInventories().isEmpty()) {
+            layoutedForEach(data, filter, (rect, pageSlot, inventory) -> {
+                if (result[0] == null && pageSlot.equals(activeSlot)) {
+                    result[0] = rect;
                 }
-            }
-        });
+            });
+        }
+
+        if (result[0] == null) {
+            int pageHeight = calculatePageHeight(null);
+            result[0] = new Rect(overviewX + PADDING, overviewY + TOP_BAR_HEIGHT, PAGE_WIDTH, pageHeight);
+        }
+
+        return result[0];
     }
 
     @Override
     public void render(GuiGraphics graphics, float delta, int mouseX, int mouseY) {
-        LOGGER.error("========== STORAGE OVERLAY RENDER ==========");
         drawOverlayBackground(graphics);
         drawPages(graphics, mouseX, mouseY);
         drawScrollbar(graphics);
@@ -173,7 +217,16 @@ public class StorageOverlayGui extends ContainerOverlay {
     }
 
     private void drawOverlayBackground(GuiGraphics graphics) {
-        graphics.fill(overviewX, overviewY, overviewX + overviewWidth, overviewY + overviewHeight, 0xFFFF0000);
+        drawPanelBackground(graphics, overviewX, overviewY, overviewWidth, overviewHeight, OVERLAY_BACKGROUND);
+    }
+
+    private void drawPanelBackground(GuiGraphics graphics, int x, int y, int width, int height, int fallbackColor) {
+        try {
+            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, OVERLAY_BG_SPRITE, x, y, width, height);
+        } catch (Exception e) {
+            // Sprite not available — fall back to solid color
+            graphics.fill(x, y, x + width, y + height, fallbackColor);
+        }
     }
 
     private void drawPages(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -187,15 +240,10 @@ public class StorageOverlayGui extends ContainerOverlay {
         StorageData data = StorageData.INSTANCE;
 
         // DEBUG: Verify data is actually populated
-        LOGGER.info("!!! drawPages: mapSize={}, filterSize={}, empty={}",
-                data.getInventories().size(), filter.size(), data.getInventories().isEmpty());
-
         LOGGER.debug("drawPages: mapSize={}, filterSize={}, scroll={}",
                 data.getInventories().size(), filter.size(), scroll);
 
         if (data.getInventories().isEmpty()) {
-            // FALLBACK: if the map got cleared somehow, render placeholders directly
-            LOGGER.warn("drawPages: StorageData map is empty! Rendering direct placeholders.");
             renderDirectPlaceholders(graphics, mouseX, mouseY);
         } else {
             layoutedForEach(data, filter, (rect, pageSlot, inventory) -> {
@@ -254,16 +302,16 @@ public class StorageOverlayGui extends ContainerOverlay {
 
         // Inner background
         graphics.fill(x + 1, y + mc.font.lineHeight + 5,
-                x + PAGE_WIDTH - 1, y + pageContentHeight - 1, 0xFF2A2A3E);
+                x + PAGE_WIDTH - 1, y + pageContentHeight - 1, PAGE_INNER_BG);
 
         // Title
         String title = pageSlot.defaultName();
-        int titleColor = isActive ? 0xFFFFFF00 : 0xFFFFFFFF;
+        int titleColor = isActive ? TITLE_ACTIVE : TITLE_INACTIVE;
         graphics.drawString(mc.font, title, x + 4, y + 2, titleColor, true);
 
         // Placeholder text
         graphics.drawCenteredString(mc.font, "Not yet opened",
-                x + PAGE_WIDTH / 2, y + pageContentHeight / 2, 0xFF888888);
+                x + PAGE_WIDTH / 2, y + pageContentHeight / 2, PLACEHOLDER_TEXT);
     }
 
     private Rect getScrollPanelInner() {
@@ -344,24 +392,27 @@ public class StorageOverlayGui extends ContainerOverlay {
 
         // Inner background
         graphics.fill(x + 1, y + mc.font.lineHeight + 5,
-                x + PAGE_WIDTH - 1, y + pageContentHeight - 1, 0xFF2A2A3E);
+                x + PAGE_WIDTH - 1, y + pageContentHeight - 1, PAGE_INNER_BG);
 
         // Title
         String title = inventory.title();
         if (title == null || title.isEmpty()) title = pageSlot.defaultName();
-        int titleColor = isActive ? 0xFFFFFF00 : 0xFFFFFFFF;
+        int titleColor = isActive ? TITLE_ACTIVE : TITLE_INACTIVE;
         graphics.drawString(mc.font, title, x + 4, y + 2, titleColor, true);
 
         VirtualInventory inv = inventory.inventory();
         if (inv == null) {
             // Placeholder for never-opened page
             graphics.drawCenteredString(mc.font, "Not yet opened",
-                    x + PAGE_WIDTH / 2, y + pageContentHeight / 2, 0xFF888888);
+                    x + PAGE_WIDTH / 2, y + pageContentHeight / 2, PLACEHOLDER_TEXT);
             return;
         }
 
         List<ItemStack> stacks = isActive ? getLiveStacks() : inv.stacks();
         int slotCount = Math.min(stacks.size(), rows * 9);
+
+        // Convert screen mouse Y to content-space for hit-testing against un-scrolled slots
+        int contentMouseY = mouseY + (int) scroll;
 
         for (int i = 0; i < slotCount; i++) {
             ItemStack stack = stacks.get(i);
@@ -369,11 +420,11 @@ public class StorageOverlayGui extends ContainerOverlay {
             int slotY = y + mc.font.lineHeight + 6 + (i / 9) * SLOT_RENDER_SIZE;
 
             boolean isHovered = mouseX >= slotX && mouseX < slotX + SLOT_RENDER_SIZE
-                    && mouseY >= slotY && mouseY < slotY + SLOT_RENDER_SIZE;
+                    && contentMouseY >= slotY && contentMouseY < slotY + SLOT_RENDER_SIZE;
 
             // Slot background
-            int bgColor = isHovered ? 0x80808080
-                    : (stack.isEmpty() ? 0x402A2A3E : 0x40808080);
+            int bgColor = isHovered ? SLOT_HOVERED_BG
+                    : (stack.isEmpty() ? SLOT_EMPTY_BG : SLOT_OCCUPIED_BG);
             graphics.fill(slotX, slotY, slotX + SLOT_RENDER_SIZE, slotY + SLOT_RENDER_SIZE, bgColor);
 
             // Search highlight
@@ -520,7 +571,6 @@ public class StorageOverlayGui extends ContainerOverlay {
         if (scrollPanel.contains(mx, my)) {
             StoragePageSlot clicked = findPageAt((int) mx, (int) my);
             if (clicked != null && !clicked.equals(activeSlot)) {
-                StorageOverlayLifecycle.onNavigateToPage(clicked);
                 clicked.navigateTo();
                 return true;
             }
@@ -589,12 +639,11 @@ public class StorageOverlayGui extends ContainerOverlay {
 
     @Override
     public boolean isPointOverSlot(Slot slot, double pointX, double pointY) {
-        if (slot.container == mc.player.getInventory()) return true;
+        if (slot.container == mc.player.getInventory()) return false;
         if (activeSlot == null) return false;
 
         Rect pos = activeSlotPositions.get(slot);
         if (pos != null) {
-            // Standard vanilla hit box: -1 to +17 around the 16x16 item
             return pointX >= pos.x - 1 && pointX < pos.x + pos.width + 1
                     && pointY >= pos.y - 1 && pointY < pos.y + pos.height + 1;
         }
