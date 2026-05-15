@@ -3,6 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.chat;
 import com.github.kd_gaming1.skyblockenhancements.access.SBEChatAccess;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.chat.compact.CompactMessageHandler;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.GuiMessageTag;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.network.chat.Component;
@@ -61,7 +62,14 @@ public abstract class CompactChatMixin {
             Component message, MessageSignature sig, GuiMessageTag tag, CallbackInfo ci) {
         if (sbe$compactedThisMessage) {
             sbe$compactedThisMessage = false;
-            ((SBEChatAccess) this).sbe$refreshMessages();
+
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.isSameThread()) {
+                ((SBEChatAccess) this).sbe$refreshMessages();
+            } else {
+                // Defer the UI rebuild to the main thread to prevent IndexOutOfBoundsExceptions
+                mc.execute(() -> ((SBEChatAccess) this).sbe$refreshMessages());
+            }
         }
     }
 

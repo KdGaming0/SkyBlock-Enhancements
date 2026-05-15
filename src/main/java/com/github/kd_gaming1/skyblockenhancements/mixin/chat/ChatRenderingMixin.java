@@ -82,6 +82,14 @@ public abstract class ChatRenderingMixin implements SBEChatAccess {
 
     @Override
     public void sbe$refreshMessages() {
+        // Ensure UI rebuilds only happen on the main thread to prevent concurrent
+        // modification exceptions during render frames.
+        Minecraft mc = Minecraft.getInstance();
+        if (!mc.isSameThread()) {
+            mc.execute(this::sbe$refreshMessages);
+            return;
+        }
+
         int savedScroll = this.chatScrollbarPos;
         boolean savedNewMessage = this.newMessageSinceScroll;
 
