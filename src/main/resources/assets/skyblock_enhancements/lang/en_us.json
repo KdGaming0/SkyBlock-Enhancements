@@ -102,6 +102,12 @@
   "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics": "Enable Recipe Diagnostics",
   "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Logs detailed recipe diagnostics for debugging purposes.\nOnly useful for developers.",
 
+  "skyblock_enhancements.midnightconfig.rrvSearchMode": "RRV Search Mode",
+  "skyblock_enhancements.midnightconfig.rrvSearchMode.tooltip": "Controls how the RRV item filter searches inventory slots.\nName and ID Only: checks item name and SkyBlock ID (fast).\nFull Tooltip Search: also scans the entire tooltip text (slower, more matches).",
+
+  "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Name and ID Only",
+  "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full Tooltip Search",
+
   "skyblock_enhancements.midnightconfig.chatEnhancementsText": "Chat Enhancement Features",
 
   "skyblock_enhancements.midnightconfig.extendedChatHistory": "Extended Chat History",

@@ -45,6 +45,7 @@
     "rrv.itemlist.ItemSlotTooltipMixin",
     "rrv.itemlist.RrvCategoryFilterMixin",
     "rrv.itemlist.RrvItemListMixin",
+    "rrv.itemlist.RrvItemHighlightMixin",
     "rrv.recipe.RecipeViewCenterMixin",
     "rrv.recipe.RecipeViewFallbackMixin",
     "rrv.recipe.VisitorHelperRecipeViewMixin",

@@ -102,6 +102,12 @@
   "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics": "Aktiver oppskriftsdiagnostikk",
   "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Loggfører detaljert oppskriftsdiagnostikk for feilsøking.\nBerre nyttig for utviklarar.",
 
+  "skyblock_enhancements.midnightconfig.rrvSearchMode": "RRV-søkjemodus",
+  "skyblock_enhancements.midnightconfig.rrvSearchMode.tooltip": "Styrer korleis RRV-gjenstandsfiltret søkjer i inventorplasser.\nBerre namn og ID: sjekkar gjenstandsnamn og SkyBlock-ID (raskt).\nFull verktøytips-søk: skannar også heile verktøytipset (tregare, fleire treff).",
+
+  "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Berre namn og ID",
+  "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full verktøytips-søk",
+
   "skyblock_enhancements.midnightconfig.chatEnhancementsText": "Chat-forbetringsfunksjonar",
 
   "skyblock_enhancements.midnightconfig.extendedChatHistory": "Utvida chathistorikk",

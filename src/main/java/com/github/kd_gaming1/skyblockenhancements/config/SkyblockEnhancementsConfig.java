@@ -6,14 +6,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 
-/**
- * MidnightConfig-based configuration for Skyblock Enhancements.
- *
- * <p>All options are {@code public static} and annotated with {@link Entry}
- * or {@link Comment} so MidnightLib recognises them. The class implements
- * {@link ModSettings} so services receive a narrow interface instead of
- * touching static fields directly.
- */
 public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSettings {
 
     // ── Category IDs ────────────────────────────────────────────────────────────
@@ -138,6 +130,16 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = RRV_INTEGRATION)
     public static boolean enableRecipeDiagnostics = false;
+
+    @Entry(category = RRV_INTEGRATION)
+    public static RrvSearchMode rrvSearchMode = RrvSearchMode.FULL_TOOLTIP;
+
+    public enum RrvSearchMode {
+        /** Display name + SkyBlock ID only. Fast, no tooltip generation. */
+        NAME_AND_ID,
+        /** Display name + SkyBlock ID + full tooltip lore. Slower, more matches. */
+        FULL_TOOLTIP
+    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  Chat Enhancements
@@ -331,7 +333,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
         super.writeChanges();
 
         var mc = Minecraft.getInstance();
-        //noinspection ConstantValue
         if (mc.gameRenderer == null) return;
         LightTexture lt = mc.gameRenderer.lightTexture();
         if (lt instanceof LightTextureAccessor accessor) {
