@@ -66,7 +66,7 @@ public final class StorageOverlayLifecycle {
             }
         }
         // Trim to valid size
-        int rows = Math.max(1, Math.min(5, (stacks.size() + 8) / 9));
+        int rows = Math.clamp((stacks.size() + 8) / 9, 1, 6);
         int target = rows * 9;
         while (stacks.size() < target) stacks.add(net.minecraft.world.item.ItemStack.EMPTY);
         if (stacks.size() > target) stacks = stacks.subList(0, target);

@@ -56,7 +56,7 @@ public class ContainerPacketMixin {
                 stacks.set(s.index, s.getItem().copy());
             }
         }
-        int rows = Math.max(1, Math.min(5, (stacks.size() + 8) / 9));
+        int rows = Math.clamp((stacks.size() + 8) / 9, 1, 6);
         int target = rows * 9;
         while (stacks.size() < target) stacks.add(ItemStack.EMPTY);
         if (stacks.size() > target) stacks = stacks.subList(0, target);

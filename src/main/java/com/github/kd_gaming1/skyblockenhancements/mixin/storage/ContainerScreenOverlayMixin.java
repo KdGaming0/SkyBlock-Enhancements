@@ -4,6 +4,7 @@ import com.github.kd_gaming1.skyblockenhancements.gui.storage.ContainerOverlay;
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageOverlayLifecycle;
 import com.github.kd_gaming1.skyblockenhancements.gui.storage.HasContainerOverlay;
 import com.github.kd_gaming1.skyblockenhancements.gui.storage.Rect;
+import com.github.kd_gaming1.skyblockenhancements.mixin.access.AbstractContainerScreenAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -55,11 +56,43 @@ public abstract class ContainerScreenOverlayMixin<T extends AbstractContainerMen
         }
     }
 
-    @Inject(method = "renderBackground", at = @At("TAIL"))
-    private void sbe$renderOverlay(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
-        if (sbe$overlay != null) {
-            sbe$overlay.render(graphics, partialTick, mouseX, mouseY);
-        }
+    @Inject(
+            method = "renderBackground",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;renderBg(Lnet/minecraft/client/gui/GuiGraphics;FII)V",
+                    shift = At.Shift.BEFORE
+            )
+    )
+    private void sbe$beforeRenderBg(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+        if (sbe$overlay == null) return;
+
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
+        try {
+            int firstPlayerSlotY = screen.getMenu().slots.get(screen.getMenu().slots.size() - 36).y;
+            int inventoryTopY = ((AbstractContainerScreenAccessor) screen).sbe$getTopPos() + firstPlayerSlotY - 12;
+
+            // Allow vanilla background ONLY where the player inventory sits
+            graphics.enableScissor(0, inventoryTopY, screen.width, screen.height);
+        } catch (Exception ignored) {}
+    }
+
+    @Inject(
+            method = "renderBackground",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;renderBg(Lnet/minecraft/client/gui/GuiGraphics;FII)V",
+                    shift = At.Shift.AFTER
+            )
+    )
+    private void sbe$afterRenderBg(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+        if (sbe$overlay == null) return;
+
+        // Stop clipping after vanilla background draws
+        graphics.disableScissor();
+
+        // Draw your overlay (this replaces the chest area)
+        sbe$overlay.render(graphics, partialTick, mouseX, mouseY);
     }
 
     @Inject(method = "renderLabels", at = @At("HEAD"), cancellable = true)

@@ -30,8 +30,8 @@ public final class VirtualInventory {
     private final CompletableFuture<byte[]> serializationFuture;
 
     public VirtualInventory(List<ItemStack> stacks) {
-        if (stacks.isEmpty() || stacks.size() > 45) {
-            throw new IllegalArgumentException("Stack count must be 1..45");
+        if (stacks.isEmpty() || stacks.size() > 54) {
+            throw new IllegalArgumentException("Stack count must be 1..54");
         }
         if (stacks.size() % 9 != 0) {
             throw new IllegalArgumentException("Stack count must be a multiple of 9");
@@ -110,7 +110,7 @@ public final class VirtualInventory {
             }
             // Pad or trim to valid size
             while (stacks.size() < 9) stacks.add(ItemStack.EMPTY);
-            while (stacks.size() > 45) stacks.removeLast();
+            while (stacks.size() > 54) stacks.removeLast();
             int rows = stacks.size() / 9;
             int targetSize = rows * 9;
             while (stacks.size() < targetSize) stacks.add(ItemStack.EMPTY);
