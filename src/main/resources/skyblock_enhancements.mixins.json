@@ -53,6 +53,7 @@
     "rrv.storage.RrvStorageOverlayMixin",
     "storage.ContainerPacketMixin",
     "storage.ContainerScreenOverlayMixin",
+    "access.SlotAccessor",
     "tooltipscroll.ClientTextTooltipAccessor",
     "tooltipscroll.TooltipScrollGuiGraphicsMixin",
     "tooltipscroll.TooltipScrollMouseMixin"
