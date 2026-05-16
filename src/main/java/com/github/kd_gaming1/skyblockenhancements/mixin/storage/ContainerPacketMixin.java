@@ -29,7 +29,7 @@ public class ContainerPacketMixin {
 
     @Inject(method = "handleContainerContent", at = @At("TAIL"))
     private void sbe$onContainerContent(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
-        if (!SkyblockEnhancementsConfig.enableStorageDashboard) return;
+        if (!SkyblockEnhancementsConfig.enableStorageDashboard_Test) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;

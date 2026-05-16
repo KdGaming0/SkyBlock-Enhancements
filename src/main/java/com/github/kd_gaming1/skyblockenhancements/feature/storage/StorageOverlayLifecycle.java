@@ -22,7 +22,7 @@ public final class StorageOverlayLifecycle {
      * If the screen is a recognised storage page, creates and returns an overlay.
      */
     public static ContainerOverlay createOverlay(AbstractContainerScreen<?> screen) {
-        if (!SkyblockEnhancementsConfig.enableStorageDashboard) {
+        if (!SkyblockEnhancementsConfig.enableStorageDashboard_Test) {
             return null;
         }
 

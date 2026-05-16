@@ -32,7 +32,7 @@ public final class StorageFeature {
         STORAGE_REF.set(storage);
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            if (!SkyblockEnhancementsConfig.enableStorageDashboard) return;
+            if (!SkyblockEnhancementsConfig.enableStorageDashboard_Test) return;
             cachedProfileId = resolveProfileId();
             storage.load(cachedProfileId, StorageData.INSTANCE);
         });
@@ -42,7 +42,7 @@ public final class StorageFeature {
     }
 
     public static void save() {
-        if (!SkyblockEnhancementsConfig.enableStorageDashboard) return;
+        if (!SkyblockEnhancementsConfig.enableStorageDashboard_Test) return;
         StorageSnapshotStorage storage = STORAGE_REF.get();
         if (storage == null) return;
         storage.save(cachedProfileId, StorageData.INSTANCE);

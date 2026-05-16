@@ -83,33 +83,43 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     //  Storage Overlay
     // ═══════════════════════════════════════════════════════════════════════════
 
+    @Hidden
     @Comment(category = STORAGE_OVERLAY, centered = true)
     public static Comment storageOverlayText;
 
+    @Hidden
     @Entry(category = STORAGE_OVERLAY)
-    public static boolean enableStorageDashboard = false;
+    public static boolean enableStorageDashboard_Test = false;
 
+    @Hidden
     @Entry(category = STORAGE_OVERLAY)
     public static boolean persistStorageSnapshots = true;
 
+    @Hidden
     @Entry(category = STORAGE_OVERLAY, isSlider = true, min = 1, max = 8)
     public static int storageOverlayColumns = 3;
 
+    @Hidden
     @Entry(category = STORAGE_OVERLAY, isSlider = true, min = 100, max = 600)
     public static int storageOverlayHeight = 300;
 
+    @Hidden
     @Entry(category = STORAGE_OVERLAY, isSlider = true, min = 1, max = 50)
     public static int storageScrollSpeed = 10;
 
+    @Hidden
     @Entry(category = STORAGE_OVERLAY)
     public static boolean storageInverseScroll = false;
 
+    @Hidden
     @Entry(category = STORAGE_OVERLAY, isColor = true)
     public static String storageSearchHighlightColor = "#00B000CC";
 
+    @Hidden
     @Entry(category = STORAGE_OVERLAY, isColor = true)
     public static String storageActivePageOutlineColor = "#FFD700FF";
 
+    @Hidden
     @Entry(category = STORAGE_OVERLAY, isColor = true)
     public static String storageInactivePageBorderColor = "#4A4A6AFF";
 
