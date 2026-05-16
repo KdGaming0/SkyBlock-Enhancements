@@ -11,14 +11,11 @@ import org.lwjgl.glfw.GLFW;
 /**
  * Registers and tracks the two price-modifier keybinds:
  * <ul>
- *   <li><b>Full Stack</b> (default Left Shift) — multiplies displayed prices by the item's max stack size.</li>
- *   <li><b>Current Amount</b> (default Left Ctrl) — multiplies displayed prices by the hovered stack's count.</li>
+ *   <li><b>Full Stack</b> (default Left Control) — multiplies displayed prices by the
+ *       item's logical stack size (max stack for inventory items, order amount for Bazaar).</li>
+ *   <li><b>Current Amount</b> (default Left Shift) — multiplies displayed prices by the
+ *       hovered item's logical stack size (same as Full Stack for Bazaar UI).</li>
  * </ul>
- *
- * <p>Both keys appear in the standard Minecraft Controls menu under the
- * {@code Skyblock Enhancements} category and are fully rebindable by the player.
- *
- * <p>Key-held detection uses direct GLFW polling via {@link InputConstants#isKeyDown}
  */
 public final class PriceTooltipKeybinds {
 

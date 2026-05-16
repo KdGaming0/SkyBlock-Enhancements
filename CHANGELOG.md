@@ -9,3 +9,7 @@
 ### **Chat Enhancements**
 **Fixes**
 - Fixed a rare game crash that could occur when receiving chat messages.
+
+### **Tooltip Enhancements**
+**Fixes**
+- Holding the Full Stack key (Left Shift) in the Bazaar now correctly multiplies prices by the order amount parsed from tooltip lore instead of always using the physical stack count of 1.

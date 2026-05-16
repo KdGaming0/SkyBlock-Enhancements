@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
+import com.github.kd_gaming1.skyblockenhancements.util.LogicalStackSize;
 import com.github.kd_gaming1.skyblockenhancements.util.SkyblockItemUtil;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.minecraft.ChatFormatting;
@@ -37,6 +39,7 @@ import net.minecraft.world.item.TooltipFlag;
 public final class PriceTooltipEnhancement {
 
     private static final DecimalFormat COIN_FORMAT;
+    private static final int FULL_STACK_SIZE = 64;
 
     static {
         DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
@@ -61,21 +64,22 @@ public final class PriceTooltipEnhancement {
 
     private void onTooltip(ItemStack stack, Item.TooltipContext ctx, TooltipFlag flag, List<Component> lines) {
         if (!settings.enablePriceTooltips()) return;
-        if (!com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState.isOnSkyblock()) return;
+        if (!HypixelLocationState.isOnSkyblock()) return;
         if (stack.isEmpty()) return;
 
         String skyblockId = SkyblockItemUtil.getPriceLookupId(stack);
         if (skyblockId == null) return;
 
-        int multiplier = computeMultiplier(stack);
+        // Pass existing tooltip lines so Bazaar order amounts can be parsed
+        long logicalSize = LogicalStackSize.getLogicalStackSize(stack, lines);
+        int multiplier = computeMultiplier(stack, logicalSize);
         boolean tickerText = settings.enablePriceTickerText();
 
         List<Component> priceLines = resolvePriceLines(skyblockId, multiplier, tickerText);
         if (!priceLines.isEmpty()) {
             lines.addAll(priceLines);
-            // Only show hint lines when we have actual price data (not error state)
             if (!store.isLastFetchFailed() && store.hasData() && store.getBazaarPrice(skyblockId).isPresent()) {
-                appendHintLines(lines, stack);
+                appendHintLines(lines, logicalSize);
             }
         }
     }
@@ -83,24 +87,30 @@ public final class PriceTooltipEnhancement {
     // ── Multiplier logic ───────────────────────────────────────────────────────
 
     /**
-     * Computes the price multiplier based on currently-held modifier keys.
-     *
+     * Computes the price multiplier:
      * <ul>
-     *   <li>Full Stack key held  → multiply by {@code stack.getMaxStackSize()}</li>
-     *   <li>Current Amount key held → multiply by {@code stack.getCount()}</li>
-     *   <li>Both held → multiply by both (they stack multiplicatively)</li>
+     *   <li>No modifier held → multiply by current stack count (shows 2x for a stack of 2)</li>
+     *   <li>Shift (Current Amount) held → multiply by stack count; if stack is 1, use 64 instead</li>
+     *   <li>Ctrl (Full Stack) held → always multiply by 64 (max stack size)</li>
+     *   <li>Both held → multiply by both (stack multiplicatively)</li>
      * </ul>
      */
-    private static int computeMultiplier(ItemStack stack) {
-        int multiplier = 1;
-        if (PriceTooltipKeybinds.isFullStackHeld()) {
-            int maxStack = stack.getMaxStackSize();
-            multiplier *= (maxStack > 1) ? maxStack : 64;
+    private static int computeMultiplier(ItemStack stack, long logicalSize) {
+        int currentAmount = (int) Math.min(logicalSize, Integer.MAX_VALUE);
+
+        boolean ctrlHeld = PriceTooltipKeybinds.isFullStackHeld();
+        boolean shiftHeld = PriceTooltipKeybinds.isCurrentAmountHeld();
+
+        if (ctrlHeld && shiftHeld) {
+            return (currentAmount <= 1) ? FULL_STACK_SIZE * FULL_STACK_SIZE : currentAmount * FULL_STACK_SIZE;
+        } else if (ctrlHeld) {
+            return FULL_STACK_SIZE;
+        } else if (shiftHeld) {
+            // Shift: show stack amount, but if stack is 1, show full stack instead
+            return (currentAmount == 1) ? FULL_STACK_SIZE : currentAmount;
         }
-        if (PriceTooltipKeybinds.isCurrentAmountHeld()) {
-            multiplier *= stack.getCount();
-        }
-        return multiplier;
+
+        return 1;
     }
 
     // ── Hint lines (discoverability) ────────────────────────────────────────────
@@ -110,35 +120,32 @@ public final class PriceTooltipEnhancement {
      * Uses the player's actual bound key names so hints remain accurate after rebinding.
      * Each hint is on its own line.
      */
-    private static void appendHintLines(List<Component> lines, ItemStack stack) {
-        boolean fullStackHeld = PriceTooltipKeybinds.isFullStackHeld();
-        boolean currentHeld   = PriceTooltipKeybinds.isCurrentAmountHeld();
+    private static void appendHintLines(List<Component> lines, long stack) {
+        boolean ctrlHeld = PriceTooltipKeybinds.isFullStackHeld();
+        boolean shiftHeld = PriceTooltipKeybinds.isCurrentAmountHeld();
 
-        String fullKey  = PriceTooltipKeybinds.getFullStackKeyName();
-        String amountKey = PriceTooltipKeybinds.getCurrentAmountKeyName();
+        String ctrlKey = PriceTooltipKeybinds.getFullStackKeyName();
+        String shiftKey = PriceTooltipKeybinds.getCurrentAmountKeyName();
 
-        boolean showFullHint  = !fullStackHeld && !fullKey.isEmpty();
-        boolean showAmountHint = !currentHeld && !amountKey.isEmpty() && stack.getCount() > 1;
+        boolean showCtrlHint = !ctrlHeld && !ctrlKey.isEmpty();
+        boolean showShiftHint = !shiftHeld && !shiftKey.isEmpty();
 
-        // Both hints are available: combine them into one line
-        if (showFullHint && showAmountHint) {
+        String shiftHintText = (stack == 1) ? " for x" + FULL_STACK_SIZE : " for x" + stack;
+
+        if (showCtrlHint && showShiftHint) {
             lines.add(Component.literal("Hold ").withStyle(ChatFormatting.DARK_GRAY)
-                    .append(Component.literal(fullKey).withStyle(ChatFormatting.GRAY))
-                    .append(Component.literal(" for stack, ").withStyle(ChatFormatting.DARK_GRAY))
-                    .append(Component.literal(amountKey).withStyle(ChatFormatting.GRAY))
-                    .append(Component.literal(" for amount").withStyle(ChatFormatting.DARK_GRAY)));
-        }
-        // Only the full stack hint is available
-        else if (showFullHint) {
+                    .append(Component.literal(ctrlKey).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(" for x" + FULL_STACK_SIZE + ", ").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.literal(shiftKey).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(shiftHintText).withStyle(ChatFormatting.DARK_GRAY)));
+        } else if (showCtrlHint) {
             lines.add(Component.literal("Hold ").withStyle(ChatFormatting.DARK_GRAY)
-                    .append(Component.literal(fullKey).withStyle(ChatFormatting.GRAY))
-                    .append(Component.literal(" for full stack").withStyle(ChatFormatting.DARK_GRAY)));
-        }
-        // Only the current amount hint is available
-        else if (showAmountHint) {
+                    .append(Component.literal(ctrlKey).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(" for x" + FULL_STACK_SIZE).withStyle(ChatFormatting.DARK_GRAY)));
+        } else if (showShiftHint) {
             lines.add(Component.literal("Hold ").withStyle(ChatFormatting.DARK_GRAY)
-                    .append(Component.literal(amountKey).withStyle(ChatFormatting.GRAY))
-                    .append(Component.literal(" for amount").withStyle(ChatFormatting.DARK_GRAY)));
+                    .append(Component.literal(shiftKey).withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(shiftHintText).withStyle(ChatFormatting.DARK_GRAY)));
         }
     }
 
