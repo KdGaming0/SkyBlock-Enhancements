@@ -4,6 +4,7 @@ import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LO
 
 import cc.cassian.rrv.api.recipe.ItemView;
 import cc.cassian.rrv.common.recipe.ClientRecipeCache;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.search.SkyblockSearchIndex;
 import com.github.kd_gaming1.skyblockenhancements.mixin.access.CustomDataAccessor;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
@@ -48,6 +49,7 @@ public final class FullStackListCache {
     @Nullable private static volatile Map<ItemStack, String> cachedIds;
     @Nullable private static volatile Map<ItemStack, NeuItem> cachedNeuItems;
     @Nullable private static volatile Map<SkyblockItemCategory, Set<ItemStack>> cachedByCategory;
+    @Nullable private static volatile SkyblockSearchIndex cachedSearchIndex;
 
     /**
      * Equality-keyed LRU cache for stacks that are not in {@link #cachedIds}.
@@ -171,6 +173,15 @@ public final class FullStackListCache {
         return result != null ? result : Collections.emptySet();
     }
 
+    /**
+     * Returns the pre-built {@link SkyblockSearchIndex} for fast inverted search,
+     * or {@code null} if the cache has not been populated yet.
+     */
+    @Nullable
+    public static SkyblockSearchIndex getSearchIndex() {
+        return cachedSearchIndex;
+    }
+
     /** Clears all caches so the next access rebuilds. */
     public static void invalidate() {
         cachedList = null;
@@ -178,6 +189,7 @@ public final class FullStackListCache {
         cachedIds = null;
         cachedNeuItems = null;
         cachedByCategory = null;
+        cachedSearchIndex = null;
         fallbackIdCache.clear();
     }
 
@@ -226,10 +238,13 @@ public final class FullStackListCache {
             immutableByCategory.put(entry.getKey(), Collections.unmodifiableSet(entry.getValue()));
         }
 
+        SkyblockSearchIndex searchIndex = new SkyblockSearchIndex(items, neuItems);
+
         cachedNames = Collections.unmodifiableMap(names);
         cachedIds = Collections.unmodifiableMap(ids);
         cachedNeuItems = Collections.unmodifiableMap(neuItems);
         cachedByCategory = Collections.unmodifiableMap(immutableByCategory);
+        cachedSearchIndex = searchIndex;
         cachedList = Collections.unmodifiableList(items); // publish last — readers use this as the ready signal
     }
 

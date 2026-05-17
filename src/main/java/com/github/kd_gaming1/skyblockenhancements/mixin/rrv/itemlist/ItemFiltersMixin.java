@@ -2,7 +2,10 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.rrv.itemlist;
 
 import cc.cassian.rrv.api.recipe.ItemView;
 import cc.cassian.rrv.common.overlay.itemlist.view.ItemFilters;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.search.SkyblockSearchFilter;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.search.SkyblockSearchIndex;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +18,10 @@ import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
 @Mixin(ItemFilters.class)
@@ -74,6 +79,18 @@ public class ItemFiltersMixin {
             remap = false)
     private static String sbe$preLowercaseQuery(String query) {
         return query.toLowerCase();
+    }
+
+    // ── SkyBlock search filter ───────────────────────────────────────────────────
+
+    @Inject(method = "defaultFilter", at = @At("HEAD"), cancellable = true, remap = false)
+    private static void sbe$skyblockSearchFilter(String query, CallbackInfoReturnable<List<ItemStack>> cir) {
+        if (!RrvCompat.isActive()) return;
+
+        SkyblockSearchIndex index = FullStackListCache.getSearchIndex();
+        if (index == null) return;
+
+        cir.setReturnValue(SkyblockSearchFilter.filter(query, index));
     }
 
     // ── Lifecycle ────────────────────────────────────────────────────────────────
