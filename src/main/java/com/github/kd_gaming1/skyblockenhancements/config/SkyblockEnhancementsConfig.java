@@ -28,6 +28,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean preventWeaponPlacement = true;
 
+    @Hidden
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean hideCheapCoins = false;
 

@@ -27,10 +27,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class PreventWeaponPlacementMixin {
 
     @Unique
-    private static final Pattern SWORD_TYPE_LINE =
+    private static final Pattern PREVENT_PLACE_TYPE_LINE =
             Pattern.compile(
                     "(?:COMMON|UNCOMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|VERY SPECIAL|SPECIAL)"
-                            + "\\s+(?:DUNGEON\\s+)?SWORD\\b");
+                            + "\\s+(?:DUNGEON\\s+)?(?:SWORD|WATERING\\s+CAN)\\b");
 
     @Inject(method = "useOn", at = @At("HEAD"), cancellable = true)
     private void sbe$preventWeaponPlacement(
@@ -38,20 +38,21 @@ public class PreventWeaponPlacementMixin {
         if (!SkyblockEnhancementsConfig.preventWeaponPlacement) return;
         if (!HypixelLocationState.isOnSkyblock()) return;
 
-        if (sbe$isSkyblockSword(context.getItemInHand())) {
+        if (sbe$isBlockedItem(context.getItemInHand())) {
             cir.setReturnValue(InteractionResult.PASS);
         }
     }
 
     @Unique
-    private static boolean sbe$isSkyblockSword(ItemStack stack) {
+    private static boolean sbe$isBlockedItem(ItemStack stack) {
         ItemLore lore = stack.get(DataComponents.LORE);
         if (lore == null) return false;
 
         List<Component> lines = lore.lines();
         for (int i = lines.size() - 1; i >= 0; i--) {
             String lineText = lines.get(i).getString();
-            if (lineText.contains("SWORD") && SWORD_TYPE_LINE.matcher(lineText).find()) {
+            if ((lineText.contains("SWORD") || lineText.contains("CAN"))
+                    && PREVENT_PLACE_TYPE_LINE.matcher(lineText).find()) {
                 return true;
             }
         }

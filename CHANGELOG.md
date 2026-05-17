@@ -1,6 +1,10 @@
-## Changelog for 1.0.0-beta.11
+## Changelog for 1.0.0
 
-### **Item List Enhancements**
-**Fixes**
-- Category buttons do now shift the item list to prevent overlap when the search bar is inside the item list view. Even if you closed the inventory and reopened it again.
-- Added configurable RRV search modes (Name & ID or Full Tooltip) and made category buttons and search queries apply to inventory slot highlighting.
+### **Tooltip Enhancements**
+**Improvements**
+- Price tooltips now display cached prices with a stale-data warning when the API is unreachable, instead of hiding price info entirely.
+- Added automatic rate-limit backoff and dedicated fetch threads to reduce API errors and keep prices up to date.
+
+### **Skyblock Enhancements**
+**Improvements**
+- Added watering can to Prevent Weapon Placement.

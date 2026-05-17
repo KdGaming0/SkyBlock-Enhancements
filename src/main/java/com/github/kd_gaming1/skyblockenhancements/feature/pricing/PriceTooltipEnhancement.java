@@ -178,8 +178,7 @@ public final class PriceTooltipEnhancement {
     // ── Line building ───────────────────────────────────────────────────────────
 
     private List<Component> buildPriceLines(String skyblockId, int multiplier, boolean tickerText) {
-        // If API is down or data hasn't loaded yet, show error state
-        if (!store.hasData() || store.isLastFetchFailed()) {
+        if (!store.hasData()) {
             return buildErrorLines();
         }
 
@@ -189,8 +188,13 @@ public final class PriceTooltipEnhancement {
 
         if (lowestBin.isEmpty() && bazaar.isEmpty()) return List.of();
 
-        List<Component> builder = new ArrayList<>(4);
+        List<Component> builder = new ArrayList<>(5);
         builder.add(Component.empty());
+
+        // Stale-data banner when the last fetch failed
+        if (store.isLastFetchFailed()) {
+            builder.add(Component.literal("⚠ Prices may be outdated").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+        }
 
         lowestBin.ifPresent(price -> builder.add(priceLine("AH Lowest BIN", price, 1, tickerText, roundNumbers)));
 
@@ -211,7 +215,7 @@ public final class PriceTooltipEnhancement {
             }
         }
 
-        return builder.size() > 1 ? List.copyOf(builder) : List.of();
+        return List.copyOf(builder);
     }
 
     /**

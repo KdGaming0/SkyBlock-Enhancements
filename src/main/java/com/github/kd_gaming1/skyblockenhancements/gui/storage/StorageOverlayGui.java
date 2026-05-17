@@ -26,29 +26,24 @@ public class StorageOverlayGui extends ContainerOverlay {
 
     // ── Layout constants ──────────────────────────────────────────────────────
     private static final int SLOT_SIZE     = 18;
-    private static final int PAGE_WIDTH    = SLOT_SIZE * 9 + 4;   // 2 px side padding
+    private static final int PAGE_WIDTH    = SLOT_SIZE * 9 + 4;
     private static final int PADDING       = 8;
     private static final int TOP_BAR_H     = 26;
     private static final int SCROLL_BAR_W  = 6;
     private static final int MIN_OVERLAY_H = 60;
+    private static final int OVERVIEW_TOP  = SLOT_SIZE;
+    private static final int INV_SLOTS_TOP = 18; // vertical space reserved for the "Inventory" label
 
-    /** Gap from screen top to overlay top. */
-    private static final int OVERVIEW_TOP  = SLOT_SIZE;            // 1 slot
-
-    /** Gap between overlay bottom and inventory panel top. */
-    private static final int INVENTORY_GAP = SLOT_SIZE * 5 / 2;   // 2.5 slots = 45 px
-
-    /** Pixels from inventory panel top to the first slot row. Accommodates the label. */
-    private static final int INV_SLOTS_TOP = 18;
-
-    /** Padding below the last slot row inside the inventory panel. */
-    private static final int BOTTOM_PADDING = 6;
+    /**
+     * Distance from the bottom of the screen to the bottom edge of the inventory section.
+     * Increase to move the inventory section upward.
+     */
+    private static final int BOTTOM_PADDING = 20;
 
     // ── Colours ───────────────────────────────────────────────────────────────
     private static final int COL_OVERLAY_BG   = 0xD4080810;
     private static final int COL_PANEL_BORDER = 0xFF2E2E4A;
     private static final int COL_PAGE_BG      = 0xFF141422;
-    private static final int COL_SLOT_EMPTY   = 0xFF1C1C2C;
     private static final int COL_SLOT_ITEM    = 0xFF22223A;
     private static final int COL_SLOT_TL      = 0xFF0F0F1E;
     private static final int COL_SLOT_BR      = 0xFF3A3A5C;
@@ -64,30 +59,24 @@ public class StorageOverlayGui extends ContainerOverlay {
     private final Minecraft mc;
 
     /**
-     * Vanilla's topPos, captured once per init. Never mutated.
-     * All screen-space Y calculations anchor to this value.
+     * Vanilla's topPos at init time. All screen-space Y calculations anchor here.
+     * Never mutated — we push slots via slot.y instead.
      */
     private int baseTopPos;
 
     /**
-     * Original slot.y values (relative to topPos) for all 36 player slots,
-     * captured before any push is applied. Preserves the vanilla hotbar gap.
+     * Captured slot.y values (relative to topPos) before any push, preserving
+     * the vanilla hotbar gap between the main grid and hotbar rows.
      */
     private int[] originalPlayerSlotRelY;
 
-    /**
-     * Pixels added to each player slot's Y so items land inside our custom panel.
-     * Because vanilla renders items at (leftPos + slot.x, topPos + slot.y), this
-     * shift is the only thing needed — no topPos mutation.
-     */
+    /** Pixels added to each player slot.y so vanilla renders items inside our panel. */
     private int playerPush;
 
     // ── Layout state ──────────────────────────────────────────────────────────
     private int pageWidthCount;
     private int overviewX, overviewWidth, overviewHeight;
     private int innerScrollPanelWidth, innerScrollPanelHeight;
-
-    /** Position and size of our custom inventory replacement panel. */
     private int invPanelX, invPanelY, invPanelW, invPanelH;
 
     // ── Scroll state ──────────────────────────────────────────────────────────
@@ -104,10 +93,10 @@ public class StorageOverlayGui extends ContainerOverlay {
     // ─────────────────────────────────────────────────────────────────────────
 
     public StorageOverlayGui(AbstractContainerScreen<?> screen, StoragePageSlot activeSlot) {
-        this.screen   = screen;
-        this.accessor = (AbstractContainerScreenAccessor) screen;
+        this.screen     = screen;
+        this.accessor   = (AbstractContainerScreenAccessor) screen;
         this.activeSlot = activeSlot;
-        this.mc       = Minecraft.getInstance();
+        this.mc         = Minecraft.getInstance();
     }
 
     // ── ContainerOverlay ──────────────────────────────────────────────────────
@@ -115,7 +104,7 @@ public class StorageOverlayGui extends ContainerOverlay {
     @Override
     public void onInit(int screenWidth, int screenHeight) {
         ensureAllSlotsRegistered();
-        baseTopPos            = accessor.sbe$getTopPos();
+        baseTopPos             = accessor.sbe$getTopPos();
         originalPlayerSlotRelY = capturePlayerSlotRelY();
         recalculateMeasurements();
         scroll = clampScroll(scroll);
@@ -123,8 +112,8 @@ public class StorageOverlayGui extends ContainerOverlay {
     }
 
     /**
-     * Repositions chest slots onto the overlay and pushes player slots into our
-     * custom inventory panel. Vanilla renders all items at (leftPos+slot.x, topPos+slot.y),
+     * Repositions chest slots onto the overlay and pushes player slots into the
+     * inventory section. Vanilla renders items at (leftPos+slot.x, topPos+slot.y),
      * so adjusting slot.y is sufficient — no topPos mutation required.
      */
     @Override
@@ -135,7 +124,7 @@ public class StorageOverlayGui extends ContainerOverlay {
 
     @Override
     public void render(GuiGraphics gfx, float delta, int mouseX, int mouseY) {
-        drawOverlayPanel(gfx);
+        drawPanel(gfx);
         drawScrollableContent(gfx, mouseX, mouseY);
         drawScrollbar(gfx);
         drawInventoryPanel(gfx);
@@ -148,7 +137,7 @@ public class StorageOverlayGui extends ContainerOverlay {
     public List<Rect> getBounds() {
         return List.of(
                 new Rect(overviewX, OVERVIEW_TOP, overviewWidth, overviewHeight),
-                new Rect(invPanelX, invPanelY, invPanelW, invPanelH));
+                new Rect(invPanelX - 1, invPanelY, invPanelW + 2, invPanelH + 1));
     }
 
     @Override public EditBox getSearchField() { return searchField; }
@@ -194,30 +183,26 @@ public class StorageOverlayGui extends ContainerOverlay {
     // ── Layout ────────────────────────────────────────────────────────────────
 
     private void recalculateMeasurements() {
-        // ── Page overlay ──────────────────────────────────────────────────────
         pageWidthCount = Math.clamp(
                 (screen.width - PADDING * 2) / (PAGE_WIDTH + PADDING),
                 1, SkyblockEnhancementsConfig.storageOverlayColumns);
 
         innerScrollPanelWidth = PAGE_WIDTH * pageWidthCount + (pageWidthCount - 1) * PADDING;
-        overviewWidth = innerScrollPanelWidth + SCROLL_BAR_W + PADDING * 3;
-        overviewX     = screen.width / 2 - overviewWidth / 2;
+        overviewWidth         = innerScrollPanelWidth + SCROLL_BAR_W + PADDING * 3;
+        overviewX             = screen.width / 2 - overviewWidth / 2;
 
-        // ── Inventory panel ───────────────────────────────────────────────────
-        // Height: label section + all slot rows (preserving vanilla hotbar gap) + bottom padding.
-        int slotsH = originalPlayerSlotRelY[originalPlayerSlotRelY.length - 1]
-                - originalPlayerSlotRelY[0] + SLOT_SIZE;
-        invPanelH = INV_SLOTS_TOP + slotsH + BOTTOM_PADDING;
         invPanelX = accessor.sbe$getLeftPos();
         invPanelW = accessor.sbe$getImageWidth();
+
+        int slotsH = originalPlayerSlotRelY[originalPlayerSlotRelY.length - 1]
+                - originalPlayerSlotRelY[0] + SLOT_SIZE;
+        invPanelH = INV_SLOTS_TOP + slotsH + 4;
         invPanelY = screen.height - BOTTOM_PADDING - invPanelH;
 
-        // ── Overlay fills space between screen top and inventory panel ─────────
-        overviewHeight         = Math.max(MIN_OVERLAY_H, invPanelY - OVERVIEW_TOP - INVENTORY_GAP);
+        overviewHeight         = Math.max(MIN_OVERLAY_H, invPanelY - OVERVIEW_TOP);
         innerScrollPanelHeight = overviewHeight - TOP_BAR_H - PADDING * 2;
 
-        // ── Player push: first slot must land at invPanelY + INV_SLOTS_TOP ────
-        int targetFirstSlotScreenY = invPanelY + INV_SLOTS_TOP;
+        int targetFirstSlotScreenY  = invPanelY + INV_SLOTS_TOP;
         int vanillaFirstSlotScreenY = baseTopPos + originalPlayerSlotRelY[0];
         playerPush = targetFirstSlotScreenY - vanillaFirstSlotScreenY;
     }
@@ -242,9 +227,9 @@ public class StorageOverlayGui extends ContainerOverlay {
     }
 
     private void repositionChestSlots() {
-        Rect panel        = getScrollPanel();
-        Rect activeRect   = findPageRect(activeSlot);
-        int leftPos       = accessor.sbe$getLeftPos();
+        Rect panel      = getScrollPanel();
+        Rect activeRect = findPageRect(activeSlot);
+        int leftPos     = accessor.sbe$getLeftPos();
 
         for (Slot slot : screen.getMenu().slots) {
             if (slot.container == mc.player.getInventory()) continue;
@@ -274,10 +259,23 @@ public class StorageOverlayGui extends ContainerOverlay {
 
     // ── Rendering ─────────────────────────────────────────────────────────────
 
-    private void drawOverlayPanel(GuiGraphics gfx) {
-        int bottom = OVERVIEW_TOP + overviewHeight;
-        gfx.fill(overviewX,     OVERVIEW_TOP,     overviewX + overviewWidth,     bottom,     COL_PANEL_BORDER);
-        gfx.fill(overviewX + 1, OVERVIEW_TOP + 1, overviewX + overviewWidth - 1, bottom - 1, COL_OVERLAY_BG);
+    /**
+     * Draws a stepped/T-shaped panel: the top section spans the full overlay width,
+     * then steps inward at invPanelY to match the inventory width below.
+     * The bottom border of the top section doubles as the horizontal step cap,
+     * so no separate divider fill is needed.
+     */
+    private void drawPanel(GuiGraphics gfx) {
+        // Top section
+        gfx.fill(overviewX,     OVERVIEW_TOP,     overviewX + overviewWidth,     invPanelY + 1, COL_PANEL_BORDER);
+        gfx.fill(overviewX + 1, OVERVIEW_TOP + 1, overviewX + overviewWidth - 1, invPanelY,     COL_OVERLAY_BG);
+
+        // Inventory section — left/right/bottom borders only; top is shared with the step above
+        int iL = invPanelX - 1;
+        int iR = invPanelX + invPanelW + 1;
+        int iB = invPanelY + invPanelH + 1;
+        gfx.fill(iL,     invPanelY, iR,     iB,     COL_PANEL_BORDER);
+        gfx.fill(iL + 1, invPanelY, iR - 1, iB - 1, COL_OVERLAY_BG);
     }
 
     private void drawScrollableContent(GuiGraphics gfx, int mouseX, int mouseY) {
@@ -303,7 +301,7 @@ public class StorageOverlayGui extends ContainerOverlay {
         int borderColor = parseColor(isActive
                 ? SkyblockEnhancementsConfig.storageActivePageOutlineColor
                 : SkyblockEnhancementsConfig.storageInactivePageBorderColor);
-        gfx.fill(rect.x, cardTop, rect.x + PAGE_WIDTH, rect.y + cardH, borderColor);
+        gfx.fill(rect.x,     cardTop,     rect.x + PAGE_WIDTH,     rect.y + cardH,     borderColor);
         gfx.fill(rect.x + 1, cardTop + 1, rect.x + PAGE_WIDTH - 1, rect.y + cardH - 1, COL_PAGE_BG);
 
         String title = inv != null && inv.title() != null ? inv.title() : pageSlot.defaultName();
@@ -316,20 +314,24 @@ public class StorageOverlayGui extends ContainerOverlay {
             return;
         }
 
-        // Slot backgrounds are always drawn — they provide the grid even for the active page.
-        drawSlotBackgrounds(gfx, rect, rows);
+        drawSlotBackgrounds(gfx, rect, rows, isActive);
 
-        // Fake items only for cached pages; the active page is rendered by vanilla.
         if (!isActive) {
             drawFakeItems(gfx, rect, inv.inventory().stacks(), rows, panel, mouseX, mouseY);
         }
     }
 
-    private void drawSlotBackgrounds(GuiGraphics gfx, Rect pageRect, int rows) {
+    /**
+     * @param vanillaRendered true for the active page, where vanilla places items at (x, y).
+     *                        false for cached pages, where we render fake items at (x+1, y+1).
+     *                        The background must be offset so the inner fill aligns with where
+     *                        items and hover highlights actually land.
+     */
+    private void drawSlotBackgrounds(GuiGraphics gfx, Rect pageRect, int rows, boolean vanillaRendered) {
         for (int i = 0; i < rows * 9; i++) {
             int x = pageRect.x + 2 + (i % 9) * SLOT_SIZE;
             int y = pageRect.y + mc.font.lineHeight + 6 + (i / 9) * SLOT_SIZE;
-            drawSlotBackground(gfx, x, y);
+            drawSlotBackground(gfx, vanillaRendered ? x - 1 : x, vanillaRendered ? y - 1 : y);
         }
     }
 
@@ -360,37 +362,33 @@ public class StorageOverlayGui extends ContainerOverlay {
         }
     }
 
-    /**
-     * Draws the custom inventory panel that replaces vanilla's player inventory background.
-     * Slot backgrounds are drawn here; vanilla renders the actual items on top via slot positions.
-     */
     private void drawInventoryPanel(GuiGraphics gfx) {
-        // Panel background
-        gfx.fill(invPanelX,     invPanelY,     invPanelX + invPanelW,     invPanelY + invPanelH,     COL_PANEL_BORDER);
-        gfx.fill(invPanelX + 1, invPanelY + 1, invPanelX + invPanelW - 1, invPanelY + invPanelH - 1, COL_OVERLAY_BG);
-
-        // "Inventory" label
         gfx.drawString(mc.font, Component.translatable("container.inventory"),
                 invPanelX + PADDING, invPanelY + PADDING - 2, COL_TITLE_IDLE, false);
 
-        // Slot backgrounds — drawn at the same screen positions vanilla will place items.
+        // Vanilla places items at (leftPos + slot.x, topPos + slot.y), which is the 16x16 item
+        // area. Pass (screenX - 1, screenY - 1) so the 1px border is drawn outside that area,
+        // keeping the inner fill aligned with where items and the hover highlight land.
         int leftPos = accessor.sbe$getLeftPos();
         List<Slot> playerSlots = getPlayerSlots();
         for (int i = 0; i < Math.min(playerSlots.size(), originalPlayerSlotRelY.length); i++) {
             Slot slot = playerSlots.get(i);
             int screenX = leftPos + slot.x;
-            int screenY = baseTopPos + slot.y;   // slot.y already pushed in preRender
-            drawSlotBackground(gfx, screenX, screenY);
+            int screenY = baseTopPos + slot.y;
+            drawSlotBackground(gfx, screenX - 1, screenY - 1);
         }
     }
 
-    /** Vanilla-style sunken slot: dark top/left edges, lighter bottom/right edges. */
+    /**
+     * Draws an 18×18 sunken slot with (x, y) as the outer top-left corner.
+     * The inner 16×16 fill — where items and hover highlights land — starts at (x+1, y+1).
+     */
     private void drawSlotBackground(GuiGraphics gfx, int x, int y) {
-        gfx.fill(x,                y,                 x + SLOT_SIZE, y + 1,            COL_SLOT_TL);
-        gfx.fill(x,                y,                 x + 1,         y + SLOT_SIZE,    COL_SLOT_TL);
-        gfx.fill(x,                y + SLOT_SIZE - 1, x + SLOT_SIZE, y + SLOT_SIZE,    COL_SLOT_BR);
-        gfx.fill(x + SLOT_SIZE - 1, y,                x + SLOT_SIZE, y + SLOT_SIZE,    COL_SLOT_BR);
-        gfx.fill(x + 1, y + 1, x + SLOT_SIZE - 1, y + SLOT_SIZE - 1, COL_SLOT_ITEM);
+        gfx.fill(x,                 y,                 x + SLOT_SIZE,     y + 1,             COL_SLOT_TL);
+        gfx.fill(x,                 y,                 x + 1,             y + SLOT_SIZE,     COL_SLOT_TL);
+        gfx.fill(x,                 y + SLOT_SIZE - 1, x + SLOT_SIZE,     y + SLOT_SIZE,     COL_SLOT_BR);
+        gfx.fill(x + SLOT_SIZE - 1, y,                 x + SLOT_SIZE,     y + SLOT_SIZE,     COL_SLOT_BR);
+        gfx.fill(x + 1,             y + 1,             x + SLOT_SIZE - 1, y + SLOT_SIZE - 1, COL_SLOT_ITEM);
     }
 
     private void drawScrollbar(GuiGraphics gfx) {
@@ -410,8 +408,8 @@ public class StorageOverlayGui extends ContainerOverlay {
     // ── Hover guard ───────────────────────────────────────────────────────────
 
     /**
-     * Only hovers/tooltips a slot when it is actually visible inside the scissor viewport.
-     * Without this, slots scrolled above the panel still match the mouse Y in content-space.
+     * Guards fake-item hover so slots that have scrolled outside the viewport
+     * don't match the mouse position in content-space.
      */
     private boolean isSlotHovered(int slotX, int slotY, int mouseX, int contentMouseY, Rect panel) {
         int screenSlotY = slotY - (int) scroll;
