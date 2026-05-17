@@ -5,7 +5,6 @@ import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageData;
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StoragePageSlot;
 import com.github.kd_gaming1.skyblockenhancements.mixin.access.AbstractContainerScreenAccessor;
 import com.github.kd_gaming1.skyblockenhancements.mixin.access.SlotAccessor;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -26,223 +25,161 @@ import net.minecraft.world.item.TooltipFlag;
 public class StorageOverlayGui extends ContainerOverlay {
 
     // ── Layout constants ──────────────────────────────────────────────────────
-    private static final int SLOT_SIZE        = 18;
-    private static final int PAGE_SLOTS_WIDTH = SLOT_SIZE * 9;
-    private static final int PAGE_WIDTH       = PAGE_SLOTS_WIDTH + 4;  // 2 px padding each side
-    private static final int PADDING          = 8;
-    private static final int SCROLL_BAR_W     = 6;
-    private static final int TOP_BAR_H        = 26;
-    /**
-     * Extra pixels the player inventory is pushed down, giving the overlay that
-     * much additional vertical space.  Adjust to taste – 36 px = 2 slot rows.
-     */
-    private static final int PLAYER_INV_PUSH  = 36;
+    private static final int SLOT_SIZE     = 18;
+    private static final int PAGE_WIDTH    = SLOT_SIZE * 9 + 4;   // 2 px side padding
+    private static final int PADDING       = 8;
+    private static final int TOP_BAR_H     = 26;
+    private static final int SCROLL_BAR_W  = 6;
+    private static final int MIN_OVERLAY_H = 60;
 
-    // ── Colour palette ────────────────────────────────────────────────────────
-    /** Main overlay panel – semi-transparent, very dark indigo */
-    private static final int COL_OVERLAY_BG    = 0xD4080810;
-    /** Individual page card background */
-    private static final int COL_PAGE_BG       = 0xFF141422;
-    /** Page card border (default) */
-    private static final int COL_PAGE_BORDER   = 0xFF2E2E4A;
-    /** Slot fill – empty */
-    private static final int COL_SLOT_EMPTY    = 0xFF1C1C2C;
-    /** Slot fill – occupied */
-    private static final int COL_SLOT_ITEM     = 0xFF22223A;
-    /** Slot border – top-left (dark shadow = sunken look) */
-    private static final int COL_SLOT_TL       = 0xFF0F0F1E;
-    /** Slot border – bottom-right (lighter = sunken look) */
-    private static final int COL_SLOT_BR       = 0xFF3A3A5C;
-    /** Slot hover highlight */
-    private static final int COL_SLOT_HOVER    = 0x60FFFFFF;
-    /** Active page title */
-    private static final int COL_TITLE_ACTIVE  = 0xFFFFD700;
-    /** Inactive page title */
-    private static final int COL_TITLE_INACTIVE = 0xFFAAAAAA;
-    /** "Not yet opened" placeholder text */
-    private static final int COL_PLACEHOLDER   = 0xFF55556A;
-    /** Background drawn behind the pushed-down player inventory */
-    private static final int COL_PLAYER_INV_BG = 0xCC0A0A16;
-    /** Thin separator line above player inventory */
-    private static final int COL_SEPARATOR     = 0xFF35355A;
+    /** Gap from screen top to overlay top. */
+    private static final int OVERVIEW_TOP  = SLOT_SIZE;            // 1 slot
 
-    // ── State ─────────────────────────────────────────────────────────────────
+    /** Gap between overlay bottom and inventory panel top. */
+    private static final int INVENTORY_GAP = SLOT_SIZE * 5 / 2;   // 2.5 slots = 45 px
+
+    /** Pixels from inventory panel top to the first slot row. Accommodates the label. */
+    private static final int INV_SLOTS_TOP = 18;
+
+    /** Padding below the last slot row inside the inventory panel. */
+    private static final int BOTTOM_PADDING = 6;
+
+    // ── Colours ───────────────────────────────────────────────────────────────
+    private static final int COL_OVERLAY_BG   = 0xD4080810;
+    private static final int COL_PANEL_BORDER = 0xFF2E2E4A;
+    private static final int COL_PAGE_BG      = 0xFF141422;
+    private static final int COL_SLOT_EMPTY   = 0xFF1C1C2C;
+    private static final int COL_SLOT_ITEM    = 0xFF22223A;
+    private static final int COL_SLOT_TL      = 0xFF0F0F1E;
+    private static final int COL_SLOT_BR      = 0xFF3A3A5C;
+    private static final int COL_SLOT_HOVER   = 0x60FFFFFF;
+    private static final int COL_TITLE_ACTIVE = 0xFFFFD700;
+    private static final int COL_TITLE_IDLE   = 0xFFAAAAAA;
+    private static final int COL_PLACEHOLDER  = 0xFF55556A;
+
+    // ── References ────────────────────────────────────────────────────────────
     private final AbstractContainerScreen<?> screen;
+    private final AbstractContainerScreenAccessor accessor;
     private final StoragePageSlot activeSlot;
     private final Minecraft mc;
 
-    /** Original Y values of the player inventory slots, captured at construction
-     *  time before any per-frame push has been applied. */
-    private final int[] originalPlayerSlotY;
+    /**
+     * Vanilla's topPos, captured once per init. Never mutated.
+     * All screen-space Y calculations anchor to this value.
+     */
+    private int baseTopPos;
 
-    private float scroll = 0f;
-    private int lastRenderedInnerHeight = 0;
-    private boolean knobGrabbed = false;
+    /**
+     * Original slot.y values (relative to topPos) for all 36 player slots,
+     * captured before any push is applied. Preserves the vanilla hotbar gap.
+     */
+    private int[] originalPlayerSlotRelY;
 
+    /**
+     * Pixels added to each player slot's Y so items land inside our custom panel.
+     * Because vanilla renders items at (leftPos + slot.x, topPos + slot.y), this
+     * shift is the only thing needed — no topPos mutation.
+     */
+    private int playerPush;
+
+    // ── Layout state ──────────────────────────────────────────────────────────
+    private int pageWidthCount;
+    private int overviewX, overviewWidth, overviewHeight;
+    private int innerScrollPanelWidth, innerScrollPanelHeight;
+
+    /** Position and size of our custom inventory replacement panel. */
+    private int invPanelX, invPanelY, invPanelW, invPanelH;
+
+    // ── Scroll state ──────────────────────────────────────────────────────────
+    private float scroll;
+    private int lastRenderedContentH;
+    private boolean knobGrabbed;
+
+    // ── Search state ──────────────────────────────────────────────────────────
     private EditBox searchField;
     private String searchQuery = "";
-    private String cachedSearch = null;
-    private Set<StoragePageSlot> filteredPagesCache = Set.of();
+    private String cachedSearchQuery;
+    private Set<StoragePageSlot> cachedFilteredPages = Set.of();
 
-    // Measured layout values (recalculated in onInit / resize)
-    private int pageWidthCount;
-    private int overviewX, overviewY;
-    private int overviewWidth, overviewHeight;
-    private int innerScrollPanelWidth, innerScrollPanelHeight;
-    private int guiLeft, guiTop;
+    // ─────────────────────────────────────────────────────────────────────────
 
-    // ── Constructor ───────────────────────────────────────────────────────────
     public StorageOverlayGui(AbstractContainerScreen<?> screen, StoragePageSlot activeSlot) {
-        this.screen     = screen;
+        this.screen   = screen;
+        this.accessor = (AbstractContainerScreenAccessor) screen;
         this.activeSlot = activeSlot;
-        this.mc         = Minecraft.getInstance();
-
-        // Capture player-slot Y positions NOW, before any preRender pushes them.
-        List<Slot> ps = getPlayerSlots();
-        this.originalPlayerSlotY = new int[ps.size()];
-        for (int i = 0; i < ps.size(); i++) {
-            this.originalPlayerSlotY[i] = ps.get(i).y;
-        }
+        this.mc       = Minecraft.getInstance();
     }
 
     // ── ContainerOverlay ──────────────────────────────────────────────────────
+
     @Override
     public void onInit(int screenWidth, int screenHeight) {
-        for (int i = 0; i < StoragePageSlot.COUNT; i++) {
-            StoragePageSlot slot = new StoragePageSlot(i);
-            if (!StorageData.INSTANCE.hasInventory(slot)) {
-                StorageData.INSTANCE.updateInventory(slot, slot.defaultName(), null);
-            }
-        }
-
-        try {
-            AbstractContainerScreenAccessor a = (AbstractContainerScreenAccessor) screen;
-            guiLeft = a.sbe$getLeftPos();
-            guiTop  = a.sbe$getTopPos();
-        } catch (Exception e) {
-            guiLeft = 0;
-            guiTop  = 0;
-        }
-
+        ensureAllSlotsRegistered();
+        baseTopPos            = accessor.sbe$getTopPos();
+        originalPlayerSlotRelY = capturePlayerSlotRelY();
         recalculateMeasurements();
         scroll = clampScroll(scroll);
-
-        if (searchField == null) {
-            searchField = new EditBox(mc.font, 0, 0, 140, 16, Component.literal("Search items..."));
-            searchField.setMaxLength(64);
-            searchField.setResponder(this::onSearchChanged);
-            searchField.setBordered(true);
-        }
-        updateSearchFieldPosition();
+        initSearchField();
     }
 
     /**
-     * Called every frame, BEFORE hover/slot evaluation.
-     *
-     * <ul>
-     *   <li>Chest slots → moved to their visual overlay position (active page)
-     *       or to off-screen (-9999) so vanilla cannot hover or tooltip them.</li>
-     *   <li>Player inventory slots → pushed down by {@link #PLAYER_INV_PUSH}.</li>
-     * </ul>
+     * Repositions chest slots onto the overlay and pushes player slots into our
+     * custom inventory panel. Vanilla renders all items at (leftPos+slot.x, topPos+slot.y),
+     * so adjusting slot.y is sufficient — no topPos mutation required.
      */
     @Override
     public void preRender(int mouseX, int mouseY) {
-        Rect scrollPanel   = getScrollPanelInner();
-        int contentYOffset = (int) scroll;
-        Rect activeRect    = findActivePageRect();
-
-        // ── Reposition chest slots ────────────────────────────────────────────
-        for (Slot slot : screen.getMenu().slots) {
-            if (slot.container == mc.player.getInventory()) continue;
-
-            if (activeSlot == null || activeRect == null) {
-                // Overview screen: no live page → hide every chest slot.
-                ((SlotAccessor) slot).setX(-9999);
-                ((SlotAccessor) slot).setY(-9999);
-            } else {
-                int absX = activeRect.x + 2 + (slot.index % 9) * SLOT_SIZE;
-                int absY = activeRect.y + mc.font.lineHeight + 6 + (slot.index / 9) * SLOT_SIZE - contentYOffset;
-
-                boolean visible = absY >= scrollPanel.y - SLOT_SIZE + 4
-                        && absY <= scrollPanel.y + scrollPanel.height - 4;
-                if (visible) {
-                    ((SlotAccessor) slot).setX(absX - guiLeft);
-                    ((SlotAccessor) slot).setY(absY - guiTop);
-                } else {
-                    ((SlotAccessor) slot).setX(-9999);
-                    ((SlotAccessor) slot).setY(-9999);
-                }
-            }
-        }
-
-        // ── Push player inventory slots down ──────────────────────────────────
-        List<Slot> playerSlots = getPlayerSlots();
-        for (int i = 0; i < Math.min(playerSlots.size(), originalPlayerSlotY.length); i++) {
-            ((SlotAccessor) playerSlots.get(i)).setY(originalPlayerSlotY[i] + PLAYER_INV_PUSH);
-        }
+        pushPlayerSlots();
+        repositionChestSlots();
     }
 
     @Override
     public void render(GuiGraphics gfx, float delta, int mouseX, int mouseY) {
-        // ── Cover the vanilla chest background ────────────────────────────────
-        try {
-            AbstractContainerScreenAccessor a = (AbstractContainerScreenAccessor) screen;
-            int vLeft   = a.sbe$getLeftPos();
-            int vTop    = a.sbe$getTopPos();
-            int vWidth  = a.sbe$getImageWidth();
-            int firstPSlotOrigY = originalPlayerSlotY.length > 0
-                    ? originalPlayerSlotY[originalPlayerSlotY.length - 36]   // first of last 36 = first hotbar-row area
-                    : screen.getMenu().slots.get(screen.getMenu().slots.size() - 36).y - PLAYER_INV_PUSH;
-            int chestEndY = vTop + firstPSlotOrigY - 12;
-            gfx.fill(vLeft, vTop, vLeft + vWidth, chestEndY, COL_OVERLAY_BG);
-        } catch (Exception ignored) {}
-
-        // ── Main overlay panel ────────────────────────────────────────────────
-        // Rounded-ish look via slightly contrasting border
-        gfx.fill(overviewX,     overviewY,      overviewX + overviewWidth,     overviewY + overviewHeight,     COL_PAGE_BORDER);
-        gfx.fill(overviewX + 1, overviewY + 1,  overviewX + overviewWidth - 1, overviewY + overviewHeight - 1, COL_OVERLAY_BG);
-
-        // ── Scrollable page grid ──────────────────────────────────────────────
-        Rect scrollPanel = getScrollPanelInner();
-        gfx.enableScissor(scrollPanel.x, scrollPanel.y,
-                scrollPanel.x + scrollPanel.width,
-                scrollPanel.y + scrollPanel.height);
-        gfx.pose().pushMatrix();
-        gfx.pose().translate(0f, -scroll);
-
-        Set<StoragePageSlot> filter = getFilteredPages();
-        layoutedForEach(filter, (rect, pageSlot, inventory) -> {
-            boolean isActive = pageSlot.equals(activeSlot);
-            drawPage(gfx, rect, pageSlot, inventory, isActive, mouseX, mouseY, scrollPanel);
-        });
-
-        gfx.pose().popMatrix();
-        gfx.disableScissor();
-
-        // ── Scrollbar ─────────────────────────────────────────────────────────
+        drawOverlayPanel(gfx);
+        drawScrollableContent(gfx, mouseX, mouseY);
         drawScrollbar(gfx);
-
-        // ── Search field ──────────────────────────────────────────────────────
-        if (searchField != null) {
-            searchField.render(gfx, mouseX, mouseY, delta);
-        }
-
-        // ── Player-inventory background (pushed-down area) ────────────────────
-        drawPlayerInventoryBackground(gfx);
+        drawInventoryPanel(gfx);
+        if (searchField != null) searchField.render(gfx, mouseX, mouseY, delta);
     }
 
-    @Override
-    public boolean shouldDrawForeground() { return false; }
+    @Override public boolean shouldDrawForeground() { return false; }
 
     @Override
     public List<Rect> getBounds() {
-        List<Rect> bounds = new ArrayList<>();
-        bounds.add(new Rect(overviewX, overviewY, overviewWidth, overviewHeight));
-        return bounds;
+        return List.of(
+                new Rect(overviewX, OVERVIEW_TOP, overviewWidth, overviewHeight),
+                new Rect(invPanelX, invPanelY, invPanelW, invPanelH));
+    }
+
+    @Override public EditBox getSearchField() { return searchField; }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (handleSearchFieldClick(event, doubleClick)) return true;
+        if (handleScrollbarClick(event)) return true;
+        return handlePageClick(event);
     }
 
     @Override
-    public EditBox getSearchField() { return searchField; }
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (knobGrabbed) { knobGrabbed = false; return true; }
+        return false;
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+        if (!knobGrabbed) return false;
+        scroll = scrollForKnobY(event.y());
+        return true;
+    }
+
+    @Override
+    public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
+        if (!getScrollPanel().contains(x, y)) return false;
+        float dir = SkyblockEnhancementsConfig.storageInverseScroll ? 1f : -1f;
+        scroll = clampScroll(scroll + (float) (scrollY * SkyblockEnhancementsConfig.storageScrollSpeed * dir));
+        return true;
+    }
 
     @Override
     public boolean keyPressed(KeyEvent event) {
@@ -254,382 +191,394 @@ public class StorageOverlayGui extends ContainerOverlay {
         return searchField != null && searchField.isFocused() && searchField.charTyped(event);
     }
 
-    @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        double mx = event.x(), my = event.y();
-
-        if (searchField != null) {
-            if (searchField.mouseClicked(event, doubleClick)) {
-                searchField.setFocused(true);
-                return true;
-            } else {
-                searchField.setFocused(false);
-            }
-        }
-
-        Rect track = getScrollbarTrackRect();
-        if (track.contains(mx, my)) {
-            knobGrabbed = true;
-            float maxScroll = getMaxScroll();
-            if (maxScroll > 0)
-                scroll = Mth.clamp((float) ((my - track.y) / track.height) * maxScroll, 0, maxScroll);
-            return true;
-        }
-
-        Rect scrollPanel = getScrollPanelInner();
-        if (scrollPanel.contains(mx, my)) {
-            StoragePageSlot clicked = findPageAt((int) mx, (int) my);
-            if (clicked != null && !clicked.equals(activeSlot)) {
-                clicked.navigateTo();
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean mouseReleased(MouseButtonEvent event) {
-        if (knobGrabbed) { knobGrabbed = false; return true; }
-        return false;
-    }
-
-    @Override
-    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-        if (knobGrabbed) {
-            Rect track = getScrollbarTrackRect();
-            float maxScroll = getMaxScroll();
-            if (maxScroll > 0)
-                scroll = Mth.clamp((float) ((event.y() - track.y) / track.height) * maxScroll, 0, maxScroll);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
-        Rect scrollPanel = getScrollPanelInner();
-        if (scrollPanel.contains(x, y)) {
-            float d = (float) (scrollY * SkyblockEnhancementsConfig.storageScrollSpeed
-                    * (SkyblockEnhancementsConfig.storageInverseScroll ? 1 : -1));
-            scroll = clampScroll(scroll + d);
-            return true;
-        }
-        return false;
-    }
-
-    // ── Layout helpers ────────────────────────────────────────────────────────
+    // ── Layout ────────────────────────────────────────────────────────────────
 
     private void recalculateMeasurements() {
+        // ── Page overlay ──────────────────────────────────────────────────────
         pageWidthCount = Math.clamp(
                 (screen.width - PADDING * 2) / (PAGE_WIDTH + PADDING),
-                1,
-                SkyblockEnhancementsConfig.storageOverlayColumns);
+                1, SkyblockEnhancementsConfig.storageOverlayColumns);
 
         innerScrollPanelWidth = PAGE_WIDTH * pageWidthCount + (pageWidthCount - 1) * PADDING;
-        overviewWidth  = innerScrollPanelWidth + 3 * PADDING + SCROLL_BAR_W;
-        overviewX      = screen.width / 2 - overviewWidth / 2;
-        overviewY      = PADDING;   // sit closer to the top of the screen
+        overviewWidth = innerScrollPanelWidth + SCROLL_BAR_W + PADDING * 3;
+        overviewX     = screen.width / 2 - overviewWidth / 2;
 
-        // Calculate the pushed-down position of the player inventory.
-        int inventoryStartY = screen.height;
-        try {
-            AbstractContainerScreenAccessor a = (AbstractContainerScreenAccessor) screen;
-            // originalPlayerSlotY[last-36] is the first player slot's original Y
-            int firstPSlotOrigY = (originalPlayerSlotY.length >= 36)
-                    ? originalPlayerSlotY[originalPlayerSlotY.length - 36]
-                    : screen.getMenu().slots.get(screen.getMenu().slots.size() - 36).y;
-            // After the push the inventory starts here; leave 12 px breathing room above it.
-            inventoryStartY = a.sbe$getTopPos() + firstPSlotOrigY - 12 + PLAYER_INV_PUSH;
-        } catch (Exception ignored) {}
+        // ── Inventory panel ───────────────────────────────────────────────────
+        // Height: label section + all slot rows (preserving vanilla hotbar gap) + bottom padding.
+        int slotsH = originalPlayerSlotRelY[originalPlayerSlotRelY.length - 1]
+                - originalPlayerSlotRelY[0] + SLOT_SIZE;
+        invPanelH = INV_SLOTS_TOP + slotsH + BOTTOM_PADDING;
+        invPanelX = accessor.sbe$getLeftPos();
+        invPanelW = accessor.sbe$getImageWidth();
+        invPanelY = screen.height - BOTTOM_PADDING - invPanelH;
 
-        int maxHeight = inventoryStartY - overviewY;
-        overviewHeight = Math.clamp(maxHeight, 120, SkyblockEnhancementsConfig.storageOverlayHeight);
-        innerScrollPanelHeight = overviewHeight - PADDING * 2 - TOP_BAR_H;
-        updateSearchFieldPosition();
+        // ── Overlay fills space between screen top and inventory panel ─────────
+        overviewHeight         = Math.max(MIN_OVERLAY_H, invPanelY - OVERVIEW_TOP - INVENTORY_GAP);
+        innerScrollPanelHeight = overviewHeight - TOP_BAR_H - PADDING * 2;
+
+        // ── Player push: first slot must land at invPanelY + INV_SLOTS_TOP ────
+        int targetFirstSlotScreenY = invPanelY + INV_SLOTS_TOP;
+        int vanillaFirstSlotScreenY = baseTopPos + originalPlayerSlotRelY[0];
+        playerPush = targetFirstSlotScreenY - vanillaFirstSlotScreenY;
     }
 
-    private void updateSearchFieldPosition() {
-        if (searchField == null) return;
-        searchField.setX(overviewX + PADDING);
-        searchField.setY(overviewY + 5);
-        searchField.setWidth(Math.max(100, overviewWidth - SCROLL_BAR_W - PADDING * 4));
+    private Rect getScrollPanel() {
+        return new Rect(overviewX + PADDING, OVERVIEW_TOP + TOP_BAR_H,
+                innerScrollPanelWidth, innerScrollPanelHeight);
     }
 
-    private Rect getScrollPanelInner() {
-        return new Rect(overviewX + PADDING,
-                overviewY + TOP_BAR_H,
-                innerScrollPanelWidth,
-                innerScrollPanelHeight);
-    }
-
-    private Rect getScrollbarTrackRect() {
+    private Rect getScrollbarTrack() {
         return new Rect(overviewX + overviewWidth - PADDING - SCROLL_BAR_W,
-                overviewY + TOP_BAR_H,
-                SCROLL_BAR_W,
-                innerScrollPanelHeight);
+                OVERVIEW_TOP + TOP_BAR_H, SCROLL_BAR_W, innerScrollPanelHeight);
     }
 
-    // ── Page drawing ──────────────────────────────────────────────────────────
+    // ── Slot repositioning ────────────────────────────────────────────────────
 
-    @FunctionalInterface
-    private interface PageConsumer {
-        void accept(Rect rect, StoragePageSlot pageSlot, StorageData.StorageInventory inventory);
-    }
-
-    private int calculatePageHeight(StorageData.StorageInventory inventory, StoragePageSlot pageSlot) {
-        int rows = 1;
-        if (pageSlot.equals(activeSlot)) {
-            rows = Math.max(1, (screen.getMenu().slots.size() - 36) / 9);
-        } else if (inventory != null && inventory.inventory() != null) {
-            rows = inventory.inventory().rows();
+    private void pushPlayerSlots() {
+        List<Slot> playerSlots = getPlayerSlots();
+        for (int i = 0; i < Math.min(playerSlots.size(), originalPlayerSlotRelY.length); i++) {
+            ((SlotAccessor) playerSlots.get(i)).setY(originalPlayerSlotRelY[i] + playerPush);
         }
-        return Math.clamp(rows, 1, 6) * SLOT_SIZE + mc.font.lineHeight + 10;
     }
 
-    private void layoutedForEach(Set<StoragePageSlot> filter, PageConsumer consumer) {
-        int xOffset = 0, maxRowH = 0, totalH = 0;
-        for (var entry : StorageData.INSTANCE.getInventories().entrySet()) {
-            if (!filter.contains(entry.getKey())) continue;
+    private void repositionChestSlots() {
+        Rect panel        = getScrollPanel();
+        Rect activeRect   = findPageRect(activeSlot);
+        int leftPos       = accessor.sbe$getLeftPos();
 
-            StorageData.StorageInventory inv = entry.getValue();
-            int pageH = calculatePageHeight(inv, entry.getKey());
-            maxRowH = Math.max(maxRowH, pageH);
+        for (Slot slot : screen.getMenu().slots) {
+            if (slot.container == mc.player.getInventory()) continue;
 
-            int x = overviewX + PADDING + (PAGE_WIDTH + PADDING) * xOffset;
-            int y = overviewY + TOP_BAR_H + totalH;
-            consumer.accept(new Rect(x, y, PAGE_WIDTH, pageH), entry.getKey(), inv);
+            if (activeSlot == null || activeRect == null) {
+                hideSlot(slot);
+                continue;
+            }
 
-            xOffset++;
-            if (xOffset >= pageWidthCount) {
-                totalH += maxRowH + PADDING;
-                xOffset = 0;
-                maxRowH = 0;
+            int screenX = activeRect.x + 2 + (slot.index % 9) * SLOT_SIZE;
+            int screenY = activeRect.y + mc.font.lineHeight + 6 + (slot.index / 9) * SLOT_SIZE - (int) scroll;
+            boolean inPanel = screenY >= panel.y && screenY + SLOT_SIZE <= panel.y + panel.height;
+
+            if (inPanel) {
+                ((SlotAccessor) slot).setX(screenX - leftPos);
+                ((SlotAccessor) slot).setY(screenY - baseTopPos);
+            } else {
+                hideSlot(slot);
             }
         }
-        lastRenderedInnerHeight = totalH + maxRowH;
     }
 
-    /**
-     * Draw one storage-page card.
-     *
-     * @param scrollPanel  the visible clip region in SCREEN space (not scroll-offset space),
-     *                     used to gate tooltip emission so off-screen items never show tooltips.
-     */
+    private static void hideSlot(Slot slot) {
+        ((SlotAccessor) slot).setX(-9999);
+        ((SlotAccessor) slot).setY(-9999);
+    }
+
+    // ── Rendering ─────────────────────────────────────────────────────────────
+
+    private void drawOverlayPanel(GuiGraphics gfx) {
+        int bottom = OVERVIEW_TOP + overviewHeight;
+        gfx.fill(overviewX,     OVERVIEW_TOP,     overviewX + overviewWidth,     bottom,     COL_PANEL_BORDER);
+        gfx.fill(overviewX + 1, OVERVIEW_TOP + 1, overviewX + overviewWidth - 1, bottom - 1, COL_OVERLAY_BG);
+    }
+
+    private void drawScrollableContent(GuiGraphics gfx, int mouseX, int mouseY) {
+        Rect panel = getScrollPanel();
+        gfx.enableScissor(panel.x, panel.y, panel.x + panel.width, panel.y + panel.height);
+        gfx.pose().pushMatrix();
+        gfx.pose().translate(0f, -scroll);
+
+        forEachPage(getFilteredPages(), (rect, slot, inv) ->
+                drawPage(gfx, rect, slot, inv, slot.equals(activeSlot), mouseX, mouseY, panel));
+
+        gfx.pose().popMatrix();
+        gfx.disableScissor();
+    }
+
     private void drawPage(GuiGraphics gfx, Rect rect, StoragePageSlot pageSlot,
-                          StorageData.StorageInventory inventory, boolean isActive,
-                          int mouseX, int mouseY, Rect scrollPanel) {
-        int rows = 1;
-        if (isActive) {
-            rows = Math.max(1, (screen.getMenu().slots.size() - 36) / 9);
-        } else if (inventory != null && inventory.inventory() != null) {
-            rows = inventory.inventory().rows();
-        }
-        rows = Math.clamp(rows, 1, 6);
-
-        int pageContentH = rows * SLOT_SIZE + mc.font.lineHeight + 10;
-
-        // ── Card border + fill ────────────────────────────────────────────────
-        int borderCol = parseColor(isActive
-                ? SkyblockEnhancementsConfig.storageActivePageOutlineColor
-                : SkyblockEnhancementsConfig.storageInactivePageBorderColor);
+                          StorageData.StorageInventory inv, boolean isActive,
+                          int mouseX, int mouseY, Rect panel) {
+        int rows    = pageRows(pageSlot, inv, isActive);
+        int cardH   = rows * SLOT_SIZE + mc.font.lineHeight + 10;
         int cardTop = rect.y + mc.font.lineHeight + 4;
 
-        // Outer border
-        gfx.fill(rect.x, cardTop, rect.x + PAGE_WIDTH, rect.y + pageContentH, borderCol);
-        // Inner fill
-        gfx.fill(rect.x + 1, cardTop + 1, rect.x + PAGE_WIDTH - 1, rect.y + pageContentH - 1, COL_PAGE_BG);
+        int borderColor = parseColor(isActive
+                ? SkyblockEnhancementsConfig.storageActivePageOutlineColor
+                : SkyblockEnhancementsConfig.storageInactivePageBorderColor);
+        gfx.fill(rect.x, cardTop, rect.x + PAGE_WIDTH, rect.y + cardH, borderColor);
+        gfx.fill(rect.x + 1, cardTop + 1, rect.x + PAGE_WIDTH - 1, rect.y + cardH - 1, COL_PAGE_BG);
 
-        // ── Title ─────────────────────────────────────────────────────────────
-        String title = (inventory != null && inventory.title() != null)
-                ? inventory.title()
-                : pageSlot.defaultName();
+        String title = inv != null && inv.title() != null ? inv.title() : pageSlot.defaultName();
         gfx.drawString(mc.font, title, rect.x + 4, rect.y + 2,
-                isActive ? COL_TITLE_ACTIVE : COL_TITLE_INACTIVE, true);
+                isActive ? COL_TITLE_ACTIVE : COL_TITLE_IDLE, true);
 
-        // ── "Not yet opened" placeholder ──────────────────────────────────────
-        if (inventory == null || inventory.inventory() == null) {
+        if (inv == null || inv.inventory() == null) {
             gfx.drawCenteredString(mc.font, "Not yet opened",
-                    rect.x + PAGE_WIDTH / 2, rect.y + pageContentH / 2, COL_PLACEHOLDER);
+                    rect.x + PAGE_WIDTH / 2, rect.y + cardH / 2, COL_PLACEHOLDER);
             return;
         }
 
-        // ── Item grid ─────────────────────────────────────────────────────────
-        List<ItemStack> stacks  = isActive ? getLiveStacks() : inventory.inventory().stacks();
-        int slotCount           = Math.min(stacks.size(), rows * 9);
-        int contentMouseY       = mouseY + (int) scroll;   // mouse Y in scroll-offset space
+        // Slot backgrounds are always drawn — they provide the grid even for the active page.
+        drawSlotBackgrounds(gfx, rect, rows);
 
-        for (int i = 0; i < slotCount; i++) {
+        // Fake items only for cached pages; the active page is rendered by vanilla.
+        if (!isActive) {
+            drawFakeItems(gfx, rect, inv.inventory().stacks(), rows, panel, mouseX, mouseY);
+        }
+    }
+
+    private void drawSlotBackgrounds(GuiGraphics gfx, Rect pageRect, int rows) {
+        for (int i = 0; i < rows * 9; i++) {
+            int x = pageRect.x + 2 + (i % 9) * SLOT_SIZE;
+            int y = pageRect.y + mc.font.lineHeight + 6 + (i / 9) * SLOT_SIZE;
+            drawSlotBackground(gfx, x, y);
+        }
+    }
+
+    private void drawFakeItems(GuiGraphics gfx, Rect pageRect, List<ItemStack> stacks,
+                               int rows, Rect panel, int mouseX, int mouseY) {
+        int count         = Math.min(stacks.size(), rows * 9);
+        int contentMouseY = mouseY + (int) scroll;
+
+        for (int i = 0; i < count; i++) {
             ItemStack stack = stacks.get(i);
-            int slotX = rect.x + 2 + (i % 9) * SLOT_SIZE;
-            int slotY = rect.y + mc.font.lineHeight + 6 + (i / 9) * SLOT_SIZE;
+            if (stack.isEmpty()) continue;
 
-            // ── Vanilla-style inset slot ───────────────────────────────────
-            // Top + left dark shadow  (makes slot look sunken)
-            gfx.fill(slotX,          slotY,          slotX + SLOT_SIZE, slotY + 1,          COL_SLOT_TL);
-            gfx.fill(slotX,          slotY,          slotX + 1,         slotY + SLOT_SIZE,  COL_SLOT_TL);
-            // Bottom + right lighter highlight
-            gfx.fill(slotX,          slotY + SLOT_SIZE - 1, slotX + SLOT_SIZE, slotY + SLOT_SIZE, COL_SLOT_BR);
-            gfx.fill(slotX + SLOT_SIZE - 1, slotY, slotX + SLOT_SIZE, slotY + SLOT_SIZE,   COL_SLOT_BR);
-            // Inner fill
-            int fillCol = stack.isEmpty() ? COL_SLOT_EMPTY : COL_SLOT_ITEM;
-            gfx.fill(slotX + 1, slotY + 1, slotX + SLOT_SIZE - 1, slotY + SLOT_SIZE - 1, fillCol);
+            int slotX = pageRect.x + 2 + (i % 9) * SLOT_SIZE;
+            int slotY = pageRect.y + mc.font.lineHeight + 6 + (i / 9) * SLOT_SIZE;
 
-            // ── Search highlight ───────────────────────────────────────────
-            if (!searchQuery.isBlank() && !stack.isEmpty() && matchesSearch(stack, searchQuery)) {
+            gfx.renderFakeItem(stack, slotX + 1, slotY + 1);
+            gfx.renderItemDecorations(mc.font, stack, slotX + 1, slotY + 1);
+
+            if (!searchQuery.isBlank() && matchesSearch(stack, searchQuery)) {
                 gfx.fill(slotX + 1, slotY + 1, slotX + SLOT_SIZE - 1, slotY + SLOT_SIZE - 1,
                         parseColor(SkyblockEnhancementsConfig.storageSearchHighlightColor));
             }
 
-            if (!stack.isEmpty() && !isActive) {
-                // Render the fake item
-                gfx.pose().pushMatrix();
-                gfx.renderFakeItem(stack, slotX + 1, slotY + 1);
-                gfx.renderItemDecorations(mc.font, stack, slotX + 1, slotY + 1);
-                gfx.pose().popMatrix();
-
-                // ── Hover highlight + tooltip ──────────────────────────────
-                // TOOLTIP BUG FIX: only emit the tooltip if the slot is actually
-                // inside the scissor viewport (screen coordinates).
-                // Screen Y of the slot = slotY - scroll.
-                int screenSlotY = slotY - (int) scroll;
-                boolean inViewport = screenSlotY      >= scrollPanel.y
-                        && screenSlotY + SLOT_SIZE <= scrollPanel.y + scrollPanel.height
-                        && slotX          >= scrollPanel.x
-                        && slotX + SLOT_SIZE <= scrollPanel.x + scrollPanel.width;
-
-                boolean isHovered = inViewport
-                        && mouseX >= slotX && mouseX < slotX + SLOT_SIZE
-                        && contentMouseY >= slotY && contentMouseY < slotY + SLOT_SIZE;
-
-                if (isHovered) {
-                    // White-border highlight (same as vanilla slot hover)
-                    gfx.fill(slotX + 1, slotY + 1, slotX + SLOT_SIZE - 1, slotY + SLOT_SIZE - 1, COL_SLOT_HOVER);
-                    gfx.setTooltipForNextFrame(mc.font, stack, mouseX, mouseY);
-                }
+            if (isSlotHovered(slotX, slotY, mouseX, contentMouseY, panel)) {
+                gfx.fill(slotX + 1, slotY + 1, slotX + SLOT_SIZE - 1, slotY + SLOT_SIZE - 1, COL_SLOT_HOVER);
+                gfx.setTooltipForNextFrame(mc.font, stack, mouseX, mouseY);
             }
         }
     }
 
-    // ── Scrollbar ─────────────────────────────────────────────────────────────
+    /**
+     * Draws the custom inventory panel that replaces vanilla's player inventory background.
+     * Slot backgrounds are drawn here; vanilla renders the actual items on top via slot positions.
+     */
+    private void drawInventoryPanel(GuiGraphics gfx) {
+        // Panel background
+        gfx.fill(invPanelX,     invPanelY,     invPanelX + invPanelW,     invPanelY + invPanelH,     COL_PANEL_BORDER);
+        gfx.fill(invPanelX + 1, invPanelY + 1, invPanelX + invPanelW - 1, invPanelY + invPanelH - 1, COL_OVERLAY_BG);
+
+        // "Inventory" label
+        gfx.drawString(mc.font, Component.translatable("container.inventory"),
+                invPanelX + PADDING, invPanelY + PADDING - 2, COL_TITLE_IDLE, false);
+
+        // Slot backgrounds — drawn at the same screen positions vanilla will place items.
+        int leftPos = accessor.sbe$getLeftPos();
+        List<Slot> playerSlots = getPlayerSlots();
+        for (int i = 0; i < Math.min(playerSlots.size(), originalPlayerSlotRelY.length); i++) {
+            Slot slot = playerSlots.get(i);
+            int screenX = leftPos + slot.x;
+            int screenY = baseTopPos + slot.y;   // slot.y already pushed in preRender
+            drawSlotBackground(gfx, screenX, screenY);
+        }
+    }
+
+    /** Vanilla-style sunken slot: dark top/left edges, lighter bottom/right edges. */
+    private void drawSlotBackground(GuiGraphics gfx, int x, int y) {
+        gfx.fill(x,                y,                 x + SLOT_SIZE, y + 1,            COL_SLOT_TL);
+        gfx.fill(x,                y,                 x + 1,         y + SLOT_SIZE,    COL_SLOT_TL);
+        gfx.fill(x,                y + SLOT_SIZE - 1, x + SLOT_SIZE, y + SLOT_SIZE,    COL_SLOT_BR);
+        gfx.fill(x + SLOT_SIZE - 1, y,                x + SLOT_SIZE, y + SLOT_SIZE,    COL_SLOT_BR);
+        gfx.fill(x + 1, y + 1, x + SLOT_SIZE - 1, y + SLOT_SIZE - 1, COL_SLOT_ITEM);
+    }
 
     private void drawScrollbar(GuiGraphics gfx) {
-        Rect track = getScrollbarTrackRect();
-        // Track background
+        Rect track = getScrollbarTrack();
         gfx.fill(track.x, track.y, track.x + track.width, track.y + track.height, 0x30FFFFFF);
 
-        float maxScroll = getMaxScroll();
-        if (maxScroll <= 0) return;
+        float max = maxScroll();
+        if (max <= 0) return;
 
-        float visibleRatio = (float) innerScrollPanelHeight / Math.max(lastRenderedInnerHeight, 1);
-        int knobH = Math.max(20, (int) (track.height * visibleRatio));
-        int knobY = track.y + (int) ((scroll / maxScroll) * (track.height - knobH));
-        // Knob
+        float ratio = (float) innerScrollPanelHeight / Math.max(lastRenderedContentH, 1);
+        int knobH   = Math.max(20, (int) (track.height * ratio));
+        int knobY   = track.y + (int) ((scroll / max) * (track.height - knobH));
         gfx.fill(track.x,     knobY,     track.x + track.width,     knobY + knobH,     0xC0FFFFFF);
-        // Inner knob (slightly darker, for depth)
         gfx.fill(track.x + 1, knobY + 1, track.x + track.width - 1, knobY + knobH - 1, 0x80AAAAAA);
     }
 
-    // ── Player-inventory background ───────────────────────────────────────────
+    // ── Hover guard ───────────────────────────────────────────────────────────
 
     /**
-     * Draws a background panel behind the pushed-down player inventory so that
-     * the gap between the overlay and the inventory doesn't look hollow.
+     * Only hovers/tooltips a slot when it is actually visible inside the scissor viewport.
+     * Without this, slots scrolled above the panel still match the mouse Y in content-space.
      */
-    private void drawPlayerInventoryBackground(GuiGraphics gfx) {
-        try {
-            AbstractContainerScreenAccessor a = (AbstractContainerScreenAccessor) screen;
-            int firstPSlotOrigY = (originalPlayerSlotY.length >= 36)
-                    ? originalPlayerSlotY[originalPlayerSlotY.length - 36]
-                    : screen.getMenu().slots.get(screen.getMenu().slots.size() - 36).y - PLAYER_INV_PUSH;
-
-            int vLeft   = a.sbe$getLeftPos();
-            int vTop    = a.sbe$getTopPos();
-            int vWidth  = a.sbe$getImageWidth();
-            // Where the pushed inventory starts (12 px above the first slot row)
-            int panelY  = vTop + firstPSlotOrigY - 12 + PLAYER_INV_PUSH;
-            // Enough height for 4 slot rows + hotbar row + padding
-            int panelH  = 4 * SLOT_SIZE + SLOT_SIZE + 14;
-
-            // Background fill
-            gfx.fill(vLeft, panelY, vLeft + vWidth, panelY + panelH, COL_PLAYER_INV_BG);
-            // Top separator line
-            gfx.fill(vLeft, panelY, vLeft + vWidth, panelY + 1, COL_SEPARATOR);
-        } catch (Exception ignored) {}
+    private boolean isSlotHovered(int slotX, int slotY, int mouseX, int contentMouseY, Rect panel) {
+        int screenSlotY = slotY - (int) scroll;
+        boolean inViewport = screenSlotY >= panel.y
+                && screenSlotY + SLOT_SIZE <= panel.y + panel.height
+                && slotX >= panel.x
+                && slotX + SLOT_SIZE <= panel.x + panel.width;
+        return inViewport
+                && mouseX        >= slotX && mouseX        < slotX + SLOT_SIZE
+                && contentMouseY >= slotY && contentMouseY < slotY + SLOT_SIZE;
     }
 
-    // ── Search + filter ───────────────────────────────────────────────────────
+    // ── Page iteration ────────────────────────────────────────────────────────
+
+    @FunctionalInterface
+    private interface PageConsumer {
+        void accept(Rect rect, StoragePageSlot slot, StorageData.StorageInventory inv);
+    }
+
+    private void forEachPage(Set<StoragePageSlot> filter, PageConsumer consumer) {
+        int col = 0, maxRowH = 0, totalH = 0;
+        for (var entry : StorageData.INSTANCE.getInventories().entrySet()) {
+            if (!filter.contains(entry.getKey())) continue;
+            StorageData.StorageInventory inv = entry.getValue();
+
+            int pageH = pageRows(entry.getKey(), inv, entry.getKey().equals(activeSlot)) * SLOT_SIZE
+                    + mc.font.lineHeight + 10;
+            maxRowH = Math.max(maxRowH, pageH);
+
+            consumer.accept(
+                    new Rect(overviewX + PADDING + (PAGE_WIDTH + PADDING) * col,
+                            OVERVIEW_TOP + TOP_BAR_H + totalH, PAGE_WIDTH, pageH),
+                    entry.getKey(), inv);
+
+            if (++col >= pageWidthCount) {
+                totalH += maxRowH + PADDING;
+                col = 0;
+                maxRowH = 0;
+            }
+        }
+        lastRenderedContentH = totalH + maxRowH;
+    }
+
+    private int pageRows(StoragePageSlot slot, StorageData.StorageInventory inv, boolean isActive) {
+        if (isActive) return Math.max(1, (screen.getMenu().slots.size() - 36) / 9);
+        if (inv != null && inv.inventory() != null) return inv.inventory().rows();
+        return 1;
+    }
+
+    // ── Hit-testing ───────────────────────────────────────────────────────────
+
+    private Rect findPageRect(StoragePageSlot target) {
+        if (target == null) return null;
+        Rect[] result = {null};
+        forEachPage(getFilteredPages(), (rect, slot, inv) -> {
+            if (result[0] == null && slot.equals(target)) result[0] = rect;
+        });
+        return result[0];
+    }
+
+    private StoragePageSlot pageAt(int screenX, int screenY) {
+        StoragePageSlot[] result = {null};
+        forEachPage(getFilteredPages(), (rect, slot, inv) -> {
+            if (result[0] == null && rect.contains(screenX, screenY + (int) scroll)) result[0] = slot;
+        });
+        return result[0];
+    }
+
+    // ── Input handlers ────────────────────────────────────────────────────────
+
+    private boolean handleSearchFieldClick(MouseButtonEvent event, boolean doubleClick) {
+        if (searchField == null) return false;
+        if (searchField.mouseClicked(event, doubleClick)) {
+            searchField.setFocused(true);
+            return true;
+        }
+        searchField.setFocused(false);
+        return false;
+    }
+
+    private boolean handleScrollbarClick(MouseButtonEvent event) {
+        if (!getScrollbarTrack().contains(event.x(), event.y())) return false;
+        knobGrabbed = true;
+        scroll = scrollForKnobY(event.y());
+        return true;
+    }
+
+    private boolean handlePageClick(MouseButtonEvent event) {
+        if (!getScrollPanel().contains(event.x(), event.y())) return false;
+        StoragePageSlot clicked = pageAt((int) event.x(), (int) event.y());
+        if (clicked != null && !clicked.equals(activeSlot)) {
+            clicked.navigateTo();
+            return true;
+        }
+        return false;
+    }
+
+    private float scrollForKnobY(double mouseY) {
+        Rect track = getScrollbarTrack();
+        return clampScroll((float) ((mouseY - track.y) / track.height) * maxScroll());
+    }
+
+    // ── Search ────────────────────────────────────────────────────────────────
+
+    private void initSearchField() {
+        if (searchField == null) {
+            searchField = new EditBox(mc.font, 0, 0, 140, 16, Component.literal("Search items..."));
+            searchField.setMaxLength(64);
+            searchField.setResponder(this::onSearchChanged);
+            searchField.setBordered(true);
+        }
+        searchField.setX(overviewX + PADDING);
+        searchField.setY(OVERVIEW_TOP + 5);
+        searchField.setWidth(Math.max(80, overviewWidth - SCROLL_BAR_W - PADDING * 4));
+    }
 
     private void onSearchChanged(String query) {
-        this.searchQuery  = query != null ? query : "";
-        this.cachedSearch = null;
+        searchQuery       = query != null ? query : "";
+        cachedSearchQuery = null;
         scroll = 0f;
     }
 
     private Set<StoragePageSlot> getFilteredPages() {
         if (searchQuery.isBlank()) return StorageData.INSTANCE.getInventories().keySet();
-        if (cachedSearch != null && cachedSearch.equals(searchQuery)) return filteredPagesCache;
+        if (searchQuery.equals(cachedSearchQuery)) return cachedFilteredPages;
 
-        filteredPagesCache = StorageData.INSTANCE.getInventories().entrySet().stream()
+        cachedFilteredPages = StorageData.INSTANCE.getInventories().entrySet().stream()
                 .filter(e -> e.getValue() == null
                         || e.getValue().inventory() == null
                         || e.getValue().inventory().stacks().stream()
                         .anyMatch(s -> matchesSearch(s, searchQuery)))
                 .map(java.util.Map.Entry::getKey)
                 .collect(java.util.stream.Collectors.toSet());
-        cachedSearch = searchQuery;
-        return filteredPagesCache;
+        cachedSearchQuery = searchQuery;
+        return cachedFilteredPages;
     }
 
-    private boolean matchesSearch(ItemStack stack, String search) {
+    private boolean matchesSearch(ItemStack stack, String query) {
         if (stack.isEmpty()) return false;
-        Set<String> words = new TreeSet<>(Arrays.asList(search.toLowerCase().split("\\s+")));
+        Set<String> words = new TreeSet<>(Arrays.asList(query.toLowerCase().split("\\s+")));
         words.removeIf(stack.getHoverName().getString().toLowerCase()::contains);
         if (words.isEmpty()) return true;
         for (Component line : stack.getTooltipLines(
                 net.minecraft.world.item.Item.TooltipContext.of(mc.level),
-                mc.player,
-                TooltipFlag.Default.NORMAL)) {
+                mc.player, TooltipFlag.Default.NORMAL)) {
             words.removeIf(line.getString().toLowerCase()::contains);
             if (words.isEmpty()) return true;
         }
         return false;
     }
 
-    // ── Click helpers ─────────────────────────────────────────────────────────
+    // ── Utilities ─────────────────────────────────────────────────────────────
 
-    private StoragePageSlot findPageAt(int mx, int my) {
-        StoragePageSlot[] result = { null };
-        layoutedForEach(getFilteredPages(), (rect, pageSlot, inventory) -> {
-            if (result[0] == null && rect.contains(mx, my + (int) scroll)) result[0] = pageSlot;
-        });
-        return result[0];
-    }
-
-    private Rect findActivePageRect() {
-        if (activeSlot == null) return null;
-        Set<StoragePageSlot> filter = getFilteredPages();
-        Rect[] result = { null };
-        layoutedForEach(filter, (rect, pageSlot, inventory) -> {
-            if (result[0] == null && pageSlot.equals(activeSlot)) result[0] = rect;
-        });
-        return result[0];
-    }
-
-    // ── Live-slot helpers ─────────────────────────────────────────────────────
-
-    private List<ItemStack> getLiveStacks() {
-        List<ItemStack> stacks = new ArrayList<>();
-        for (Slot slot : screen.getMenu().slots) {
-            if (slot.container != mc.player.getInventory()) {
-                while (stacks.size() <= slot.index) stacks.add(ItemStack.EMPTY);
-                stacks.set(slot.index, slot.getItem());
+    private void ensureAllSlotsRegistered() {
+        for (int i = 0; i < StoragePageSlot.COUNT; i++) {
+            StoragePageSlot s = new StoragePageSlot(i);
+            if (!StorageData.INSTANCE.hasInventory(s)) {
+                StorageData.INSTANCE.updateInventory(s, s.defaultName(), null);
             }
         }
-        int rows   = Math.max(1, (stacks.size() + 8) / 9);
-        int target = Math.min(6, rows) * 9;
-        while (stacks.size() < target) stacks.add(ItemStack.EMPTY);
-        if (stacks.size() > target) stacks = stacks.subList(0, target);
-        return stacks;
+    }
+
+    private int[] capturePlayerSlotRelY() {
+        List<Slot> slots = getPlayerSlots();
+        int[] relY = new int[slots.size()];
+        for (int i = 0; i < slots.size(); i++) relY[i] = slots.get(i).y;
+        return relY;
     }
 
     private List<Slot> getPlayerSlots() {
@@ -638,21 +587,14 @@ public class StorageOverlayGui extends ContainerOverlay {
                 .toList();
     }
 
-    // ── Scroll math ───────────────────────────────────────────────────────────
-
-    private float getMaxScroll()           { return Math.max(0, lastRenderedInnerHeight - innerScrollPanelHeight); }
-    private float clampScroll(float value) { return Mth.clamp(value, 0f, getMaxScroll()); }
-
-    // ── Utility ───────────────────────────────────────────────────────────────
+    private float maxScroll()          { return Math.max(0f, lastRenderedContentH - innerScrollPanelHeight); }
+    private float clampScroll(float v) { return Mth.clamp(v, 0f, maxScroll()); }
 
     private static int parseColor(String hex) {
         try {
             if (hex.startsWith("#")) hex = hex.substring(1);
             if (hex.length() == 6) return 0xFF000000 | Integer.parseInt(hex, 16);
-            if (hex.length() == 8) {
-                int rgba = (int) Long.parseLong(hex, 16);
-                return (rgba >> 8) | ((rgba & 0xFF) << 24);
-            }
+            if (hex.length() == 8) { int v = (int) Long.parseLong(hex, 16); return (v >> 8) | ((v & 0xFF) << 24); }
         } catch (NumberFormatException ignored) {}
         return 0xFFFFFFFF;
     }

@@ -4,14 +4,11 @@ import com.github.kd_gaming1.skyblockenhancements.gui.storage.ContainerOverlay;
 import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageOverlayLifecycle;
 import com.github.kd_gaming1.skyblockenhancements.gui.storage.HasContainerOverlay;
 import com.github.kd_gaming1.skyblockenhancements.gui.storage.Rect;
-import com.github.kd_gaming1.skyblockenhancements.mixin.access.AbstractContainerScreenAccessor;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -27,22 +24,15 @@ public abstract class ContainerScreenOverlayMixin<T extends AbstractContainerMen
     private ContainerOverlay sbe$overlay;
 
     @Override
-    public ContainerOverlay skyBlock_Enhancements$getSbeOverlay() {
-        return sbe$overlay;
-    }
+    public ContainerOverlay skyBlock_Enhancements$getSbeOverlay() { return sbe$overlay; }
 
     @Override
-    public void skyBlock_Enhancements$setSbeOverlay(ContainerOverlay overlay) {
-        this.sbe$overlay = overlay;
-    }
+    public void skyBlock_Enhancements$setSbeOverlay(ContainerOverlay overlay) { this.sbe$overlay = overlay; }
 
     @Inject(method = "init()V", at = @At("TAIL"))
     private void sbe$onInit(CallbackInfo ci) {
         if (sbe$overlay == null) {
-            ContainerOverlay overlay = StorageOverlayLifecycle.createOverlay((AbstractContainerScreen<?>)(Object)this);
-            if (overlay != null) {
-                sbe$overlay = overlay;
-            }
+            sbe$overlay = StorageOverlayLifecycle.createOverlay((AbstractContainerScreen<?>)(Object)this);
         }
         if (sbe$overlay != null) {
             sbe$overlay.onInit(((Screen)(Object)this).width, ((Screen)(Object)this).height);
@@ -51,11 +41,13 @@ public abstract class ContainerScreenOverlayMixin<T extends AbstractContainerMen
 
     @Inject(method = "render", at = @At("HEAD"))
     private void sbe$preRender(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
-        if (sbe$overlay != null) {
-            sbe$overlay.preRender(mouseX, mouseY);
-        }
+        if (sbe$overlay != null) sbe$overlay.preRender(mouseX, mouseY);
     }
 
+    /**
+     * Suppress the entire vanilla background texture.
+     * Our overlay and inventory panel replace it completely.
+     */
     @Inject(
             method = "renderBackground",
             at = @At(
@@ -66,15 +58,9 @@ public abstract class ContainerScreenOverlayMixin<T extends AbstractContainerMen
     )
     private void sbe$beforeRenderBg(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if (sbe$overlay == null) return;
-
-        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
-        try {
-            int firstPlayerSlotY = screen.getMenu().slots.get(screen.getMenu().slots.size() - 36).y;
-            int inventoryTopY = ((AbstractContainerScreenAccessor) screen).sbe$getTopPos() + firstPlayerSlotY - 12;
-
-            // Allow vanilla background ONLY where the player inventory sits
-            graphics.enableScissor(0, inventoryTopY, screen.width, screen.height);
-        } catch (Exception ignored) {}
+        // Scissor to an off-screen strip so renderBg draws nothing.
+        int h = ((Screen)(Object)this).height;
+        graphics.enableScissor(0, h, ((Screen)(Object)this).width, h + 1);
     }
 
     @Inject(
@@ -87,22 +73,14 @@ public abstract class ContainerScreenOverlayMixin<T extends AbstractContainerMen
     )
     private void sbe$afterRenderBg(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if (sbe$overlay == null) return;
-
-        // Stop clipping after vanilla background draws
         graphics.disableScissor();
-
-        // Draw your overlay (this replaces the chest area)
         sbe$overlay.render(graphics, partialTick, mouseX, mouseY);
     }
 
+    /** Cancel vanilla label rendering; our panels draw all labels. */
     @Inject(method = "renderLabels", at = @At("HEAD"), cancellable = true)
     private void sbe$onRenderLabels(GuiGraphics graphics, int mouseX, int mouseY, CallbackInfo ci) {
-        if (sbe$overlay != null) {
-            AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
-            int yOffset = screen.getMenu().slots.size() > 36 ? screen.getMenu().slots.get(screen.getMenu().slots.size() - 36).y - 12 : 0;
-            graphics.drawString(Minecraft.getInstance().font, Component.translatable("container.inventory"), 8, yOffset, 4210752, false);
-            ci.cancel();
-        }
+        if (sbe$overlay != null) ci.cancel();
     }
 
     @Inject(method = "mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z", at = @At("HEAD"), cancellable = true)
@@ -142,7 +120,5 @@ public abstract class ContainerScreenOverlayMixin<T extends AbstractContainerMen
     }
 
     @Inject(method = "removed", at = @At("HEAD"))
-    private void sbe$onRemoved(CallbackInfo ci) {
-        sbe$overlay = null;
-    }
+    private void sbe$onRemoved(CallbackInfo ci) { sbe$overlay = null; }
 }
