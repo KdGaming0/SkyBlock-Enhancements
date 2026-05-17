@@ -11,15 +11,18 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCa
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCategoryFilter;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCategoryState;
 import com.github.kd_gaming1.skyblockenhancements.mixin.rrv.accessor.AbstractRrvItemListOverlayAccessor;
+import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
 
-import java.util.Objects; // Added import
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique; // Added import
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -42,7 +45,9 @@ public abstract class RrvCategoryFilterMixin {
 
     @Unique
     private String sbe$lastQuery = null;
-    // -----------------------------------
+
+    @Unique
+    private final List<CategoryIconButton> sbe$categoryButtons = new ArrayList<>();
 
     // ── Search prefix parsing + stripping ────────────────────────────────────────
 
@@ -91,6 +96,8 @@ public abstract class RrvCategoryFilterMixin {
     private void sbe$applyCategoryFilter(String newQuery, CallbackInfo ci) {
         if (!RrvCompat.isActive()) return;
 
+        sbe$updateCategoryButtonVisibility();
+
         SkyblockItemCategory target = SkyblockCategoryState.getActiveCategory();
         if (target == null) return;
 
@@ -128,10 +135,35 @@ public abstract class RrvCategoryFilterMixin {
     private void sbe$addCategoryButtons(ScreenContext ctx, CallbackInfo ci) {
         if (!RrvCompat.isActive() || searchbar == null) return;
 
+        sbe$categoryButtons.clear();
+
         for (CategoryIconButton btn :
                 SkyblockCategoryButtons.create(
                         searchbar.getX(), searchbar.getY(), searchbar.getWidth())) {
+            sbe$categoryButtons.add(btn);
             ctx.addRenderable(btn);
+        }
+
+        sbe$updateCategoryButtonVisibility();
+    }
+
+    // ── Button visibility (hook into RRV's "hide when not searching" behaviour) ─
+
+    @Inject(method = "setEnabled", at = @At("TAIL"), remap = false)
+    private void sbe$onEnabledChanged(boolean enabled, CallbackInfo ci) {
+        sbe$updateCategoryButtonVisibility();
+    }
+
+    @Unique
+    private void sbe$updateCategoryButtonVisibility() {
+        if (!RrvCompat.isActive() || sbe$categoryButtons.isEmpty()) return;
+
+        ItemViewOverlay self = (ItemViewOverlay) (Object) this;
+        boolean visible = !SkyblockEnhancementsConfig.hideCategoryButtonsWhenNotSearching
+                || self.isSearching();
+
+        for (CategoryIconButton btn : sbe$categoryButtons) {
+            btn.visible = visible;
         }
     }
 }

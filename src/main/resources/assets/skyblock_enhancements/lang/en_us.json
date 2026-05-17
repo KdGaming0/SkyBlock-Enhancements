@@ -105,6 +105,9 @@
   "skyblock_enhancements.midnightconfig.rrvSearchMode": "RRV Search Mode",
   "skyblock_enhancements.midnightconfig.rrvSearchMode.tooltip": "Controls how the RRV item filter searches inventory slots.\nName and ID Only: checks item name and SkyBlock ID (fast).\nFull Tooltip Search: also scans the entire tooltip text (slower, more matches).",
 
+  "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching": "Hide Category Buttons When Not Searching",
+  "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching.tooltip": "Hides the category filter buttons above the RRV search bar when no search text is entered.",
+
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Name and ID Only",
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full Tooltip Search",
 
