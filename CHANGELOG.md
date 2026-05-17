@@ -8,3 +8,7 @@
 ### **Skyblock Enhancements**
 **Improvements**
 - Added watering can to Prevent Weapon Placement.
+
+### **RRV Enhancements**
+**Improvements**
+- Hide Firmament message that REI is not installed when RRV is enabled, as RRV provides its own item info.

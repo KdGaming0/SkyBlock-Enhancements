@@ -28,6 +28,7 @@
     "chat.ChatRenderingMixin",
     "chat.ChatScreenAnimationMixin",
     "chat.CompactChatMixin",
+    "chat.FirmamentWarningMixin",
     "chat.search.ChatSearchFilterMixin",
     "chat.search.ChatSearchScreenMixin",
     "chat.tab.ChatTabFilterMixin",
