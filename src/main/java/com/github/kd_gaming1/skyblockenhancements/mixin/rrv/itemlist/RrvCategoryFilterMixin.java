@@ -5,13 +5,12 @@ import cc.cassian.rrv.common.overlay.itemlist.AbstractRrvItemListOverlay;
 import cc.cassian.rrv.common.overlay.itemlist.view.ItemViewOverlay;
 import cc.cassian.rrv.common.overlay.itemlist.view.SearchBar;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.CategoryIconButton;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCategoryButtons;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCategoryFilter;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCategoryState;
-import com.github.kd_gaming1.skyblockenhancements.mixin.rrv.accessor.AbstractRrvItemListOverlayAccessor;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.mixin.rrv.accessor.AbstractRrvItemListOverlayAccessor;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
 
 import java.util.ArrayList;
@@ -30,6 +29,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Adds category filtering and toggle buttons to the RRV item list overlay.
+ *
+ * <p>When the advanced search index is active, category filtering is applied at the
+ * index level (inside {@link com.github.kd_gaming1.skyblockenhancements.compat.rrv.search.SkyblockSearchFilter}),
+ * so the post-search {@code removeIf} is skipped to avoid redundant work. The button bar
+ * and prefix parsing still function exactly as before.
  */
 @Mixin(ItemViewOverlay.class)
 public abstract class RrvCategoryFilterMixin {
@@ -53,7 +57,6 @@ public abstract class RrvCategoryFilterMixin {
 
     @ModifyVariable(method = "updateQuery", at = @At("HEAD"), argsOnly = true, remap = false, name = "newQuery")
     private String sbe$parseAndStripCategoryPrefix(String newQuery) {
-        // [Existing code remains the same]
         if (!RrvCompat.isActive()) return newQuery;
 
         if (newQuery == null || !newQuery.startsWith("%")) {
@@ -89,8 +92,19 @@ public abstract class RrvCategoryFilterMixin {
     // ── Category filter application ─────────────────────────────────────────────
 
     /**
-     * Narrows the item list to the active category (and sub-category) after RRV has
-     * finished applying its own query filters. Buttons take priority over search prefixes.
+     * Applies the active category filter to {@code availableItems()}.
+     *
+     * <p>The search index (via {@code ItemFiltersMixin}) handles text-query filtering,
+     * but it is only invoked when {@code defaultFilter} runs. When a category button is
+     * clicked with an empty query, RRV's {@code updateQuery} may skip calling
+     * {@code defaultFilter}, leaving {@code availableItems()} as the full unfiltered list.
+     * This method always applies the category via {@code removeIf} so the filter is
+     * never accidentally bypassed.
+     *
+     * <p>For search-driven categories (via {@code %CATEGORY} prefix), the search index
+     * already narrows the list, so the {@code removeIf} here is typically a no-op.
+     * Sub-categories (e.g. {@code %PET/COMBAT}) always require the per-item
+     * {@code SkyblockCategoryFilter.matches} check.
      */
     @Inject(method = "updateQuery", at = @At("TAIL"), remap = false)
     private void sbe$applyCategoryFilter(String newQuery, CallbackInfo ci) {
@@ -121,7 +135,7 @@ public abstract class RrvCategoryFilterMixin {
             self.availableItems().removeIf(
                     stack -> !SkyblockCategoryFilter.matches(stack, target, subCategory));
         } else {
-            Set<ItemStack> allowed = FullStackListCache.getCategoryItems(target);
+            Set<ItemStack> allowed = com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache.getCategoryItems(target);
             self.availableItems().removeIf(stack -> !allowed.contains(stack));
         }
 

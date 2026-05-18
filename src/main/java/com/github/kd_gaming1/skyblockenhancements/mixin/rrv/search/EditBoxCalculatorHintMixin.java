@@ -2,9 +2,11 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.rrv.search;
 
 import cc.cassian.rrv.common.overlay.itemlist.view.SearchBar;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.search.SearchSuggestionState;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.input.KeyEvent;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -12,23 +14,26 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Forces the calculator hint (set via {@link EditBox#setSuggestion}) to always render
- * at the end of the typed text, regardless of cursor position.
+ * Custom renderer and key handler for the RRV search bar.
  *
- * <p>Vanilla {@code EditBox} only draws its suggestion when the cursor is at the very
- * end of the value ({@code !insert} guard in {@code renderWidget}). This mixin bypasses
- * that guard by:
- * <ol>
- *   <li>Snapshotting and clearing the suggestion at HEAD so vanilla never draws it.</li>
- *   <li>Restoring and re-drawing it at TAIL, anchored to the end of the visible text.</li>
- * </ol>
+ * <h3>Calculator hint</h3>
+ * Vanilla {@code EditBox} only draws its suggestion when the cursor is at the very
+ * end of the value. This mixin bypasses that guard by snapshotting and clearing the
+ * suggestion at HEAD, then restoring and re-drawing it at TAIL anchored to the end of
+ * the visible text.
  *
- * <p>The field mutation is conditional — it only occurs when the suggestion is non-empty,
- * avoiding unnecessary per-frame writes when no calculator result is present.
+ * <h3>Autocomplete ghost</h3>
+ * When an autocomplete completion is active (and no calculator result is present),
+ * the full completion word is drawn in dim gray at the position where the last typed
+ * word starts. Vanilla then draws the actual typed text in white on top, so the prefix
+ * overlaps perfectly and only the suffix peeks through as a faint hint.
  *
- * <p>Only active for {@link SearchBar} instances.
+ * <h3>Key acceptance</h3>
+ * {@code Tab} or {@code Right Arrow} (when cursor is at end) accepts the ghost
+ * completion, replacing the last word with the full completion.
  */
 @Mixin(EditBox.class)
 public abstract class EditBoxCalculatorHintMixin {
@@ -44,60 +49,163 @@ public abstract class EditBoxCalculatorHintMixin {
     @Shadow private int textY;
 
     @Shadow public abstract int getInnerWidth();
+    @Shadow public abstract int getCursorPosition();
+    @Shadow public abstract void setValue(String text);
 
-    // ── Render-thread scratch state ─────────────────────────────────────────────
+    // ── Calculator hint state ───────────────────────────────────────────────────
 
-    /** Holds the original suggestion while vanilla renders, or {@code null} if unchanged. */
     @Unique private transient String sbe$pendingSuggestion;
-    /** Set to {@code true} only when we actually cleared the field for this frame. */
     @Unique private transient boolean sbe$didSuppress;
 
-    // ── Injections ──────────────────────────────────────────────────────────────
+    // ── Render: HEAD ────────────────────────────────────────────────────────────
 
     /**
-     * Snapshot and suppress the suggestion before vanilla's render pass so vanilla
-     * never draws it (regardless of cursor position).
-     *
-     * <p>Only mutates the field when the suggestion is non-empty, avoiding needless
-     * writes on every render frame.
+     * At HEAD of renderWidget:
+     * <ol>
+     *   <li>Draw autocomplete ghost text behind the typed text (if applicable).</li>
+     *   <li>Suppress vanilla suggestion rendering so we can draw it ourselves at TAIL.</li>
+     * </ol>
      */
     @Inject(method = "renderWidget", at = @At("HEAD"))
-    private void sbe$suppressVanillaSuggestion(
+    private void sbe$renderAtHead(
             GuiGraphics gfx, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
 
         if (!isTrackedSearchBar()) return;
-        if (suggestion == null || suggestion.isEmpty()) return;
 
-        sbe$pendingSuggestion = suggestion;
-        sbe$didSuppress = true;
-        suggestion = null;
+        if (suggestion != null && !suggestion.isEmpty()) {
+            sbe$pendingSuggestion = suggestion;
+            sbe$didSuppress = true;
+            suggestion = null;
+        }
     }
+
+    // ── Render: TAIL ────────────────────────────────────────────────────────────
 
     /**
-     * After vanilla finishes, restore the suggestion field and draw it ourselves
-     * anchored to the end of the visible text.
+     * At TAIL of renderWidget: restore the suggestion field and draw the calculator
+     * hint anchored to the end of the visible text.
      */
     @Inject(method = "renderWidget", at = @At("TAIL"))
-    private void sbe$renderCalculatorHintAlways(
+    private void sbe$renderAtTail(
             GuiGraphics gfx, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
 
         if (!isTrackedSearchBar()) return;
-        if (!sbe$didSuppress) return;
 
-        sbe$didSuppress = false;
-        suggestion = sbe$pendingSuggestion;
-        sbe$pendingSuggestion = null;
+        if (sbe$didSuppress) {
+            sbe$didSuppress = false;
+            suggestion = sbe$pendingSuggestion;
+            sbe$pendingSuggestion = null;
+        }
 
-        if (suggestion == null || suggestion.isEmpty()) return;
         if (font == null) return;
 
-        String displayed = font.plainSubstrByWidth(value.substring(displayPos), getInnerWidth());
-        int hintX = textX + font.width(displayed);
+        // Priority 1: calculator hint
+        if (suggestion != null && !suggestion.isEmpty()) {
+            String displayed = font.plainSubstrByWidth(value.substring(displayPos), getInnerWidth());
+            int hintX = textX + font.width(displayed);
+            gfx.drawString(font, suggestion, hintX, textY, dimColor(textColor), textShadow);
+            return;
+        }
 
-        gfx.drawString(font, suggestion, hintX, textY, dimColor(textColor), textShadow);
+        // Priority 2: autocomplete ghost suffix
+        String completion = SearchSuggestionState.getCompletion();
+        if (completion != null) {
+            sbe$drawAutocompleteGhost(gfx, completion);
+        }
+    }
+    // ── Key handling ────────────────────────────────────────────────────────────
+
+    /**
+     * {@code Tab} or {@code Right Arrow} (at end-of-text) accepts the current
+     * autocomplete completion, replacing the last word with the full completion.
+     */
+    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
+    private void sbe$acceptAutocomplete(
+            KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+
+        if (!isTrackedSearchBar()) return;
+
+        int keyCode = event.key();
+        if (keyCode == 258) { // Tab
+            sbe$tryAccept(cir);
+        } else if (keyCode == 262) { // Right Arrow
+            if (getCursorPosition() == value.length()) {
+                sbe$tryAccept(cir);
+            }
+        }
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────────────────
+    @Unique
+    private void sbe$tryAccept(CallbackInfoReturnable<Boolean> cir) {
+        String completion = SearchSuggestionState.getCompletion();
+        if (completion == null) return;
+
+        String lastWord = sbe$extractLastWord(value);
+        if (lastWord.isEmpty() || !completion.startsWith(lastWord)) return;
+
+        // Find the last occurrence of lastWord in value
+        int lastWordStart = value.lastIndexOf(lastWord);
+        if (lastWordStart < 0) return;
+
+        String newValue = value.substring(0, lastWordStart) + completion;
+        setValue(newValue);
+        SearchSuggestionState.clear();
+        cir.setReturnValue(true);
+    }
+
+    // ── Ghost drawing ───────────────────────────────────────────────────────────
+
+    /**
+     * Draws the full completion word in dim gray aligned with the start of the last
+     * typed word. Vanilla's white text draw (coming after this HEAD injection) will
+     * cover the overlapping prefix, leaving only the suffix visible as a faint hint.
+     */
+    @Unique
+    private void sbe$drawAutocompleteGhost(GuiGraphics gfx, String completion) {
+        if (font == null) return;
+
+        String lastWord = sbe$extractLastWord(value);
+        if (lastWord.isEmpty() || !completion.startsWith(lastWord)) return;
+
+        String suffix = completion.substring(lastWord.length());
+        if (suffix.isEmpty()) return;
+
+        String displayed = font.plainSubstrByWidth(value.substring(displayPos), getInnerWidth());
+        int ghostX = textX + font.width(displayed);
+        gfx.drawString(font, suffix, ghostX, textY, 0xFF888888, false);
+    }
+
+    // ── String helpers ──────────────────────────────────────────────────────────
+
+    @Unique
+    private static String sbe$extractLastWord(String query) {
+        int len = query.length();
+        int end = len;
+        while (end > 0 && Character.isWhitespace(query.charAt(end - 1))) {
+            end--;
+        }
+        int start = end;
+        while (start > 0 && !Character.isWhitespace(query.charAt(start - 1))) {
+            start--;
+        }
+        return query.substring(start, end);
+    }
+
+    @Unique
+    private static int sbe$findLastWordStart(String query) {
+        int len = query.length();
+        int end = len;
+        while (end > 0 && Character.isWhitespace(query.charAt(end - 1))) {
+            end--;
+        }
+        int start = end;
+        while (start > 0 && !Character.isWhitespace(query.charAt(start - 1))) {
+            start--;
+        }
+        return start;
+    }
+
+    // ── Misc helpers ────────────────────────────────────────────────────────────
 
     @Unique
     @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "ConstantValue"})

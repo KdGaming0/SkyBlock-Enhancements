@@ -24,16 +24,21 @@ public final class SearchQueryParser {
     /**
      * Parses {@code raw} into a {@link SearchQuery}.
      * Returns an empty query when {@code raw} is null or blank.
+     *
+     * <p>The query is expected to already be lowercased by the mixin ({@code
+     * ItemFiltersMixin#sbe$preLowercaseQuery}), so this parser skips redundant
+     * {@code toLowerCase()} when every character is already lowercase.
      */
     public static SearchQuery parse(String raw) {
         if (raw == null || raw.isBlank()) {
-            return new SearchQuery(List.of(), List.of());
+            return new SearchQuery(List.of(), List.of(), null);
         }
+
+        String lower = isAlreadyLowercased(raw) ? raw : raw.toLowerCase(Locale.ROOT);
 
         List<SearchQuery.KeywordClause> keywords = new ArrayList<>();
         List<SearchQuery.StatClause> stats = new ArrayList<>();
 
-        String lower = raw.toLowerCase(Locale.ROOT);
         int len = lower.length();
         int i = 0;
 
@@ -57,7 +62,22 @@ public final class SearchQueryParser {
             }
         }
 
-        return new SearchQuery(keywords, stats);
+        return new SearchQuery(keywords, stats, null);
+    }
+
+    /**
+     * Fast-path check: returns {@code true} if {@code s} contains no uppercase letters.
+     * This avoids the allocation + CPU cost of {@code toLowerCase()} when the mixin
+     * has already lowercased the query.
+     */
+    private static boolean isAlreadyLowercased(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static SearchQuery.StatClause tryParseStat(String token) {
