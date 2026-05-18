@@ -12,6 +12,7 @@
     - `fleet` — find reforge stones like Diamonite (Fleet reforge).
     - `mining speed` — find items that grant Mining Speed.
     - `mining_speed>50` — find items with a Mining Speed stat over 50.
+    - `mining_fortune<120` — find items with a Mining Speed stat under 120.
     - `combat pet` — find all Combat pets.
     - `wolf slayer` — find items requiring Wolf Slayer.
 
@@ -28,3 +29,4 @@
 - Performance optimizations
 - Category buttons are now hidden when the item view is disabled.
 - The search bar is now wider when in the item view position.
+- Bookmarks now show when the item view is to Only When Searching.

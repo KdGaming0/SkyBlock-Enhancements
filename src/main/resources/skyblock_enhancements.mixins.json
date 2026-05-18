@@ -39,6 +39,8 @@
     "rrv.accessor.AbstractRrvItemListOverlayAccessor",
     "rrv.accessor.AbstractRrvOverlayAccessor",
     "rrv.accessor.RecipeViewMenuAccessor",
+    "rrv.bookmark.AbstractRrvOverlayMixin",
+    "rrv.bookmark.SidePanelOverlayMixin",
     "rrv.fix.QuickNavRecipeViewMixin",
     "rrv.fix.RrvRecipeRequestMixin",
     "rrv.fix.RrvReturnToCacheFixMixin",

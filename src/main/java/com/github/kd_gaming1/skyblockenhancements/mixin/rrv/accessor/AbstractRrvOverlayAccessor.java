@@ -18,4 +18,7 @@ public interface AbstractRrvOverlayAccessor {
 
     @Accessor(value = "effectiveWidth", remap = false)
     int sbe$getEffectiveWidth();
+
+    @Accessor("enabled")
+    boolean sbe$getRawEnabled();
 }

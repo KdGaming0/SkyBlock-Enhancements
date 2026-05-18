@@ -111,6 +111,9 @@
   "skyblock_enhancements.midnightconfig.wideRrvSearchBar": "Breitt RRV-søkjefelt",
   "skyblock_enhancements.midnightconfig.wideRrvSearchBar.tooltip": "Tvingar RRV-søkjefeltet til å vere breitt når det er i gjenstandsliste-posisjon.",
 
+  "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching": "Hald bokmerke synleg ved søk",
+  "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching.tooltip": "Held bokmerke-/tilverkingspanelet synleg sjølv når søkjefeltet er tomt.\nGjeld berre når RRV er sett til \"Berre synleg ved søk\".",
+
   "skyblock_enhancements.midnightconfig.rrvSearchBarWidth": "Breidd på RRV-søkjefelt",
   "skyblock_enhancements.midnightconfig.rrvSearchBarWidth.tooltip": "Minimumsbreidd på RRV-søkjefeltet i pikslar.\nOmråde: 100-300",
 
