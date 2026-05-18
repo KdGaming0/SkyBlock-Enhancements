@@ -2,8 +2,8 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv.util;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
+import com.github.kd_gaming1.skyblockenhancements.util.StringUtil;
 import java.util.Collection;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +84,7 @@ public final class ItemFamilyHelper {
         if (totalTiers <= 1) return null;
 
         // Strip color codes for tier detection, then re-apply
-        String stripped = displayName.replaceAll("§.", "");
+        String stripped = StringUtil.stripColorCodes(displayName);
         Matcher matcher = TIER_SUFFIX.matcher(stripped);
         if (!matcher.find()) return null;
 

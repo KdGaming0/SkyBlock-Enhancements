@@ -55,9 +55,9 @@ public abstract class RrvSearchCalculatorMixin {
         SearchAutocomplete autocomplete = index != null ? index.getAutocomplete() : null;
         if (autocomplete != null) {
             SkyblockItemCategory activeCategory = SkyblockCategoryState.getActiveCategory();
-            String completion = autocomplete.suggest(newQuery, activeCategory);
-            if (completion != null && !completion.isEmpty()) {
-                SearchSuggestionState.set(newQuery, completion);
+            SearchAutocomplete.Suggestion suggestion = autocomplete.suggest(newQuery, activeCategory);
+            if (suggestion != null && !suggestion.text().isEmpty()) {
+                SearchSuggestionState.set(newQuery, suggestion.text(), suggestion.replaceWholeQuery());
                 return;
             }
         }

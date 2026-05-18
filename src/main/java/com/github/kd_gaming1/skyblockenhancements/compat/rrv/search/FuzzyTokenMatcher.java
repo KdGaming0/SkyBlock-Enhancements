@@ -1,8 +1,6 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.search;
 
-import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.List;
 
 /**
  * Provides fuzzy token matching for typo-tolerant search.

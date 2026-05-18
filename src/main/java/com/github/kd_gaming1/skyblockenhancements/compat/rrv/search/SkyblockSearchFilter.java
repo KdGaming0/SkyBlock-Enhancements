@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Bridges the inverted {@link SkyblockSearchIndex} with RRV's item list overlay.

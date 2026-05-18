@@ -12,12 +12,18 @@ public final class SearchSuggestionState {
 
     private static String currentQuery;
     private static String currentCompletion;
+    private static boolean replaceWholeQuery;
 
     private SearchSuggestionState() {}
 
-    public static void set(@Nullable String query, @Nullable String completion) {
+    public static void set(@Nullable String query, @Nullable String completion, boolean replaceWholeQuery) {
         currentQuery = query;
         currentCompletion = completion;
+        SearchSuggestionState.replaceWholeQuery = replaceWholeQuery;
+    }
+
+    public static void set(@Nullable String query, @Nullable String completion) {
+        set(query, completion, false);
     }
 
     public static @Nullable String getCompletion() {
@@ -28,8 +34,13 @@ public final class SearchSuggestionState {
         return currentQuery;
     }
 
+    public static boolean isReplaceWholeQuery() {
+        return replaceWholeQuery;
+    }
+
     public static void clear() {
         currentQuery = null;
         currentCompletion = null;
+        replaceWholeQuery = false;
     }
 }

@@ -1,5 +1,6 @@
 package com.github.kd_gaming1.skyblockenhancements.repo.neu;
 
+import com.github.kd_gaming1.skyblockenhancements.util.StringUtil;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -209,8 +210,7 @@ public enum SkyblockItemCategory {
         if (item.lore == null || item.lore.isEmpty()) return null;
 
         String lastLine = item.lore.getLast();
-        // Strip all section-sign formatting codes (§ followed by any character)
-        String clean = lastLine.replaceAll("§.", "").trim();
+        String clean = StringUtil.stripColorCodes(lastLine).trim();
         if (clean.isEmpty()) return null;
 
         // The first word is the rarity, everything after is the type
@@ -252,7 +252,7 @@ public enum SkyblockItemCategory {
         if (item.lore == null || item.lore.isEmpty()) return null;
 
         String lastLine = item.lore.getLast();
-        String clean = lastLine.replaceAll("§.", "").trim();
+        String clean = StringUtil.stripColorCodes(lastLine).trim();
         if (clean.isEmpty()) return null;
 
         // First word is always the rarity (may be the only word for bare-rarity items)

@@ -2,6 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.rrv.search;
 
 import cc.cassian.rrv.common.overlay.itemlist.view.SearchBar;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.search.SearchAutocomplete;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.search.SearchSuggestionState;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -27,13 +28,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *
  * <h3>Autocomplete ghost</h3>
  * When an autocomplete completion is active (and no calculator result is present),
- * the full completion word is drawn in dim gray at the position where the last typed
- * word starts. Vanilla then draws the actual typed text in white on top, so the prefix
- * overlaps perfectly and only the suffix peeks through as a faint hint.
+ * the completion is drawn in dim gray at the appropriate position. Vanilla then draws
+ * the actual typed text in white on top, so the prefix overlaps perfectly and only
+ * the suffix peeks through as a faint hint. For acronym-style whole-query replacements,
+ * the full completion is drawn appended to the current text.
  *
  * <h3>Key acceptance</h3>
  * {@code Tab} or {@code Right Arrow} (when cursor is at end) accepts the ghost
- * completion, replacing the last word with the full completion.
+ * completion, replacing the last word (or the entire query for acronym matches).
  */
 @Mixin(EditBox.class)
 public abstract class EditBoxCalculatorHintMixin {
@@ -107,12 +109,17 @@ public abstract class EditBoxCalculatorHintMixin {
             return;
         }
 
-        // Priority 2: autocomplete ghost suffix
+        // Priority 2: autocomplete ghost
         String completion = SearchSuggestionState.getCompletion();
-        if (completion != null) {
+        if (completion == null) return;
+
+        if (SearchSuggestionState.isReplaceWholeQuery()) {
+            sbe$drawFullAutocompleteGhost(gfx, completion);
+        } else {
             sbe$drawAutocompleteGhost(gfx, completion);
         }
     }
+
     // ── Key handling ────────────────────────────────────────────────────────────
 
     /**
@@ -140,10 +147,16 @@ public abstract class EditBoxCalculatorHintMixin {
         String completion = SearchSuggestionState.getCompletion();
         if (completion == null) return;
 
-        String lastWord = sbe$extractLastWord(value);
+        if (SearchSuggestionState.isReplaceWholeQuery()) {
+            setValue(completion);
+            SearchSuggestionState.clear();
+            cir.setReturnValue(true);
+            return;
+        }
+
+        String lastWord = SearchAutocomplete.extractLastWord(value);
         if (lastWord.isEmpty() || !completion.startsWith(lastWord)) return;
 
-        // Find the last occurrence of lastWord in value
         int lastWordStart = value.lastIndexOf(lastWord);
         if (lastWordStart < 0) return;
 
@@ -164,7 +177,7 @@ public abstract class EditBoxCalculatorHintMixin {
     private void sbe$drawAutocompleteGhost(GuiGraphics gfx, String completion) {
         if (font == null) return;
 
-        String lastWord = sbe$extractLastWord(value);
+        String lastWord = SearchAutocomplete.extractLastWord(value);
         if (lastWord.isEmpty() || !completion.startsWith(lastWord)) return;
 
         String suffix = completion.substring(lastWord.length());
@@ -175,34 +188,17 @@ public abstract class EditBoxCalculatorHintMixin {
         gfx.drawString(font, suffix, ghostX, textY, 0xFF888888, false);
     }
 
-    // ── String helpers ──────────────────────────────────────────────────────────
-
+    /**
+     * Draws the full replacement text at the end of the current input.
+     * Used for acronym matches where the completion replaces the entire query.
+     */
     @Unique
-    private static String sbe$extractLastWord(String query) {
-        int len = query.length();
-        int end = len;
-        while (end > 0 && Character.isWhitespace(query.charAt(end - 1))) {
-            end--;
-        }
-        int start = end;
-        while (start > 0 && !Character.isWhitespace(query.charAt(start - 1))) {
-            start--;
-        }
-        return query.substring(start, end);
-    }
+    private void sbe$drawFullAutocompleteGhost(GuiGraphics gfx, String completion) {
+        if (font == null) return;
 
-    @Unique
-    private static int sbe$findLastWordStart(String query) {
-        int len = query.length();
-        int end = len;
-        while (end > 0 && Character.isWhitespace(query.charAt(end - 1))) {
-            end--;
-        }
-        int start = end;
-        while (start > 0 && !Character.isWhitespace(query.charAt(start - 1))) {
-            start--;
-        }
-        return start;
+        String displayed = font.plainSubstrByWidth(value.substring(displayPos), getInnerWidth());
+        int ghostX = textX + font.width(displayed);
+        gfx.drawString(font, completion, ghostX, textY, 0xFF888888, false);
     }
 
     // ── Misc helpers ────────────────────────────────────────────────────────────

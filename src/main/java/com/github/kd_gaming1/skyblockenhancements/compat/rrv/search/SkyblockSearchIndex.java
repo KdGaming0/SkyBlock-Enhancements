@@ -5,6 +5,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.ReforgeStoneData;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
+import com.github.kd_gaming1.skyblockenhancements.util.StringUtil;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
@@ -17,6 +18,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Pre-computed inverted search index for the SkyBlock item list.
@@ -180,7 +182,7 @@ public final class SkyblockSearchIndex {
             if (query.keywords().size() == 1 && query.stats().isEmpty()) {
                 BitSet prefixMatches = BitSetPool.borrow(itemCount);
                 try {
-                    resolvePrefixUnion(query.keywords().get(0).token(), prefixMatches);
+                    resolvePrefixUnion(query.keywords().getFirst().token(), prefixMatches);
                     third.or(prefixMatches);
                     third.andNot(first);
                     third.andNot(second);
@@ -261,7 +263,7 @@ public final class SkyblockSearchIndex {
         }
         // Fuzzy fallback for typo tolerance
         if (fuzzyMatcher != null) {
-            BitSet fuzzy = fuzzyMatcher.fuzzyMatch(token, t -> anyTokenIndex.get(t));
+            BitSet fuzzy = fuzzyMatcher.fuzzyMatch(token, anyTokenIndex::get);
             if (!fuzzy.isEmpty()) {
                 return fuzzy;
             }
@@ -542,7 +544,7 @@ public final class SkyblockSearchIndex {
             return;
         }
 
-        String clean = stripColorCodes(raw).toLowerCase(java.util.Locale.ROOT);
+        String clean = StringUtil.stripColorCodes(raw).toLowerCase(java.util.Locale.ROOT);
         int len = clean.length();
         int start = -1;
 
@@ -564,25 +566,9 @@ public final class SkyblockSearchIndex {
         }
     }
 
-    private static String stripColorCodes(String raw) {
-        if (raw == null || raw.isEmpty()) {
-            return "";
-        }
-        int len = raw.length();
-        StringBuilder sb = new StringBuilder(len);
-        for (int i = 0; i < len; i++) {
-            char ch = raw.charAt(i);
-            if (ch == '§' && i + 1 < len) {
-                i++;
-            } else {
-                sb.append(ch);
-            }
-        }
-        return sb.toString();
-    }
 
-    @Nullable
-    private static String extractPetId(String internalName) {
+
+    private static @NonNull String extractPetId(String internalName) {
         int semi = internalName.indexOf(';');
         return semi >= 0 ? internalName.substring(0, semi) : internalName;
     }

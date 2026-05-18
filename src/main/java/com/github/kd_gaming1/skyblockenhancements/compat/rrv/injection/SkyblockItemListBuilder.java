@@ -1,10 +1,12 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection;
 
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.ItemFamilyHelper;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.util.StringUtil;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -12,7 +14,6 @@ import java.util.Map;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.ItemFamilyHelper;
 
 /**
  * Builds the sorted SkyBlock item list from the {@link NeuItemRegistry} for injection
@@ -95,7 +96,7 @@ public final class SkyblockItemListBuilder {
             this(
                     familyPrefixOf(item.internalName),
                     item.rarity != null ? item.rarity.ordinal() : Integer.MAX_VALUE,
-                    stripColorCodes(item.displayName),
+                    StringUtil.stripColorCodes(item.displayName),
                     item.internalName != null ? item.internalName : ""
             );
         }
@@ -124,23 +125,5 @@ public final class SkyblockItemListBuilder {
         return semi >= 0 ? internalName.substring(0, semi) : "";
     }
 
-    /**
-     * Strips Minecraft color/formatting codes ({@code §x}) from a string.
-     * Faster than {@code replaceAll("§.", "")} because it avoids regex compilation
-     * and intermediate {@link String} objects.
-     */
-    private static String stripColorCodes(String raw) {
-        if (raw == null) return "";
-        int len = raw.length();
-        StringBuilder sb = new StringBuilder(len);
-        for (int i = 0; i < len; i++) {
-            char ch = raw.charAt(i);
-            if (ch == '§' && i + 1 < len) {
-                i++; // skip the formatting code character
-            } else {
-                sb.append(ch);
-            }
-        }
-        return sb.toString();
-    }
+
 }
