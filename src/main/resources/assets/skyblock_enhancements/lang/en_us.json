@@ -117,6 +117,9 @@
   "skyblock_enhancements.midnightconfig.rrvSearchBarWidth": "RRV Search Bar Width",
   "skyblock_enhancements.midnightconfig.rrvSearchBarWidth.tooltip": "Minimum width of the RRV search bar in pixels.\nRange: 100-300",
 
+  "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent": "RRV Item List Width",
+  "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent.tooltip": "Percentage of the available screen width used by the RRV item list panel.\n100% fills the space between inventory and screen edge.\nLower values shrink the panel from the right side inward.",
+
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Name and ID Only",
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full Tooltip Search",
 
@@ -262,5 +265,8 @@
   "key.category.skyblock_enhancements.general": "Skyblock Enhancements",
   "key.skyblock_enhancements.fullbright": "Toggle Fullbright",
   "key.skyblock_enhancements.full_stack_price": "Show BZ Price for Full Stack",
-  "key.skyblock_enhancements.current_amount_price": "Show BZ Price for Current Amount"
+  "key.skyblock_enhancements.current_amount_price": "Show BZ Price for Current Amount",
+
+  "skyblock_enhancements.midnightconfig.rrvConfigHint": "More options available in Skyblock Enhancements config → Recipe Viewer Tab",
+  "skyblock_enhancements.midnightconfig.openFromRrv": "Open SBE Config..."
 }

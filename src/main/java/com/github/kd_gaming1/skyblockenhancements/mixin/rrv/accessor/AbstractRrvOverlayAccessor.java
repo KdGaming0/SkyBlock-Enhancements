@@ -4,21 +4,27 @@ import cc.cassian.rrv.common.overlay.AbstractRrvOverlay;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(AbstractRrvOverlay.class)
+@Mixin(value = AbstractRrvOverlay.class, remap = false)
 public interface AbstractRrvOverlayAccessor {
 
-    @Accessor(value = "x", remap = false)
+    @Accessor("x")
     int sbe$getX();
 
-    @Accessor(value = "width", remap = false)
+    @Accessor("width")
     int sbe$getWidth();
 
-    @Accessor(value = "effectiveX", remap = false)
+    @Accessor("effectiveX")
     int sbe$getEffectiveX();
 
-    @Accessor(value = "effectiveWidth", remap = false)
+    @Accessor("effectiveWidth")
     int sbe$getEffectiveWidth();
 
     @Accessor("enabled")
     boolean sbe$getRawEnabled();
+
+    @Accessor("x")
+    void sbe$setX(int x);
+
+    @Accessor("width")
+    void sbe$setWidth(int width);
 }

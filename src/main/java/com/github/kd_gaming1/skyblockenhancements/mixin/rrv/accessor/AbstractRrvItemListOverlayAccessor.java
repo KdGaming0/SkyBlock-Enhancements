@@ -4,10 +4,15 @@ import cc.cassian.rrv.common.overlay.itemlist.AbstractRrvItemListOverlay;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-/** Exposes {@code startIndex} for page-reset after a category filter is applied. */
-@Mixin(AbstractRrvItemListOverlay.class)
+@Mixin(value = AbstractRrvItemListOverlay.class, remap = false)
 public interface AbstractRrvItemListOverlayAccessor {
 
-    @Accessor(value = "startIndex", remap = false)
+    @Accessor("startIndex")
     void sbe$setStartIndex(int startIndex);
+
+    @Accessor("itemStartX")
+    void sbe$setItemStartX(int value);
+
+    @Accessor("itemEndX")
+    void sbe$setItemEndX(int value);
 }

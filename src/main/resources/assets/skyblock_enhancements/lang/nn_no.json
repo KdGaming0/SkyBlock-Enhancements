@@ -117,6 +117,9 @@
   "skyblock_enhancements.midnightconfig.rrvSearchBarWidth": "Breidd på RRV-søkjefelt",
   "skyblock_enhancements.midnightconfig.rrvSearchBarWidth.tooltip": "Minimumsbreidd på RRV-søkjefeltet i pikslar.\nOmråde: 100-300",
 
+  "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent": "Breidd på RRV-gjenstandsliste",
+  "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent.tooltip": "Prosent av den tilgjengelege skjermbreidda som RRV-gjenstandslistepanelet brukar.\n100% fyller rommet mellom inventar og skjermkant.\nLågare verdiar gjer panelet mindre frå høgre side innover.",
+
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Berre namn og ID",
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full verktøytips-søk",
 
@@ -262,5 +265,8 @@
   "key.category.skyblock_enhancements.general": "Skyblock-forbetringar",
   "key.skyblock_enhancements.fullbright": "Skru av/på Fullbright",
   "key.skyblock_enhancements.full_stack_price": "Vis BZ-pris for full stabel",
-  "key.skyblock_enhancements.current_amount_price": "Vis BZ-pris for gjeldande mengde"
+  "key.skyblock_enhancements.current_amount_price": "Vis BZ-pris for gjeldande mengde",
+
+  "skyblock_enhancements.midnightconfig.rrvConfigHint": "Fleire alternativ tilgjengelege i Skyblock-forbetringar-konfig → RRV-integrasjon",
+  "skyblock_enhancements.midnightconfig.openFromRrv": "Opne SBE konfig..."
 }
