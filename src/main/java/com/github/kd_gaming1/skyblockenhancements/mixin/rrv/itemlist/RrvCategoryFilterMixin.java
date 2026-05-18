@@ -1,5 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.mixin.rrv.itemlist;
 
+import cc.cassian.rrv.common.config.Configs;
+import cc.cassian.rrv.common.config.options.OverlayDisplay;
 import cc.cassian.rrv.common.overlay.AbstractRrvOverlay.ScreenContext;
 import cc.cassian.rrv.common.overlay.itemlist.AbstractRrvItemListOverlay;
 import cc.cassian.rrv.common.overlay.itemlist.view.ItemViewOverlay;
@@ -173,8 +175,13 @@ public abstract class RrvCategoryFilterMixin {
         if (!RrvCompat.isActive() || sbe$categoryButtons.isEmpty()) return;
 
         ItemViewOverlay self = (ItemViewOverlay) (Object) this;
-        boolean visible = !SkyblockEnhancementsConfig.hideCategoryButtonsWhenNotSearching
-                || self.isSearching();
+        OverlayDisplay rrvMode = Configs.CLIENT_SETTINGS.isShowOverlays();
+
+        boolean visible;
+        if (rrvMode == OverlayDisplay.WHEN_SEARCHING) {
+            visible = !SkyblockEnhancementsConfig.hideCategoryButtonsWhenNotSearching
+                    || self.isSearching();
+        } else visible = rrvMode != OverlayDisplay.DISABLED;
 
         for (CategoryIconButton btn : sbe$categoryButtons) {
             btn.visible = visible;

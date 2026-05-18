@@ -22,3 +22,7 @@
 - **Autocomplete Ghost Text** — As you type, a faint completion hint appears behind the cursor.
   - Suggestions are drawn from **item display names** first, then search tokens.
   - Press **Tab** or **Right Arrow** (at end of text) to accept the completion.
+
+### **RRV Enhancements**
+**Improvements**
+- Category buttons are now hidden when the item view is disabled.
