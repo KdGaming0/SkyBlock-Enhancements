@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -22,6 +23,9 @@ import net.minecraft.resources.Identifier;
  * <p>When a player clicks an item in RRV, only reforge recipes whose {@code rarity}
  * matches the item's rarity <em>and</em> whose {@code itemType} applies to the item
  * will match via {@link SkyblockReforgeClientRecipe#redirectsAsResult}.
+ *
+ * <p>Result internal names are pre-computed during generation so the client recipe never
+ * has to scan the full item registry.
  */
 public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
 
@@ -31,7 +35,7 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
                     () -> new SkyblockReforgeServerRecipe(
                             "", true, "", "", "COMMON", List.of(),
                             Map.of(), 0, Optional.empty(),
-                            List.of(), List.of(), Optional.empty(), new String[0]));
+                            List.of(), List.of(), Optional.empty(), new String[0], List.of()));
 
     private String reforgeName;
     private boolean isBlacksmith;
@@ -46,12 +50,19 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
     private List<String> specificItemIds;
     private Optional<String> nbtModifier;
 
+    /**
+     * Pre-computed internal names of items that match this reforge recipe's criteria.
+     * Built once during generation to eliminate registry scans on the client.
+     */
+    private List<String> resultInternalNames;
+
     public SkyblockReforgeServerRecipe(
             String reforgeName, boolean isBlacksmith, String stoneInternalName,
             String itemType, String rarity, List<String> requiredRarities,
             Map<String, Double> stats, int cost, Optional<String> ability,
             List<String> specificInternalNames, List<String> specificItemIds,
-            Optional<String> nbtModifier, String[] wikiUrls) {
+            Optional<String> nbtModifier, String[] wikiUrls,
+            List<String> resultInternalNames) {
         super(wikiUrls);
         this.reforgeName = reforgeName != null ? reforgeName : "";
         this.isBlacksmith = isBlacksmith;
@@ -65,6 +76,7 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
         this.specificInternalNames = specificInternalNames != null ? List.copyOf(specificInternalNames) : List.of();
         this.specificItemIds = specificItemIds != null ? List.copyOf(specificItemIds) : List.of();
         this.nbtModifier = nbtModifier;
+        this.resultInternalNames = resultInternalNames != null ? List.copyOf(resultInternalNames) : List.of();
     }
 
     @Override
@@ -90,6 +102,7 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
         if (nbtModifier.isPresent()) {
             tag.putString(RecipeTagCodec.KEY_NBT_MODIFIER, nbtModifier.get());
         }
+        writeStringList(tag, "resNames", resultInternalNames);
     }
 
     @Override
@@ -110,6 +123,7 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
         nbtModifier = tag.contains(RecipeTagCodec.KEY_NBT_MODIFIER)
                 ? Optional.of(tag.getStringOr(RecipeTagCodec.KEY_NBT_MODIFIER, ""))
                 : Optional.empty();
+        resultInternalNames = readStringList(tag, "resNames");
     }
 
     // ── NBT helpers ────────────────────────────────────────────────────────────
@@ -162,4 +176,5 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
     public List<String> getSpecificInternalNames()    { return specificInternalNames; }
     public List<String> getSpecificItemIds()          { return specificItemIds; }
     public Optional<String> getNbtModifier()          { return nbtModifier; }
+    public List<String> getResultInternalNames()      { return resultInternalNames; }
 }

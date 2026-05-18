@@ -25,4 +25,5 @@
 
 ### **RRV Enhancements**
 **Improvements**
+- Performance optimizations
 - Category buttons are now hidden when the item view is disabled.

@@ -31,6 +31,7 @@ public class SkyblockEssenceUpgradeClientRecipe extends AbstractSkyblockClientRe
     private final SlotContent[] companions;
     private final int starLevel;
     private final String essenceType;
+    private final List<SlotContent> ingredients;
 
     public SkyblockEssenceUpgradeClientRecipe(
             SlotContent input, SlotContent output, SlotContent essence,
@@ -42,6 +43,17 @@ public class SkyblockEssenceUpgradeClientRecipe extends AbstractSkyblockClientRe
         this.companions = companions;
         this.starLevel = starLevel;
         this.essenceType = essenceType;
+        this.ingredients = buildIngredients(input, essence, companions);
+    }
+
+    private static List<SlotContent> buildIngredients(SlotContent input, SlotContent essence, SlotContent[] companions) {
+        List<SlotContent> list = new ArrayList<>(2 + companions.length);
+        if (input != null)   list.add(input);
+        if (essence != null) list.add(essence);
+        for (SlotContent comp : companions) {
+            if (comp != null) list.add(comp);
+        }
+        return List.copyOf(list);
     }
 
     @Override
@@ -63,13 +75,7 @@ public class SkyblockEssenceUpgradeClientRecipe extends AbstractSkyblockClientRe
 
     @Override
     public List<SlotContent> getIngredients() {
-        List<SlotContent> list = new ArrayList<>();
-        if (input != null)   list.add(input);
-        if (essence != null) list.add(essence);
-        for (SlotContent comp : companions) {
-            if (comp != null) list.add(comp);
-        }
-        return list;
+        return ingredients;
     }
 
     @Override

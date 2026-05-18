@@ -122,8 +122,9 @@ public final class RepoDiskCache {
         while (reader.hasNext()) {
             String internalName = reader.nextName();
             NeuItem item = GSON.fromJson(reader, NeuItem.class);
-            item.category = SkyblockItemCategory.fromNeuItem(item);
+            item.loreType = SkyblockItemCategory.extractLoreType(item);
             item.rarity   = SkyblockItemCategory.extractRarity(item);
+            item.category = SkyblockItemCategory.fromNeuItem(item);
             NeuItemRegistry.register(internalName, item);
             count++;
         }

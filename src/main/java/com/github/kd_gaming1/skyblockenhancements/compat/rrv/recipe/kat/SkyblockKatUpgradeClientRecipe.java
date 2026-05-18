@@ -27,6 +27,7 @@ public class SkyblockKatUpgradeClientRecipe extends AbstractSkyblockClientRecipe
     private final SlotContent[] materials;
     private final long coins;
     private final int timeSeconds;
+    private final List<SlotContent> ingredients;
 
     public SkyblockKatUpgradeClientRecipe(
             SlotContent input, SlotContent output, SlotContent[] materials,
@@ -37,6 +38,16 @@ public class SkyblockKatUpgradeClientRecipe extends AbstractSkyblockClientRecipe
         this.materials = materials;
         this.coins = coins;
         this.timeSeconds = timeSeconds;
+        this.ingredients = buildIngredients(input, materials);
+    }
+
+    private static List<SlotContent> buildIngredients(SlotContent input, SlotContent[] materials) {
+        List<SlotContent> list = new ArrayList<>(1 + materials.length);
+        if (input != null) list.add(input);
+        for (SlotContent sc : materials) {
+            if (sc != null) list.add(sc);
+        }
+        return List.copyOf(list);
     }
 
     @Override
@@ -57,12 +68,7 @@ public class SkyblockKatUpgradeClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     public List<SlotContent> getIngredients() {
-        List<SlotContent> list = new ArrayList<>();
-        if (input != null) list.add(input);
-        for (SlotContent sc : materials) {
-            if (sc != null) list.add(sc);
-        }
-        return list;
+        return ingredients;
     }
 
     @Override

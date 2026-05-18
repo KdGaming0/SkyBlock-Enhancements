@@ -168,9 +168,15 @@ public class NeuItem {
 
     /**
      * Rarity extracted from the last lore line. {@code null} for items without a rarity line.
-     * Populated lazily during sort and cached to avoid re-parsing.
+     * Populated eagerly during parsing and cached to avoid re-parsing.
      */
     public transient SkyblockRarity rarity;
+
+    /**
+     * Item type extracted from the last lore line (e.g. {@code "SWORD"}, {@code "HELMET"}).
+     * {@code null} for items without a type line. Populated eagerly during parsing.
+     */
+    public transient String loreType;
 
     /**
      * Releases the raw recipe JSON to reduce memory pressure after recipes have been

@@ -61,12 +61,31 @@ public final class ReforgeTypeResolver {
             Map.entry("CHISEL", List.of("PICKAXE"))
     );
 
+    /** Reverse index: reforge type → lore types. Built once for O(1) lookups. */
+    private static final Map<String, List<String>> REFORGE_TYPE_TO_LORE_TYPES = buildReverseIndex();
+
+    private static Map<String, List<String>> buildReverseIndex() {
+        Map<String, List<String>> map = new java.util.HashMap<>();
+        for (var entry : LORE_TYPE_TO_REFORGE_TYPES.entrySet()) {
+            String loreType = entry.getKey();
+            for (String reforgeType : entry.getValue()) {
+                map.computeIfAbsent(reforgeType, k -> new java.util.ArrayList<>()).add(loreType);
+            }
+        }
+        // Defensive copy to immutable lists
+        Map<String, List<String>> result = new java.util.HashMap<>(map.size());
+        for (var entry : map.entrySet()) {
+            result.put(entry.getKey(), List.copyOf(entry.getValue()));
+        }
+        return java.util.Collections.unmodifiableMap(result);
+    }
+
     /**
      * Returns the list of reforge type strings applicable to the given item.
      * Returns an empty list if the item is not reforgable.
      */
     public static List<String> resolve(NeuItem item) {
-        String loreType = SkyblockItemCategory.extractLoreType(item);
+        String loreType = item.loreType != null ? item.loreType : SkyblockItemCategory.extractLoreType(item);
         if (loreType == null) return List.of();
         return LORE_TYPE_TO_REFORGE_TYPES.getOrDefault(loreType, List.of());
     }
@@ -76,12 +95,6 @@ public final class ReforgeTypeResolver {
      * For example, {@code "ARMOR"} returns {@code ["HELMET", "CHESTPLATE", ...]}.
      */
     public static List<String> getLoreTypesForReforgeType(String reforgeType) {
-        List<String> result = new ArrayList<>();
-        for (var entry : LORE_TYPE_TO_REFORGE_TYPES.entrySet()) {
-            if (entry.getValue().contains(reforgeType)) {
-                result.add(entry.getKey());
-            }
-        }
-        return result;
+        return REFORGE_TYPE_TO_LORE_TYPES.getOrDefault(reforgeType, List.of());
     }
 }

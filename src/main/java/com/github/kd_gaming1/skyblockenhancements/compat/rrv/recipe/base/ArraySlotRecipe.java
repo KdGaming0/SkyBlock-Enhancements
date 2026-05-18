@@ -3,6 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import java.util.ArrayList;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Intermediate base for recipes whose ingredients are a simple array of slots.
@@ -16,6 +17,8 @@ import java.util.List;
  */
 public abstract class ArraySlotRecipe extends AbstractSkyblockClientRecipe {
 
+    @Nullable private List<SlotContent> cachedIngredients;
+
     protected ArraySlotRecipe(String[] wikiUrls) {
         super(wikiUrls);
     }
@@ -24,12 +27,16 @@ public abstract class ArraySlotRecipe extends AbstractSkyblockClientRecipe {
 
     @Override
     public List<SlotContent> getIngredients() {
+        List<SlotContent> snapshot = cachedIngredients;
+        if (snapshot != null) return snapshot;
+
         SlotContent[] slots = getInputSlots();
         List<SlotContent> list = new ArrayList<>(slots.length);
         for (SlotContent sc : slots) {
             // Pad empty indices instead of dropping them so length/layout matches
             list.add(sc != null ? sc : SlotRefParser.empty());
         }
-        return list;
+        cachedIngredients = List.copyOf(list);
+        return cachedIngredients;
     }
 }

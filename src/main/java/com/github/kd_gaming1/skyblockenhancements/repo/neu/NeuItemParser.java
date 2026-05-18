@@ -93,8 +93,9 @@ public final class NeuItemParser {
      */
     public static void resolveAllCategoryAndRarity(Map<String, NeuItem> items) {
         for (NeuItem item : items.values()) {
-            item.category = SkyblockItemCategory.fromNeuItem(item);
+            item.loreType = SkyblockItemCategory.extractLoreType(item);
             item.rarity = SkyblockItemCategory.extractRarity(item);
+            item.category = SkyblockItemCategory.fromNeuItem(item);
         }
     }
 

@@ -13,10 +13,9 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipe
 import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockRarity;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +40,9 @@ import org.jetbrains.annotations.Nullable;
  * (e.g. a sword) shows only matching reforge recipes.
  * <p>{@link #redirectsAsIngredient} filters by stone internal name, so clicking a reforge stone
  * (e.g. AMBER_MATERIAL) shows all rarity variants of the reforge it provides.
+ *
+ * <p>Result stacks are pre-computed during recipe generation and stored in the server recipe,
+ * so {@link #getResults} never scans the full item registry.
  */
 public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
 
@@ -71,6 +73,15 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
     private final List<String> specificItemIds;
     private final Optional<String> nbtModifier;
 
+    /** Pre-computed internal names of items that match this reforge (all rarities). */
+    private final List<String> resultInternalNames;
+    /** Set view of {@link #resultInternalNames} for O(1) {@link #redirectsAsResult} checks. */
+    private final Set<String> resultIdSet;
+    /** Pre-computed stone slot content; empty for blacksmith reforges. */
+    private final SlotContent cachedStone;
+    /** Item IDs from {@link #resultInternalNames} that also match this recipe's rarity. */
+    private final Set<String> rarityFilteredIdSet;
+
     @Nullable private List<SlotContent> cachedResults;
 
     public SkyblockReforgeClientRecipe(SkyblockReforgeServerRecipe src) {
@@ -87,6 +98,26 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
         this.specificInternalNames = src.getSpecificInternalNames();
         this.specificItemIds = src.getSpecificItemIds();
         this.nbtModifier = src.getNbtModifier();
+        this.resultInternalNames = src.getResultInternalNames();
+        this.resultIdSet = !resultInternalNames.isEmpty()
+                ? Set.copyOf(resultInternalNames)
+                : Collections.emptySet();
+        this.cachedStone = (!isBlacksmith && !stoneInternalName.isEmpty())
+                ? SlotRefParser.parse(stoneInternalName)
+                : SlotRefParser.empty();
+        this.rarityFilteredIdSet = buildRarityFilteredSet(resultInternalNames, rarity);
+    }
+
+    private static Set<String> buildRarityFilteredSet(List<String> resultNames, String recipeRarity) {
+        if (resultNames.isEmpty()) return Collections.emptySet();
+        Set<String> set = new java.util.HashSet<>();
+        for (String id : resultNames) {
+            NeuItem item = NeuItemRegistry.get(id);
+            if (item != null && item.rarity != null && item.rarity.name().equals(recipeRarity)) {
+                set.add(id);
+            }
+        }
+        return Collections.unmodifiableSet(set);
     }
 
     // ── ReliableClientRecipe core ──────────────────────────────────────────────
@@ -98,19 +129,15 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
 
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
-        if (!isBlacksmith) {
-            SlotContent stone = SlotRefParser.parse(stoneInternalName);
-            if (!stone.isEmpty()) {
-                ctx.bindSlot(0, stone);
-            }
+        if (!isBlacksmith && !cachedStone.isEmpty()) {
+            ctx.bindSlot(0, cachedStone);
         }
     }
 
     @Override
     public List<SlotContent> getIngredients() {
-        if (isBlacksmith || stoneInternalName.isEmpty()) return List.of();
-        SlotContent stone = SlotRefParser.parse(stoneInternalName);
-        return stone.isEmpty() ? List.of() : List.of(stone);
+        if (isBlacksmith || cachedStone.isEmpty()) return List.of();
+        return List.of(cachedStone);
     }
 
     @Override
@@ -134,34 +161,7 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
     @Override
     public boolean redirectsAsResult(ItemStack stack) {
         String itemId = SkyblockRecipeUtil.extractSkyblockId(stack);
-        if (itemId == null) return false;
-
-        NeuItem item = NeuItemRegistry.get(itemId);
-        if (item == null) return false;
-
-        SkyblockRarity itemRarity = SkyblockItemCategory.extractRarity(item);
-        if (itemRarity == null || !itemRarity.name().equals(rarity)) {
-            return false;
-        }
-
-        if (!specificInternalNames.isEmpty() && specificInternalNames.contains(itemId)) {
-            return true;
-        }
-
-        if (!specificItemIds.isEmpty()) {
-            String mcId = item.itemId;
-            String snbtId = item.snbtItemId;
-            for (String target : specificItemIds) {
-                if (target.equals(mcId) || target.equals(snbtId)) return true;
-            }
-        }
-
-        if (!itemType.isEmpty()) {
-            List<String> types = ReforgeTypeResolver.resolve(item);
-            return types.contains(itemType);
-        }
-
-        return false;
+        return itemId != null && rarityFilteredIdSet.contains(itemId);
     }
 
     @Override
@@ -317,48 +317,21 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
     // ── Result building ────────────────────────────────────────────────────────
 
     private List<SlotContent> buildResults() {
-        Set<Item> seenItems = new HashSet<>();
-        List<ItemStack> stacks = new ArrayList<>();
+        if (resultInternalNames.isEmpty()) return List.of();
 
-        for (String id : specificInternalNames) {
+        Set<Item> seenItems = Collections.newSetFromMap(new IdentityHashMap<>());
+        List<ItemStack> stacks = new ArrayList<>(resultInternalNames.size());
+
+        for (String id : resultInternalNames) {
             NeuItem item = NeuItemRegistry.get(id);
-            if (item != null) {
-                ItemStack stack = ItemStackBuilder.build(item);
-                if (!stack.isEmpty() && seenItems.add(stack.getItem())) {
-                    stacks.add(stack);
-                }
+            if (item == null) continue;
+            ItemStack stack = ItemStackBuilder.build(item);
+            if (!stack.isEmpty() && seenItems.add(stack.getItem())) {
+                stacks.add(stack);
             }
         }
 
-        if (!specificItemIds.isEmpty()) {
-            for (NeuItem item : NeuItemRegistry.getAll().values()) {
-                for (String targetId : specificItemIds) {
-                    if (targetId.equals(item.itemId) || targetId.equals(item.snbtItemId)) {
-                        ItemStack stack = ItemStackBuilder.build(item);
-                        if (!stack.isEmpty() && seenItems.add(stack.getItem())) {
-                            stacks.add(stack);
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
-        List<String> loreTypes = ReforgeTypeResolver.getLoreTypesForReforgeType(itemType);
-        if (!loreTypes.isEmpty()) {
-            for (NeuItem item : NeuItemRegistry.getAll().values()) {
-                String loreType = SkyblockItemCategory.extractLoreType(item);
-                if (loreTypes.contains(loreType)) {
-                    ItemStack stack = ItemStackBuilder.build(item);
-                    if (!stack.isEmpty() && seenItems.add(stack.getItem())) {
-                        stacks.add(stack);
-                    }
-                }
-            }
-        }
-
-        if (stacks.isEmpty()) return List.of();
-        return List.of(SlotContent.of(stacks));
+        return stacks.isEmpty() ? List.of() : List.of(SlotContent.of(stacks));
     }
 
     // ── Formatting ─────────────────────────────────────────────────────────────

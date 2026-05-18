@@ -21,8 +21,13 @@ public final class StringUtil {
             return "";
         }
         int len = raw.length();
+        int firstCode = raw.indexOf('§');
+        if (firstCode < 0) {
+            return raw; // Fast path: no color codes, zero allocation
+        }
         StringBuilder sb = new StringBuilder(len);
-        for (int i = 0; i < len; i++) {
+        sb.append(raw, 0, firstCode);
+        for (int i = firstCode; i < len; i++) {
             char ch = raw.charAt(i);
             if (ch == '§' && i + 1 < len) {
                 i++; // skip the formatting code character

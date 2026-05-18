@@ -138,6 +138,9 @@ public enum SkyblockItemCategory {
      * @return the matching category, or {@code null} if the item has no lore at all
      */
     public static SkyblockItemCategory fromNeuItem(NeuItem item) {
+        // Fast path: already resolved during parsing or cache load
+        if (item.category != null) return item.category;
+
         // Priority 1: structural checks — reliable, independent of lore format
         if (isPet(item)) return PET;
         if (isNpc(item)) return NPC;
@@ -207,6 +210,8 @@ public enum SkyblockItemCategory {
      * doesn't follow this pattern or yields an unrecognized type.
      */
     public static String extractLoreType(NeuItem item) {
+        // Fast path: resolved during parsing or cache load
+        if (item.loreType != null) return item.loreType;
         if (item.lore == null || item.lore.isEmpty()) return null;
 
         String lastLine = item.lore.getLast();
@@ -238,6 +243,7 @@ public enum SkyblockItemCategory {
 
         if (!LORE_TYPE_TO_CATEGORY.containsKey(type)) return null;
 
+        item.loreType = type; // cache for subsequent calls
         return type;
     }
 
@@ -249,6 +255,8 @@ public enum SkyblockItemCategory {
      */
     @Nullable
     public static SkyblockRarity extractRarity(NeuItem item) {
+        // Fast path: resolved during parsing or cache load
+        if (item.rarity != null) return item.rarity;
         if (item.lore == null || item.lore.isEmpty()) return null;
 
         String lastLine = item.lore.getLast();
@@ -268,7 +276,9 @@ public enum SkyblockItemCategory {
         }
 
         try {
-            return SkyblockRarity.valueOf(rarityStr);
+            SkyblockRarity rarity = SkyblockRarity.valueOf(rarityStr);
+            item.rarity = rarity; // cache for subsequent calls
+            return rarity;
         } catch (IllegalArgumentException e) {
             return null; // Unrecognized rarity string
         }
