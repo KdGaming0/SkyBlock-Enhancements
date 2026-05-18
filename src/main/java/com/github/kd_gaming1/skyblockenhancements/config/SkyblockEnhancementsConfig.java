@@ -138,6 +138,12 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = RRV_INTEGRATION)
     public static boolean hideCategoryButtonsWhenNotSearching = true;
 
+    @Entry(category = RRV_INTEGRATION)
+    public static boolean wideRrvSearchBar = true;
+
+    @Entry(category = RRV_INTEGRATION, isSlider = true, min = 100, max = 300, precision = 1)
+    public static int rrvSearchBarWidth = 200;
+
     public enum RrvSearchMode {
         /** Display name + SkyBlock ID only. Fast, no tooltip generation. */
         NAME_AND_ID,

@@ -108,6 +108,12 @@
   "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching": "Skjul kategoriknappar når ein ikkje søkjer",
   "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching.tooltip": "Skjuler kategorifilterknappane ovanfor RRV-søkjefeltet når det ikkje er noko søkjetekst.",
 
+  "skyblock_enhancements.midnightconfig.wideRrvSearchBar": "Breitt RRV-søkjefelt",
+  "skyblock_enhancements.midnightconfig.wideRrvSearchBar.tooltip": "Tvingar RRV-søkjefeltet til å vere breitt når det er i gjenstandsliste-posisjon.",
+
+  "skyblock_enhancements.midnightconfig.rrvSearchBarWidth": "Breidd på RRV-søkjefelt",
+  "skyblock_enhancements.midnightconfig.rrvSearchBarWidth.tooltip": "Minimumsbreidd på RRV-søkjefeltet i pikslar.\nOmråde: 100-300",
+
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Berre namn og ID",
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full verktøytips-søk",
 

@@ -108,6 +108,12 @@
   "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching": "Hide Category Buttons When Not Searching",
   "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching.tooltip": "Hides the category filter buttons above the RRV search bar when no search text is entered.",
 
+  "skyblock_enhancements.midnightconfig.wideRrvSearchBar": "Wide RRV Search Bar",
+  "skyblock_enhancements.midnightconfig.wideRrvSearchBar.tooltip": "Forces the RRV search bar to be wider when in the item-list position.",
+
+  "skyblock_enhancements.midnightconfig.rrvSearchBarWidth": "RRV Search Bar Width",
+  "skyblock_enhancements.midnightconfig.rrvSearchBarWidth.tooltip": "Minimum width of the RRV search bar in pixels.\nRange: 100-300",
+
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Name and ID Only",
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full Tooltip Search",
 

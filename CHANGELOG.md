@@ -27,3 +27,4 @@
 **Improvements**
 - Performance optimizations
 - Category buttons are now hidden when the item view is disabled.
+- The search bar is now wider when in the item view position.
