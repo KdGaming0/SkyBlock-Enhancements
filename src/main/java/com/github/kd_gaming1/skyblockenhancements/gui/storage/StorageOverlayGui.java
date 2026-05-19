@@ -40,17 +40,29 @@ public class StorageOverlayGui extends ContainerOverlay {
      */
     private static final int BOTTOM_PADDING = 20;
 
-    // ── Colours ───────────────────────────────────────────────────────────────
-    private static final int COL_OVERLAY_BG   = 0xD4080810;
-    private static final int COL_PANEL_BORDER = 0xFF2E2E4A;
-    private static final int COL_PAGE_BG      = 0xFF141422;
-    private static final int COL_SLOT_ITEM    = 0xFF22223A;
-    private static final int COL_SLOT_TL      = 0xFF0F0F1E;
-    private static final int COL_SLOT_BR      = 0xFF3A3A5C;
-    private static final int COL_SLOT_HOVER   = 0x60FFFFFF;
-    private static final int COL_TITLE_ACTIVE = 0xFFFFD700;
-    private static final int COL_TITLE_IDLE   = 0xFFAAAAAA;
-    private static final int COL_PLACEHOLDER  = 0xFF55556A;
+    // ── Colours — Dark Glass theme ────────────────────────────────────────────
+    /** Main backdrop: deep blue-black, 94% opaque — the world peeks through slightly. */
+    private static final int COL_OVERLAY_BG      = 0xF0080C18;
+    /** Outer frame border: solid mid-dark navy. */
+    private static final int COL_PANEL_BORDER     = 0xFF1A3060;
+    /** Inactive page card: very dark navy, distinct from the backdrop. */
+    private static final int COL_PAGE_BG          = 0xFF0C1020;
+    /** Active page card: slightly lighter navy so the live page reads clearly. */
+    private static final int COL_PAGE_BG_ACTIVE   = 0xFF0F1A36;
+    /** Slot inner fill: dark inset blue-black — makes items pop. */
+    private static final int COL_SLOT_ITEM        = 0xFF131828;
+    /** Slot top/left bevel: near-black for the sunken effect. */
+    private static final int COL_SLOT_TL          = 0xFF07090F;
+    /** Slot bottom/right bevel: medium navy for a subtle raised edge. */
+    private static final int COL_SLOT_BR          = 0xFF1E2840;
+    /** Slot hover overlay: white wash (37% opaque). */
+    private static final int COL_SLOT_HOVER       = 0x60FFFFFF;
+    /** Active page title: bright cool blue. */
+    private static final int COL_TITLE_ACTIVE     = 0xFF7AB4FF;
+    /** Idle page title: muted blue-gray. */
+    private static final int COL_TITLE_IDLE       = 0xFFA0AABB;
+    /** "Not yet opened" placeholder: faded blue-gray. */
+    private static final int COL_PLACEHOLDER      = 0xFF505868;
 
     // ── References ────────────────────────────────────────────────────────────
     private final AbstractContainerScreen<?> screen;
@@ -301,8 +313,9 @@ public class StorageOverlayGui extends ContainerOverlay {
         int borderColor = parseColor(isActive
                 ? SkyblockEnhancementsConfig.storageActivePageOutlineColor
                 : SkyblockEnhancementsConfig.storageInactivePageBorderColor);
+        int bgColor = isActive ? COL_PAGE_BG_ACTIVE : COL_PAGE_BG;
         gfx.fill(rect.x,     cardTop,     rect.x + PAGE_WIDTH,     rect.y + cardH,     borderColor);
-        gfx.fill(rect.x + 1, cardTop + 1, rect.x + PAGE_WIDTH - 1, rect.y + cardH - 1, COL_PAGE_BG);
+        gfx.fill(rect.x + 1, cardTop + 1, rect.x + PAGE_WIDTH - 1, rect.y + cardH - 1, bgColor);
 
         String title = inv != null && inv.title() != null ? inv.title() : pageSlot.defaultName();
         gfx.drawString(mc.font, title, rect.x + 4, rect.y + 2,
@@ -393,7 +406,7 @@ public class StorageOverlayGui extends ContainerOverlay {
 
     private void drawScrollbar(GuiGraphics gfx) {
         Rect track = getScrollbarTrack();
-        gfx.fill(track.x, track.y, track.x + track.width, track.y + track.height, 0x30FFFFFF);
+        gfx.fill(track.x, track.y, track.x + track.width, track.y + track.height, 0x30253560);
 
         float max = maxScroll();
         if (max <= 0) return;
@@ -401,8 +414,8 @@ public class StorageOverlayGui extends ContainerOverlay {
         float ratio = (float) innerScrollPanelHeight / Math.max(lastRenderedContentH, 1);
         int knobH   = Math.max(20, (int) (track.height * ratio));
         int knobY   = track.y + (int) ((scroll / max) * (track.height - knobH));
-        gfx.fill(track.x,     knobY,     track.x + track.width,     knobY + knobH,     0xC0FFFFFF);
-        gfx.fill(track.x + 1, knobY + 1, track.x + track.width - 1, knobY + knobH - 1, 0x80AAAAAA);
+        gfx.fill(track.x,     knobY,     track.x + track.width,     knobY + knobH,     0xC04878CC);
+        gfx.fill(track.x + 1, knobY + 1, track.x + track.width - 1, knobY + knobH - 1, 0x80304E90);
     }
 
     // ── Hover guard ───────────────────────────────────────────────────────────
@@ -484,7 +497,11 @@ public class StorageOverlayGui extends ContainerOverlay {
         if (searchField == null) return false;
         if (searchField.mouseClicked(event, doubleClick)) {
             searchField.setFocused(true);
+            screen.setFocused(searchField);
             return true;
+        }
+        if (screen.getFocused() == searchField) {
+            screen.setFocused(null);
         }
         searchField.setFocused(false);
         return false;

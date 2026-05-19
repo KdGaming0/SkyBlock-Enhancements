@@ -5,8 +5,10 @@ import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageOverlay
 import com.github.kd_gaming1.skyblockenhancements.gui.storage.HasContainerOverlay;
 import com.github.kd_gaming1.skyblockenhancements.gui.storage.Rect;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import com.github.kd_gaming1.skyblockenhancements.mixin.access.ScreenAccessor;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -36,6 +38,10 @@ public abstract class ContainerScreenOverlayMixin<T extends AbstractContainerMen
         }
         if (sbe$overlay != null) {
             sbe$overlay.onInit(((Screen)(Object)this).width, ((Screen)(Object)this).height);
+            EditBox searchField = sbe$overlay.getSearchField();
+            if (searchField != null) {
+                ((ScreenAccessor) this).sbe$addWidget(searchField);
+            }
         }
     }
 
