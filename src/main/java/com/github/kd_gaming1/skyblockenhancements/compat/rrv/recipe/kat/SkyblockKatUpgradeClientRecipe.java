@@ -57,13 +57,11 @@ public class SkyblockKatUpgradeClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
-        if (input != null) ctx.bindSlot(0, input);
+        bindOptional(ctx, 0, input);
         for (int i = 0; i < materials.length && i < 4; i++) {
-            if (materials[i] != null) {
-                ctx.bindOptionalSlot(i + 1, materials[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
-            }
+            bindOptional(ctx, i + 1, materials[i]);
         }
-        if (output != null) ctx.bindSlot(5, output);
+        bindOptional(ctx, 5, output);
     }
 
     @Override

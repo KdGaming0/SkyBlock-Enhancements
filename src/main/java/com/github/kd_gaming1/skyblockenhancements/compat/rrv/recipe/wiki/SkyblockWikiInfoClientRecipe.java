@@ -35,6 +35,8 @@ public class SkyblockWikiInfoClientRecipe extends AbstractSkyblockClientRecipe
 
     private final @Nullable SlotContent displayItem;
     private final Component itemName;
+    /** Cached wrapped name lines to avoid re-splitting text every frame. */
+    @Nullable private List<FormattedCharSequence> cachedNameLines;
 
     public SkyblockWikiInfoClientRecipe(ItemStack displayItem, String displayName, String[] wikiUrls) {
         super(wikiUrls);
@@ -62,7 +64,7 @@ public class SkyblockWikiInfoClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
-        if (displayItem != null) ctx.bindSlot(0, displayItem);
+        bindOptional(ctx, 0, displayItem);
     }
 
     @Override
@@ -80,7 +82,11 @@ public class SkyblockWikiInfoClientRecipe extends AbstractSkyblockClientRecipe
                              int mouseX, int mouseY, float partialTicks) {
         Font font = font();
         int wrapWidth = getViewType().getDisplayWidth() - NAME_X - RIGHT_PADDING;
-        List<FormattedCharSequence> lines = wrapName(font, itemName, wrapWidth);
+        List<FormattedCharSequence> lines = cachedNameLines;
+        if (lines == null) {
+            lines = wrapName(font, itemName, wrapWidth);
+            cachedNameLines = lines;
+        }
 
         int startY = centeredStartY(lines.size());
         for (int i = 0; i < lines.size(); i++) {

@@ -18,7 +18,7 @@ public class SkyblockForgeRecipeType implements ReliableClientRecipeType {
     private static final int COLS = 4;
     private static final int ROWS = 2;
     private static final int OUTPUT_INDEX = COLS * ROWS;
-    private static final int OUTPUT_X = COLS * RecipeLayoutConstants.SLOT_SIZE + 12;
+    private static final int OUTPUT_X = COLS * RecipeLayoutConstants.SLOT_SIZE + 16;
     private static final int OUTPUT_Y = (ROWS * RecipeLayoutConstants.SLOT_SIZE) / 2;
 
     private final ItemStack icon = new ItemStack(Items.ANVIL);

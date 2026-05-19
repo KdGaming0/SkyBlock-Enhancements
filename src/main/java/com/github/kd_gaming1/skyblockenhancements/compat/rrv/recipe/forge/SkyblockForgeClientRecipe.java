@@ -40,6 +40,7 @@ public class SkyblockForgeClientRecipe extends ArraySlotRecipe
     private final String crafttext;
     private final boolean hasCrafttext;
     @Nullable private Component cachedTooltipLine;
+    private final RecipeViewMenu.AdditionalStackModifier requirementModifier;
 
     public SkyblockForgeClientRecipe(SlotContent[] inputs, SlotContent output,
                                      int durationSeconds, String[] wikiUrls, String crafttext) {
@@ -50,6 +51,7 @@ public class SkyblockForgeClientRecipe extends ArraySlotRecipe
         this.tierOffset = SkyblockRecipeUtil.extractTierFromResults(getResults());
         this.crafttext = crafttext != null ? crafttext : "";
         this.hasCrafttext = !this.crafttext.isEmpty();
+        this.requirementModifier = hasCrafttext ? this::appendRequirementTooltip : null;
     }
 
     @Override
@@ -60,18 +62,16 @@ public class SkyblockForgeClientRecipe extends ArraySlotRecipe
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
         for (int i = 0; i < inputs.length && i < MAX_INPUTS; i++) {
-            if (inputs[i] != null) {
-                ctx.bindOptionalSlot(i, inputs[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
-            }
+            bindOptional(ctx, i, inputs[i]);
         }
-        if (output != null) ctx.bindSlot(OUTPUT_SLOT, output);
-        if (hasCrafttext && SkyblockEnhancementsConfig.showCollectionRequirements) {
-            ctx.addAdditionalStackModifier(OUTPUT_SLOT, this::appendRequirementTooltip);
+        bindOptional(ctx, OUTPUT_SLOT, output);
+        if (requirementModifier != null && SkyblockEnhancementsConfig.showCollectionRequirements) {
+            ctx.addAdditionalStackModifier(OUTPUT_SLOT, requirementModifier);
         }
     }
 
     private void appendRequirementTooltip(ItemStack stack, List<Component> tooltip) {
-        tooltip.addLast(Component.literal(""));
+        tooltip.addLast(Component.empty());
         tooltip.addLast(requirementTooltipLine());
     }
 

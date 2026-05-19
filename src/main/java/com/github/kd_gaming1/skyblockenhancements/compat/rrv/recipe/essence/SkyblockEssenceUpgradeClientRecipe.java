@@ -63,14 +63,12 @@ public class SkyblockEssenceUpgradeClientRecipe extends AbstractSkyblockClientRe
 
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
-        if (input != null)   ctx.bindSlot(0, input);
-        if (essence != null) ctx.bindSlot(1, essence);
+        bindOptional(ctx, 0, input);
+        bindOptional(ctx, 1, essence);
         for (int i = 0; i < companions.length && i < 4; i++) {
-            if (companions[i] != null) {
-                ctx.bindOptionalSlot(2 + i, companions[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
-            }
+            bindOptional(ctx, 2 + i, companions[i]);
         }
-        if (output != null) ctx.bindSlot(6, output);
+        bindOptional(ctx, 6, output);
     }
 
     @Override

@@ -55,11 +55,9 @@ public class SkyblockNpcShopClientRecipe extends ArraySlotRecipe
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
         for (int i = 0; i < costs.length && i < MAX_COSTS; i++) {
-            if (costs[i] != null) {
-                ctx.bindOptionalSlot(i, costs[i], RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
-            }
+            bindOptional(ctx, i, costs[i]);
         }
-        if (result != null) ctx.bindSlot(RESULT_SLOT, result);
+        bindOptional(ctx, RESULT_SLOT, result);
     }
 
     @Override

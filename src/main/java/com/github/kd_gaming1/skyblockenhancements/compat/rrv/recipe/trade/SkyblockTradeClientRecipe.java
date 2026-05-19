@@ -35,8 +35,8 @@ public class SkyblockTradeClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
-        if (cost != null)   ctx.bindSlot(0, cost);
-        if (result != null) ctx.bindSlot(1, result);
+        bindOptional(ctx, 0, cost);
+        bindOptional(ctx, 1, result);
     }
 
     @Override

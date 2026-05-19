@@ -78,7 +78,7 @@ public class SkyblockNpcInfoClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
-        if (npcHead != null) ctx.bindSlot(0, npcHead);
+        bindOptional(ctx, 0, npcHead);
     }
 
     @Override

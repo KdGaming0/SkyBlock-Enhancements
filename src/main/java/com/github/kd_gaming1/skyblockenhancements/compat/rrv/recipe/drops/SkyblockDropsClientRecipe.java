@@ -40,6 +40,10 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
     private final String[] chances;
     private final List<SlotContent> drops;
     private final MobPreviewController previewController;
+    /** Pre-built tooltip modifiers so bindSlots never allocates lambdas. */
+    private final RecipeViewMenu.AdditionalStackModifier[] chanceModifiers;
+    /** Cached ellipsized mob name to avoid re-measuring text every frame. */
+    @Nullable private Component cachedMobName;
 
     public SkyblockDropsClientRecipe(SkyblockDropsServerRecipe src) {
         super(src.getWikiUrls());
@@ -50,6 +54,7 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
         MobPreview resolved = MobRenderResolver.resolve(src.getRenderRef());
         if (resolved == null) logUnresolvedOnce(src.getRenderRef());
         this.previewController = new MobPreviewController(resolved);
+        this.chanceModifiers = buildChanceModifiers();
     }
 
     private static List<SlotContent> buildDropsList(SlotContent[] rawDrops) {
@@ -68,6 +73,23 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
         }
     }
 
+    private RecipeViewMenu.AdditionalStackModifier[] buildChanceModifiers() {
+        if (chances == null || chances.length == 0) return new RecipeViewMenu.AdditionalStackModifier[0];
+        int limit = Math.min(chances.length, MAX_DROPS);
+        RecipeViewMenu.AdditionalStackModifier[] mods = new RecipeViewMenu.AdditionalStackModifier[limit];
+        for (int i = 0; i < limit; i++) {
+            String chance = chances[i];
+            if (chance == null || chance.isEmpty()) continue;
+            if (drops.get(i).isEmpty()) continue;
+            Component line = Component.literal("§7Drop chance: §e§l" + chance);
+            mods[i] = (stack, tooltip) -> {
+                tooltip.addLast(Component.empty());
+                tooltip.addLast(line);
+            };
+        }
+        return mods;
+    }
+
     // ── ReliableClientRecipe core ──────────────────────────────────────────────
 
     @Override
@@ -79,20 +101,15 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
         int limit = Math.min(drops.size(), MAX_DROPS);
         for (int i = 0; i < limit; i++) {
-            ctx.bindSlot(i, drops.get(i));
+            bindOptional(ctx, i, drops.get(i));
         }
         attachChanceTooltips(ctx);
     }
 
     private void attachChanceTooltips(RecipeViewMenu.SlotFillContext ctx) {
-        int limit = Math.min(chances != null ? chances.length : 0, MAX_DROPS);
-        for (int i = 0; i < limit; i++) {
-            String chance = chances[i];
-            if (chance == null || chance.isEmpty()) continue;
-            ctx.addAdditionalStackModifier(i, (stack, tooltip) -> {
-                tooltip.addLast(Component.literal(""));
-                tooltip.addLast(Component.literal("§7Drop chance: §e§l" + chance));
-            });
+        for (int i = 0; i < chanceModifiers.length; i++) {
+            RecipeViewMenu.AdditionalStackModifier mod = chanceModifiers[i];
+            if (mod != null) ctx.addAdditionalStackModifier(i, mod);
         }
     }
 
@@ -152,7 +169,11 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
         if (mobName.isEmpty()) return;
 
         int maxWidth = pos.width() - NAME_SIDE_PADDING * 2;
-        Component line = SkyblockRecipeUtil.ellipsize(font(), mobName, maxWidth);
+        Component line = cachedMobName;
+        if (line == null) {
+            line = SkyblockRecipeUtil.ellipsize(font(), mobName, maxWidth);
+            cachedMobName = line;
+        }
 
         int textWidth = font().width(line);
         int x = NAME_SIDE_PADDING + (maxWidth - textWidth) / 2;

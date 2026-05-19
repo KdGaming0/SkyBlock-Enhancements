@@ -87,8 +87,13 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
     private final String crafttext;
     private final boolean hasCrafttext;
     @Nullable private Component cachedTooltipLine;
+    private final RecipeViewMenu.AdditionalStackModifier requirementModifier;
 
     @Nullable private List<SlotContent> cachedResults;
+    /** Cached render artefacts to avoid re-computing text layout every frame. */
+    @Nullable private Component cachedName;
+    @Nullable private Component cachedSubtitle;
+    @Nullable private List<String> cachedWrappedStatLines;
 
     public SkyblockReforgeClientRecipe(SkyblockReforgeServerRecipe src) {
         super(src.getWikiUrls());
@@ -114,6 +119,7 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
         this.rarityFilteredIdSet = buildRarityFilteredSet(resultInternalNames, rarity);
         this.crafttext = src.getCrafttext();
         this.hasCrafttext = !this.crafttext.isEmpty();
+        this.requirementModifier = hasCrafttext ? this::appendRequirementTooltip : null;
     }
 
     private static Set<String> buildRarityFilteredSet(List<String> resultNames, String recipeRarity) {
@@ -137,16 +143,16 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
 
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
-        if (!isBlacksmith && !cachedStone.isEmpty()) {
-            ctx.bindSlot(0, cachedStone);
+        if (!isBlacksmith) {
+            bindOptional(ctx, 0, cachedStone);
         }
-        if (hasCrafttext && SkyblockEnhancementsConfig.showCollectionRequirements && !cachedStone.isEmpty()) {
-            ctx.addAdditionalStackModifier(0, this::appendRequirementTooltip);
+        if (requirementModifier != null && SkyblockEnhancementsConfig.showCollectionRequirements && !cachedStone.isEmpty()) {
+            ctx.addAdditionalStackModifier(0, requirementModifier);
         }
     }
 
     private void appendRequirementTooltip(ItemStack stack, List<Component> tooltip) {
-        tooltip.addLast(Component.literal(""));
+        tooltip.addLast(Component.empty());
         tooltip.addLast(requirementTooltipLine());
     }
 
@@ -221,22 +227,30 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
     }
 
     private void renderName(GuiGraphics gfx, RecipePosition pos) {
-        String rarityLabel = rarityColorCode() + rarity.replace("_", " ");
-        String label = "§e" + reforgeName + " §7- " + rarityLabel;
-        Component line = SkyblockRecipeUtil.ellipsize(font(), label, pos.width() - NAME_X - TEXT_MARGIN_X);
+        Component line = cachedName;
+        if (line == null) {
+            String rarityLabel = rarityColorCode() + rarity.replace("_", " ");
+            String label = "§e" + reforgeName + " §7- " + rarityLabel;
+            line = SkyblockRecipeUtil.ellipsize(font(), label, pos.width() - NAME_X - TEXT_MARGIN_X);
+            cachedName = line;
+        }
         gfx.drawString(font(), line, NAME_X, NAME_Y, RecipeColors.WHITE, true);
     }
 
     private void renderSubtitle(GuiGraphics gfx, RecipePosition pos) {
-        String label;
-        if (isBlacksmith) {
-            label = "§7Blacksmith";
-        } else if (cost > 0) {
-            label = "§7Cost: §6" + SkyblockRecipeUtil.formatNumber(cost) + " coins";
-        } else {
-            return;
+        Component line = cachedSubtitle;
+        if (line == null) {
+            String label;
+            if (isBlacksmith) {
+                label = "§7Blacksmith";
+            } else if (cost > 0) {
+                label = "§7Cost: §6" + SkyblockRecipeUtil.formatNumber(cost) + " coins";
+            } else {
+                return;
+            }
+            line = SkyblockRecipeUtil.ellipsize(font(), label, pos.width() - SUBTITLE_X - TEXT_MARGIN_X);
+            cachedSubtitle = line;
         }
-        Component line = SkyblockRecipeUtil.ellipsize(font(), label, pos.width() - SUBTITLE_X - TEXT_MARGIN_X);
         gfx.drawString(font(), line, SUBTITLE_X, SUBTITLE_Y, RecipeColors.COINS, true);
     }
 
@@ -248,23 +262,30 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
         }
 
         int maxWidth = pos.width() - TEXT_MARGIN_X * 2;
-        int y = STATS_START_Y;
+        List<String> lines = cachedWrappedStatLines;
+        if (lines == null) {
+            lines = buildWrappedStatLines(maxWidth);
+            cachedWrappedStatLines = lines;
+        }
 
+        int y = STATS_START_Y;
+        for (String line : lines) {
+            gfx.drawString(font(), line, TEXT_MARGIN_X, y, RecipeColors.WHITE, true);
+            y += LINE_HEIGHT;
+        }
+    }
+
+    private List<String> buildWrappedStatLines(int maxWidth) {
+        List<String> out = new ArrayList<>();
         if (ability.isPresent() && !ability.get().isBlank()) {
             String text = ability.get().replace("\n", " ").trim();
-            for (String line : wrapText(font(), text, maxWidth)) {
-                gfx.drawString(font(), line, TEXT_MARGIN_X, y, RecipeColors.WHITE, true);
-                y += LINE_HEIGHT;
-            }
+            out.addAll(wrapText(font(), text, maxWidth));
         }
-
         for (var entry : stats.entrySet()) {
             String text = "§7" + formatStatName(entry.getKey()) + ": " + formatStatValue(entry.getValue());
-            for (String line : wrapText(font(), text, maxWidth)) {
-                gfx.drawString(font(), line, TEXT_MARGIN_X, y, RecipeColors.WHITE, true);
-                y += LINE_HEIGHT;
-            }
+            out.addAll(wrapText(font(), text, maxWidth));
         }
+        return List.copyOf(out);
     }
 
     private void renderRequirementIndicator(GuiGraphics gfx) {

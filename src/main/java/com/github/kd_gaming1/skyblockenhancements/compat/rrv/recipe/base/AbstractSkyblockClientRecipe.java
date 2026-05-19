@@ -2,6 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base;
 
 import cc.cassian.rrv.api.recipe.ReliableClientRecipe;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
+import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.ItemFamilyHelper;
@@ -116,6 +117,18 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
         return SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, x, y);
     }
 
+    /**
+     * Binds a slot with the default optional-slot renderer so a background sprite is drawn
+     * behind the item. Skips null or empty content. This should be used for every slot that
+     * contains an item so the recipe display looks consistent with native RRV recipe views.
+     */
+    protected static void bindOptional(RecipeViewMenu.SlotFillContext ctx, int index,
+                                       @Nullable SlotContent content) {
+        if (content != null && !content.isEmpty()) {
+            ctx.bindOptionalSlot(index, content, RecipeViewMenu.OptionalSlotRenderer.DEFAULT);
+        }
+    }
+
     // ── Render utilities ────────────────────────────────────────────────────────
 
     /** Convenience: {@code Minecraft.getInstance().font}. */
@@ -123,12 +136,14 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
         return Minecraft.getInstance().font;
     }
 
+    private static final Component ARROW_TEXT = Component.literal("→");
+
     /**
      * Draws the standard "→" arrow used between recipe inputs and outputs.
      * Subclasses call this from {@link #renderRecipe} with their recipe-specific coordinates.
      */
     protected final void renderArrow(GuiGraphics gfx, int x, int y) {
-        gfx.drawString(Minecraft.getInstance().font, Component.literal("→"), x, y, RecipeColors.ARROW, false);
+        gfx.drawString(Minecraft.getInstance().font, ARROW_TEXT, x, y, RecipeColors.ARROW, false);
     }
 
     // ── Internal ─────────────────────────────────────────────────────────────────
