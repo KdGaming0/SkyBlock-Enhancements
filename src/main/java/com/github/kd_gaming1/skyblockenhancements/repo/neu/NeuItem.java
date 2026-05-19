@@ -192,5 +192,6 @@ public class NeuItem {
             this.recipesTrimmed = true;
         }
         this.recipes = null;
+        this.recipe = null;
     }
 }

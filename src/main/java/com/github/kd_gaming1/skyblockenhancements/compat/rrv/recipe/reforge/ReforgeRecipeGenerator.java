@@ -18,8 +18,8 @@ import java.util.Set;
  * Generates reforge recipes from NEU constants.
  *
  * <p>One server recipe is created per (reforge, rarity) pair. When a player clicks an item
- * in RRV, only recipes whose rarity matches the item's rarity and whose item type applies to
- * the item will be shown in the reforge tab.
+ * in RRV, only recipes whose rarity matches the item's rarity and whose item type applies to the
+ * item will be shown in the reforge tab.
  *
  * <p>Blacksmith reforges and reforge stones are both expanded across their
  * {@code requiredRarities} list. The client renders each recipe as a compact stat card.
@@ -41,7 +41,7 @@ public final class ReforgeRecipeGenerator {
         Map<String, List<NeuItem>> bySnbtId = new java.util.HashMap<>();
         Map<String, List<NeuItem>> byLoreType = new java.util.HashMap<>();
 
-        for (NeuItem item : NeuItemRegistry.getAll().values()) {
+        for (NeuItem item : NeuItemRegistry.getAllValues()) {
             if (item.itemId != null && !item.itemId.isEmpty()) {
                 byItemId.computeIfAbsent(item.itemId, k -> new ArrayList<>()).add(item);
             }
@@ -74,7 +74,8 @@ public final class ReforgeRecipeGenerator {
                         List.of(),
                         reforge.nbtModifier(),
                         new String[0],
-                        resultNames));
+                        resultNames,
+                        ""));
             }
         }
 
@@ -83,6 +84,7 @@ public final class ReforgeRecipeGenerator {
             String itemType = stone.itemTypes().orElse("");
             List<String> specificInternalNames = stone.specificInternalNames().orElse(List.of());
             List<String> specificItemIds = stone.specificItemIds().orElse(List.of());
+            String crafttext = resolveStoneCrafttext(stone.internalName());
             for (String rarity : stone.requiredRarities()) {
                 Map<String, Double> rarityStats = stone.statsForRarity(rarity);
                 int rarityCost = stone.costForRarity(rarity).orElse(0);
@@ -105,9 +107,20 @@ public final class ReforgeRecipeGenerator {
                         specificItemIds,
                         stone.nbtModifier(),
                         new String[0],
-                        resultNames));
+                        resultNames,
+                        crafttext));
             }
         }
+    }
+
+    /**
+     * Looks up the NEU item for a reforge stone and returns its collection requirement text.
+     * Returns an empty string when the stone has no item entry or no requirement.
+     */
+    private static String resolveStoneCrafttext(String stoneInternalName) {
+        if (stoneInternalName == null || stoneInternalName.isEmpty()) return "";
+        NeuItem item = NeuItemRegistry.get(stoneInternalName);
+        return item != null && item.hasCrafttext() ? item.crafttext : "";
     }
 
     /**

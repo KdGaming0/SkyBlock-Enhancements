@@ -110,7 +110,7 @@ public final class SkyblockCategoryFilter {
 
     private static Map<String, NeuItem> ensureDisplayNameIndex() {
         Map<String, NeuItem> idx = displayNameIndex;
-        int registrySize = NeuItemRegistry.getAll().size();
+        int registrySize = NeuItemRegistry.size();
 
         if (idx != null && registrySize == indexedSize) return idx;
 
@@ -120,7 +120,7 @@ public final class SkyblockCategoryFilter {
             }
 
             Map<String, NeuItem> newIndex = new HashMap<>(registrySize);
-            for (NeuItem item : NeuItemRegistry.getAll().values()) {
+            for (NeuItem item : NeuItemRegistry.getAllValues()) {
                 if (item.displayName != null) {
                     newIndex.put(item.displayName, item);
                 }

@@ -8,7 +8,9 @@ import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.ArraySlotRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
+import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
@@ -22,18 +24,24 @@ public class SkyblockCraftingClientRecipe extends ArraySlotRecipe
 
     private static final int ARROW_X   = 62;
     private static final int ARROW_Y   = 22;
+    private static final int ARROW_HIT_W = 12;
+    private static final int ARROW_HIT_H = 10;
     private static final int BUTTON_ROW_Y_OFFSET = 56;
-
 
     private final SlotContent[] inputs;
     private final SlotContent output;
     private final int tierOffset;
+    private final String crafttext;
+    private final boolean hasCrafttext;
+    @Nullable private Component cachedTooltipLine;
 
-    public SkyblockCraftingClientRecipe(SlotContent[] inputs, SlotContent output, String[] wikiUrls) {
+    public SkyblockCraftingClientRecipe(SlotContent[] inputs, SlotContent output, String[] wikiUrls, String crafttext) {
         super(wikiUrls);
         this.inputs = inputs;
         this.output = output;
         this.tierOffset = SkyblockRecipeUtil.extractTierFromResults(getResults());
+        this.crafttext = crafttext != null ? crafttext : "";
+        this.hasCrafttext = !this.crafttext.isEmpty();
     }
 
     @Override
@@ -47,6 +55,22 @@ public class SkyblockCraftingClientRecipe extends ArraySlotRecipe
             if (inputs[i] != null) ctx.bindSlot(i, inputs[i]);
         }
         if (output != null) ctx.bindSlot(9, output);
+        if (hasCrafttext && SkyblockEnhancementsConfig.showCollectionRequirements) {
+            ctx.addAdditionalStackModifier(9, this::appendRequirementTooltip);
+        }
+    }
+
+    private void appendRequirementTooltip(ItemStack stack, List<Component> tooltip) {
+        tooltip.addLast(Component.literal(""));
+        tooltip.addLast(requirementTooltipLine());
+    }
+
+    private Component requirementTooltipLine() {
+        Component cached = cachedTooltipLine;
+        if (cached != null) return cached;
+        cached = Component.literal("§cRequirement: §e" + SkyblockRecipeUtil.formatCrafttext(crafttext));
+        cachedTooltipLine = cached;
+        return cached;
     }
 
     @Override
@@ -63,7 +87,27 @@ public class SkyblockCraftingClientRecipe extends ArraySlotRecipe
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
         renderArrow(gfx, ARROW_X, ARROW_Y);
+        if (hasCrafttext && SkyblockEnhancementsConfig.showCollectionRequirements) {
+            renderRequirementIndicator(gfx);
+            renderArrowTooltipIfHovered(gfx, screen, pos, mouseX, mouseY);
+        }
         maintainButtons(screen, pos);
+    }
+
+    private void renderRequirementIndicator(GuiGraphics gfx) {
+        gfx.drawString(font(), "§c!", ARROW_X + 8, ARROW_Y - 8, RecipeColors.WHITE, false);
+    }
+
+    private void renderArrowTooltipIfHovered(GuiGraphics gfx, RecipeViewScreen screen,
+                                             RecipePosition pos, int mouseX, int mouseY) {
+        if (mouseX < ARROW_X || mouseX >= ARROW_X + ARROW_HIT_W
+                || mouseY < ARROW_Y || mouseY >= ARROW_Y + ARROW_HIT_H) {
+            return;
+        }
+        gfx.setComponentTooltipForNextFrame(font(),
+                List.of(requirementTooltipLine()),
+                pos.left() + mouseX,
+                pos.top() + mouseY);
     }
 
     @Override

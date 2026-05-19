@@ -35,7 +35,8 @@ public final class CraftingRecipeParser {
         return new SkyblockCraftingServerRecipe(
                 inputs,
                 SlotContent.of(ItemStackBuilder.build(item).copy()),
-                item.getWikiUrls());
+                item.getWikiUrls(),
+                item.crafttext);
     }
 
     /** Builds a crafting recipe from a single modern {@code recipes[]} entry. */
@@ -47,6 +48,7 @@ public final class CraftingRecipeParser {
         return new SkyblockCraftingServerRecipe(
                 inputs,
                 SlotContent.of(RecipeOutputResolver.resolve(recipe, item)),
-                item.getWikiUrls());
+                item.getWikiUrls(),
+                item.crafttext);
     }
 }

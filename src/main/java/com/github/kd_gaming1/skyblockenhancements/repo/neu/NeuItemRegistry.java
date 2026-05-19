@@ -79,6 +79,15 @@ public final class NeuItemRegistry {
         return Map.copyOf(ITEMS);
     }
 
+    /** Returns a snapshot list of all registered items without copying the key set. */
+    public static List<NeuItem> getAllValues() {
+        return List.copyOf(ITEMS.values());
+    }
+
+    public static int size() {
+        return ITEMS.size();
+    }
+
     // ── Lifecycle ────────────────────────────────────────────────────────────────
 
     public static void clear() {

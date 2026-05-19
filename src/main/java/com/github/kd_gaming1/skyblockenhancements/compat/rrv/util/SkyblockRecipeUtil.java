@@ -218,6 +218,40 @@ public final class SkyblockRecipeUtil {
         return clean;
     }
 
+    // ── Crafttext formatting ────────────────────────────────────────────────────
+
+    /**
+     * Strips common "Requires:" / "Requires " prefixes from NEU crafttext so the
+     * requirement can be displayed cleanly in tooltips. Returns the original text
+     * (trimmed) when no recognised prefix is present.
+     *
+     * <p>Zero-allocation until the final {@code substring}.
+     */
+    public static String formatCrafttext(String raw) {
+        if (raw == null || raw.isEmpty()) return "";
+
+        int i = 0;
+        int len = raw.length();
+        while (i < len && raw.charAt(i) <= ' ') i++;
+
+        if (i + 8 <= len) {
+            boolean isRequires = (raw.charAt(i) == 'R' || raw.charAt(i) == 'r')
+                    && (raw.charAt(i + 1) == 'E' || raw.charAt(i + 1) == 'e')
+                    && (raw.charAt(i + 2) == 'Q' || raw.charAt(i + 2) == 'q')
+                    && (raw.charAt(i + 3) == 'U' || raw.charAt(i + 3) == 'u')
+                    && (raw.charAt(i + 4) == 'I' || raw.charAt(i + 4) == 'i')
+                    && (raw.charAt(i + 5) == 'R' || raw.charAt(i + 5) == 'r')
+                    && (raw.charAt(i + 6) == 'E' || raw.charAt(i + 6) == 'e')
+                    && (raw.charAt(i + 7) == 'S' || raw.charAt(i + 7) == 's');
+            if (isRequires) {
+                i += 8;
+                while (i < len && (raw.charAt(i) == ':' || raw.charAt(i) <= ' ')) i++;
+                return raw.substring(i);
+            }
+        }
+        return raw.substring(i);
+    }
+
     // ── Page seek ────────────────────────────────────────────────────────────────
 
     public static void seekToMatchingPage(RecipeViewMenu menu, String targetId) {

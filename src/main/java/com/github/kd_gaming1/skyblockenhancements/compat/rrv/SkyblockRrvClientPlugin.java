@@ -142,11 +142,11 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
 
     private void registerRecipeWrappers() {
         register(SkyblockCraftingServerRecipe.TYPE,
-                r -> new SkyblockCraftingClientRecipe(r.getInputs(), r.getOutput(), r.getWikiUrls()));
+                r -> new SkyblockCraftingClientRecipe(r.getInputs(), r.getOutput(), r.getWikiUrls(), r.getCrafttext()));
 
         register(SkyblockForgeServerRecipe.TYPE,
                 r -> new SkyblockForgeClientRecipe(
-                        r.getInputs(), r.getOutput(), r.getDurationSeconds(), r.getWikiUrls()));
+                        r.getInputs(), r.getOutput(), r.getDurationSeconds(), r.getWikiUrls(), r.getCrafttext()));
 
         register(SkyblockNpcShopServerRecipe.TYPE,
                 r -> new SkyblockNpcShopClientRecipe(
@@ -173,6 +173,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
                         r.getInput(), r.getOutput(), r.getEssence(), r.getCompanions(),
                         r.getStarLevel(), r.getEssenceType(), r.getWikiUrls()));
 
-        register(SkyblockReforgeServerRecipe.TYPE, SkyblockReforgeClientRecipe::new);
+        register(SkyblockReforgeServerRecipe.TYPE,
+                r -> new SkyblockReforgeClientRecipe(r));
     }
 }

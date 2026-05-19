@@ -10,6 +10,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
+import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
@@ -48,6 +49,7 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
 
     private static final int ICON_X = 4;
     private static final int ICON_Y = 4;
+    private static final int ICON_SIZE = 16;
 
     private static final int NAME_X = 24;
     private static final int NAME_Y = 4;
@@ -82,6 +84,10 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
     /** Item IDs from {@link #resultInternalNames} that also match this recipe's rarity. */
     private final Set<String> rarityFilteredIdSet;
 
+    private final String crafttext;
+    private final boolean hasCrafttext;
+    @Nullable private Component cachedTooltipLine;
+
     @Nullable private List<SlotContent> cachedResults;
 
     public SkyblockReforgeClientRecipe(SkyblockReforgeServerRecipe src) {
@@ -106,6 +112,8 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
                 ? SlotRefParser.parse(stoneInternalName)
                 : SlotRefParser.empty();
         this.rarityFilteredIdSet = buildRarityFilteredSet(resultInternalNames, rarity);
+        this.crafttext = src.getCrafttext();
+        this.hasCrafttext = !this.crafttext.isEmpty();
     }
 
     private static Set<String> buildRarityFilteredSet(List<String> resultNames, String recipeRarity) {
@@ -132,6 +140,22 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
         if (!isBlacksmith && !cachedStone.isEmpty()) {
             ctx.bindSlot(0, cachedStone);
         }
+        if (hasCrafttext && SkyblockEnhancementsConfig.showCollectionRequirements && !cachedStone.isEmpty()) {
+            ctx.addAdditionalStackModifier(0, this::appendRequirementTooltip);
+        }
+    }
+
+    private void appendRequirementTooltip(ItemStack stack, List<Component> tooltip) {
+        tooltip.addLast(Component.literal(""));
+        tooltip.addLast(requirementTooltipLine());
+    }
+
+    private Component requirementTooltipLine() {
+        Component cached = cachedTooltipLine;
+        if (cached != null) return cached;
+        cached = Component.literal("§cRequirement: §e" + SkyblockRecipeUtil.formatCrafttext(crafttext));
+        cachedTooltipLine = cached;
+        return cached;
     }
 
     @Override
@@ -183,6 +207,10 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
         renderName(gfx, pos);
         renderSubtitle(gfx, pos);
         renderStats(gfx, pos);
+        if (hasCrafttext && SkyblockEnhancementsConfig.showCollectionRequirements) {
+            renderRequirementIndicator(gfx);
+            renderNameTooltipIfHovered(gfx, screen, pos, mouseX, mouseY);
+        }
         maintainButtons(screen, pos);
     }
 
@@ -237,6 +265,23 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
                 y += LINE_HEIGHT;
             }
         }
+    }
+
+    private void renderRequirementIndicator(GuiGraphics gfx) {
+        gfx.drawString(font(), "§c!", ICON_X + ICON_SIZE - 2, ICON_Y - 2, RecipeColors.WHITE, false);
+    }
+
+    private void renderNameTooltipIfHovered(GuiGraphics gfx, RecipeViewScreen screen,
+                                            RecipePosition pos, int mouseX, int mouseY) {
+        int nameMaxX = pos.width() - TEXT_MARGIN_X;
+        if (mouseX < NAME_X || mouseX >= nameMaxX
+                || mouseY < NAME_Y || mouseY >= NAME_Y + font().lineHeight) {
+            return;
+        }
+        gfx.setComponentTooltipForNextFrame(font(),
+                List.of(requirementTooltipLine()),
+                pos.left() + mouseX,
+                pos.top() + mouseY);
     }
 
     // ── Text wrapping ──────────────────────────────────────────────────────────

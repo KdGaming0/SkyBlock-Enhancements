@@ -138,7 +138,7 @@ public class Commands {
             DataReadinessTracker.waitAndInject(session).thenRun(() -> {
                 ctx.getSource().sendFeedback(
                         Component.literal(PREFIX + "Item repo refreshed ("
-                                + NeuItemRegistry.getAll().size() + " items)")
+                                + NeuItemRegistry.size() + " items)")
                 );
             });
         }

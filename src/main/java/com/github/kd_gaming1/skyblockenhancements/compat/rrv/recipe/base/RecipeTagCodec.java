@@ -49,6 +49,7 @@ public final class RecipeTagCodec {
     public static final String KEY_STAR        = "star";
     public static final String KEY_ESSENCE_TYPE = "essType";
     public static final String KEY_WIKI_URLS   = "wiki";
+    public static final String KEY_CRAFTTEXT   = "ct";
 
     // Reforge recipe keys
     public static final String KEY_REFORGE_NAME   = "rfn";
@@ -70,6 +71,19 @@ public final class RecipeTagCodec {
     public static final String KEY_MATERIALS_PREFIX  = "m";
 
     private RecipeTagCodec() {}
+
+    // ── Simple strings ───────────────────────────────────────────────────────────
+
+    /** Writes a string only when non-null and non-empty, keeping NBT payloads minimal. */
+    public static void writeString(CompoundTag tag, String key, String value) {
+        if (value == null || value.isEmpty()) return;
+        tag.putString(key, value);
+    }
+
+    /** Reads a string that may be absent, defaulting to empty. */
+    public static String readString(CompoundTag tag, String key) {
+        return tag.getStringOr(key, "");
+    }
 
     // ── Single slots ─────────────────────────────────────────────────────────────
 

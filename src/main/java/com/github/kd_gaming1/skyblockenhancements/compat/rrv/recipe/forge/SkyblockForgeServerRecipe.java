@@ -13,20 +13,22 @@ public class SkyblockForgeServerRecipe extends AbstractSkyblockServerRecipe {
     public static final ReliableServerRecipeType<SkyblockForgeServerRecipe> TYPE =
             ReliableServerRecipeType.register(
                     Identifier.fromNamespaceAndPath("skyblock_enhancements", "skyblock_forge"),
-                    () -> new SkyblockForgeServerRecipe(new SlotContent[0], null, 0, new String[0]));
+                    () -> new SkyblockForgeServerRecipe(new SlotContent[0], null, 0, new String[0], ""));
 
     static final int MAX_INPUTS = 8;
 
     private SlotContent[] inputs;
     private SlotContent output;
     private int durationSeconds;
+    private String crafttext;
 
     public SkyblockForgeServerRecipe(SlotContent[] inputs, SlotContent output,
-                                     int durationSeconds, String[] wikiUrls) {
+                                     int durationSeconds, String[] wikiUrls, String crafttext) {
         super(wikiUrls);
         this.inputs = inputs;
         this.output = output;
         this.durationSeconds = durationSeconds;
+        this.crafttext = crafttext != null ? crafttext : "";
     }
 
     @Override
@@ -39,6 +41,7 @@ public class SkyblockForgeServerRecipe extends AbstractSkyblockServerRecipe {
         RecipeTagCodec.writeSlotArray(tag, RecipeTagCodec.KEY_COUNT, RecipeTagCodec.KEY_INPUTS, inputs);
         RecipeTagCodec.writeSlot(tag, RecipeTagCodec.KEY_OUTPUT, output);
         tag.putInt(RecipeTagCodec.KEY_DURATION, durationSeconds);
+        RecipeTagCodec.writeString(tag, RecipeTagCodec.KEY_CRAFTTEXT, crafttext);
     }
 
     @Override
@@ -46,9 +49,11 @@ public class SkyblockForgeServerRecipe extends AbstractSkyblockServerRecipe {
         inputs = RecipeTagCodec.readSlotArray(tag, RecipeTagCodec.KEY_COUNT, RecipeTagCodec.KEY_INPUTS, MAX_INPUTS);
         output = RecipeTagCodec.readSlot(tag, RecipeTagCodec.KEY_OUTPUT);
         durationSeconds = tag.getIntOr(RecipeTagCodec.KEY_DURATION, 0);
+        crafttext = RecipeTagCodec.readString(tag, RecipeTagCodec.KEY_CRAFTTEXT);
     }
 
     public SlotContent[] getInputs()          { return inputs; }
     public SlotContent   getOutput()          { return output; }
     public int           getDurationSeconds() { return durationSeconds; }
+    public String        getCrafttext()       { return crafttext; }
 }

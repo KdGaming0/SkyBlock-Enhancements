@@ -31,7 +31,7 @@ public final class RecipeDiagnostic {
     public static void run() {
         if (!SkyblockEnhancementsConfig.enableRecipeDiagnostics) return;
 
-        Collection<NeuItem> items = NeuItemRegistry.getAll().values();
+        Collection<NeuItem> items = NeuItemRegistry.getAllValues();
 
         int totalItems = items.size();
         int withLegacyRecipe = 0;

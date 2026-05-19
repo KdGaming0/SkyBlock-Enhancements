@@ -1,6 +1,11 @@
-## Changelog for 1.0.3
+## Changelog for 1.0.4
+
+### **Storage Enhancements**
+**Improvements**
+
 
 ### **RRV Enhancements**
 **Improvements**
-- Item list can now be configured to have an alternative width from the Skyblock Enhancmetns config.
-- Added a button to the TTV config that redirects to the Skyblock Enhancements config.
+- Added Craft Requirement tooltip to Recipes
+  - If a recipe has a craft requirement, it will now display a small exclamation and tooltip when you hover over it in RRV.
+- 

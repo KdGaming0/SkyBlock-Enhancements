@@ -35,7 +35,7 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
                     () -> new SkyblockReforgeServerRecipe(
                             "", true, "", "", "COMMON", List.of(),
                             Map.of(), 0, Optional.empty(),
-                            List.of(), List.of(), Optional.empty(), new String[0], List.of()));
+                            List.of(), List.of(), Optional.empty(), new String[0], List.of(), ""));
 
     private String reforgeName;
     private boolean isBlacksmith;
@@ -56,13 +56,15 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
      */
     private List<String> resultInternalNames;
 
+    private String crafttext;
+
     public SkyblockReforgeServerRecipe(
             String reforgeName, boolean isBlacksmith, String stoneInternalName,
             String itemType, String rarity, List<String> requiredRarities,
             Map<String, Double> stats, int cost, Optional<String> ability,
             List<String> specificInternalNames, List<String> specificItemIds,
             Optional<String> nbtModifier, String[] wikiUrls,
-            List<String> resultInternalNames) {
+            List<String> resultInternalNames, String crafttext) {
         super(wikiUrls);
         this.reforgeName = reforgeName != null ? reforgeName : "";
         this.isBlacksmith = isBlacksmith;
@@ -77,6 +79,7 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
         this.specificItemIds = specificItemIds != null ? List.copyOf(specificItemIds) : List.of();
         this.nbtModifier = nbtModifier;
         this.resultInternalNames = resultInternalNames != null ? List.copyOf(resultInternalNames) : List.of();
+        this.crafttext = crafttext != null ? crafttext : "";
     }
 
     @Override
@@ -103,6 +106,7 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
             tag.putString(RecipeTagCodec.KEY_NBT_MODIFIER, nbtModifier.get());
         }
         writeStringList(tag, "resNames", resultInternalNames);
+        RecipeTagCodec.writeString(tag, RecipeTagCodec.KEY_CRAFTTEXT, crafttext);
     }
 
     @Override
@@ -124,6 +128,7 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
                 ? Optional.of(tag.getStringOr(RecipeTagCodec.KEY_NBT_MODIFIER, ""))
                 : Optional.empty();
         resultInternalNames = readStringList(tag, "resNames");
+        crafttext = RecipeTagCodec.readString(tag, RecipeTagCodec.KEY_CRAFTTEXT);
     }
 
     // ── NBT helpers ────────────────────────────────────────────────────────────
@@ -177,4 +182,5 @@ public class SkyblockReforgeServerRecipe extends AbstractSkyblockServerRecipe {
     public List<String> getSpecificItemIds()          { return specificItemIds; }
     public Optional<String> getNbtModifier()          { return nbtModifier; }
     public List<String> getResultInternalNames()      { return resultInternalNames; }
+    public String getCrafttext()                      { return crafttext; }
 }

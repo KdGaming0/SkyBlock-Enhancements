@@ -29,7 +29,7 @@ final class NpcReferenceCollector {
         if (!NeuItemRegistry.isLoaded()) return List.of();
 
         List<ItemStack> npcs = new ArrayList<>();
-        for (NeuItem item : NeuItemRegistry.getAll().values()) {
+        for (NeuItem item : NeuItemRegistry.getAllValues()) {
             if (item.internalName != null && item.internalName.endsWith("_NPC") && filter.test(item)) {
                 ItemStack stack = ItemStackBuilder.build(item);
                 if (!stack.isEmpty()) npcs.add(stack);

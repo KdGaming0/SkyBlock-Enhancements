@@ -29,6 +29,7 @@ public final class ForgeRecipeParser {
                 inputs,
                 SlotContent.of(RecipeOutputResolver.resolve(recipe, item)),
                 duration,
-                item.getWikiUrls());
+                item.getWikiUrls(),
+                item.crafttext);
     }
 }

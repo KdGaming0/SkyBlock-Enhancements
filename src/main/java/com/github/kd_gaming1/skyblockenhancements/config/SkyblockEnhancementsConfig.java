@@ -104,17 +104,16 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = STORAGE_OVERLAY)
     public static boolean storageInverseScroll = false;
 
-    @Hidden
     @Entry(category = STORAGE_OVERLAY, isColor = true)
-    public static String storageSearchHighlightColor = "#00B000CC";
+    public static String storageSearchHighlightColor = "#AAFF0055";
 
     @Hidden
     @Entry(category = STORAGE_OVERLAY, isColor = true)
-    public static String storageActivePageOutlineColor = "#FFD700FF";
+    public static String storageActivePageOutlineColor = "#4878CCFF";
 
     @Hidden
     @Entry(category = STORAGE_OVERLAY, isColor = true)
-    public static String storageInactivePageBorderColor = "#4A4A6AFF";
+    public static String storageInactivePageBorderColor = "#1A3060FF";
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  RRV Integration
@@ -146,6 +145,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = RRV_INTEGRATION, isSlider = true, min = 100, max = 300, precision = 1)
     public static int rrvSearchBarWidth = 200;
+
+    @Entry(category = RRV_INTEGRATION)
+    public static boolean showCollectionRequirements = true;
 
     @Entry(category = RRV_INTEGRATION, isSlider = true, min = 25, max = 100, precision = 1)
     public static int rrvItemListWidthPercent = 100;

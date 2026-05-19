@@ -48,7 +48,7 @@ public final class SkyblockRecipeGenerator {
         // NPC recipes are rebuilt every generation — clear stale entries first.
         SkyblockNpcInfoRegistry.clear();
 
-        List<NeuItem> sortedItems = new ArrayList<>(NeuItemRegistry.getAll().values());
+        List<NeuItem> sortedItems = new ArrayList<>(NeuItemRegistry.getAllValues());
         sortedItems.sort(Comparator.comparing(item -> item.internalName != null ? item.internalName : ""));
 
         for (NeuItem item : sortedItems) {
