@@ -108,6 +108,9 @@
   "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching": "Hide Category Buttons When Not Searching",
   "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching.tooltip": "Hides the category filter buttons above the RRV search bar when no search text is entered.",
 
+  "skyblock_enhancements.midnightconfig.hideCategoryButtons": "Hide Category Buttons",
+  "skyblock_enhancements.midnightconfig.hideCategoryButtons.tooltip": "Completely hides the category filter buttons above the RRV search bar.",
+
   "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching": "Keep Bookmarks Visible When Searching",
   "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching.tooltip": "Keeps the bookmark/craftables side panel visible even when the search bar is empty.\nOnly applies when RRV is set to \"Only visible when searching\".",
 

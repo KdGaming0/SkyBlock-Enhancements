@@ -178,10 +178,14 @@ public abstract class RrvCategoryFilterMixin {
         OverlayDisplay rrvMode = Configs.CLIENT_SETTINGS.isShowOverlays();
 
         boolean visible;
-        if (rrvMode == OverlayDisplay.WHEN_SEARCHING) {
+        if (SkyblockEnhancementsConfig.hideCategoryButtons) {
+            visible = false;
+        } else if (rrvMode == OverlayDisplay.WHEN_SEARCHING) {
             visible = !SkyblockEnhancementsConfig.hideCategoryButtonsWhenNotSearching
                     || self.isSearching();
-        } else visible = rrvMode != OverlayDisplay.DISABLED;
+        } else {
+            visible = rrvMode != OverlayDisplay.DISABLED;
+        }
 
         for (CategoryIconButton btn : sbe$categoryButtons) {
             btn.visible = visible;

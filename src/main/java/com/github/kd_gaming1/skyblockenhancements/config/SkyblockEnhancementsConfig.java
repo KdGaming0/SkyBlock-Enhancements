@@ -104,6 +104,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = STORAGE_OVERLAY)
     public static boolean storageInverseScroll = false;
 
+    @Hidden
     @Entry(category = STORAGE_OVERLAY, isColor = true)
     public static String storageSearchHighlightColor = "#AAFF0055";
 
@@ -136,6 +137,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = RRV_INTEGRATION)
     public static boolean hideCategoryButtonsWhenNotSearching = true;
+
+    @Entry(category = RRV_INTEGRATION)
+    public static boolean hideCategoryButtons = false;
 
     @Entry(category = RRV_INTEGRATION)
     public static boolean keepBookmarksVisibleWhenSearching = true;
