@@ -29,14 +29,15 @@ public final class FuzzyTokenMatcher {
     /**
      * Attempts to find tokens that are within 1 edit distance of {@code token}.
      *
+     * @param itemCount the total number of items, used to size pooled BitSets
      * @return a BitSet union of all fuzzy-matched items, or an empty BitSet if no fuzzy matches
      */
-    public BitSet fuzzyMatch(String token, java.util.function.Function<String, BitSet> indexLookup) {
+    public BitSet fuzzyMatch(String token, java.util.function.Function<String, BitSet> indexLookup, int itemCount) {
         if (token.length() < 2) {
             return new BitSet();
         }
 
-        BitSet result = new BitSet();
+        BitSet temp = BitSetPool.borrow(itemCount);
         int count = 0;
 
         for (String candidate : sortedTokens) {
@@ -46,12 +47,18 @@ public final class FuzzyTokenMatcher {
             if (editDistanceOne(token, candidate)) {
                 BitSet bits = indexLookup.apply(candidate);
                 if (bits != null) {
-                    result.or(bits);
+                    temp.or(bits);
                 }
                 if (++count >= MAX_CANDIDATES) break;
             }
         }
 
+        if (temp.isEmpty()) {
+            BitSetPool.release(temp);
+            return new BitSet();
+        }
+        BitSet result = (BitSet) temp.clone();
+        BitSetPool.release(temp);
         return result;
     }
 

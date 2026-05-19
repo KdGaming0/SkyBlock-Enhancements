@@ -163,6 +163,22 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
         FULL_TOOLTIP
     }
 
+    public enum CalculatorDecimalSeparator {
+        DOT, COMMA, BOTH
+    }
+
+    @Comment(category = RRV_INTEGRATION)
+    public static Comment rrvCalculatorText;
+
+    @Entry(category = RRV_INTEGRATION)
+    public static CalculatorDecimalSeparator rrvCalculatorDecimalSeparator = CalculatorDecimalSeparator.DOT;
+
+    @Entry(category = RRV_INTEGRATION)
+    public static boolean rrvCalculatorRoundingEnabled = true;
+
+    @Entry(category = RRV_INTEGRATION, isSlider = true, min = 0, max = 10, precision = 1)
+    public static int rrvCalculatorMaxDecimalPlaces = 2;
+
     // ═══════════════════════════════════════════════════════════════════════════
     //  Chat Enhancements
     // ═══════════════════════════════════════════════════════════════════════════

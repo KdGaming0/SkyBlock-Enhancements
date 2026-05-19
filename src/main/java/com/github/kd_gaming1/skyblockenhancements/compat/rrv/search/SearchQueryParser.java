@@ -29,18 +29,24 @@ public final class SearchQueryParser {
      * ItemFiltersMixin#sbe$preLowercaseQuery}), so this parser skips redundant
      * {@code toLowerCase()} when every character is already lowercase.
      */
+    private static final SearchQuery EMPTY = new SearchQuery(List.of(), List.of(), null);
+
     public static SearchQuery parse(String raw) {
         if (raw == null || raw.isBlank()) {
-            return new SearchQuery(List.of(), List.of(), null);
+            return EMPTY;
         }
 
         String lower = isAlreadyLowercased(raw) ? raw : raw.toLowerCase(Locale.ROOT);
 
-        List<SearchQuery.KeywordClause> keywords = new ArrayList<>();
-        List<SearchQuery.StatClause> stats = new ArrayList<>();
-
         int len = lower.length();
         int i = 0;
+
+        // Skip leading whitespace and check for actual content
+        while (i < len && Character.isWhitespace(lower.charAt(i))) i++;
+        if (i >= len) return EMPTY;
+
+        List<SearchQuery.KeywordClause> keywords = null;
+        List<SearchQuery.StatClause> stats = null;
 
         while (i < len) {
             while (i < len && Character.isWhitespace(lower.charAt(i))) {
@@ -56,13 +62,18 @@ public final class SearchQueryParser {
 
             SearchQuery.StatClause stat = tryParseStat(token);
             if (stat != null) {
+                if (stats == null) stats = new ArrayList<>(4);
                 stats.add(stat);
             } else {
+                if (keywords == null) keywords = new ArrayList<>(4);
                 keywords.add(new SearchQuery.KeywordClause(token));
             }
         }
 
-        return new SearchQuery(keywords, stats, null);
+        return new SearchQuery(
+                keywords != null ? keywords : List.of(),
+                stats != null ? stats : List.of(),
+                null);
     }
 
     /**

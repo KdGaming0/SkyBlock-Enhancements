@@ -256,19 +256,22 @@ public final class SkyblockSearchIndex {
         if (exact != null) {
             return exact;
         }
-        BitSet prefix = new BitSet();
-        resolvePrefixUnion(token, prefix);
-        if (!prefix.isEmpty()) {
-            return prefix;
+        BitSet temp = BitSetPool.borrow(itemCount);
+        resolvePrefixUnion(token, temp);
+        if (!temp.isEmpty()) {
+            BitSet copy = (BitSet) temp.clone();
+            BitSetPool.release(temp);
+            return copy;
         }
+        BitSetPool.release(temp);
         // Fuzzy fallback for typo tolerance
         if (fuzzyMatcher != null) {
-            BitSet fuzzy = fuzzyMatcher.fuzzyMatch(token, anyTokenIndex::get);
+            BitSet fuzzy = fuzzyMatcher.fuzzyMatch(token, anyTokenIndex::get, itemCount);
             if (!fuzzy.isEmpty()) {
                 return fuzzy;
             }
         }
-        return prefix;
+        return new BitSet();
     }
 
     /** Looks up a keyword in the name-only index, falling back to prefix expansion. */
@@ -277,9 +280,15 @@ public final class SkyblockSearchIndex {
         if (exact != null) {
             return exact;
         }
-        BitSet prefix = new BitSet();
-        resolvePrefixUnionInName(token, prefix);
-        return prefix;
+        BitSet temp = BitSetPool.borrow(itemCount);
+        resolvePrefixUnionInName(token, temp);
+        if (!temp.isEmpty()) {
+            BitSet copy = (BitSet) temp.clone();
+            BitSetPool.release(temp);
+            return copy;
+        }
+        BitSetPool.release(temp);
+        return new BitSet();
     }
 
     /** Unions all any-token BitSets whose token starts with {@code prefix} into {@code result}. */

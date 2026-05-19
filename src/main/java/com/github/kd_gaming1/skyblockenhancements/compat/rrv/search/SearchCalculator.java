@@ -1,8 +1,8 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.search;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.Locale;
+import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
  *   <li>Input is lowercased once in the constructor; no per-token toLowerCase calls.</li>
  *   <li>A small last-result cache skips re-parsing identical consecutive queries
  *       (e.g. the user holds a key or the frame re-renders).</li>
+ *   <li>Formatting uses a fast custom path instead of {@link java.text.DecimalFormat}
+ *       to avoid thread-local lookup and synchronization overhead.</li>
  * </ul>
  *
  * <h3>Supported syntax</h3>
@@ -29,6 +31,16 @@ import org.jetbrains.annotations.Nullable;
  *       sin cos tan asin acos atan deg rad sign}</li>
  *   <li>2-arg functions: {@code min(a,b) max(a,b) pow(a,b) log(x,base) atan2(y,x)}</li>
  * </ul>
+ *
+ * <h3>Precision and formatting</h3>
+ * All arithmetic uses {@code double} (IEEE-754) which is exact for integer values up to
+ * 2^53 (~9×10^15) and sufficient for typical SkyBlock quantity math.  The final display
+ * formatting is configurable via {@link SkyblockEnhancementsConfig}:
+ * <ul>
+ *   <li>Decimal separator: dot ({@code .}), comma ({@code ,}), or both.</li>
+ *   <li>Rounding: enabled (half-up) or disabled (truncation).</li>
+ *   <li>Maximum decimal places: 0–10.</li>
+ * </ul>
  */
 public final class SearchCalculator {
 
@@ -39,15 +51,6 @@ public final class SearchCalculator {
     /** Result string for {@link #cachedQuery}. */
     private static volatile @Nullable String cachedResult = null;
 
-    // ── Formatting ────────────────────────────────────────────────────────────
-
-    /**
-     * {@link DecimalFormat} is not thread-safe, so we keep one per thread.
-     * The formatter is lightweight to create; ThreadLocal avoids synchronization.
-     */
-    private static final ThreadLocal<DecimalFormat> GUI_FORMAT = ThreadLocal.withInitial(() ->
-            new DecimalFormat("###,###.##", DecimalFormatSymbols.getInstance(Locale.ROOT)));
-
     // ── Parser state ──────────────────────────────────────────────────────────
 
     /** Pre-lowercased input for zero-cost identifier comparisons. */
@@ -55,7 +58,7 @@ public final class SearchCalculator {
     private int pos = 0;
 
     private SearchCalculator(String raw) {
-        this.input = raw.toLowerCase(Locale.ROOT);
+        this.input = raw.toLowerCase(java.util.Locale.ROOT);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -111,10 +114,11 @@ public final class SearchCalculator {
     private static boolean isValidInput(String s) {
         // Must start with something numeric-ish or a unary sign to be math
         boolean seenDigitOrParen = false;
-        for (int i = 0; i < s.length(); i++) {
+        int len = s.length();
+        for (int i = 0; i < len; i++) {
             char c = s.charAt(i);
-            if (Character.isDigit(c)) { seenDigitOrParen = true; continue; }
-            if (Character.isLetter(c) || Character.isWhitespace(c)) { continue; }
+            if (c >= '0' && c <= '9') { seenDigitOrParen = true; continue; }
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == ' ' || c == '\t') { continue; }
             switch (c) {
                 case '.', '+', '-', '*', '/', '^', '%', 'x', '(', ')', ',' -> {
                     if (c == '(' || c == ')') seenDigitOrParen = true;
@@ -324,6 +328,9 @@ public final class SearchCalculator {
     /**
      * Parses a numeric literal with optional scientific notation and value suffixes.
      *
+     * <p>The decimal separator is configurable via
+     * {@link SkyblockEnhancementsConfig#rrvCalculatorDecimalSeparator}.
+     *
      * <p>Suffixes (case-insensitive, chainable):
      * <ul>
      *   <li>{@code st} — one stack (×64)</li>
@@ -337,12 +344,24 @@ public final class SearchCalculator {
         int start = pos;
         boolean hasDecimal  = false;
         boolean hasExponent = false;
+        boolean hasComma    = false;
+        boolean hasDot      = false;
+        char decimalSep = getActiveDecimalSeparator();
+        boolean acceptBoth = decimalSep == '\0'; // BOTH mode
 
         while (pos < input.length()) {
             char c = input.charAt(pos);
-            if (Character.isDigit(c)) {
+            if (c >= '0' && c <= '9') {
                 pos++;
-            } else if (c == '.' && !hasDecimal && !hasExponent) {
+            } else if (isDecimalSeparator(c) && !hasDecimal && !hasExponent) {
+                if (acceptBoth) {
+                    if (c == '.') hasDot = true;
+                    else hasComma = true;
+                    // Reject ambiguous numbers that contain both dot and comma
+                    if (hasDot && hasComma) {
+                        throw new IllegalStateException("Ambiguous number with both dot and comma");
+                    }
+                }
                 hasDecimal = true;
                 pos++;
             } else if ((c == 'e') && !hasExponent && pos > start) {
@@ -351,7 +370,7 @@ public final class SearchCalculator {
                 int peek = pos + 1;
                 if (peek < input.length()) {
                     char next = input.charAt(peek);
-                    if (Character.isDigit(next) || next == '+' || next == '-') {
+                    if (next >= '0' && next <= '9' || next == '+' || next == '-') {
                         hasExponent = true;
                         pos++; // consume 'e'
                         if (input.charAt(pos) == '+' || input.charAt(pos) == '-') pos++;
@@ -366,7 +385,12 @@ public final class SearchCalculator {
 
         if (start == pos) throw new IllegalStateException("Expected number at pos " + pos);
 
-        double v = Double.parseDouble(input.substring(start, pos));
+        String numStr = input.substring(start, pos);
+        // Normalize decimal separator for Double.parseDouble
+        if (decimalSep == ',' || (acceptBoth && numStr.indexOf(',') >= 0)) {
+            numStr = numStr.replace(',', '.');
+        }
+        double v = Double.parseDouble(numStr);
 
         // Value suffixes — consume greedily, allow chaining (e.g. "1st k" = 64 000)
         skipWhitespace();
@@ -408,10 +432,32 @@ public final class SearchCalculator {
         return false;
     }
 
+    /** Returns the configured decimal separator, or {@code '\0'} when both are accepted. */
+    private static char getActiveDecimalSeparator() {
+        return switch (SkyblockEnhancementsConfig.rrvCalculatorDecimalSeparator) {
+            case DOT -> '.';
+            case COMMA -> ',';
+            case BOTH -> '\0';
+        };
+    }
+
+    private static boolean isDecimalSeparator(char c) {
+        char sep = getActiveDecimalSeparator();
+        if (sep == '\0') return c == '.' || c == ',';
+        return c == sep;
+    }
+
     // ── Formatting ────────────────────────────────────────────────────────────
 
+    /**
+     * Formats a calculator result using the user's configured precision and separator.
+     *
+     * <p>Large values are scaled into T/B/M/K suffix bands.  The fractional part is
+     * controlled by {@link SkyblockEnhancementsConfig#rrvCalculatorRoundingEnabled}
+     * and {@link SkyblockEnhancementsConfig#rrvCalculatorMaxDecimalPlaces}.
+     */
     private static String format(double v) {
-        boolean negative = v < 0;
+        boolean negative = Double.doubleToRawLongBits(v) < 0;
         double abs = Math.abs(v);
 
         double scaled;
@@ -423,7 +469,57 @@ public final class SearchCalculator {
         else if (abs >= 1e3)  { scaled = abs / 1e3;  suffix = "K"; }
         else                  { scaled = abs;         suffix = "";  }
 
-        String formatted = GUI_FORMAT.get().format(scaled) + suffix;
-        return negative ? "-" + formatted : formatted;
+        char decimalSep = getActiveDecimalSeparator();
+        if (decimalSep == '\0') decimalSep = '.'; // BOTH → dot in output
+
+        String formatted = formatNumber(scaled, decimalSep);
+        return (negative ? "-" : "") + formatted + suffix;
+    }
+
+    /**
+     * Fast number formatter that avoids {@link java.text.DecimalFormat} overhead.
+     * Uses {@link BigDecimal} only for the final string conversion to guarantee
+     * correct rounding behaviour without the thread-local indirection of DecimalFormat.
+     */
+    private static String formatNumber(double value, char decimalSep) {
+        boolean roundingEnabled = SkyblockEnhancementsConfig.rrvCalculatorRoundingEnabled;
+        int maxDecimals = SkyblockEnhancementsConfig.rrvCalculatorMaxDecimalPlaces;
+
+        // Fast path: plain integers (exact double representation)
+        long asLong = (long) value;
+        if (value == asLong) {
+            return Long.toString(asLong);
+        }
+
+        // Use BigDecimal only for formatting — not for arithmetic.
+        // Double.toString gives the exact decimal representation, and BigDecimal.valueOf
+        // uses that exact value, so no precision is lost in the conversion.
+        BigDecimal bd = BigDecimal.valueOf(value);
+
+        RoundingMode mode = roundingEnabled ? RoundingMode.HALF_UP : RoundingMode.DOWN;
+        bd = bd.setScale(maxDecimals > 0 ? maxDecimals : 0, mode);
+
+        String plain = bd.toPlainString();
+
+        // Strip trailing zeros (and the dot if it becomes redundant) so that
+        // "1.500" → "1.5" and "1.000" → "1".  This matches the old DecimalFormat
+        // behaviour which used '#' placeholders that suppress trailing zeros.
+        int dotIdx = plain.indexOf('.');
+        if (dotIdx >= 0) {
+            int end = plain.length();
+            while (end > dotIdx + 1 && plain.charAt(end - 1) == '0') {
+                end--;
+            }
+            if (end == dotIdx + 1) {
+                end = dotIdx; // remove the dot too
+            }
+            plain = plain.substring(0, end);
+        }
+
+        if (decimalSep != '.') {
+            plain = plain.replace('.', decimalSep);
+        }
+
+        return plain;
     }
 }
