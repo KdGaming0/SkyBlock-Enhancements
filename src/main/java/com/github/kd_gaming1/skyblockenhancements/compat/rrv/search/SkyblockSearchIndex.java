@@ -575,8 +575,6 @@ public final class SkyblockSearchIndex {
         }
     }
 
-
-
     private static @NonNull String extractPetId(String internalName) {
         int semi = internalName.indexOf(';');
         return semi >= 0 ? internalName.substring(0, semi) : internalName;
