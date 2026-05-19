@@ -6,6 +6,7 @@ import cc.cassian.rrv.api.recipe.ReliableClientRecipeType;
 import cc.cassian.rrv.common.recipe.ClientRecipeCache;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockRecipeIndex;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoRecipeType;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcShopRecipeType;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeClientRecipe;
@@ -34,8 +35,8 @@ import net.minecraft.world.item.ItemStack;
  *       pre-selected (shop vs info).</li>
  *   <li><b>Reforge stones</b> — merges reforge recipes into the left-click (RESULT)
  *       view so stats appear alongside crafting and wiki tabs.</li>
- *   <li><b>Family item page-seek</b> — advances to the page whose recipe result
- *       matches the clicked item's exact SkyBlock ID.</li>
+ *   <li><b>SkyBlock item recipe lookup</b> — uses {@link SkyblockRecipeIndex} for O(1)
+ *       lookup by SkyBlock internal ID, bypassing RRV's slow item-type scan.</li>
  * </ol>
  */
 public final class RecipeFallbackResolver {
@@ -76,9 +77,15 @@ public final class RecipeFallbackResolver {
 
     private static boolean tryOpenMergedResult(ItemStack stack) {
         List<ReliableClientRecipe> resultRecipes =
-                ClientRecipeCache.INSTANCE.getRecipesForCraftingOutput(stack);
+                SkyblockRecipeIndex.getRecipesForResult(stack);
         List<ReliableClientRecipe> inputRecipes =
-                ClientRecipeCache.INSTANCE.getRecipesForCraftingInput(stack);
+                SkyblockRecipeIndex.getRecipesForIngredient(stack);
+
+        // Fall back to RRV's default lookup if our index is empty.
+        if (resultRecipes.isEmpty() && inputRecipes.isEmpty()) {
+            resultRecipes = ClientRecipeCache.INSTANCE.getRecipesForCraftingOutput(stack);
+            inputRecipes = ClientRecipeCache.INSTANCE.getRecipesForCraftingInput(stack);
+        }
 
         List<ReliableClientRecipe> merged = appendReforgeRecipes(resultRecipes, inputRecipes);
         if (merged.isEmpty()) return false;
@@ -91,7 +98,12 @@ public final class RecipeFallbackResolver {
 
     private static boolean tryOpenInput(ItemStack stack) {
         List<ReliableClientRecipe> inputRecipes =
-                ClientRecipeCache.INSTANCE.getRecipesForCraftingInput(stack);
+                SkyblockRecipeIndex.getRecipesForIngredient(stack);
+
+        // Fall back to RRV's default lookup if our index is empty.
+        if (inputRecipes.isEmpty()) {
+            inputRecipes = ClientRecipeCache.INSTANCE.getRecipesForCraftingInput(stack);
+        }
         if (inputRecipes.isEmpty()) return false;
 
         String seekId = SkyblockRecipeUtil.extractSkyblockId(stack);
@@ -110,7 +122,7 @@ public final class RecipeFallbackResolver {
         if (candidates.isEmpty()) return base;
 
         Set<ReliableClientRecipe> baseSet =
-                Collections.newSetFromMap(new IdentityHashMap<>(base.size()));
+                Collections.newSetFromMap(new IdentityHashMap<>(base.size() * 2));
         baseSet.addAll(base);
 
         List<ReliableClientRecipe> additions = candidates.stream()

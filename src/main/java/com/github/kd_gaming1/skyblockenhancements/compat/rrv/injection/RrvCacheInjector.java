@@ -7,6 +7,7 @@ import cc.cassian.rrv.api.recipe.ReliableServerRecipeType;
 import cc.cassian.rrv.common.recipe.ClientRecipeManager;
 import cc.cassian.rrv.common.recipe.ServerRecipeManager.ServerRecipeEntry;
 import cc.cassian.rrv.common.recipe.cache.LowEndRecipeCache;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockRecipeIndex;
 import java.util.List;
 import java.util.Map;
 import net.fabricmc.loader.api.FabricLoader;
@@ -55,6 +56,7 @@ public final class RrvCacheInjector {
 
         injectItems(items);
         queueRecipeInjection(grouped);
+        ClientRecipeManager.INSTANCE.queueTask(SkyblockRecipeIndex::rebuildIndex);
         ClientRecipeManager.INSTANCE.runTasks();
     }
 

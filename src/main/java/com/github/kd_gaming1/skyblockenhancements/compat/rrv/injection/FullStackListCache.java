@@ -5,6 +5,7 @@ import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LO
 import cc.cassian.rrv.api.recipe.ItemView;
 import cc.cassian.rrv.common.recipe.ClientRecipeCache;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.search.SkyblockSearchIndex;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.PetIdResolver;
 import com.github.kd_gaming1.skyblockenhancements.mixin.access.CustomDataAccessor;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
@@ -13,12 +14,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import org.jetbrains.annotations.Nullable;
@@ -30,19 +31,13 @@ import org.jetbrains.annotations.Nullable;
  * is never replaced during a session.
  *
  * <p>The primary population path is {@link #populateFromInjected(List)}, called from
- * {@link SkyblockInjectionCache#buildCache()} with the exact same stack references that
- * will be injected into RRV. This eliminates the redundant registry scan that the old
- * {@link #buildCacheFromRegistry()} performed.
- *
- * <p>A secondary bounded LRU cache (equality-keyed) handles arbitrary stacks that are
- * not in the overlay list — e.g. player inventory items and recipe ingredient copies.
+ * {@link SkyblockInjectionCache#buildCache()} on the background thread, using
+ * the exact same stack references that will be injected into RRV. This eliminates
+ * the redundant registry scan that the old {@link #buildCacheFromRegistry()} performed.
  *
  * <p>All caches are invalidated together on RRV client reload or NEU repo change.
  */
 public final class FullStackListCache {
-
-    /** Maximum entries in the fallback LRU cache for non-overlay stacks. */
-    private static final int FALLBACK_CACHE_CAPACITY = 2048;
 
     @Nullable private static volatile List<ItemStack> cachedList;
     @Nullable private static volatile Map<ItemStack, String> cachedNames;
@@ -50,19 +45,6 @@ public final class FullStackListCache {
     @Nullable private static volatile Map<ItemStack, NeuItem> cachedNeuItems;
     @Nullable private static volatile Map<SkyblockItemCategory, Set<ItemStack>> cachedByCategory;
     @Nullable private static volatile SkyblockSearchIndex cachedSearchIndex;
-
-    /**
-     * Equality-keyed LRU cache for stacks that are not in {@link #cachedIds}.
-     * Player inventory stacks and recipe ingredient copies hit this path.
-     */
-    @SuppressWarnings("serial")
-    private static final Map<ItemStack, String> fallbackIdCache =
-            Collections.synchronizedMap(new LinkedHashMap<>(FALLBACK_CACHE_CAPACITY, 0.75f, true) {
-                @Override
-                protected boolean removeEldestEntry(Map.Entry<ItemStack, String> eldest) {
-                    return size() > FALLBACK_CACHE_CAPACITY;
-                }
-            });
 
     private FullStackListCache() {}
 
@@ -112,8 +94,11 @@ public final class FullStackListCache {
 
     /**
      * Returns the pre-extracted SkyBlock internal ID for the given stack.
-     * Uses the identity cache for overlay stacks and a bounded LRU cache for
-     * arbitrary stacks, falling back to a live extraction only on cache miss.
+     * Uses the identity cache for overlay stacks and falls back to a live
+     * extraction for arbitrary stacks (inventory items, recipe copies, etc.).
+     *
+     * <p>The extraction path supports both mod-generated stacks ({@code CustomData.id})
+     * and server-sent Hypixel stacks ({@code ExtraAttributes.id}).
      */
     @Nullable
     public static String getCachedId(ItemStack stack) {
@@ -126,14 +111,8 @@ public final class FullStackListCache {
             if (id != null) return id;
         }
 
-        // Second path: equality-based LRU cache for inventory / recipe stacks
-        String cached = fallbackIdCache.get(stack);
-        if (cached != null) return cached;
-
-        // Fallback: extract without copying NBT
-        String extracted = extractIdFromStack(stack);
-        fallbackIdCache.put(stack, extracted);
-        return extracted;
+        // Fallback: extract without copying NBT.
+        return extractIdFromStack(stack);
     }
 
     /**
@@ -190,7 +169,6 @@ public final class FullStackListCache {
         cachedNeuItems = null;
         cachedByCategory = null;
         cachedSearchIndex = null;
-        fallbackIdCache.clear();
     }
 
     // ── Shared cache construction ───────────────────────────────────────────────
@@ -276,14 +254,50 @@ public final class FullStackListCache {
     // ── ID extraction ───────────────────────────────────────────────────────────
 
     /**
-     * Extracts the SkyBlock internal ID directly from a stack's {@code CUSTOM_DATA}
-     * component without copying the underlying NBT compound.
+     * Extracts the SkyBlock internal ID from a stack. Checks three sources:
+     * <ol>
+     *   <li>{@code petInfo} — for pets the actual type/tier live here (NEU & Hypixel formats).</li>
+     *   <li>{@code CustomData.id} — set by {@code ItemStackBuilder} on mod-generated stacks.</li>
+     *   <li>{@code ExtraAttributes.id} — present on server-sent Hypixel items.</li>
+     * </ol>
+     *
+     * <p>Reads directly from the underlying NBT without copying the compound,
+     * so this is safe to call from hot paths.
      */
     @Nullable
     private static String extractIdFromStack(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data != null) {
+            CompoundTag rawTag = ((CustomDataAccessor) (Object) data).getRawTag();
+
+            // 1. Pets: petInfo JSON contains the real type and tier.
+            String petId = PetIdResolver.resolveFromTag(rawTag);
+            if (petId != null) return petId;
+
+            // 2. Mod-generated stacks (and most server items).
+            String id = rawTag.getStringOr("id", "");
+            if (!id.isEmpty() && !"PET".equals(id)) return id;
+        }
+
+        // 3. Fallback: Hypixel server items store the ID in ExtraAttributes.
+        CompoundTag extraAttributes = getExtraAttributes(stack);
+        if (extraAttributes != null) {
+            String id = extraAttributes.getStringOr("id", "");
+            if (!id.isEmpty() && !"PET".equals(id)) return id;
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the {@code ExtraAttributes} compound from a stack, or {@code null} if absent.
+     * Hypixel stores item metadata (including {@code id}, {@code uuid}, {@code timestamp})
+     * under this key.
+     */
+    @Nullable
+    private static CompoundTag getExtraAttributes(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null) return null;
-        String id = ((CustomDataAccessor) (Object) data).getRawTag().getStringOr("id", "");
-        return id.isEmpty() ? null : id;
+        return ((CustomDataAccessor) (Object) data).getRawTag().getCompound("ExtraAttributes").orElse(null);
     }
 }

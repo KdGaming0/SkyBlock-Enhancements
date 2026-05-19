@@ -1,5 +1,6 @@
 package com.github.kd_gaming1.skyblockenhancements.util;
 
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.PetIdResolver;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
@@ -17,6 +18,9 @@ public final class SkyblockItemUtil {
     /**
      * Extracts the SkyBlock internal ID from a stack's {@code CUSTOM_DATA} component.
      *
+     * <p>For pets, this parses the {@code petInfo} JSON to reconstruct the NEU-style
+     * ID ({@code TYPE;TIER}) rather than returning the generic {@code "PET"} placeholder.
+     *
      * @param stack the item stack to inspect
      * @return the {@code id} string from NBT, or {@code null} if absent or empty
      */
@@ -25,8 +29,15 @@ public final class SkyblockItemUtil {
         if (stack.isEmpty()) return null;
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null) return null;
-        String id = data.copyTag().getStringOr("id", "");
-        return id.isEmpty() ? null : id;
+
+        CompoundTag tag = data.copyTag();
+
+        // Pets store their real identity in petInfo JSON.
+        String petId = PetIdResolver.resolveFromTag(tag);
+        if (petId != null) return petId;
+
+        String id = tag.getStringOr("id", "");
+        return (id.isEmpty() || "PET".equals(id)) ? null : id;
     }
 
     /**

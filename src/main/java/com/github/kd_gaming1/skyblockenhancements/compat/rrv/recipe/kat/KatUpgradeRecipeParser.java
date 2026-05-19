@@ -1,5 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.kat;
 
+import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
+
 import cc.cassian.rrv.api.recipe.ReliableServerRecipe;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.SlotRefParser;
@@ -18,19 +20,27 @@ public final class KatUpgradeRecipeParser {
     public static ReliableServerRecipe parse(JsonObject recipe, NeuItem item) {
         String inputRef = JsonUtil.getString(recipe, "input");
         String outputRef = JsonUtil.getString(recipe, "output");
-        if (inputRef == null || outputRef == null) return null;
+        if (inputRef == null || outputRef == null) {
+            LOGGER.warn("Kat-grade recipe for {} missing input/output — skipping.", item.internalName);
+            return null;
+        }
 
         SlotContent[] materials = parseMaterials(recipe);
         int coins = JsonUtil.getInt(recipe, "coins", 0);
         int time = JsonUtil.getInt(recipe, "time", 0);
 
-        return new SkyblockKatUpgradeServerRecipe(
+        ReliableServerRecipe result = new SkyblockKatUpgradeServerRecipe(
                 SlotRefParser.parse(inputRef),
                 SlotRefParser.parse(outputRef),
                 materials,
                 coins,
                 time,
                 item.getWikiUrls());
+
+        LOGGER.debug("Parsed kat-grade recipe for {}: {} -> {} ({} materials, {} coins, {}s)",
+                item.internalName, inputRef, outputRef, materials.length, coins, time);
+
+        return result;
     }
 
     private static SlotContent[] parseMaterials(JsonObject recipe) {

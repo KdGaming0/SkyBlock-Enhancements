@@ -65,6 +65,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
         NeuItemRegistry.addClearListener(SkyblockNpcShopRecipeType.INSTANCE::clearCache);
         NeuItemRegistry.addClearListener(SkyblockNpcInfoRecipeType.INSTANCE::clearCache);
         NeuItemRegistry.addClearListener(SkyblockNpcInfoRegistry::clear);
+        NeuItemRegistry.addClearListener(com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockRecipeIndex::invalidate);
 
         registerRecipeWrappers();
 

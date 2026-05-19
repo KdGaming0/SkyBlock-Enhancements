@@ -121,6 +121,21 @@ public final class RecipeDiagnostic {
         }
 
         LOGGER.info("{}{}", TAG, sep);
+
+        // Kat-grade specific diagnostic
+        int katCount = typeCounts.getOrDefault("katgrade", 0);
+        if (katCount > 0) {
+            LOGGER.info("{}  Kat-grade (pet upgrade) recipes: {}", TAG, katCount);
+            LOGGER.info("{}  Sample kat-grade recipe:", TAG);
+            NeuItem sample = typeExamples.get("katgrade");
+            if (sample != null) {
+                JsonObject ex = findRecipeOfType(sample, "katgrade");
+                LOGGER.info("{}    item  : {}", TAG, sample.internalName);
+                LOGGER.info("{}    recipe: {}", TAG, ex);
+            }
+        }
+
+        LOGGER.info("{}{}", TAG, sep);
         LOGGER.info("{}Done. Distinct modern recipe types: {}", TAG, typeCounts.size());
         LOGGER.info("{}{}", TAG, sep);
     }

@@ -9,6 +9,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipe
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -24,13 +25,12 @@ import org.jetbrains.annotations.Nullable;
  * rebuilt its widget list, and (c) reset that state on init/fade. This base owns the mechanics of
  * that button lifecycle so subclasses only have to say <em>which</em> buttons to place.
  *
- * <p>Subclasses implement {@link #placeButtons} — called lazily at most once per screen lifecycle.
- * The returned button is kept as a "sentinel": if RRV drops its widgets, the sentinel goes missing
- * from {@code screen.children()} and we re-run placement on the next render.
- *
  * <p>Redirect behaviour defaults to SkyBlock family matching (so clicking a tiered child resolves
  * to the parent's recipe in compact mode). Visual-only views fall back to plain equality and never
  * match as an ingredient.
+ *
+ * <p>Ingredient/result IDs are pre-computed lazily and stored in a {@link Set} for O(1)
+ * {@link #redirectsAsIngredient} / {@link #redirectsAsResult} lookups.
  */
 public abstract class AbstractSkyblockClientRecipe implements ReliableClientRecipe {
 
@@ -39,10 +39,10 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
     private boolean buttonsDirty = true;
     @Nullable private Button sentinelButton;
 
-    /** Lazily-built list of every SkyBlock internal ID present in {@link #getIngredients()}. */
-    @Nullable private List<String> precomputedIngredientIds;
-    /** Lazily-built list of every SkyBlock internal ID present in {@link #getResults()}. */
-    @Nullable private List<String> precomputedResultIds;
+    /** Lazily-built set of every SkyBlock internal ID present in {@link #getIngredients()}. */
+    @Nullable private Set<String> precomputedIngredientIds;
+    /** Lazily-built set of every SkyBlock internal ID present in {@link #getResults()}. */
+    @Nullable private Set<String> precomputedResultIds;
 
     protected AbstractSkyblockClientRecipe(String[] wikiUrls) {
         this.wikiUrls = SkyblockRecipeUtil.sanitizeWikiUrls(wikiUrls);
@@ -71,8 +71,9 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
         String queryId = SkyblockRecipeUtil.extractSkyblockId(stack);
         if (queryId == null) return false;
 
-        for (String candidateId : precomputedResultIds()) {
-            if (queryId.equals(candidateId)) return true;
+        Set<String> candidates = precomputedResultIds();
+        if (candidates.contains(queryId)) return true;
+        for (String candidateId : candidates) {
             if (ItemFamilyHelper.isFamilyMember(queryId, candidateId)) return true;
         }
         return false;
@@ -134,16 +135,16 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
 
     /**
      * Shared logic for {@link #redirectsAsResult} and {@link #redirectsAsIngredient}.
-     * Extracts the query stack's ID once, then tests it against a precomputed candidate list.
+     * Extracts the query stack's ID once, then tests it against a precomputed candidate set.
      */
-    private boolean redirectsAgainstPrecomputed(ItemStack stack, List<String> candidateIds) {
+    private boolean redirectsAgainstPrecomputed(ItemStack stack, Set<String> candidateIds) {
         String queryId = SkyblockRecipeUtil.extractSkyblockId(stack);
         if (queryId == null) return false;
 
         if (candidateIds.isEmpty()) return false;
+        if (candidateIds.contains(queryId)) return true;
 
         for (String candidateId : candidateIds) {
-            if (queryId.equals(candidateId)) return true;
             if (ItemFamilyHelper.isFamilyMember(queryId, candidateId)) return true;
         }
         return false;
@@ -151,10 +152,10 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
 
     /**
      * Lazily extracts and caches the SkyBlock internal IDs of all stacks returned by
-     * {@link #getIngredients()}. The list is immutable once built.
+     * {@link #getIngredients()}. The set is immutable once built.
      */
-    private List<String> precomputedIngredientIds() {
-        List<String> snapshot = precomputedIngredientIds;
+    private Set<String> precomputedIngredientIds() {
+        Set<String> snapshot = precomputedIngredientIds;
         if (snapshot != null) return snapshot;
 
         precomputedIngredientIds = collectIdsFromSlots(getIngredients());
@@ -163,19 +164,19 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
 
     /**
      * Lazily extracts and caches the SkyBlock internal IDs of all stacks returned by
-     * {@link #getResults()}. The list is immutable once built.
+     * {@link #getResults()}. The set is immutable once built.
      */
-    private List<String> precomputedResultIds() {
-        List<String> snapshot = precomputedResultIds;
+    private Set<String> precomputedResultIds() {
+        Set<String> snapshot = precomputedResultIds;
         if (snapshot != null) return snapshot;
 
         precomputedResultIds = collectIdsFromSlots(getResults());
         return precomputedResultIds;
     }
 
-    /** Collects all non-null SkyBlock internal IDs from the given slot contents. */
-    private static List<String> collectIdsFromSlots(List<SlotContent> slots) {
-        List<String> ids = new ArrayList<>();
+    /** Collects all non-null SkyBlock internal IDs from the given slot contents into a HashSet. */
+    private static Set<String> collectIdsFromSlots(List<SlotContent> slots) {
+        java.util.HashSet<String> ids = new java.util.HashSet<>();
         for (SlotContent slot : slots) {
             for (ItemStack candidate : slot.getValidContents()) {
                 String id = SkyblockRecipeUtil.extractSkyblockId(candidate);
@@ -184,6 +185,6 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
                 }
             }
         }
-        return Collections.unmodifiableList(ids);
+        return Collections.unmodifiableSet(ids);
     }
 }

@@ -2,8 +2,10 @@ package com.github.kd_gaming1.skyblockenhancements;
 
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
+import cc.cassian.rrv.api.recipe.ItemView;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.DataReadinessTracker;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockRecipeIndex;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
@@ -129,6 +131,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
 
         // Register cache invalidation with RRV so overlays stay in sync on reload.
         FullStackListCache.registerRrvReloadCallback();
+        ItemView.addClientReloadCallback(SkyblockRecipeIndex::invalidate);
 
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             LOGGER.info("Starting NEU repo download...");
