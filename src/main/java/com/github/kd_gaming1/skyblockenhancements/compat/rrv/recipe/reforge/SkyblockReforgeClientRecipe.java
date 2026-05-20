@@ -166,8 +166,12 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
 
     @Override
     public List<SlotContent> getIngredients() {
-        if (isBlacksmith || cachedStone.isEmpty()) return List.of();
-        return List.of(cachedStone);
+        List<SlotContent> ingredients = new ArrayList<>();
+        ingredients.addAll(getResults());
+        if (!isBlacksmith && !cachedStone.isEmpty()) {
+            ingredients.add(cachedStone);
+        }
+        return ingredients;
     }
 
     @Override
@@ -196,12 +200,13 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
 
     @Override
     public boolean redirectsAsIngredient(ItemStack stack) {
-        if (isBlacksmith || stoneInternalName.isEmpty()) return false;
-
         String itemId = SkyblockRecipeUtil.extractSkyblockId(stack);
         if (itemId == null) return false;
 
-        return itemId.equals(stoneInternalName);
+        if (rarityFilteredIdSet.contains(itemId)) return true;
+        if (!isBlacksmith && itemId.equals(stoneInternalName)) return true;
+
+        return false;
     }
 
     // ── Rendering ──────────────────────────────────────────────────────────────
@@ -398,6 +403,28 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
         }
 
         return stacks.isEmpty() ? List.of() : List.of(SlotContent.of(stacks));
+    }
+
+    // ── Getters ────────────────────────────────────────────────────────────────
+
+    public String getReforgeName() {
+        return reforgeName;
+    }
+
+    public String getRarity() {
+        return rarity;
+    }
+
+    public boolean isBlacksmith() {
+        return isBlacksmith;
+    }
+
+    public String getStoneInternalName() {
+        return stoneInternalName;
+    }
+
+    public List<String> getResultInternalNames() {
+        return resultInternalNames;
     }
 
     // ── Formatting ─────────────────────────────────────────────────────────────

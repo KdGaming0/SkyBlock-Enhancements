@@ -5,9 +5,11 @@ import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LO
 import cc.cassian.rrv.api.recipe.ReliableClientRecipe;
 import cc.cassian.rrv.common.recipe.ClientRecipeCache;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,8 +60,21 @@ public final class SkyblockRecipeIndex {
         Map<String, List<ReliableClientRecipe>> byResult = new java.util.HashMap<>(4096);
 
         for (ReliableClientRecipe recipe : all) {
-            indexSlots(recipe.getIngredients(), recipe, byIngredient);
-            indexSlots(recipe.getResults(), recipe, byResult);
+            if (recipe instanceof SkyblockReforgeClientRecipe reforge) {
+                indexReforgeRecipe(reforge, byIngredient, byResult);
+            } else {
+                indexSlots(recipe.getIngredients(), recipe, byIngredient);
+                indexSlots(recipe.getResults(), recipe, byResult);
+            }
+        }
+
+        // Sort reforge recipes so lookups return deterministically ordered lists.
+        Comparator<ReliableClientRecipe> reforgeComparator = reforgeComparator();
+        for (List<ReliableClientRecipe> list : byIngredient.values()) {
+            if (list.size() > 1) list.sort(reforgeComparator);
+        }
+        for (List<ReliableClientRecipe> list : byResult.values()) {
+            if (list.size() > 1) list.sort(reforgeComparator);
         }
 
         // Deduplicate and freeze.
@@ -76,24 +91,30 @@ public final class SkyblockRecipeIndex {
     /**
      * Returns all recipes that use {@code stack} as an ingredient, identified by its SkyBlock ID.
      * Falls back to an empty list for stacks without a SkyBlock ID or when the index is stale.
+     *
+     * <p>Results are filtered through {@link ReliableClientRecipe#redirectsAsIngredient} so that
+     * reforge recipes only match when the item's rarity matches the recipe's rarity.
      */
     public static List<ReliableClientRecipe> getRecipesForIngredient(ItemStack stack) {
         if (stack.isEmpty()) return List.of();
         ensureFresh();
         String id = SkyblockRecipeUtil.extractSkyblockId(stack);
         if (id == null) return List.of();
-        return byIngredientId.getOrDefault(id, List.of());
+        return filterByRedirect(byIngredientId.getOrDefault(id, List.of()), stack, false);
     }
 
     /**
      * Returns all recipes that produce {@code stack} as a result, identified by its SkyBlock ID.
+     *
+     * <p>Results are filtered through {@link ReliableClientRecipe#redirectsAsResult} so that
+     * reforge recipes only match when the item's rarity matches the recipe's rarity.
      */
     public static List<ReliableClientRecipe> getRecipesForResult(ItemStack stack) {
         if (stack.isEmpty()) return List.of();
         ensureFresh();
         String id = SkyblockRecipeUtil.extractSkyblockId(stack);
         if (id == null) return List.of();
-        return byResultId.getOrDefault(id, List.of());
+        return filterByRedirect(byResultId.getOrDefault(id, List.of()), stack, true);
     }
 
     /** Clears the index so the next access rebuilds. */
@@ -108,6 +129,46 @@ public final class SkyblockRecipeIndex {
     private static void ensureFresh() {
         if (ClientRecipeCache.INSTANCE.getRecipes().size() != lastRecipeCount) {
             rebuildIndex();
+        }
+    }
+
+    /**
+     * Filters a list of candidate recipes by calling the appropriate redirect method.
+     * For non-reforge recipes this is effectively a no-op; for reforge recipes it ensures
+     * only variants whose rarity matches the clicked item survive.
+     */
+    private static List<ReliableClientRecipe> filterByRedirect(
+            List<ReliableClientRecipe> recipes, ItemStack stack, boolean resultRedirect) {
+        if (recipes.isEmpty()) return List.of();
+        int size = recipes.size();
+        List<ReliableClientRecipe> filtered = new ArrayList<>(size);
+        for (ReliableClientRecipe recipe : recipes) {
+            boolean matches = resultRedirect
+                    ? recipe.redirectsAsResult(stack)
+                    : recipe.redirectsAsIngredient(stack);
+            if (matches) filtered.add(recipe);
+        }
+        return filtered;
+    }
+
+    private static void indexReforgeRecipe(
+            SkyblockReforgeClientRecipe reforge,
+            Map<String, List<ReliableClientRecipe>> byIngredient,
+            Map<String, List<ReliableClientRecipe>> byResult) {
+
+        Set<String> seenResult = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (String id : reforge.getResultInternalNames()) {
+            if (id != null && !id.isEmpty() && seenResult.add(id)) {
+                byResult.computeIfAbsent(id, k -> new ArrayList<>(4)).add(reforge);
+                byIngredient.computeIfAbsent(id, k -> new ArrayList<>(4)).add(reforge);
+            }
+        }
+
+        if (!reforge.isBlacksmith()) {
+            String stone = reforge.getStoneInternalName();
+            if (stone != null && !stone.isEmpty()) {
+                byIngredient.computeIfAbsent(stone, k -> new ArrayList<>(4)).add(reforge);
+            }
         }
     }
 
@@ -127,6 +188,41 @@ public final class SkyblockRecipeIndex {
                 }
             }
         }
+    }
+
+    /**
+     * Returns a comparator that sorts reforge recipes by name then rarity.
+     * Non-reforge recipes are treated as equal (stable sort preserves their order).
+     */
+    private static Comparator<ReliableClientRecipe> reforgeComparator() {
+        return (a, b) -> {
+            boolean aReforge = a instanceof SkyblockReforgeClientRecipe;
+            boolean bReforge = b instanceof SkyblockReforgeClientRecipe;
+            if (!aReforge && !bReforge) return 0;
+            if (aReforge != bReforge) return aReforge ? 1 : -1;
+
+            SkyblockReforgeClientRecipe ra = (SkyblockReforgeClientRecipe) a;
+            SkyblockReforgeClientRecipe rb = (SkyblockReforgeClientRecipe) b;
+            int nameCmp = ra.getReforgeName().compareTo(rb.getReforgeName());
+            if (nameCmp != 0) return nameCmp;
+            return Integer.compare(rarityOrdinal(ra.getRarity()), rarityOrdinal(rb.getRarity()));
+        };
+    }
+
+    private static int rarityOrdinal(String rarity) {
+        return switch (rarity) {
+            case "COMMON" -> 0;
+            case "UNCOMMON" -> 1;
+            case "RARE" -> 2;
+            case "EPIC" -> 3;
+            case "LEGENDARY" -> 4;
+            case "MYTHIC" -> 5;
+            case "DIVINE" -> 6;
+            case "SPECIAL" -> 7;
+            case "VERY_SPECIAL" -> 8;
+            case "SUPREME" -> 9;
+            default -> -1;
+        };
     }
 
     private static Map<String, List<ReliableClientRecipe>> freezeMap(

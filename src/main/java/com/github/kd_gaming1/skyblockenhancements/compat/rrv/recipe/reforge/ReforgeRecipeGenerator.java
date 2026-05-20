@@ -8,6 +8,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.ReforgeData;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.ReforgeStoneData;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,8 +54,15 @@ public final class ReforgeRecipeGenerator {
             }
         }
 
+        // Sort entries so recipes are generated in deterministic order.
+        List<Map.Entry<String, ReforgeData>> sortedReforges = new ArrayList<>(reforges.entrySet());
+        sortedReforges.sort(Map.Entry.comparingByKey());
+        List<Map.Entry<String, ReforgeStoneData>> sortedStones = new ArrayList<>(stones.entrySet());
+        sortedStones.sort(Map.Entry.comparingByKey());
+
         // Blacksmith reforges — one recipe per supported rarity
-        for (ReforgeData reforge : reforges.values()) {
+        for (Map.Entry<String, ReforgeData> entry : sortedReforges) {
+            ReforgeData reforge = entry.getValue();
             for (String rarity : reforge.requiredRarities()) {
                 Map<String, Double> rarityStats = reforge.statsForRarity(rarity);
                 List<String> resultNames = computeResultNames(
@@ -80,7 +88,8 @@ public final class ReforgeRecipeGenerator {
         }
 
         // Reforge stones — one recipe per supported rarity
-        for (ReforgeStoneData stone : stones.values()) {
+        for (Map.Entry<String, ReforgeStoneData> entry : sortedStones) {
+            ReforgeStoneData stone = entry.getValue();
             String itemType = stone.itemTypes().orElse("");
             List<String> specificInternalNames = stone.specificInternalNames().orElse(List.of());
             List<String> specificItemIds = stone.specificItemIds().orElse(List.of());

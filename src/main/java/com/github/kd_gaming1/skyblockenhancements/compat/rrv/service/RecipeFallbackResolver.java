@@ -15,6 +15,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
@@ -87,7 +88,7 @@ public final class RecipeFallbackResolver {
             inputRecipes = ClientRecipeCache.INSTANCE.getRecipesForCraftingInput(stack);
         }
 
-        List<ReliableClientRecipe> merged = appendReforgeRecipes(resultRecipes, inputRecipes);
+        List<ReliableClientRecipe> merged = mergeDeduped(resultRecipes, inputRecipes);
         if (merged.isEmpty()) return false;
 
         String seekId = SkyblockRecipeUtil.extractSkyblockId(stack);
@@ -112,29 +113,21 @@ public final class RecipeFallbackResolver {
     }
 
     /**
-     * Appends reforge recipes from {@code candidates} that are not already present
-     * in {@code base}. Uses an {@link IdentityHashMap} set for O(1) containment checks
+     * Merges two recipe lists into one, deduplicating by identity.
+     * Uses an {@link IdentityHashMap} set for O(1) containment checks
      * instead of the previous O(n²) {@link List#contains} approach.
      */
-    private static List<ReliableClientRecipe> appendReforgeRecipes(
-            List<ReliableClientRecipe> base,
-            List<ReliableClientRecipe> candidates) {
-        if (candidates.isEmpty()) return base;
+    private static List<ReliableClientRecipe> mergeDeduped(
+            List<ReliableClientRecipe> a,
+            List<ReliableClientRecipe> b) {
+        if (a.isEmpty()) return b;
+        if (b.isEmpty()) return a;
 
-        Set<ReliableClientRecipe> baseSet =
-                Collections.newSetFromMap(new IdentityHashMap<>(base.size() * 2));
-        baseSet.addAll(base);
-
-        List<ReliableClientRecipe> additions = candidates.stream()
-                .filter(r -> r instanceof SkyblockReforgeClientRecipe)
-                .filter(r -> !baseSet.contains(r))
-                .toList();
-
-        if (additions.isEmpty()) return base;
-
-        List<ReliableClientRecipe> merged = new ArrayList<>(base.size() + additions.size());
-        merged.addAll(base);
-        merged.addAll(additions);
+        Set<ReliableClientRecipe> seen =
+                Collections.newSetFromMap(new IdentityHashMap<>(a.size() + b.size()));
+        List<ReliableClientRecipe> merged = new ArrayList<>(a.size() + b.size());
+        for (ReliableClientRecipe r : a) if (seen.add(r)) merged.add(r);
+        for (ReliableClientRecipe r : b) if (seen.add(r)) merged.add(r);
         return merged;
     }
 
@@ -142,6 +135,35 @@ public final class RecipeFallbackResolver {
         Component displayName = stack.get(DataComponents.CUSTOM_NAME);
         if (displayName == null) return null;
         return NeuItemRegistry.getNpcByDisplayName(displayName.getString());
+    }
+
+    public static final Comparator<ReliableClientRecipe> RECIPE_COMPARATOR = (a, b) -> {
+        boolean aReforge = a instanceof SkyblockReforgeClientRecipe;
+        boolean bReforge = b instanceof SkyblockReforgeClientRecipe;
+        if (!aReforge && !bReforge) return 0;
+        if (aReforge != bReforge) return aReforge ? 1 : -1;
+
+        SkyblockReforgeClientRecipe ra = (SkyblockReforgeClientRecipe) a;
+        SkyblockReforgeClientRecipe rb = (SkyblockReforgeClientRecipe) b;
+        int nameCmp = ra.getReforgeName().compareTo(rb.getReforgeName());
+        if (nameCmp != 0) return nameCmp;
+        return Integer.compare(rarityOrdinal(ra.getRarity()), rarityOrdinal(rb.getRarity()));
+    };
+
+    public static int rarityOrdinal(String rarity) {
+        return switch (rarity) {
+            case "COMMON" -> 0;
+            case "UNCOMMON" -> 1;
+            case "RARE" -> 2;
+            case "EPIC" -> 3;
+            case "LEGENDARY" -> 4;
+            case "MYTHIC" -> 5;
+            case "DIVINE" -> 6;
+            case "SPECIAL" -> 7;
+            case "VERY_SPECIAL" -> 8;
+            case "SUPREME" -> 9;
+            default -> -1;
+        };
     }
 
     private static void openWithTab(
@@ -154,6 +176,8 @@ public final class RecipeFallbackResolver {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return;
         if (recipes == null || recipes.isEmpty()) return;
+
+        recipes.sort(RECIPE_COMPARATOR);
 
         Screen parent = Minecraft.getInstance().screen;
         ArrayList<RecipeViewScreen> viewHistory = new ArrayList<>();
