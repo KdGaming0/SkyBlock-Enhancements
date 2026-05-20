@@ -2,4 +2,4 @@
 
 ### **RRV Enhancements**
 **Improvements**
-- Improvement to the Craftables side panel causing massive lag spikes when the inventory is opened. (You can still experience tiny lag spikes)
+- Improvement to the Craftables side panel causing massive lag spikes when the inventory is opened.

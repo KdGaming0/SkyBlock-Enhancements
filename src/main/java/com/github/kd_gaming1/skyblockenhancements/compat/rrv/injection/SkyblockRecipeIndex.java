@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Fast SkyBlock-ID-based index over RRV's client recipe cache.
@@ -36,6 +35,14 @@ public final class SkyblockRecipeIndex {
     /** Snapshot of recipe count when the index was last built. Detects stale cache. */
     private static volatile int lastRecipeCount = -1;
 
+    /**
+     * Cache for filtered ingredient lookups. {@link #redirectsAsIngredient} is deterministic
+     * for a given SkyBlock ID, so we avoid recomputing it for duplicate inventory items.
+     */
+    private static final Map<String, List<ReliableClientRecipe>> ingredientFilterCache = new java.util.HashMap<>();
+    /** Same as above for result lookups. */
+    private static final Map<String, List<ReliableClientRecipe>> resultFilterCache = new java.util.HashMap<>();
+
     private SkyblockRecipeIndex() {}
 
     // ── Rebuild ─────────────────────────────────────────────────────────────────
@@ -55,6 +62,9 @@ public final class SkyblockRecipeIndex {
 
         // Avoid rebuilding when the cache hasn't changed.
         if (all.size() == lastRecipeCount) return;
+
+        ingredientFilterCache.clear();
+        resultFilterCache.clear();
 
         Map<String, List<ReliableClientRecipe>> byIngredient = new java.util.HashMap<>(4096);
         Map<String, List<ReliableClientRecipe>> byResult = new java.util.HashMap<>(4096);
@@ -100,7 +110,16 @@ public final class SkyblockRecipeIndex {
         ensureFresh();
         String id = SkyblockRecipeUtil.extractSkyblockId(stack);
         if (id == null) return List.of();
-        return filterByRedirect(byIngredientId.getOrDefault(id, List.of()), stack, false);
+
+        List<ReliableClientRecipe> cached = ingredientFilterCache.get(id);
+        if (cached != null) {
+            return new ArrayList<>(cached);
+        }
+
+        List<ReliableClientRecipe> filtered = filterByRedirect(
+                byIngredientId.getOrDefault(id, List.of()), stack, false);
+        ingredientFilterCache.put(id, filtered);
+        return filtered;
     }
 
     /**
@@ -114,7 +133,16 @@ public final class SkyblockRecipeIndex {
         ensureFresh();
         String id = SkyblockRecipeUtil.extractSkyblockId(stack);
         if (id == null) return List.of();
-        return filterByRedirect(byResultId.getOrDefault(id, List.of()), stack, true);
+
+        List<ReliableClientRecipe> cached = resultFilterCache.get(id);
+        if (cached != null) {
+            return new ArrayList<>(cached);
+        }
+
+        List<ReliableClientRecipe> filtered = filterByRedirect(
+                byResultId.getOrDefault(id, List.of()), stack, true);
+        resultFilterCache.put(id, filtered);
+        return filtered;
     }
 
     /** Clears the index so the next access rebuilds. */
@@ -122,6 +150,8 @@ public final class SkyblockRecipeIndex {
         byIngredientId = Map.of();
         byResultId = Map.of();
         lastRecipeCount = -1;
+        ingredientFilterCache.clear();
+        resultFilterCache.clear();
     }
 
     // ── Internal ────────────────────────────────────────────────────────────────

@@ -39,6 +39,8 @@ public class ClientRecipeCacheMixin {
             ItemStack inputStack,
             CallbackInfoReturnable<List<ReliableClientRecipe>> cir) {
 
+        if (inputStack.isEmpty()) return;
+
         // Hypixel SkyBlock does not use Polymer, so running before RRV's polymer
         // normalization (at the very start of the method) is safe and correct.
         String skyblockId = SkyblockRecipeUtil.extractSkyblockId(inputStack);
