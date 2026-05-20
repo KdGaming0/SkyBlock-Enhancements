@@ -21,6 +21,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import org.lwjgl.glfw.GLFW;
 
 public class StorageOverlayGui extends ContainerOverlay {
 
@@ -184,7 +185,12 @@ public class StorageOverlayGui extends ContainerOverlay {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        return searchField != null && searchField.isFocused() && searchField.keyPressed(event);
+        if (searchField == null || !searchField.isFocused()) return false;
+        if (searchField.keyPressed(event)) return true;
+        // Consume all remaining keys while the field is focused so vanilla hotkeys
+        // (e.g. the inventory key "E") don't fire. Escape is exempt so the screen
+        // can still be closed normally.
+        return event.key() != GLFW.GLFW_KEY_ESCAPE;
     }
 
     @Override
