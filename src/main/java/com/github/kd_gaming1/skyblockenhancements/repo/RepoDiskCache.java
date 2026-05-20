@@ -8,6 +8,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.SkyblockItemCategory;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.garden.GardenMutationRegistry;
 import com.google.gson.Gson;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemParser;
 import com.google.gson.JsonObject;
@@ -106,6 +107,7 @@ public final class RepoDiskCache {
             loadConstantsFromJson(constants);
 
             NeuItemRegistry.markLoaded();
+            GardenMutationRegistry.load();
             LOGGER.info("Loaded {} SkyBlock items from cache (version {})", itemCount, version);
             RecipeDiagnostic.run();
             return true;

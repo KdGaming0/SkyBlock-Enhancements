@@ -28,4 +28,16 @@ public final class RecipeColors {
 
     /** Dark body text (item names, etc.). */
     public static final int DARK_TEXT   = 0xFF404040;
+
+    /** Garden mutation grid — empty cell background. */
+    public static final int GRID_EMPTY_BG = 0xFF2a2a2a;
+
+    /** Garden mutation grid — target (center) cell background. */
+    public static final int GRID_TARGET_BG = 0xFF3b6ea5;
+
+    /** Garden mutation grid — ingredient cell background. */
+    public static final int GRID_INGREDIENT_BG = 0xFFa56e3b;
+
+    /** Garden mutation grid — cell border. */
+    public static final int GRID_BORDER = 0xFF1a1a1a;
 }

@@ -20,6 +20,9 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops.Skyblo
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.essence.SkyblockEssenceUpgradeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.essence.SkyblockEssenceUpgradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.forge.SkyblockForgeClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.garden.GardenMutationRegistry;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.garden.SkyblockGardenMutationClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.garden.SkyblockGardenMutationServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.forge.SkyblockForgeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.kat.SkyblockKatUpgradeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.kat.SkyblockKatUpgradeServerRecipe;
@@ -66,6 +69,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
         NeuItemRegistry.addClearListener(SkyblockNpcShopRecipeType.INSTANCE::clearCache);
         NeuItemRegistry.addClearListener(SkyblockNpcInfoRecipeType.INSTANCE::clearCache);
         NeuItemRegistry.addClearListener(SkyblockNpcInfoRegistry::clear);
+        NeuItemRegistry.addClearListener(GardenMutationRegistry::clear);
         NeuItemRegistry.addClearListener(com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockRecipeIndex::invalidate);
 
         registerRecipeWrappers();
@@ -178,5 +182,8 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
 
         register(SkyblockReforgeServerRecipe.TYPE,
                 r -> new SkyblockReforgeClientRecipe(r));
+
+        register(SkyblockGardenMutationServerRecipe.TYPE,
+                r -> new SkyblockGardenMutationClientRecipe(r.getLayout(), r.getWikiUrls()));
     }
 }

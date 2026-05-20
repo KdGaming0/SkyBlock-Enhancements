@@ -10,6 +10,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemParser;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.garden.GardenMutationRegistry;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.net.URI;
@@ -286,6 +287,7 @@ public class NeuRepoDownloader {
         loadConstants(result.constants());
         NeuItemParser.resolvePetStats(result.items());
         NeuItemRegistry.markLoaded();
+        GardenMutationRegistry.load();
 
         session.neuReady().complete(true);
 

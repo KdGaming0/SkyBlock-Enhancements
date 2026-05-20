@@ -10,6 +10,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.kat.KatUpgra
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.NpcInfoRecipeBuilder;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.NpcShopRecipeParser;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoRegistry;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.garden.MutationRecipeGenerator;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.ReforgeRecipeGenerator;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.trade.TradeRecipeParser;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.wiki.WikiInfoRecipeBuilder;
@@ -66,6 +67,7 @@ public final class SkyblockRecipeGenerator {
 
         EssenceUpgradeGenerator.generate(out);
         ReforgeRecipeGenerator.generate(out);
+        MutationRecipeGenerator.generate(out);
         return out;
     }
 

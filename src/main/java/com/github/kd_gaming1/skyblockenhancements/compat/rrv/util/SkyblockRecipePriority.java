@@ -35,6 +35,9 @@ public final class SkyblockRecipePriority {
     /** Reforge recipes (blacksmith + stones). */
     public static final int REFORGE = 30;
 
+    /** Garden mutation planting layouts. */
+    public static final int MUTATION = 35;
+
     /** NPC information cards. */
     public static final int NPC_INFO = 20;
 
