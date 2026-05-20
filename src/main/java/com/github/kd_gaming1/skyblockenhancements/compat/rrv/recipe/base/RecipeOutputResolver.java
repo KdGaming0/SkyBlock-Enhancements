@@ -28,6 +28,7 @@ public final class RecipeOutputResolver {
         }
 
         ItemStack stack = ItemStackBuilder.build(resolved).copy();
+        // Gson's getAsInt() uses Number.intValue(), so decimal counts like 1.0 are safe.
         int count = recipe.has("count") ? recipe.get("count").getAsInt() : 1;
         if (count > 1) stack.setCount(count);
         return stack;
