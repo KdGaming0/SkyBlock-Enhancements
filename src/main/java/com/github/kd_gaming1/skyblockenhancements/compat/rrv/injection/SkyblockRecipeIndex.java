@@ -127,8 +127,29 @@ public final class SkyblockRecipeIndex {
     // ── Internal ────────────────────────────────────────────────────────────────
 
     private static void ensureFresh() {
-        if (ClientRecipeCache.INSTANCE.getRecipes().size() != lastRecipeCount) {
+        List<ReliableClientRecipe> all = ClientRecipeCache.INSTANCE.getRecipes();
+        if (all.size() != lastRecipeCount) {
             rebuildIndex();
+            return;
+        }
+        // Same-size rebuild detection: RRV may rebuild ClientRecipeCache with the same
+        // number of recipes but different objects (e.g. after a reload). Verify that a
+        // sample recipe from our index is still present in the live cache.
+        if (!byIngredientId.isEmpty()) {
+            List<ReliableClientRecipe> sampleList = byIngredientId.values().iterator().next();
+            if (!sampleList.isEmpty()) {
+                ReliableClientRecipe sample = sampleList.get(0);
+                boolean stillPresent = false;
+                for (ReliableClientRecipe r : all) {
+                    if (r == sample) {
+                        stillPresent = true;
+                        break;
+                    }
+                }
+                if (!stillPresent) {
+                    rebuildIndex();
+                }
+            }
         }
     }
 

@@ -41,6 +41,7 @@
     "rrv.accessor.RecipeViewMenuAccessor",
     "rrv.bookmark.AbstractRrvOverlayMixin",
     "rrv.bookmark.SidePanelOverlayMixin",
+    "rrv.craftables.ClientRecipeCacheMixin",
     "rrv.fix.QuickNavRecipeViewMixin",
     "rrv.fix.RrvRecipeRequestMixin",
     "rrv.fix.RrvReturnToCacheFixMixin",

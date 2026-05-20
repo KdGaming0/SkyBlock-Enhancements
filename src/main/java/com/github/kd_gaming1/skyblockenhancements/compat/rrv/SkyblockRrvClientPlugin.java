@@ -11,6 +11,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.category.SkyblockCa
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.RrvCacheInjector;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockInjectionCache;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockRecipeIndex;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting.SkyblockCraftingClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting.SkyblockCraftingServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.drops.MobPreviewRenderer;
@@ -71,6 +72,7 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
 
         // Re-inject when RRV clears its cache (e.g. on server reconnect / lobby switch).
         ItemView.addClientReloadCallback(() -> {
+            SkyblockRecipeIndex.invalidate();
             CompletableFuture<Void> future = SkyblockEnhancements.getInstance().getRepoFuture();
             if (future.isDone()) {
                 injectIfReady();
