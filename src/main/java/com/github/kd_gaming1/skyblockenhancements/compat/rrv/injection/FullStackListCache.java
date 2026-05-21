@@ -193,7 +193,7 @@ public final class FullStackListCache {
         }
 
         for (ItemStack stack : items) {
-            names.put(stack, stack.getHoverName().getString().toLowerCase());
+            names.put(stack, stack.getHoverName().getString().toLowerCase(java.util.Locale.ROOT));
 
             String id = extractIdFromStack(stack);
             if (id != null && !id.isEmpty()) {

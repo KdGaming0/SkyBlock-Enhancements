@@ -84,6 +84,21 @@ public final class SkyblockCategoryFilter {
             if (wing != null) return wing.equalsIgnoreCase(subCategory);
         }
 
+        // General subcategory matching for lore-type-based categories
+        // (ARMOR, WEAPON, TOOL, ACCESSORY, EQUIPMENT, etc.)
+        // e.g. %ARMOR/HELMET matches lore type "HELMET" or "DUNGEON HELMET"
+        String upperSub = subCategory.toUpperCase(java.util.Locale.ROOT);
+        if (item.loreType != null) {
+            if (item.loreType.equals(upperSub) || item.loreType.endsWith(" " + upperSub)) {
+                return true;
+            }
+        }
+
+        // Fallback: internal name suffix (e.g. DIAMOND_HELMET → HELMET)
+        if (item.internalName != null && item.internalName.endsWith("_" + upperSub)) {
+            return true;
+        }
+
         return false;
     }
 

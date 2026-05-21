@@ -46,6 +46,7 @@ import cc.cassian.rrv.api.ReliableRecipeViewerClientPlugin;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import net.minecraft.client.Minecraft;
 
 /**
  * RRV client plugin entry point. Registers recipe wrappers and handles reload callbacks.
@@ -102,6 +103,11 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
      *
      * <p>The method is idempotent and thread-safe: concurrent callers are coalesced
      * into a single injection attempt.
+     *
+     * <p>The actual injection is scheduled on the Minecraft render thread because
+     * RRV's {@code ClientRecipeCache} is not thread-safe — its internal ArrayLists
+     * are iterated by the render thread (side-panel overlay) while background tasks
+     * would otherwise mutate them.
      */
     public static void injectIfReady() {
         if (!NeuItemRegistry.isLoaded()) return;
@@ -115,24 +121,28 @@ public class SkyblockRrvClientPlugin implements ReliableRecipeViewerClientPlugin
             return;
         }
 
-        try {
-            var items = SkyblockInjectionCache.getCachedItems();
-            var grouped = SkyblockInjectionCache.getCachedGrouped();
+        var items = SkyblockInjectionCache.getCachedItems();
+        var grouped = SkyblockInjectionCache.getCachedGrouped();
 
-            if (items == null || items.isEmpty() || grouped == null) {
-                LOGGER.warn("Injection skipped — cache not yet built.");
-                return;
-            }
-
-            RrvCacheInjector.inject(items, grouped);
-            SkyblockInjectionCache.markInjected();
-
-            LOGGER.info("Injected {} items and {} recipes into RRV.",
-                    items.size(),
-                    grouped.values().stream().mapToInt(List::size).sum());
-        } finally {
+        if (items == null || items.isEmpty() || grouped == null) {
             INJECTING.set(false);
+            LOGGER.warn("Injection skipped — cache not yet built.");
+            return;
         }
+
+        Minecraft.getInstance().execute(() -> {
+            try {
+                RrvCacheInjector.inject(items, grouped);
+                SkyblockInjectionCache.markInjected();
+                LOGGER.info("Injected {} items and {} recipes into RRV.",
+                        items.size(),
+                        grouped.values().stream().mapToInt(List::size).sum());
+            } catch (Exception e) {
+                LOGGER.error("Failed to inject into RRV", e);
+            } finally {
+                INJECTING.set(false);
+            }
+        });
     }
 
     // ── Recipe wrappers (server → client) ────────────────────────────────────────

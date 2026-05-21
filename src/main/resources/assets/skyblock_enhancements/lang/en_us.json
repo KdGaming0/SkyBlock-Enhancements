@@ -286,5 +286,6 @@
   "key.skyblock_enhancements.current_amount_price": "Show BZ Price for Current Amount",
 
   "skyblock_enhancements.midnightconfig.rrvConfigHint": "More options available in Skyblock Enhancements config → Recipe Viewer Tab",
-  "skyblock_enhancements.midnightconfig.openFromRrv": "Open SBE Config..."
+  "skyblock_enhancements.midnightconfig.openFromRrv": "Open SBE Config...",
+  "skyblock_enhancements.recipe.not_found": "This item (ID: %s) does not have a recipe."
 }

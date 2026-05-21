@@ -84,6 +84,14 @@ public final class NeuItemRegistry {
         return List.copyOf(ITEMS.values());
     }
 
+    /**
+     * Iterates over all registered items directly without copying.
+     * Safe only when no concurrent mutations are expected (e.g. during startup).
+     */
+    public static void forEachValue(java.util.function.Consumer<NeuItem> action) {
+        ITEMS.values().forEach(action);
+    }
+
     public static int size() {
         return ITEMS.size();
     }

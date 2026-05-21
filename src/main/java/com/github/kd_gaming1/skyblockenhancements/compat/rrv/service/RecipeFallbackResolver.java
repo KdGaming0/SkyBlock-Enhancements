@@ -7,6 +7,8 @@ import cc.cassian.rrv.common.recipe.ClientRecipeCache;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewMenu;
 import cc.cassian.rrv.common.recipe.inventory.RecipeViewScreen;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockRecipeIndex;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.crafting.SkyblockCraftingClientRecipe;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.forge.SkyblockForgeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcInfoRecipeType;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.npc.SkyblockNpcShopRecipeType;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeClientRecipe;
@@ -19,6 +21,8 @@ import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
+
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -57,6 +61,17 @@ public final class RecipeFallbackResolver {
         if (openType == ActionType.RESULT && tryOpenMergedResult(stack)) return true;
         if (openType == ActionType.INPUT && tryOpenInput(stack)) return true;
 
+        // No recipes found for this item — show a chat message for SkyBlock items
+        String id = SkyblockRecipeUtil.extractSkyblockId(stack);
+        if (id != null) {
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player != null) {
+                Component message = Component.translatable("skyblock_enhancements.recipe.not_found", id)
+                        .withStyle(ChatFormatting.RED);
+                player.displayClientMessage(message, false);
+            }
+            return true;
+        }
         return false;
     }
 
@@ -140,30 +155,49 @@ public final class RecipeFallbackResolver {
     public static final Comparator<ReliableClientRecipe> RECIPE_COMPARATOR = (a, b) -> {
         boolean aReforge = a instanceof SkyblockReforgeClientRecipe;
         boolean bReforge = b instanceof SkyblockReforgeClientRecipe;
-        if (!aReforge && !bReforge) return 0;
         if (aReforge != bReforge) return aReforge ? 1 : -1;
 
-        SkyblockReforgeClientRecipe ra = (SkyblockReforgeClientRecipe) a;
-        SkyblockReforgeClientRecipe rb = (SkyblockReforgeClientRecipe) b;
-        int nameCmp = ra.getReforgeName().compareTo(rb.getReforgeName());
-        if (nameCmp != 0) return nameCmp;
-        return Integer.compare(rarityOrdinal(ra.getRarity()), rarityOrdinal(rb.getRarity()));
+        if (aReforge && bReforge) {
+            SkyblockReforgeClientRecipe ra = (SkyblockReforgeClientRecipe) a;
+            SkyblockReforgeClientRecipe rb = (SkyblockReforgeClientRecipe) b;
+            int nameCmp = ra.getReforgeName().compareTo(rb.getReforgeName());
+            if (nameCmp != 0) return nameCmp;
+            return Integer.compare(ra.getRarityOrdinal(), rb.getRarityOrdinal());
+        }
+
+        // Non-reforge recipes: sort by result tier ascending (lower tier first)
+        int tierA = getResultTier(a);
+        int tierB = getResultTier(b);
+        if (tierA != tierB) return Integer.compare(tierA, tierB);
+
+        // Tie-break by first result ID for deterministic ordering
+        return getFirstResultId(a).compareTo(getFirstResultId(b));
     };
 
-    public static int rarityOrdinal(String rarity) {
-        return switch (rarity) {
-            case "COMMON" -> 0;
-            case "UNCOMMON" -> 1;
-            case "RARE" -> 2;
-            case "EPIC" -> 3;
-            case "LEGENDARY" -> 4;
-            case "MYTHIC" -> 5;
-            case "DIVINE" -> 6;
-            case "SPECIAL" -> 7;
-            case "VERY_SPECIAL" -> 8;
-            case "SUPREME" -> 9;
-            default -> -1;
-        };
+    private static int getResultTier(ReliableClientRecipe recipe) {
+        if (recipe instanceof SkyblockCraftingClientRecipe c) return c.getResultTier();
+        if (recipe instanceof SkyblockForgeClientRecipe f) return f.getResultTier();
+        return 0;
+    }
+
+    private static String getFirstResultId(ReliableClientRecipe recipe) {
+        var results = recipe.getResults();
+        if (results.isEmpty()) return "";
+        var contents = results.getFirst().getValidContents();
+        if (contents.isEmpty()) return "";
+        String id = SkyblockRecipeUtil.extractSkyblockId(contents.getFirst());
+        return id != null ? id : "";
+    }
+
+    private static boolean recipeContainsResultId(ReliableClientRecipe recipe, String targetId) {
+        for (var result : recipe.getResults()) {
+            for (ItemStack candidate : result.getValidContents()) {
+                if (targetId.equals(SkyblockRecipeUtil.extractSkyblockId(candidate))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static void openWithTab(
@@ -178,6 +212,22 @@ public final class RecipeFallbackResolver {
         if (recipes == null || recipes.isEmpty()) return;
 
         recipes.sort(RECIPE_COMPARATOR);
+
+        // Move the clicked item's recipe to the front so it appears first
+        // even when multiple related recipes share a single page.
+        if (seekId != null && !seekId.isEmpty()) {
+            int targetIdx = -1;
+            for (int i = 0; i < recipes.size(); i++) {
+                if (recipeContainsResultId(recipes.get(i), seekId)) {
+                    targetIdx = i;
+                    break;
+                }
+            }
+            if (targetIdx > 0) {
+                ReliableClientRecipe target = recipes.remove(targetIdx);
+                recipes.add(0, target);
+            }
+        }
 
         Screen parent = Minecraft.getInstance().screen;
         ArrayList<RecipeViewScreen> viewHistory = new ArrayList<>();

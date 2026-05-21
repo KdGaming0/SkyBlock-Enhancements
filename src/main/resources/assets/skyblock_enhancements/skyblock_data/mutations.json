@@ -52,8 +52,7 @@
         ]
       ],
       "requiredFor": [],
-      "specialMechanic": "When harvested, will hide disguised as another plant somewhere on your greenhouse. Must be found within 1 minute to successfully harvest.",
-      "multiblockCrops": []
+      "specialMechanic": "When harvested, will hide disguised as another plant somewhere on your greenhouse. Must be found within 1 minute to successfully harvest."
     },
     "TIMESTALK": {
       "name": "Timestalk",
@@ -113,8 +112,7 @@
         ]
       ],
       "requiredFor": [],
-      "specialMechanic": "Grows in reverse, and spawns a Timestalk Clone of you when harvested",
-      "multiblockCrops": []
+      "specialMechanic": "Grows in reverse, and spawns a Timestalk Clone of you when harvested"
     },
     "GODSEED": {
       "name": "Godseed",
@@ -251,10 +249,7 @@
         ]
       ],
       "requiredFor": [],
-      "specialMechanic": null,
-      "multiblockCrops": [
-        "GODSEED"
-      ]
+      "specialMechanic": null
     },
     "JERRYFLOWER": {
       "name": "Jerryflower",
@@ -279,8 +274,7 @@
         ]
       ],
       "requiredFor": [],
-      "specialMechanic": "Obtain an Unfulfilled Jerryseed from the Jerry Visitor\nGive the Unfulfilled Jerryseed and a Mysterious Crop to Xalx in the Crystal Hollows to get an Unripe Jerryseed\nReforge the Unripe Jerryseed to Dirty and show it to Dirt Guy in the Dwarven Mines to get a Fertilized Jerryseed\nPlant the Fertilized Jerryseed in the Greenhouse and feed it 10x Move Jerrys when it reaches growth stage 5 to get a Jerryflower",
-      "multiblockCrops": []
+      "specialMechanic": "Obtain an Unfulfilled Jerryseed from the Jerry Visitor\nGive the Unfulfilled Jerryseed and a Mysterious Crop to Xalx in the Crystal Hollows to get an Unripe Jerryseed\nReforge the Unripe Jerryseed to Dirty and show it to Dirt Guy in the Dwarven Mines to get a Fertilized Jerryseed\nPlant the Fertilized Jerryseed in the Greenhouse and feed it 10x Move Jerrys when it reaches growth stage 5 to get a Jerryflower"
     },
     "DEVOURER": {
       "name": "Devourer",
@@ -335,8 +329,7 @@
         ]
       ],
       "requiredFor": [],
-      "specialMechanic": "Spreads roots and overtakes other plants on your garden while it grows",
-      "multiblockCrops": []
+      "specialMechanic": "Spreads roots and overtakes other plants on your garden while it grows"
     },
     "GLASSCORN": {
       "name": "Glasscorn",
@@ -400,11 +393,7 @@
         ]
       ],
       "requiredFor": [],
-      "specialMechanic": "Must be harvested on stage 7 or 8 of growth, otherwise will reset to stage 1",
-      "multiblockCrops": [
-        "GLASSCORN",
-        "CHLORONITE"
-      ]
+      "specialMechanic": "Must be harvested on stage 7 or 8 of growth, otherwise will reset to stage 1"
     },
     "ALL_IN_ALOE": {
       "name": "All-in Aloe",
@@ -454,10 +443,7 @@
         ]
       ],
       "requiredFor": [],
-      "specialMechanic": "Gives more All-in Aloe Fragments the longer it grows, but has an increasing chance to reset every time it grows",
-      "multiblockCrops": [
-        "PLANTBOY_ADVANCE"
-      ]
+      "specialMechanic": "Gives more All-in Aloe Fragments the longer it grows, but has an increasing chance to reset every time it grows"
     },
     "ZOMBUD": {
       "name": "Zombud",
@@ -515,8 +501,7 @@
       "requiredFor": [
         "DEVOURER"
       ],
-      "specialMechanic": "Converts nearby Dead Plants into Zombuddies when harvested, which then drop Zombuds",
-      "multiblockCrops": []
+      "specialMechanic": "Converts nearby Dead Plants into Zombuddies when harvested, which then drop Zombuds"
     },
     "THUNDERLING": {
       "name": "Thunderling",
@@ -574,10 +559,7 @@
       "requiredFor": [
         "PLANTBOY_ADVANCE"
       ],
-      "specialMechanic": "Must be discharged while it grows, otherwise it will explode.",
-      "multiblockCrops": [
-        "NOCTILUME"
-      ]
+      "specialMechanic": "Must be discharged while it grows, otherwise it will explode."
     },
     "TURTLELLINI": {
       "name": "Turtlellini",
@@ -628,8 +610,7 @@
         ]
       ],
       "requiredFor": [],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "STARTLEVINE": {
       "name": "Startlevine",
@@ -686,8 +667,7 @@
       "requiredFor": [
         "GLASSCORN"
       ],
-      "specialMechanic": "Wear Sorrow Armor in order to harvest it",
-      "multiblockCrops": []
+      "specialMechanic": "Wear Sorrow Armor in order to harvest it"
     },
     "STOPLIGHT_PETAL": {
       "name": "Stoplight Petal",
@@ -777,11 +757,7 @@
       "requiredFor": [
         "TIMESTALK"
       ],
-      "specialMechanic": "Repeatedly punch to harvest while it says \"GO\"",
-      "multiblockCrops": [
-        "NOCTILUME",
-        "SNOOZLING"
-      ]
+      "specialMechanic": "Repeatedly punch to harvest while it says \"GO\""
     },
     "PUFFERCLOUD": {
       "name": "Puffercloud",
@@ -847,10 +823,7 @@
       "requiredFor": [
         "DEVOURER"
       ],
-      "specialMechanic": "Has a painful cloud of gas around it while it grows",
-      "multiblockCrops": [
-        "SNOOZLING"
-      ]
+      "specialMechanic": "Has a painful cloud of gas around it while it grows"
     },
     "SHELLFRUIT": {
       "name": "Shellfruit",
@@ -890,8 +863,7 @@
         "PHANTOMLEAF",
         "TIMESTALK"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "CHORUS_FRUIT": {
       "name": "Chorus Fruit",
@@ -945,10 +917,7 @@
         "PHANTOMLEAF",
         "TIMESTALK"
       ],
-      "specialMechanic": "Teleports around the plot as it grows",
-      "multiblockCrops": [
-        "CHLORONITE"
-      ]
+      "specialMechanic": "Teleports around the plot as it grows"
     },
     "PLANTBOY_ADVANCE": {
       "name": "PlantBoy Advance",
@@ -1030,11 +999,7 @@
       "requiredFor": [
         "ALL_IN_ALOE"
       ],
-      "specialMechanic": "Requires you to obtain 8 apples in a game of snake in order to harvest it",
-      "multiblockCrops": [
-        "PLANTBOY_ADVANCE",
-        "SNOOZLING"
-      ]
+      "specialMechanic": "Requires you to obtain 8 apples in a game of snake in order to harvest it"
     },
     "SNOOZLING": {
       "name": "Snoozling",
@@ -1120,10 +1085,7 @@
         "PUFFERCLOUD",
         "PLANTBOY_ADVANCE"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": [
-        "SNOOZLING"
-      ]
+      "specialMechanic": null
     },
     "SOGGYBUD": {
       "name": "Soggybud",
@@ -1173,8 +1135,7 @@
         "THUNDERLING",
         "TURTLELLINI"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "MAGIC_JELLYBEAN": {
       "name": "Magic Jellybean",
@@ -1228,8 +1189,7 @@
         "ALL_IN_ALOE",
         "CHORUS_FRUIT"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "NOCTILUME": {
       "name": "Noctilume",
@@ -1296,10 +1256,7 @@
         "THUNDERLING",
         "STOPLIGHT_PETAL"
       ],
-      "specialMechanic": "Growth stages need alternating day and night",
-      "multiblockCrops": [
-        "NOCTILUME"
-      ]
+      "specialMechanic": "Growth stages need alternating day and night"
     },
     "DO_NOT_EAT_SHROOM": {
       "name": "Do-not-eat-shroom",
@@ -1352,8 +1309,7 @@
       "requiredFor": [
         "PUFFERCLOUD"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "FLESHTRAP": {
       "name": "Fleshtrap",
@@ -1402,8 +1358,7 @@
       "requiredFor": [
         "ZOMBUD"
       ],
-      "specialMechanic": "Needs to be fed Raw Meat when hungry\nEnchanted Items give a bonus",
-      "multiblockCrops": []
+      "specialMechanic": "Needs to be fed Raw Meat when hungry\nEnchanted Items give a bonus"
     },
     "CHEESEBITE": {
       "name": "Cheesebite",
@@ -1456,8 +1411,7 @@
       "requiredFor": [
         "STARTLEVINE"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "CHLORONITE": {
       "name": "Chloronite",
@@ -1507,8 +1461,7 @@
         "GLASSCORN",
         "CHORUS_FRUIT"
       ],
-      "specialMechanic": "Requires a pickaxe with Breaking Power 1 or higher to be harvested",
-      "multiblockCrops": []
+      "specialMechanic": "Requires a pickaxe with Breaking Power 1 or higher to be harvested"
     },
     "BLASTBERRY": {
       "name": "Blastberry",
@@ -1565,8 +1518,7 @@
       "requiredFor": [
         "STARTLEVINE"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "THORNSHADE": {
       "name": "Thornshade",
@@ -1616,8 +1568,7 @@
         "SNOOZLING",
         "CHLORONITE"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "CREAMBLOOM": {
       "name": "Creambloom",
@@ -1662,8 +1613,7 @@
         "SNOOZLING",
         "CHEESEBITE"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "DUSKBLOOM": {
       "name": "Duskbloom",
@@ -1724,8 +1674,7 @@
         "MAGIC_JELLYBEAN",
         "NOCTILUME"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "CINDERSHADE": {
       "name": "Cindershade",
@@ -1783,8 +1732,7 @@
         "ZOMBUD",
         "FLESHTRAP"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "COALROOT": {
       "name": "Coalroot",
@@ -1833,8 +1781,7 @@
       "requiredFor": [
         "CHLORONITE"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "CHOCOBERRY": {
       "name": "Chocoberry",
@@ -1883,8 +1830,7 @@
       "requiredFor": [
         "BLASTBERRY"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "WITHERBLOOM": {
       "name": "Witherbloom",
@@ -1929,8 +1875,7 @@
         "SNOOZLING",
         "CINDERSHADE"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "SHADEVINE": {
       "name": "Shadevine",
@@ -1980,8 +1925,7 @@
       "requiredFor": [
         "DUSKBLOOM"
       ],
-      "specialMechanic": "Drops nothing without additional yield boost",
-      "multiblockCrops": []
+      "specialMechanic": "Drops nothing without additional yield boost"
     },
     "VEILSHROOM": {
       "name": "Veilshroom",
@@ -2028,8 +1972,7 @@
         "DO_NOT_EAT_SHROOM",
         "THORNSHADE"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "LONELILY": {
       "name": "Lonelily",
@@ -2062,8 +2005,7 @@
         "NOCTILUME",
         "FLESHTRAP"
       ],
-      "specialMechanic": "Appears randomly over time on empty farmland or dirt",
-      "multiblockCrops": []
+      "specialMechanic": "Appears randomly over time on empty farmland or dirt"
     },
     "SCOURROOT": {
       "name": "Scourroot",
@@ -2110,8 +2052,7 @@
         "DO_NOT_EAT_SHROOM",
         "COALROOT"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "DUSTGRAIN": {
       "name": "Dustgrain",
@@ -2149,8 +2090,7 @@
         "SNOOZLING",
         "DUSKBLOOM"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "GLOOMGOURD": {
       "name": "Gloomgourd",
@@ -2197,8 +2137,7 @@
         "SOGGYBUD",
         "CHOCOBERRY"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "ASHWREATH": {
       "name": "Ashwreath",
@@ -2253,8 +2192,7 @@
         "CINDERSHADE",
         "COALROOT"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     },
     "CHOCONUT": {
       "name": "Choconut",
@@ -2293,8 +2231,7 @@
         "CREAMBLOOM",
         "CHOCOBERRY"
       ],
-      "specialMechanic": null,
-      "multiblockCrops": []
+      "specialMechanic": null
     }
   }
 }

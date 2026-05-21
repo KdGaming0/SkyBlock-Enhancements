@@ -403,6 +403,21 @@ public final class NeuConstantsRegistry {
         return canonicalFamily.get(itemId);
     }
 
+    /**
+     * Returns every item ID belonging to the same family as {@code itemId},
+     * including the family root itself. For standalone items (no family),
+     * returns a singleton set containing {@code itemId}.
+     */
+    public static java.util.Set<String> getFamilyMembers(String itemId) {
+        String root = canonicalFamily.get(itemId);
+        if (root == null) {
+            return java.util.Set.of(itemId);
+        }
+        java.util.Set<String> members = new java.util.HashSet<>(getChildren(root));
+        members.add(root);
+        return members;
+    }
+
     public static boolean isLoaded() {
         return !parentToChildren.isEmpty() || !essenceUpgrades.isEmpty()
                 || !reforges.isEmpty() || !reforgeStones.isEmpty();

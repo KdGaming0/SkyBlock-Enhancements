@@ -48,6 +48,7 @@ public final class GardenMutationLayout {
     private final List<Effect> effects;
     private final List<String> requiredFor;
     private final Set<String> multiblockCrops;
+    @Nullable private final String specialMechanic;
 
     private GardenMutationLayout(
             String mutationId,
@@ -63,7 +64,8 @@ public final class GardenMutationLayout {
             List<SpreadingCondition> spreadingConditions,
             List<Effect> effects,
             List<String> requiredFor,
-            Set<String> multiblockCrops) {
+            Set<String> multiblockCrops,
+            @Nullable String specialMechanic) {
         this.mutationId = mutationId;
         this.name = name;
         this.rarity = rarity;
@@ -78,6 +80,7 @@ public final class GardenMutationLayout {
         this.effects = effects;
         this.requiredFor = requiredFor;
         this.multiblockCrops = Set.copyOf(multiblockCrops);
+        this.specialMechanic = specialMechanic;
     }
 
     // ── Factory ─────────────────────────────────────────────────────────────────
@@ -97,11 +100,12 @@ public final class GardenMutationLayout {
         List<Effect> effects = parseEffects(root.getAsJsonArray("effects"));
         List<String> requiredFor = parseStringArray(root.getAsJsonArray("requiredFor"));
         Set<String> multiblockCrops = parseStringSet(root.getAsJsonArray("multiblockCrops"));
+        String specialMechanic = parseNullableString(root, "specialMechanic");
 
         return new GardenMutationLayout(
                 mutationId, name, rarity, gridSize, surface, needsWater,
                 stages, costCoins, rewardCopper, grid, conditions, effects, requiredFor,
-                multiblockCrops);
+                multiblockCrops, specialMechanic);
     }
 
     private static Cell[] parseGrid(JsonArray layoutArray, int gridSize) {
@@ -187,6 +191,14 @@ public final class GardenMutationLayout {
         return el.isJsonNull() ? fallback : el.getAsString();
     }
 
+    /** Returns the string value for {@code key}, or {@code null} if absent or JSON null. */
+    @Nullable
+    private static String parseNullableString(JsonObject obj, String key) {
+        if (!obj.has(key)) return null;
+        JsonElement el = obj.get(key);
+        return el.isJsonNull() ? null : el.getAsString();
+    }
+
     // ── Getters ─────────────────────────────────────────────────────────────────
 
     public String mutationId() { return mutationId; }
@@ -203,6 +215,10 @@ public final class GardenMutationLayout {
     public List<Effect> effects() { return effects; }
     public List<String> requiredFor() { return requiredFor; }
     public Set<String> multiblockCrops() { return multiblockCrops; }
+
+    /** The special growth/harvest mechanic for this mutation, or {@code null} if none. */
+    @Nullable
+    public String specialMechanic() { return specialMechanic; }
 
     /**
      * Returns {@code true} if the given item ID is part of this mutation's multiblock crop set.

@@ -255,7 +255,7 @@ public final class SkyblockRecipeUtil {
     // ── Page seek ────────────────────────────────────────────────────────────────
 
     public static void seekToMatchingPage(RecipeViewMenu menu, String targetId) {
-        if (targetId == null || !menu.hasNextRecipe()) return;
+        if (targetId == null) return;
 
         int maxPage = menu.getMaxPageIndex();
         for (int page = 0; page <= maxPage; page++) {

@@ -7,6 +7,7 @@ import cc.cassian.rrv.common.recipe.ClientRecipeCache;
 import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.reforge.SkyblockReforgeClientRecipe;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
+import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuConstantsRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -66,8 +67,9 @@ public final class SkyblockRecipeIndex {
         ingredientFilterCache.clear();
         resultFilterCache.clear();
 
-        Map<String, List<ReliableClientRecipe>> byIngredient = new java.util.HashMap<>(4096);
-        Map<String, List<ReliableClientRecipe>> byResult = new java.util.HashMap<>(4096);
+        int expectedIds = Math.max(4096, all.size() * 2);
+        Map<String, List<ReliableClientRecipe>> byIngredient = new java.util.HashMap<>(expectedIds);
+        Map<String, List<ReliableClientRecipe>> byResult = new java.util.HashMap<>(expectedIds);
 
         for (ReliableClientRecipe recipe : all) {
             if (recipe instanceof SkyblockReforgeClientRecipe reforge) {
@@ -123,7 +125,9 @@ public final class SkyblockRecipeIndex {
     }
 
     /**
-     * Returns all recipes that produce {@code stack} as a result, identified by its SkyBlock ID.
+     * Returns all recipes that produce {@code stack} (or any member of its item family)
+     * as a result. Family expansion ensures that clicking a tier-1 minion shows recipes
+     * for all tiers, not just tier 1 and tier 2.
      *
      * <p>Results are filtered through {@link ReliableClientRecipe#redirectsAsResult} so that
      * reforge recipes only match when the item's rarity matches the recipe's rarity.
@@ -139,8 +143,8 @@ public final class SkyblockRecipeIndex {
             return new ArrayList<>(cached);
         }
 
-        List<ReliableClientRecipe> filtered = filterByRedirect(
-                byResultId.getOrDefault(id, List.of()), stack, true);
+        List<ReliableClientRecipe> candidates = collectFamilyRecipes(id, byResultId);
+        List<ReliableClientRecipe> filtered = filterByRedirect(candidates, stack, true);
         resultFilterCache.put(id, filtered);
         return filtered;
     }
@@ -202,12 +206,34 @@ public final class SkyblockRecipeIndex {
         return filtered;
     }
 
+    /**
+     * Collects recipes from the given index for {@code id} and every member of its item family.
+     * Deduplicates by identity so a recipe is never added twice.
+     */
+    private static List<ReliableClientRecipe> collectFamilyRecipes(
+            String id, Map<String, List<ReliableClientRecipe>> index) {
+        Set<String> familyIds = NeuConstantsRegistry.getFamilyMembers(id);
+        List<ReliableClientRecipe> collected = new ArrayList<>();
+        Set<ReliableClientRecipe> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (String lookupId : familyIds) {
+            List<ReliableClientRecipe> list = index.get(lookupId);
+            if (list == null) continue;
+            for (ReliableClientRecipe recipe : list) {
+                if (seen.add(recipe)) {
+                    collected.add(recipe);
+                }
+            }
+        }
+        return collected;
+    }
+
     private static void indexReforgeRecipe(
             SkyblockReforgeClientRecipe reforge,
             Map<String, List<ReliableClientRecipe>> byIngredient,
             Map<String, List<ReliableClientRecipe>> byResult) {
 
-        Set<String> seenResult = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<String> seenResult = Collections.newSetFromMap(
+                new IdentityHashMap<>(reforge.getResultInternalNames().size()));
         for (String id : reforge.getResultInternalNames()) {
             if (id != null && !id.isEmpty() && seenResult.add(id)) {
                 byResult.computeIfAbsent(id, k -> new ArrayList<>(4)).add(reforge);
@@ -256,23 +282,7 @@ public final class SkyblockRecipeIndex {
             SkyblockReforgeClientRecipe rb = (SkyblockReforgeClientRecipe) b;
             int nameCmp = ra.getReforgeName().compareTo(rb.getReforgeName());
             if (nameCmp != 0) return nameCmp;
-            return Integer.compare(rarityOrdinal(ra.getRarity()), rarityOrdinal(rb.getRarity()));
-        };
-    }
-
-    private static int rarityOrdinal(String rarity) {
-        return switch (rarity) {
-            case "COMMON" -> 0;
-            case "UNCOMMON" -> 1;
-            case "RARE" -> 2;
-            case "EPIC" -> 3;
-            case "LEGENDARY" -> 4;
-            case "MYTHIC" -> 5;
-            case "DIVINE" -> 6;
-            case "SPECIAL" -> 7;
-            case "VERY_SPECIAL" -> 8;
-            case "SUPREME" -> 9;
-            default -> -1;
+            return Integer.compare(ra.getRarityOrdinal(), rb.getRarityOrdinal());
         };
     }
 
@@ -281,9 +291,9 @@ public final class SkyblockRecipeIndex {
 
         Map<String, List<ReliableClientRecipe>> frozen = new java.util.HashMap<>(mutable.size());
         for (var entry : mutable.entrySet()) {
-            // Return mutable lists — RRV's RecipeViewMenu may reassign its internal
-            // reference but never mutates the passed list, but we play it safe.
-            frozen.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+            List<ReliableClientRecipe> list = entry.getValue();
+            // Skip cloning singleton lists — they are never mutated by callers.
+            frozen.put(entry.getKey(), list.size() == 1 ? list : new ArrayList<>(list));
         }
         return Collections.unmodifiableMap(frozen);
     }

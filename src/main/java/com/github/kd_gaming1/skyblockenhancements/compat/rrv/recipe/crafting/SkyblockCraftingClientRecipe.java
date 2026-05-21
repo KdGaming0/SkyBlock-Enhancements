@@ -30,7 +30,7 @@ public class SkyblockCraftingClientRecipe extends ArraySlotRecipe
 
     private final SlotContent[] inputs;
     private final SlotContent output;
-    private final int tierOffset;
+    private final int resultTier;
     private final String crafttext;
     private final boolean hasCrafttext;
     @Nullable private Component cachedTooltipLine;
@@ -40,7 +40,7 @@ public class SkyblockCraftingClientRecipe extends ArraySlotRecipe
         super(wikiUrls);
         this.inputs = inputs;
         this.output = output;
-        this.tierOffset = SkyblockRecipeUtil.extractTierFromResults(getResults());
+        this.resultTier = SkyblockRecipeUtil.extractTierFromResults(getResults());
         this.crafttext = crafttext != null ? crafttext : "";
         this.hasCrafttext = !this.crafttext.isEmpty();
         this.requirementModifier = hasCrafttext ? this::appendRequirementTooltip : null;
@@ -147,8 +147,13 @@ public class SkyblockCraftingClientRecipe extends ArraySlotRecipe
         SkyblockRecipeUtil.sendCommand("viewrecipe " + itemId);
     }
 
+    /** Returns the numeric tier extracted from the recipe's result ID (e.g. 5000 for COMPACTOR_5000). */
+    public int getResultTier() {
+        return resultTier;
+    }
+
     @Override
     public int getPriority() {
-        return SkyblockRecipePriority.CRAFTING + tierOffset;
+        return SkyblockRecipePriority.CRAFTING;
     }
 }

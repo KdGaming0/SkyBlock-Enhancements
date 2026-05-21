@@ -8,6 +8,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.SlotRef
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.essence.SkyblockEssenceUpgradeServerRecipe;
 import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsRegistry.HypixelUpgradeCost;
+import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.item.StarredItemBuilder;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
 import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
@@ -48,9 +49,10 @@ public final class EssenceUpgradeGenerator {
             if (perStar == null) continue;
 
             String[] wikiUrls = item.getWikiUrls();
+            ItemStack base = ItemStackBuilder.build(item);
             for (int i = 0; i < perStar.size(); i++) {
                 int star = i + 1;
-                if (appendStar(out, item, perStar.get(i), star, wikiUrls)) {
+                if (appendStar(out, item, perStar.get(i), star, wikiUrls, base)) {
                     count++;
                 }
             }
@@ -67,7 +69,8 @@ public final class EssenceUpgradeGenerator {
             NeuItem item,
             List<HypixelUpgradeCost> starCosts,
             int star,
-            String[] wikiUrls) {
+            String[] wikiUrls,
+            ItemStack base) {
 
         String essenceType = null;
         int essenceAmount = 0;
@@ -91,8 +94,8 @@ public final class EssenceUpgradeGenerator {
             companions[i] = SlotRefParser.parse(companionRefs.get(i));
         }
 
-        ItemStack input = StarredItemBuilder.buildInput(item, star);
-        ItemStack output = StarredItemBuilder.buildOutput(item, star);
+        ItemStack input = StarredItemBuilder.buildInput(item, star, base);
+        ItemStack output = StarredItemBuilder.buildOutput(item, star, base);
 
         out.add(new SkyblockEssenceUpgradeServerRecipe(
                 SlotContent.of(input), SlotContent.of(output),

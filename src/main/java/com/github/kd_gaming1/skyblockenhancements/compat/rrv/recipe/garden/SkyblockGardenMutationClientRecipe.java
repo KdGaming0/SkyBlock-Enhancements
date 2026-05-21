@@ -54,6 +54,17 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
     private static final int LEGEND_GAP = 1;
     private static final int LEGEND_MARGIN = 2;
 
+    // ── effect rendering ──────────────────────────────────────────────────────
+
+    /** Maximum number of effect names shown inline on line 3 before truncating. */
+    private static final int MAX_INLINE_EFFECTS = 3;
+
+    /** Characters of a special mechanic text shown on line 3 before truncating. */
+    private static final int MECHANIC_TRUNCATE_LENGTH = 22;
+
+    private static final Set<String> NEGATIVE_EFFECTS =
+            Set.of("Harvest Loss", "XP Loss", "Water Drain");
+
     // ── fields ────────────────────────────────────────────────────────────────
 
     private final GardenMutationLayout layout;
@@ -63,6 +74,7 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
 
     @Nullable private Component cachedNameLine;
     @Nullable private List<Component> cachedInfoLines;
+    @Nullable private List<Component> cachedInfoTooltip;
     @Nullable private RecipeViewMenu.AdditionalStackModifier targetTooltipModifier;
 
     // ── construction ──────────────────────────────────────────────────────────
@@ -285,15 +297,41 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
         renderLegend(gfx);
         renderInfo(gfx);
         maintainButtons(screen, pos);
+        // Tooltip last so it renders above all other content
+        renderInfoTooltip(gfx, mouseX, mouseY);
     }
 
     private void renderMetadata(GuiGraphics gfx) {
         Component name = cachedNameLine;
         if (name == null) {
-            name = Component.literal("§f" + layout.name());
+            // Prefer the NEU item's displayName — it already carries the correct rarity
+            // §-code (e.g. §6 for legendary). Fall back to a rarity-mapped code if the
+            // item isn't registered yet.
+            NeuItem item = NeuItemRegistry.get(layout.mutationId());
+            String nameText = (item != null && item.displayName != null)
+                    ? item.displayName
+                    : rarityColorCode(layout.rarity()) + layout.name();
+            name = Component.literal(nameText);
             cachedNameLine = name;
         }
         gfx.drawString(font(), name, TEXT_MARGIN_X, NAME_Y_OFFSET, RecipeColors.WHITE, true);
+    }
+
+    /**
+     * Maps a rarity string to its SkyBlock §-color code.
+     * Used only when the NEU item's displayName is unavailable.
+     */
+    private static String rarityColorCode(String rarity) {
+        return switch (rarity != null ? rarity.toUpperCase() : "") {
+            case "UNCOMMON"  -> "§a";
+            case "RARE"      -> "§9";
+            case "EPIC"      -> "§5";
+            case "LEGENDARY" -> "§6";
+            case "MYTHIC"    -> "§d";
+            case "DIVINE"    -> "§b";
+            case "SPECIAL"   -> "§c";
+            default          -> "§f";
+        };
     }
 
     private void renderGrid(GuiGraphics gfx) {
@@ -377,9 +415,7 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
             lines = buildInfoLines();
             cachedInfoLines = lines;
         }
-        if (lines.isEmpty()) {
-            return;
-        }
+        if (lines.isEmpty()) return;
 
         int y = computeGridBottom() + INFO_Y_GAP;
         int limit = Math.min(lines.size(), INFO_MAX_LINES);
@@ -390,40 +426,182 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
     }
 
     private List<Component> buildInfoLines() {
-        List<Component> lines = new ArrayList<>();
-
-        // Line 1: Surface | Size | Water | Stages
-        String water = layout.needsWater() ? "§b[W]" : "";
-        String stages = layout.stages() > 0 ? " S:" + layout.stages() : "";
-        lines.add(Component.literal(
-                "§7" + layout.surface() + " | " + layout.gridSize() + "x" + layout.gridSize()
-                        + water + "§7" + stages));
-
-        // Line 2: Cost and Reward (compact format)
-        String cost = SkyblockRecipeUtil.formatNumber(layout.costCoins());
-        lines.add(Component.literal("§6C:§e" + cost + " §7R:§c+" + layout.rewardCopper()));
-
-        // Line 3: Spreading condition / required for / effect
-        addThirdInfoLine(lines);
-
+        List<Component> lines = new ArrayList<>(INFO_MAX_LINES);
+        lines.add(buildSurfaceLine());
+        lines.add(buildCostLine());
+        Component behaviorLine = buildBehaviorLine();
+        if (behaviorLine != null) lines.add(behaviorLine);
         return Collections.unmodifiableList(lines);
     }
 
-    private void addThirdInfoLine(List<Component> lines) {
+    /** Line 1: "§7Farmland | 5x5 | §e40§7 stg §b[W]§7" */
+    private Component buildSurfaceLine() {
+        String stagesPart = layout.stages() > 0
+                ? " | §e" + layout.stages() + "§7 stg"
+                : "";
+        String waterPart = layout.needsWater() ? " §b[W]§7" : "";
+        return Component.literal(
+                "§7" + layout.surface() + " | " + layout.gridSize() + "x" + layout.gridSize()
+                        + stagesPart + waterPart);
+    }
+
+    /** Line 2: "§6800k Coins  §c+400 Copper" */
+    private Component buildCostLine() {
+        String cost = SkyblockRecipeUtil.formatNumber(layout.costCoins());
+        return Component.literal("§6" + cost + " Coins  §c+" + layout.rewardCopper() + " Copper");
+    }
+
+    /**
+     * Line 3 — highest-priority behavior hint:
+     * <ol>
+     *   <li>Special mechanic warning (truncated to {@link #MECHANIC_TRUNCATE_LENGTH} chars)</li>
+     *   <li>Effect name summary (up to {@link #MAX_INLINE_EFFECTS}, color-coded pos/neg)</li>
+     *   <li>First spreading condition with overflow count</li>
+     * </ol>
+     * Returns {@code null} when none of the tiers have data.
+     */
+    @Nullable
+    private Component buildBehaviorLine() {
+        String mechanic = layout.specialMechanic();
+        if (mechanic != null && !mechanic.isBlank()) {
+            int newline = mechanic.indexOf('\n');
+            String firstSentence = newline > 0 ? mechanic.substring(0, newline) : mechanic;
+            if (firstSentence.length() > MECHANIC_TRUNCATE_LENGTH) {
+                firstSentence = firstSentence.substring(0, MECHANIC_TRUNCATE_LENGTH - 1) + "…";
+            }
+            return Component.literal("§c\u26A0 " + firstSentence);
+        }
+
+        List<GardenMutationLayout.Effect> effects = layout.effects();
+        if (!effects.isEmpty()) {
+            return buildEffectSummaryLine(effects);
+        }
+
         List<GardenMutationLayout.SpreadingCondition> conds = layout.spreadingConditions();
         if (!conds.isEmpty()) {
-            lines.add(Component.literal("§7Spread: §e" + conds.getFirst().text()));
-            return;
+            String overflow = conds.size() > 1 ? "§8 +" + (conds.size() - 1) + " more" : "";
+            return Component.literal("§7Spread: §e" + conds.getFirst().text() + overflow);
         }
-        if (!layout.requiredFor().isEmpty()) {
-            lines.add(Component.literal("§7For: §e" + layout.requiredFor().getFirst()));
-            return;
+
+        return null;
+    }
+
+    /** "§a+Harvest §8│ §c-XP §8│ §a+Water §8+1…" */
+    private static Component buildEffectSummaryLine(List<GardenMutationLayout.Effect> effects) {
+        StringBuilder sb = new StringBuilder();
+        int shown = 0;
+        for (GardenMutationLayout.Effect effect : effects) {
+            if (shown >= MAX_INLINE_EFFECTS) {
+                sb.append("§8 +").append(effects.size() - shown).append("…");
+                break;
+            }
+            if (shown > 0) sb.append("§8 │ ");
+            boolean negative = NEGATIVE_EFFECTS.contains(effect.name());
+            sb.append(negative ? "§c-" : "§a+").append(abbreviateEffect(effect.name()));
+            shown++;
         }
-        if (!layout.effects().isEmpty()) {
-            GardenMutationLayout.Effect eff = layout.effects().getFirst();
-            lines.add(Component.literal("§7Effect: §e" + eff.name()));
+        return Component.literal(sb.toString());
+    }
+
+    private static String abbreviateEffect(String name) {
+        return switch (name) {
+            case "Harvest Boost"          -> "Harvest";
+            case "Improved Harvest Boost" -> "Harvest+";
+            case "XP Boost"               -> "XP";
+            case "Improved XP Boost"      -> "XP+";
+            case "Water Retain"           -> "Water";
+            case "Improved Water Retain"  -> "Water+";
+            case "Harvest Loss"           -> "Harvest";
+            case "XP Loss"                -> "XP";
+            case "Water Drain"            -> "Water";
+            case "Immunity"               -> "Immunity";
+            case "Bonus Drops"            -> "Drops";
+            case "Effect Spread"          -> "Spread";
+            default -> name.length() <= 8 ? name : name.substring(0, 7) + "…";
+        };
+    }
+
+    // ── Info tooltip (shown when hovering the text area below the grid) ────────
+
+    /**
+     * Renders a detailed tooltip when the cursor is in the info text region.
+     * Exposes the full spreading conditions list, all effects with descriptions,
+     * the complete required-for chain, and the untruncated special mechanic text.
+     */
+    private void renderInfoTooltip(GuiGraphics gfx, int mouseX, int mouseY) {
+        int infoTop = computeGridBottom() + INFO_Y_GAP;
+        int lineCount = cachedInfoLines != null
+                ? Math.min(cachedInfoLines.size(), INFO_MAX_LINES) : INFO_MAX_LINES;
+        int infoBottom = infoTop + lineCount * LINE_HEIGHT;
+
+        if (mouseX < 0 || mouseX > SkyblockGardenMutationRecipeType.DISPLAY_WIDTH) return;
+        if (mouseY < infoTop || mouseY >= infoBottom) return;
+
+        List<Component> tooltip = cachedInfoTooltip;
+        if (tooltip == null) {
+            tooltip = buildInfoTooltip();
+            cachedInfoTooltip = tooltip;
+        }
+        if (!tooltip.isEmpty()) {
+            gfx.setComponentTooltipForNextFrame(font(), tooltip, mouseX, mouseY);
         }
     }
+
+    private List<Component> buildInfoTooltip() {
+        List<Component> lines = new ArrayList<>();
+        appendConditionsSection(lines);
+        appendEffectsSection(lines);
+        appendRequiredForSection(lines);
+        appendMechanicSection(lines);
+        return Collections.unmodifiableList(lines);
+    }
+
+    private void appendConditionsSection(List<Component> lines) {
+        List<GardenMutationLayout.SpreadingCondition> conds = layout.spreadingConditions();
+        if (conds.isEmpty()) return;
+        lines.add(Component.literal("§fSpreading Conditions"));
+        for (GardenMutationLayout.SpreadingCondition cond : conds) {
+            lines.add(Component.literal("  §e" + cond.text()));
+        }
+    }
+
+    private void appendEffectsSection(List<Component> lines) {
+        List<GardenMutationLayout.Effect> effects = layout.effects();
+        if (effects.isEmpty()) return;
+        if (!lines.isEmpty()) lines.add(Component.empty());
+        lines.add(Component.literal("§fEffects"));
+        for (GardenMutationLayout.Effect effect : effects) {
+            boolean negative = NEGATIVE_EFFECTS.contains(effect.name());
+            String arrow = negative ? "§c\u25BC " : "§a\u25B2 ";
+            lines.add(Component.literal("  " + arrow + "§f" + effect.name()));
+            lines.add(Component.literal("  §7  " + effect.description()));
+        }
+    }
+
+    private void appendRequiredForSection(List<Component> lines) {
+        List<String> reqFor = layout.requiredFor();
+        if (reqFor.isEmpty()) return;
+        if (!lines.isEmpty()) lines.add(Component.empty());
+        lines.add(Component.literal("§fRequired For"));
+        for (String mutationId : reqFor) {
+            NeuItem reqItem = NeuItemRegistry.get(mutationId);
+            String display = (reqItem != null && reqItem.displayName != null)
+                    ? reqItem.displayName : mutationId;
+            lines.add(Component.literal("  §7" + display));
+        }
+    }
+
+    private void appendMechanicSection(List<Component> lines) {
+        String mechanic = layout.specialMechanic();
+        if (mechanic == null || mechanic.isBlank()) return;
+        if (!lines.isEmpty()) lines.add(Component.empty());
+        lines.add(Component.literal("§c\u26A0 Special Mechanic"));
+        for (String part : mechanic.split("\n")) {
+            lines.add(Component.literal("  §7" + part));
+        }
+    }
+
+
 
     // ── Mini legend (rendered inside grid, bottom-right corner) ───────────────
 

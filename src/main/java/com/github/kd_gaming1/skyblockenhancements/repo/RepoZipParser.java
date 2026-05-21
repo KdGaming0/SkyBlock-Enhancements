@@ -154,7 +154,7 @@ public final class RepoZipParser {
         while ((entry = zis.getNextEntry()) != null) {
             if (entry.isDirectory()) continue;
             String name = entry.getName();
-            if (isUnsafePath(name)) continue;
+            if (name.startsWith("/") || name.contains("../") || name.contains("..\\")) continue;
 
             if (!processItemEntry(name, zis, items)
                     && !processSnbtEntry(name, zis, snbtIds, snbtGlints)
@@ -172,7 +172,7 @@ public final class RepoZipParser {
         while ((entry = zis.getNextEntry()) != null) {
             if (entry.isDirectory()) continue;
             String name = entry.getName();
-            if (isUnsafePath(name)) continue;
+            if (name.startsWith("/") || name.contains("../") || name.contains("..\\")) continue;
 
             if (!MobEntryProcessor.process(name, zis)) {
                 MobPngEntryProcessor.process(name, zis);
@@ -242,17 +242,6 @@ public final class RepoZipParser {
             LOGGER.warn("Skipping malformed constants file: {}", fileName);
         }
         return true;
-    }
-
-    // ── Safety helpers ──────────────────────────────────────────────────────────
-
-    /**
-     * Rejects paths that contain {@code ".."} or start with {@code "/"}.
-     * This is a lightweight guard against ZIP slip when entries are later used
-     * as file names in memory caches.
-     */
-    private static boolean isUnsafePath(String name) {
-        return name.startsWith("/") || name.contains("../") || name.contains("..\\");
     }
 
     // ── SNBT override application ───────────────────────────────────────────────

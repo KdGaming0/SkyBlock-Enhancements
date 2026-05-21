@@ -38,7 +38,7 @@ import org.jspecify.annotations.NonNull;
 public final class SkyblockSearchIndex {
 
     /** Maximum tokens expanded for a single prefix query. Guards against {@code "a"} → everything. */
-    private static final int MAX_PREFIX_EXPANSION = 64;
+    private static final int MAX_PREFIX_EXPANSION = 128;
     /** Maximum cached query results. */
     private static final int QUERY_CACHE_CAPACITY = 64;
 
@@ -250,20 +250,28 @@ public final class SkyblockSearchIndex {
         }
     }
 
-    /** Looks up a keyword in the any-token index, falling back to prefix expansion. */
+    /**
+     * Looks up a keyword in the any-token index. If an exact token exists, its items are
+     * unioned with prefix-expanded matches so that typing {@code "en"} still finds {@code "end"},
+     * {@code "ender"}, etc. even when {@code "en"} itself is also a token.
+     */
     private BitSet resolveKeyword(String token) {
         BitSet exact = anyTokenIndex.get(token);
-        if (exact != null) {
-            return exact;
-        }
+
         BitSet temp = BitSetPool.borrow(itemCount);
         resolvePrefixUnion(token, temp);
+
+        if (exact != null) {
+            temp.or(exact);
+        }
+
         if (!temp.isEmpty()) {
             BitSet copy = (BitSet) temp.clone();
             BitSetPool.release(temp);
             return copy;
         }
         BitSetPool.release(temp);
+
         // Fuzzy fallback for typo tolerance
         if (fuzzyMatcher != null) {
             BitSet fuzzy = fuzzyMatcher.fuzzyMatch(token, anyTokenIndex::get, itemCount);
@@ -274,14 +282,19 @@ public final class SkyblockSearchIndex {
         return new BitSet();
     }
 
-    /** Looks up a keyword in the name-only index, falling back to prefix expansion. */
+    /**
+     * Looks up a keyword in the name-only index, unioning exact and prefix matches.
+     */
     private BitSet resolveKeywordInName(String token) {
         BitSet exact = nameTokenIndex.get(token);
-        if (exact != null) {
-            return exact;
-        }
+
         BitSet temp = BitSetPool.borrow(itemCount);
         resolvePrefixUnionInName(token, temp);
+
+        if (exact != null) {
+            temp.or(exact);
+        }
+
         if (!temp.isEmpty()) {
             BitSet copy = (BitSet) temp.clone();
             BitSetPool.release(temp);
@@ -311,13 +324,21 @@ public final class SkyblockSearchIndex {
             idx = -idx - 1;
         }
 
+        // Short prefixes match many tokens — cap them to keep latency low.
+        // 2+ char prefixes are specific enough that we can expand without limit.
+        int maxExpansion = switch (prefix.length()) {
+            case 1 -> 512;
+            case 2 -> 2048;
+            default -> Integer.MAX_VALUE;
+        };
+
         int count = 0;
         for (int i = idx; i < sortedTokens.length && sortedTokens[i].startsWith(prefix); i++) {
             BitSet bs = index.get(sortedTokens[i]);
             if (bs != null) {
                 result.or(bs);
             }
-            if (++count >= MAX_PREFIX_EXPANSION) {
+            if (++count >= maxExpansion) {
                 break;
             }
         }
@@ -536,15 +557,21 @@ public final class SkyblockSearchIndex {
 
     private static boolean isPurelyNumeric(String token) {
         for (int i = 0; i < token.length(); i++) {
-            if (!Character.isDigit(token.charAt(i))) {
+            char c = token.charAt(i);
+            if (c < '0' || c > '9') {
                 return false;
             }
         }
         return true;
     }
 
-    private static void addToken(Map<String, BitSet> index, String token, int itemIndex) {
-        index.computeIfAbsent(token, k -> new BitSet()).set(itemIndex);
+    private void addToken(Map<String, BitSet> index, String token, int itemIndex) {
+        BitSet bs = index.get(token);
+        if (bs == null) {
+            bs = new BitSet(itemCount);
+            index.put(token, bs);
+        }
+        bs.set(itemIndex);
     }
 
     /** Strips Minecraft color codes and splits into alphanumeric tokens. */
@@ -557,21 +584,23 @@ public final class SkyblockSearchIndex {
         int len = clean.length();
         int start = -1;
 
-        for (int i = 0; i <= len; i++) {
-            char c = i < len ? clean.charAt(i) : '\0';
+        for (int i = 0; i < len; i++) {
+            char c = clean.charAt(i);
             if (Character.isLetterOrDigit(c)) {
                 if (start < 0) {
                     start = i;
                 }
             } else {
                 if (start >= 0) {
-                    String token = clean.substring(start, i);
-                    if (token.length() > 1) {
-                        consumer.accept(token, itemIndex);
+                    if (i - start > 1) {
+                        consumer.accept(clean.substring(start, i), itemIndex);
                     }
                     start = -1;
                 }
             }
+        }
+        if (start >= 0 && len - start > 1) {
+            consumer.accept(clean.substring(start, len), itemIndex);
         }
     }
 

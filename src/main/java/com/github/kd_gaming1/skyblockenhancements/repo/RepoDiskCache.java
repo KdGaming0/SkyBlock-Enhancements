@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 public final class RepoDiskCache {
 
     /** Bump whenever {@link NeuItem} schema or parser output changes. */
-    public static final int CACHE_VERSION = 13;
+    public static final int CACHE_VERSION = 14;
 
     private static final Gson GSON = NeuItemParser.GSON;
 
@@ -124,9 +124,18 @@ public final class RepoDiskCache {
         while (reader.hasNext()) {
             String internalName = reader.nextName();
             NeuItem item = GSON.fromJson(reader, NeuItem.class);
-            item.loreType = SkyblockItemCategory.extractLoreType(item);
-            item.rarity   = SkyblockItemCategory.extractRarity(item);
-            item.category = SkyblockItemCategory.fromNeuItem(item);
+            // category, rarity, and loreType are now serialized into the cache,
+            // so no post-load extraction is needed. If any field is null (e.g.
+            // an old cache that somehow passed version check), we fall back.
+            if (item.category == null) {
+                item.category = SkyblockItemCategory.fromNeuItem(item);
+            }
+            if (item.rarity == null) {
+                item.rarity = SkyblockItemCategory.extractRarity(item);
+            }
+            if (item.loreType == null) {
+                item.loreType = SkyblockItemCategory.extractLoreType(item);
+            }
             NeuItemRegistry.register(internalName, item);
             count++;
         }

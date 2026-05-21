@@ -29,9 +29,9 @@ public class NeuItem {
     /**
      * Filter category resolved from structural checks and lore-type parsing.
      * {@code null} for items that don't fit any defined category bucket.
-     * Populated eagerly during parsing and cached with the item data.
+     * Populated eagerly during parsing and persisted to the disk cache.
      */
-    public transient SkyblockItemCategory category;
+    public SkyblockItemCategory category;
 
     /**
      * Modern item ID from the companion {@code .snbt} file (e.g. {@code "minecraft:cod"}).
@@ -168,15 +168,16 @@ public class NeuItem {
 
     /**
      * Rarity extracted from the last lore line. {@code null} for items without a rarity line.
-     * Populated eagerly during parsing and cached to avoid re-parsing.
+     * Populated eagerly during parsing and persisted to the disk cache.
      */
-    public transient SkyblockRarity rarity;
+    public SkyblockRarity rarity;
 
     /**
      * Item type extracted from the last lore line (e.g. {@code "SWORD"}, {@code "HELMET"}).
-     * {@code null} for items without a type line. Populated eagerly during parsing.
+     * {@code null} for items without a type line. Populated eagerly during parsing
+     * and persisted to the disk cache.
      */
-    public transient String loreType;
+    public String loreType;
 
     /**
      * Releases the raw recipe JSON to reduce memory pressure after recipes have been

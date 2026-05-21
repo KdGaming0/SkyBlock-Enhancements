@@ -144,7 +144,14 @@ public final class ReforgeRecipeGenerator {
             Map<String, List<NeuItem>> bySnbtId,
             Map<String, List<NeuItem>> byLoreType) {
 
-        Set<String> names = new LinkedHashSet<>();
+        int estimatedSize = specificInternalNames.size()
+                + specificItemIds.size() * 4;
+        List<String> loreTypes = ReforgeTypeResolver.getLoreTypesForReforgeType(itemType);
+        for (String lt : loreTypes) {
+            List<NeuItem> items = byLoreType.get(lt);
+            if (items != null) estimatedSize += items.size();
+        }
+        Set<String> names = new LinkedHashSet<>(Math.max(16, estimatedSize));
 
         for (String id : specificInternalNames) {
             NeuItem item = NeuItemRegistry.get(id);
@@ -164,7 +171,6 @@ public final class ReforgeRecipeGenerator {
             }
         }
 
-        List<String> loreTypes = ReforgeTypeResolver.getLoreTypesForReforgeType(itemType);
         for (String lt : loreTypes) {
             List<NeuItem> items = byLoreType.get(lt);
             if (items != null) {

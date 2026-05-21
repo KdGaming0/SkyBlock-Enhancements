@@ -67,6 +67,7 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
     private final String stoneInternalName;
     private final String itemType;
     private final String rarity;
+    private final int rarityOrdinal;
     private final List<String> requiredRarities;
     private final Map<String, Double> stats;
     private final int cost;
@@ -102,6 +103,7 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
         this.stoneInternalName = src.getStoneInternalName();
         this.itemType = src.getItemType();
         this.rarity = src.getRarity();
+        this.rarityOrdinal = rarityOrdinal(this.rarity);
         this.requiredRarities = src.getRequiredRarities();
         this.stats = src.getStats();
         this.cost = src.getCost();
@@ -413,6 +415,26 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
 
     public String getRarity() {
         return rarity;
+    }
+
+    public int getRarityOrdinal() {
+        return rarityOrdinal;
+    }
+
+    private static int rarityOrdinal(String rarity) {
+        return switch (rarity) {
+            case "COMMON" -> 0;
+            case "UNCOMMON" -> 1;
+            case "RARE" -> 2;
+            case "EPIC" -> 3;
+            case "LEGENDARY" -> 4;
+            case "MYTHIC" -> 5;
+            case "DIVINE" -> 6;
+            case "SPECIAL" -> 7;
+            case "VERY_SPECIAL" -> 8;
+            case "SUPREME" -> 9;
+            default -> -1;
+        };
     }
 
     public boolean isBlacksmith() {

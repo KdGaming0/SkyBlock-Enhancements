@@ -1,11 +1,8 @@
 package com.github.kd_gaming1.skyblockenhancements.repo.item;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -22,18 +19,15 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem;
  * Output = the item at {@code star}, with stat lines rewritten in place.
  *
  * <p><b>Lore handling:</b> the original NEU repo lore is preserved verbatim. Each line is
- * scanned against a per-stat {@link Pattern}; when a line matches a known stat, the numeric
+ * scanned against known stat labels; when a line matches a known stat, the numeric
  * value is replaced with the new value and a green {@code (+Δ)} delta is appended. Lines
- * that don't match any stat pattern (ability text, set bonuses, reforge notes, dungeon tier,
+ * that don't match any stat (ability text, set bonuses, reforge notes, dungeon tier,
  * etc.) pass through unchanged.
  *
  * <p>Stat values come from {@link EssenceStatResolver} — tiered_stats when present, otherwise
  * base × (1 + 0.02 × star). Items with no stat data keep their lore entirely unchanged.
  */
 public final class StarredItemBuilder {
-
-    /** One regex per stat; matches "Label: §color[+]digits". Group 1 = prefix, group 2 = digits. */
-    private static final Map<EssenceStat, Pattern> STAT_PATTERNS = buildStatPatterns();
 
     private static final String DELTA_COLOR    = "§a";
     private static final String DELTA_BRACKETS = "§8";
@@ -56,6 +50,20 @@ public final class StarredItemBuilder {
     }
 
     /**
+     * Overload that accepts a pre-built base stack to avoid redundant
+     * {@link ItemStackBuilder#build} calls when generating many star levels
+     * for the same item.
+     */
+    public static ItemStack buildInput(NeuItem item, int star, ItemStack base) {
+        if (star <= 1) {
+            return base.copy();
+        }
+        int previousStar = star - 1;
+        Map<EssenceStat, Integer> snapshot = EssenceStatResolver.resolve(item.internalName, previousStar);
+        return buildStack(item, previousStar, snapshot, null, base);
+    }
+
+    /**
      * Builds the output side of a star recipe — the item at {@code star}, with stat lines
      * showing the new value and the delta from the previous tier.
      */
@@ -67,13 +75,32 @@ public final class StarredItemBuilder {
         return buildStack(item, star, after, before);
     }
 
+    /**
+     * Overload that accepts a pre-built base stack to avoid redundant
+     * {@link ItemStackBuilder#build} calls when generating many star levels
+     * for the same item.
+     */
+    public static ItemStack buildOutput(NeuItem item, int star, ItemStack base) {
+        Map<EssenceStat, Integer> after  = EssenceStatResolver.resolve(item.internalName, star);
+        Map<EssenceStat, Integer> before = star > 0
+                ? EssenceStatResolver.resolve(item.internalName, star - 1)
+                : null;
+        return buildStack(item, star, after, before, base);
+    }
+
     // ── Core builder ───────────────────────────────────────────────────────────
 
     private static ItemStack buildStack(NeuItem item, int star,
                                         @Nullable Map<EssenceStat, Integer> after,
                                         @Nullable Map<EssenceStat, Integer> before) {
+        return buildStack(item, star, after, before, ItemStackBuilder.build(item));
+    }
 
-        ItemStack stack = ItemStackBuilder.build(item).copy();
+    private static ItemStack buildStack(NeuItem item, int star,
+                                        @Nullable Map<EssenceStat, Integer> after,
+                                        @Nullable Map<EssenceStat, Integer> before,
+                                        ItemStack base) {
+        ItemStack stack = base.copy();
         applyStarName(stack, item, star);
 
         // No stat data — leave NEU lore untouched.
@@ -99,8 +126,11 @@ public final class StarredItemBuilder {
     // ── Line rewriting ────────────────────────────────────────────────────────
 
     /**
-     * If the line matches a known stat pattern, rebuild it with the new value + delta.
+     * If the line matches a known stat label, rebuild it with the new value + delta.
      * Otherwise return it unchanged. At most one stat matches per line.
+     *
+     * <p>Uses direct {@code indexOf} scanning instead of regex to avoid {@code Matcher}
+     * allocation on every lore line.
      */
     private static Component rewriteStatLine(Component line,
                                              Map<EssenceStat, Integer> after,
@@ -110,15 +140,45 @@ public final class StarredItemBuilder {
 
         for (var entry : after.entrySet()) {
             EssenceStat stat = entry.getKey();
-            Pattern pattern  = STAT_PATTERNS.get(stat);
-            if (pattern == null) continue;
+            String label = stat.displayLabel();
+            int labelPos = raw.indexOf(label);
+            if (labelPos < 0) continue;
 
-            Matcher m = pattern.matcher(raw);
-            if (!m.find()) continue;
+            // Ensure it's actually a stat line: must be followed by ':'
+            int afterLabel = labelPos + label.length();
+            if (afterLabel >= raw.length() || raw.charAt(afterLabel) != ':') continue;
+
+            // Position right after "Label:"
+            int pos = afterLabel + 1;
+
+            // Skip whitespace, colour codes, and optional '+'
+            while (pos < raw.length()) {
+                char c = raw.charAt(pos);
+                if (c == ' ' || c == '+') {
+                    pos++;
+                } else if (c == '§' && pos + 1 < raw.length()) {
+                    pos += 2; // skip formatting code
+                } else {
+                    break;
+                }
+            }
+
+            // Parse digits
+            int numStart = pos;
+            while (pos < raw.length() && raw.charAt(pos) >= '0' && raw.charAt(pos) <= '9') {
+                pos++;
+            }
+            if (numStart == pos) continue; // no digits — not a stat line
+
+            int numberEnd = pos;
+            int percentEnd = pos;
+            if (pos < raw.length() && raw.charAt(pos) == '%') {
+                percentEnd = pos + 1;
+            }
 
             int afterValue = entry.getValue();
             Integer beforeBoxed = before != null ? before.get(stat) : null;
-            return Component.literal(rebuildWithDelta(m, raw, afterValue, beforeBoxed));
+            return Component.literal(rebuildWithDelta(raw, numStart, numberEnd, percentEnd, afterValue, beforeBoxed));
         }
         return line;
     }
@@ -128,18 +188,14 @@ public final class StarredItemBuilder {
      * The optional {@code '%'} is captured separately so the delta sits <em>after</em> the
      * percent sign ({@code "+31% (+1)"}), matching SkyBlock's usual formatting.
      */
-    private static String rebuildWithDelta(Matcher m, String raw, int afterValue,
+    private static String rebuildWithDelta(String raw, int numStart, int numberEnd,
+                                           int percentEnd, int afterValue,
                                            @Nullable Integer before) {
-        int prefixEnd  = m.end(1); // end of "Label: §color[+]"
-        int numberEnd  = m.end(2); // end of the digits
-        int percentEnd = m.end(3); // == numberEnd when no '%' is present
-
-        String prefix  = raw.substring(0, prefixEnd);
-        String percent = raw.substring(numberEnd, percentEnd); // "" or "%"
+        String percent = raw.substring(numberEnd, percentEnd);
         String tail    = raw.substring(percentEnd);
 
         StringBuilder sb = new StringBuilder(raw.length() + 16);
-        sb.append(prefix).append(afterValue).append(percent);
+        sb.append(raw, 0, numStart).append(afterValue).append(percent);
 
         if (before != null && before != afterValue) {
             int delta = afterValue - before;
@@ -150,27 +206,5 @@ public final class StarredItemBuilder {
         }
         sb.append(tail);
         return sb.toString();
-    }
-
-    // ── Pattern catalog ───────────────────────────────────────────────────────
-
-    /**
-     * One pattern per modelled stat. Matches the label, optional formatting codes, an optional
-     * {@code '+'}, the digits, and an optional {@code '%'} suffix. Example match against
-     * {@code "§7Crit Damage: §c+30%"}:
-     * <ul>
-     *   <li>group 1 = {@code "§7Crit Damage: §c+"}</li>
-     *   <li>group 2 = {@code "30"}</li>
-     *   <li>group 3 = {@code "%"}</li>
-     * </ul>
-     */
-    private static Map<EssenceStat, Pattern> buildStatPatterns() {
-        Map<EssenceStat, Pattern> out = new HashMap<>();
-        for (EssenceStat stat : EssenceStat.values()) {
-            String label = stat.displayLabel();
-            String regex = "(?i)(" + Pattern.quote(label) + ":\\s*(?:§[0-9a-fk-or])*\\+?)(\\d+)(%?)";
-            out.put(stat, Pattern.compile(regex));
-        }
-        return Map.copyOf(out);
     }
 }

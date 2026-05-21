@@ -29,12 +29,15 @@ final class NpcReferenceCollector {
         if (!NeuItemRegistry.isLoaded()) return List.of();
 
         List<ItemStack> npcs = new ArrayList<>();
-        for (NeuItem item : NeuItemRegistry.getAllValues()) {
+        // Iterate directly over the backing collection to avoid the List.copyOf
+        // snapshot that getAllValues() performs. This is safe because collect()
+        // is only called during startup when no concurrent mutations occur.
+        NeuItemRegistry.forEachValue(item -> {
             if (item.internalName != null && item.internalName.endsWith("_NPC") && filter.test(item)) {
                 ItemStack stack = ItemStackBuilder.build(item);
                 if (!stack.isEmpty()) npcs.add(stack);
             }
-        }
+        });
         return npcs;
     }
 }
