@@ -5,4 +5,4 @@
 - Improvement to the Craftables side panel causing massive lag spikes when the inventory is opened.
 
 **Added**
-- Added a new Mutations recipe type.
+- Added a new Mutation recipe type.

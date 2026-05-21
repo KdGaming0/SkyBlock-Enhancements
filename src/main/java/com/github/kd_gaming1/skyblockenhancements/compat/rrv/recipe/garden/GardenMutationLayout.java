@@ -5,7 +5,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,6 +47,7 @@ public final class GardenMutationLayout {
     private final List<SpreadingCondition> spreadingConditions;
     private final List<Effect> effects;
     private final List<String> requiredFor;
+    private final Set<String> multiblockCrops;
 
     private GardenMutationLayout(
             String mutationId,
@@ -59,7 +62,8 @@ public final class GardenMutationLayout {
             Cell[] grid,
             List<SpreadingCondition> spreadingConditions,
             List<Effect> effects,
-            List<String> requiredFor) {
+            List<String> requiredFor,
+            Set<String> multiblockCrops) {
         this.mutationId = mutationId;
         this.name = name;
         this.rarity = rarity;
@@ -73,6 +77,7 @@ public final class GardenMutationLayout {
         this.spreadingConditions = spreadingConditions;
         this.effects = effects;
         this.requiredFor = requiredFor;
+        this.multiblockCrops = Set.copyOf(multiblockCrops);
     }
 
     // ── Factory ─────────────────────────────────────────────────────────────────
@@ -91,10 +96,12 @@ public final class GardenMutationLayout {
         List<SpreadingCondition> conditions = parseConditions(root.getAsJsonArray("spreadingConditions"));
         List<Effect> effects = parseEffects(root.getAsJsonArray("effects"));
         List<String> requiredFor = parseStringArray(root.getAsJsonArray("requiredFor"));
+        Set<String> multiblockCrops = parseStringSet(root.getAsJsonArray("multiblockCrops"));
 
         return new GardenMutationLayout(
                 mutationId, name, rarity, gridSize, surface, needsWater,
-                stages, costCoins, rewardCopper, grid, conditions, effects, requiredFor);
+                stages, costCoins, rewardCopper, grid, conditions, effects, requiredFor,
+                multiblockCrops);
     }
 
     private static Cell[] parseGrid(JsonArray layoutArray, int gridSize) {
@@ -165,6 +172,15 @@ public final class GardenMutationLayout {
         return Collections.unmodifiableList(out);
     }
 
+    private static Set<String> parseStringSet(@Nullable JsonArray arr) {
+        if (arr == null) return Set.of();
+        Set<String> out = new HashSet<>(arr.size());
+        for (JsonElement el : arr) {
+            out.add(el.getAsString());
+        }
+        return Collections.unmodifiableSet(out);
+    }
+
     private static String getString(JsonObject obj, String key, String fallback) {
         if (!obj.has(key)) return fallback;
         JsonElement el = obj.get(key);
@@ -186,4 +202,19 @@ public final class GardenMutationLayout {
     public List<SpreadingCondition> spreadingConditions() { return spreadingConditions; }
     public List<Effect> effects() { return effects; }
     public List<String> requiredFor() { return requiredFor; }
+    public Set<String> multiblockCrops() { return multiblockCrops; }
+
+    /**
+     * Returns {@code true} if the given item ID is part of this mutation's multiblock crop set.
+     */
+    public boolean isMultiblock(@Nullable String itemId) {
+        return itemId != null && multiblockCrops.contains(itemId);
+    }
+
+    /**
+     * Returns {@code true} if this mutation's own ID is in the multiblock crop set.
+     */
+    public boolean isMultiblockTarget() {
+        return multiblockCrops.contains(mutationId);
+    }
 }

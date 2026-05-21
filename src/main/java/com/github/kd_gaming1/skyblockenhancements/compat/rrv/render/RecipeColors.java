@@ -8,6 +8,8 @@ public final class RecipeColors {
 
     private RecipeColors() {}
 
+    // ── General text colours ──
+
     /** Arrow glyph ({@code "→"}) — dark grey. */
     public static final int ARROW       = 0xFF404040;
 
@@ -29,15 +31,39 @@ public final class RecipeColors {
     /** Dark body text (item names, etc.). */
     public static final int DARK_TEXT   = 0xFF404040;
 
-    /** Garden mutation grid — empty cell background. */
-    public static final int GRID_EMPTY_BG = 0xFF2a2a2a;
+    // ── Garden mutation grid ──
 
-    /** Garden mutation grid — target (center) cell background. */
-    public static final int GRID_TARGET_BG = 0xFF3b6ea5;
+    /** Empty cell background — subtle dark grey. */
+    public static final int GRID_EMPTY_BG       = 0xFF333333;
 
-    /** Garden mutation grid — ingredient cell background. */
-    public static final int GRID_INGREDIENT_BG = 0xFFa56e3b;
+    /** Target (center) cell background — saturated blue. */
+    public static final int GRID_TARGET_BG      = 0xFF4a90d9;
 
-    /** Garden mutation grid — cell border. */
-    public static final int GRID_BORDER = 0xFF1a1a1a;
+    /** Ingredient cell background — muted amber. */
+    public static final int GRID_INGREDIENT_BG  = 0xFF8B6914;
+
+    /** Cell border — dark with enough contrast for definition. */
+    public static final int GRID_BORDER         = 0xFF222222;
+
+    /** Optional highlight border for target cells. */
+    public static final int GRID_TARGET_BORDER     = 0xFF6bb3ff;
+
+    /** Optional highlight border for ingredient cells. */
+    public static final int GRID_INGREDIENT_BORDER = 0xFFc4a44a;
+
+    // ── Legend / key ──
+
+    /** Legend text colour for the target indicator. */
+    public static final int LEGEND_TARGET     = 0xFF4a90d9;
+
+    /** Legend text colour for the ingredient indicator. */
+    public static final int LEGEND_INGREDIENT = 0xFFc4a44a;
+
+    /** Legend label text colour (neutral grey). */
+    public static final int LEGEND_TEXT       = 0xFF888888;
+
+    // ── Region overlay ──
+
+    /** Semi-transparent white for highlighting multi-cell regions. */
+    public static final int REGION_HIGHLIGHT  = 0x40FFFFFF;
 }
