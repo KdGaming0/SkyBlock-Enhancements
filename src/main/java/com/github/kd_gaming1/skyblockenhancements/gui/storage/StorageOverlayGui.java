@@ -35,6 +35,10 @@ public class StorageOverlayGui extends ContainerOverlay {
     private static final int OVERVIEW_TOP  = SLOT_SIZE;
     private static final int INV_SLOTS_TOP = 18; // vertical space reserved for the "Inventory" label
 
+    /** Hypixel puts navigation buttons in the first row of every storage page — skip it. */
+    private static final int SKIP_ROWS  = 1;
+    private static final int SKIP_SLOTS = SKIP_ROWS * 9;
+
     /**
      * Distance from the bottom of the screen to the bottom edge of the inventory section.
      * Increase to move the inventory section upward.
@@ -252,13 +256,14 @@ public class StorageOverlayGui extends ContainerOverlay {
         for (Slot slot : screen.getMenu().slots) {
             if (slot.container == mc.player.getInventory()) continue;
 
-            if (activeSlot == null || activeRect == null) {
+            if (activeSlot == null || activeRect == null || slot.index < SKIP_SLOTS) {
                 hideSlot(slot);
                 continue;
             }
 
-            int screenX = activeRect.x + 2 + (slot.index % 9) * SLOT_SIZE;
-            int screenY = activeRect.y + mc.font.lineHeight + 6 + (slot.index / 9) * SLOT_SIZE - (int) scroll;
+            int visIndex = slot.index - SKIP_SLOTS;
+            int screenX = activeRect.x + 2 + (visIndex % 9) * SLOT_SIZE;
+            int screenY = activeRect.y + mc.font.lineHeight + 6 + (visIndex / 9) * SLOT_SIZE - (int) scroll;
             boolean inPanel = screenY >= panel.y && screenY + SLOT_SIZE <= panel.y + panel.height;
 
             if (inPanel) {
@@ -356,15 +361,17 @@ public class StorageOverlayGui extends ContainerOverlay {
 
     private void drawFakeItems(GuiGraphics gfx, Rect pageRect, List<ItemStack> stacks,
                                int rows, Rect panel, int mouseX, int mouseY) {
-        int count         = Math.min(stacks.size(), rows * 9);
+        int startIdx      = SKIP_SLOTS;
+        int endIdx        = Math.min(stacks.size(), startIdx + rows * 9);
         int contentMouseY = mouseY + (int) scroll;
 
-        for (int i = 0; i < count; i++) {
+        for (int i = startIdx; i < endIdx; i++) {
             ItemStack stack = stacks.get(i);
             if (stack.isEmpty()) continue;
 
-            int slotX = pageRect.x + 2 + (i % 9) * SLOT_SIZE;
-            int slotY = pageRect.y + mc.font.lineHeight + 6 + (i / 9) * SLOT_SIZE;
+            int visIndex = i - startIdx;
+            int slotX = pageRect.x + 2 + (visIndex % 9) * SLOT_SIZE;
+            int slotY = pageRect.y + mc.font.lineHeight + 6 + (visIndex / 9) * SLOT_SIZE;
 
             gfx.renderFakeItem(stack, slotX + 1, slotY + 1);
             gfx.renderItemDecorations(mc.font, stack, slotX + 1, slotY + 1);
@@ -473,8 +480,8 @@ public class StorageOverlayGui extends ContainerOverlay {
     }
 
     private int pageRows(StoragePageSlot slot, StorageData.StorageInventory inv, boolean isActive) {
-        if (isActive) return Math.max(1, (screen.getMenu().slots.size() - 36) / 9);
-        if (inv != null && inv.inventory() != null) return inv.inventory().rows();
+        if (isActive) return Math.max(1, (screen.getMenu().slots.size() - 36) / 9 - SKIP_ROWS);
+        if (inv != null && inv.inventory() != null) return Math.max(1, inv.inventory().rows() - SKIP_ROWS);
         return 1;
     }
 
