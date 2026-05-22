@@ -43,6 +43,7 @@
     "rrv.bookmark.SidePanelOverlayMixin",
     "rrv.craftables.ClientRecipeCacheMixin",
     "rrv.fix.QuickNavRecipeViewMixin",
+    "rrv.fix.RecipeViewMenuSlotSafetyMixin",
     "rrv.fix.RrvRecipeRequestMixin",
     "rrv.fix.RrvReturnToCacheFixMixin",
     "rrv.fix.RrvScrollFixMixin",
