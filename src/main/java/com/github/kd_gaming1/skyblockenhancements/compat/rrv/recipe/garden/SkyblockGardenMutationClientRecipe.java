@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -469,7 +469,7 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
             if (firstSentence.length() > MECHANIC_TRUNCATE_LENGTH) {
                 firstSentence = firstSentence.substring(0, MECHANIC_TRUNCATE_LENGTH - 1) + "…";
             }
-            return Component.literal("§c\u26A0 " + firstSentence);
+            return Component.literal("§c⚠ " + firstSentence);
         }
 
         List<GardenMutationLayout.Effect> effects = layout.effects();
@@ -572,7 +572,7 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
         lines.add(Component.literal("§fEffects"));
         for (GardenMutationLayout.Effect effect : effects) {
             boolean negative = NEGATIVE_EFFECTS.contains(effect.name());
-            String arrow = negative ? "§c\u25BC " : "§a\u25B2 ";
+            String arrow = negative ? "§c▼ " : "§a▲ ";
             lines.add(Component.literal("  " + arrow + "§f" + effect.name()));
             lines.add(Component.literal("  §7  " + effect.description()));
         }
@@ -595,7 +595,7 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
         String mechanic = layout.specialMechanic();
         if (mechanic == null || mechanic.isBlank()) return;
         if (!lines.isEmpty()) lines.add(Component.empty());
-        lines.add(Component.literal("§c\u26A0 Special Mechanic"));
+        lines.add(Component.literal("§c⚠ Special Mechanic"));
         for (String part : mechanic.split("\n")) {
             lines.add(Component.literal("  §7" + part));
         }
@@ -624,7 +624,7 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
 
     @Override
     @Nullable
-    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+    protected AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos) {
         int y = computeGridBottom() + INFO_Y_GAP;
         int infoLineCount = cachedInfoLines != null
                 ? Math.min(cachedInfoLines.size(), INFO_MAX_LINES)

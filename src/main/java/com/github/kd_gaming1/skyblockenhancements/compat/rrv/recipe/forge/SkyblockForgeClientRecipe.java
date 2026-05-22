@@ -12,7 +12,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +126,7 @@ public class SkyblockForgeClientRecipe extends ArraySlotRecipe
 
     @Override
     @Nullable
-    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+    protected AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos) {
         return placeWikiButton(screen, pos.left(), pos.top() + BUTTON_ROW_Y_OFFSET);
     }
 

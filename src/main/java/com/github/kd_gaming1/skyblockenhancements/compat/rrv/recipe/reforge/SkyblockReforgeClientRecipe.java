@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -476,7 +476,7 @@ public class SkyblockReforgeClientRecipe extends AbstractSkyblockClientRecipe {
 
     @Override
     @Nullable
-    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+    protected AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos) {
         int btnX = (SkyblockReforgeRecipeType.DISPLAY_WIDTH - RecipeLayoutConstants.WIKI_BUTTON_WIDTH) / 2;
         return placeWikiButton(screen, pos.left() + btnX, pos.top() + BUTTON_ROW_Y);
     }

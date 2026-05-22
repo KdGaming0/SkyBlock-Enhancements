@@ -12,6 +12,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayout
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -83,10 +84,10 @@ public class SkyblockNpcShopClientRecipe extends ArraySlotRecipe
 
     @Override
     @Nullable
-    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+    protected AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos) {
         int btnY = pos.top() + BUTTON_ROW_Y_OFFSET;
         int leftX = pos.left();
-        Button sentinel = null;
+        AbstractButton sentinel = null;
 
         SkyblockNpcInfoClientRecipe infoRecipe = SkyblockNpcInfoRegistry.get(npcId);
         if (infoRecipe != null) {
@@ -100,7 +101,7 @@ public class SkyblockNpcShopClientRecipe extends ArraySlotRecipe
             sentinel = infoBtn;
         }
 
-        Button wiki = placeWikiButton(screen, leftX + RecipeLayoutConstants.WIKI_BUTTON_WIDTH + RecipeLayoutConstants.BUTTON_GAP + 2, btnY);
+        AbstractButton wiki = placeWikiButton(screen, leftX + RecipeLayoutConstants.WIKI_BUTTON_WIDTH + RecipeLayoutConstants.BUTTON_GAP + 2, btnY);
         if (sentinel == null) sentinel = wiki;
 
         return sentinel;

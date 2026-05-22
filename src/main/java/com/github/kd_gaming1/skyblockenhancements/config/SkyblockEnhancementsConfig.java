@@ -153,6 +153,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = RRV_INTEGRATION)
     public static boolean showCollectionRequirements = true;
 
+    @Entry(category = RRV_INTEGRATION)
+    public static boolean bigCraftButton = false;
+
     @Entry(category = RRV_INTEGRATION, isSlider = true, min = 25, max = 100, precision = 1)
     public static int rrvItemListWidthPercent = 100;
 

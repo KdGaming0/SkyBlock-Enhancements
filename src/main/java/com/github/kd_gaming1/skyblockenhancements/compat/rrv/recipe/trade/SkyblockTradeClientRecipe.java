@@ -9,7 +9,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipe
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.AbstractSkyblockClientRecipe;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractButton;
 import org.jetbrains.annotations.Nullable;
 
 public class SkyblockTradeClientRecipe extends AbstractSkyblockClientRecipe
@@ -58,7 +58,7 @@ public class SkyblockTradeClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     @Nullable
-    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+    protected AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos) {
         return placeWikiButton(screen, pos.left(), pos.top() + BUTTON_ROW_Y_OFFSET);
     }
 

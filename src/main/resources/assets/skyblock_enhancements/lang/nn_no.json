@@ -135,6 +135,12 @@
   "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent": "Breidd på RRV-gjenstandsliste",
   "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent.tooltip": "Prosent av den tilgjengelege skjermbreidda som RRV-gjenstandslistepanelet brukar.\n100% fyller rommet mellom inventar og skjermkant.\nLågare verdiar gjer panelet mindre frå høgre side innover.",
 
+  "skyblock_enhancements.midnightconfig.showCollectionRequirements": "Vis samlingskrav",
+  "skyblock_enhancements.midnightconfig.showCollectionRequirements.tooltip": "Viser ein raud indikator og verktøytips på tilverkingsoppskrifter som krev eit samlingsnivå eller anna vilkår for å tilverke.",
+
+  "skyblock_enhancements.midnightconfig.bigCraftButton": "Stor tilverkingsknapp",
+  "skyblock_enhancements.midnightconfig.bigCraftButton.tooltip": "Viser ein stor 'Craft'-knapp under oppskrifta i staden for ein liten '+'-knapp ved resultatsporet.",
+
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Berre namn og ID",
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full verktøytips-søk",
 

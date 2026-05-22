@@ -7,14 +7,13 @@ import cc.cassian.rrv.common.recipe.inventory.SlotContent;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.ItemFamilyHelper;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +37,7 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
     protected final String[] wikiUrls;
 
     private boolean buttonsDirty = true;
-    @Nullable private Button sentinelButton;
+    @Nullable private AbstractButton sentinelButton;
 
     /** Lazily-built set of every SkyBlock internal ID present in {@link #getIngredients()}. */
     @Nullable private Set<String> precomputedIngredientIds;
@@ -106,14 +105,14 @@ public abstract class AbstractSkyblockClientRecipe implements ReliableClientReci
      * Return {@code null} when no buttons were placed.
      */
     @Nullable
-    protected abstract Button placeButtons(RecipeViewScreen screen, RecipePosition pos);
+    protected abstract AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos);
 
     /**
      * Convenience shortcut for the common case of a single wiki button. Returns the added
      * button (or {@code null} if no wiki URLs were supplied) so it can be used as the sentinel.
      */
     @Nullable
-    protected final Button placeWikiButton(RecipeViewScreen screen, int x, int y) {
+    protected final AbstractButton placeWikiButton(RecipeViewScreen screen, int x, int y) {
         return SkyblockRecipeUtil.addWikiButton(screen, wikiUrls, x, y);
     }
 

@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -197,7 +197,7 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
 
     @Override
     @Nullable
-    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+    protected AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos) {
         int btnX = (SkyblockDropsRecipeType.displayWidth() - RecipeLayoutConstants.WIKI_BUTTON_WIDTH) / 2;
         return placeWikiButton(screen, pos.left() + btnX, pos.top() + BUTTON_ROW_Y_OFFSET);
     }

@@ -12,8 +12,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.components.AbstractButton;
 import org.jetbrains.annotations.Nullable;
 
 public class SkyblockEssenceUpgradeClientRecipe extends AbstractSkyblockClientRecipe
@@ -93,7 +92,7 @@ public class SkyblockEssenceUpgradeClientRecipe extends AbstractSkyblockClientRe
 
     @Override
     @Nullable
-    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+    protected AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos) {
         return placeWikiButton(screen, pos.left(), pos.top() + BUTTON_ROW_Y_OFFSET);
     }
 

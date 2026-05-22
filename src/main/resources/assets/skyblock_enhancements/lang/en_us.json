@@ -123,6 +123,12 @@
   "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent": "RRV Item List Width",
   "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent.tooltip": "Percentage of the available screen width used by the RRV item list panel.\n100% fills the space between inventory and screen edge.\nLower values shrink the panel from the right side inward.",
 
+  "skyblock_enhancements.midnightconfig.showCollectionRequirements": "Show Collection Requirements",
+  "skyblock_enhancements.midnightconfig.showCollectionRequirements.tooltip": "Shows a red indicator and tooltip on crafting recipes that require a collection level or other condition to craft.",
+
+  "skyblock_enhancements.midnightconfig.bigCraftButton": "Big Craft Button",
+  "skyblock_enhancements.midnightconfig.bigCraftButton.tooltip": "Shows a large 'Craft' text button below the recipe instead of a small '+' icon next to the output slot.",
+
   "skyblock_enhancements.midnightconfig.rrvCalculatorText": "Search Calculator",
 
   "skyblock_enhancements.midnightconfig.rrvCalculatorDecimalSeparator": "Calculator Decimal Separator",

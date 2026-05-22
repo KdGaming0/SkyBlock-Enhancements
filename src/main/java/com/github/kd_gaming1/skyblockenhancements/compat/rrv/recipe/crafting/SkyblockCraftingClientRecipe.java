@@ -14,7 +14,9 @@ import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsCon
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +28,12 @@ public class SkyblockCraftingClientRecipe extends ArraySlotRecipe
     private static final int ARROW_Y   = 22;
     private static final int ARROW_HIT_W = 12;
     private static final int ARROW_HIT_H = 10;
+    private static final int OUTPUT_X = 94;
+    private static final int OUTPUT_Y = 18;
     private static final int BUTTON_ROW_Y_OFFSET = 56;
+    private static final int ICON_BUTTON_SIZE = 12;
+    private static final int ICON_BUTTON_X_OFFSET = RecipeLayoutConstants.SLOT_SIZE;
+    private static final int ICON_BUTTON_Y_OFFSET = RecipeLayoutConstants.SLOT_SIZE - 5;
 
     private final SlotContent[] inputs;
     private final SlotContent output;
@@ -114,9 +121,17 @@ public class SkyblockCraftingClientRecipe extends ArraySlotRecipe
 
     @Override
     @Nullable
-    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+    protected AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+        if (SkyblockEnhancementsConfig.bigCraftButton) {
+            return placeBigCraftButton(screen, pos);
+        }
+        return placeIconCraftButton(screen, pos);
+    }
+
+    @Nullable
+    private AbstractButton placeBigCraftButton(RecipeViewScreen screen, RecipePosition pos) {
         int btnY = pos.top() + BUTTON_ROW_Y_OFFSET;
-        Button sentinel = placeWikiButton(screen, pos.left(), btnY);
+        AbstractButton sentinel = placeWikiButton(screen, pos.left(), btnY);
 
         if (HypixelLocationState.isOnSkyblock()) {
             String itemId = resolveOutputId();
@@ -127,6 +142,29 @@ public class SkyblockCraftingClientRecipe extends ArraySlotRecipe
                                 b -> sendViewRecipeCommand(itemId))
                         .pos(craftX, btnY)
                         .size(RecipeLayoutConstants.WIKI_BUTTON_WIDTH, RecipeLayoutConstants.WIKI_BUTTON_HEIGHT)
+                        .build();
+                screen.addRecipeWidget(craftBtn);
+                if (sentinel == null) sentinel = craftBtn;
+            }
+        }
+        return sentinel;
+    }
+
+    @Nullable
+    private AbstractButton placeIconCraftButton(RecipeViewScreen screen, RecipePosition pos) {
+        AbstractButton sentinel = placeWikiButton(screen, pos.left(), pos.top() + BUTTON_ROW_Y_OFFSET);
+
+        if (HypixelLocationState.isOnSkyblock()) {
+            String itemId = resolveOutputId();
+            if (itemId != null) {
+                int iconX = pos.left() + OUTPUT_X + ICON_BUTTON_X_OFFSET;
+                int iconY = pos.top() + OUTPUT_Y + ICON_BUTTON_Y_OFFSET;
+                Button craftBtn = Button.builder(
+                                Component.literal("+"),
+                                b -> sendViewRecipeCommand(itemId))
+                        .pos(iconX, iconY)
+                        .size(ICON_BUTTON_SIZE, ICON_BUTTON_SIZE)
+                        .tooltip(Tooltip.create(Component.literal("Craft")))
                         .build();
                 screen.addRecipeWidget(craftBtn);
                 if (sentinel == null) sentinel = craftBtn;

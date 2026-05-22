@@ -10,10 +10,9 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipePriority;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.SkyblockRecipeUtil;
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
@@ -140,7 +139,7 @@ public class SkyblockWikiInfoClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     @Nullable
-    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+    protected AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos) {
         return placeWikiButton(screen, pos.left(), pos.top() + BUTTON_Y_OFFSET);
     }
 

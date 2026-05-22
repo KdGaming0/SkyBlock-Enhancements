@@ -12,9 +12,9 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeColors
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.render.RecipeLayoutConstants;
 import java.util.List;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -134,11 +134,11 @@ public class SkyblockNpcInfoClientRecipe extends AbstractSkyblockClientRecipe
 
     @Override
     @Nullable
-    protected Button placeButtons(RecipeViewScreen screen, RecipePosition pos) {
+    protected AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos) {
         int btnY = pos.top() + RECIPE_HEIGHT - BUTTON_ROW_HEIGHT + 3;
         int btnX = pos.left() + 2;
 
-        Button sentinel = placeWikiButton(screen, btnX, btnY);
+        AbstractButton sentinel = placeWikiButton(screen, btnX, btnY);
         if (sentinel != null) btnX += RecipeLayoutConstants.WIKI_BUTTON_WIDTH + RecipeLayoutConstants.BUTTON_GAP;
 
         if (SKYHANNI_PRESENT) {
