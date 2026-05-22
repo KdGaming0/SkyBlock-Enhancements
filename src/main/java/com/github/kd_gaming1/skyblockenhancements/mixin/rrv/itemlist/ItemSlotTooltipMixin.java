@@ -5,6 +5,7 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
 import java.util.List;
 
+import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -57,6 +58,11 @@ public class ItemSlotTooltipMixin {
             RrvCompat.enterOverlayTooltip();
             try {
                 sbe$cachedTooltip = Screen.getTooltipFromItem(minecraft, itemStack);
+            } catch (Exception e) {
+                SkyblockEnhancements.LOGGER.warn(
+                        "Tooltip generation failed for '{}' (another mod threw during ItemTooltipCallback). Falling back to item name.",
+                        itemStack.getHoverName().getString(), e);
+                sbe$cachedTooltip = List.of(itemStack.getHoverName());
             } finally {
                 RrvCompat.exitOverlayTooltip();
             }

@@ -10,6 +10,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -49,7 +50,15 @@ public class ItemFiltersMixin {
     private static List<Component> sbe$cachedTooltip(Minecraft mc, ItemStack stack) {
         List<Component> cached = sbe$tooltipCache.get(stack);
         if (cached != null) return cached;
-        List<Component> built = Screen.getTooltipFromItem(mc, stack);
+        List<Component> built;
+        try {
+            built = Screen.getTooltipFromItem(mc, stack);
+        } catch (Exception e) {
+            SkyblockEnhancements.LOGGER.warn(
+                    "Tooltip generation failed for '{}' during RRV search (another mod threw during ItemTooltipCallback).",
+                    stack.getHoverName().getString(), e);
+            built = List.of();
+        }
         sbe$tooltipCache.put(stack, built);
         return built;
     }
