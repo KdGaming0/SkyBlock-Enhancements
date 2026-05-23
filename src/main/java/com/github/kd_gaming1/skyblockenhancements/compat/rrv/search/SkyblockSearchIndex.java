@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +56,9 @@ public final class SkyblockSearchIndex {
     private final @Nullable SearchAutocomplete autocomplete;
     private final @Nullable FuzzyTokenMatcher fuzzyMatcher;
 
+    /** Maps SkyBlock internal name → every search token belonging to that item. */
+    public final Map<String, Set<String>> itemIdToTokens;
+
     public SkyblockSearchIndex(List<ItemStack> items, Map<ItemStack, NeuItem> neuItems) {
         this.items = List.copyOf(items);
         this.itemCount = this.items.size();
@@ -62,6 +67,7 @@ public final class SkyblockSearchIndex {
         this.anyTokenIndex = new java.util.HashMap<>(8192);
         this.statIndex = new java.util.HashMap<>(256);
         this.categoryIndex = new EnumMap<>(SkyblockItemCategory.class);
+        this.itemIdToTokens = new HashMap<>(items.size());
         Set<String> autocompleteTokens = new TreeSet<>();
 
         for (int i = 0; i < itemCount; i++) {
@@ -157,7 +163,33 @@ public final class SkyblockSearchIndex {
         }
     }
 
-    // ── Ranking ────────────────────────────────────────────────────────────────────
+    /**
+     * Fast boolean check for inventory slot highlighting.
+     *
+     * <p>Stat clauses are ignored because inventory items are not mapped to overlay BitSet
+     * indices. Keyword clauses are AND-ed against the item's precomputed token set.
+     */
+    public boolean itemMatchesInventoryQuery(String itemId, SearchQuery query) {
+        Set<String> tokens = itemIdToTokens.get(itemId);
+        if (tokens == null || tokens.isEmpty()) {
+            return false;
+        }
+
+        for (SearchQuery.KeywordClause kw : query.keywords()) {
+            String token = kw.token();
+            boolean found = false;
+            for (String t : tokens) {
+                if (t.startsWith(token)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     private SearchResult rank(SearchQuery query, BitSet candidates) {
         BitSet first = new BitSet();
@@ -359,7 +391,7 @@ public final class SkyblockSearchIndex {
         boolean first = true;
         for (SearchQuery.StatClause clause : stats) {
             BitSet matches = resolveStat(clause);
-            if (matches == null || matches.isEmpty()) {
+            if (matches.isEmpty()) {
                 result.clear();
                 return;
             }
@@ -402,28 +434,48 @@ public final class SkyblockSearchIndex {
 
     private void indexItem(int itemIndex, ItemStack stack, @Nullable NeuItem neuItem,
                            Set<String> autocompleteTokens) {
+        String itemId = neuItem != null ? neuItem.internalName : null;
+        Set<String> itemTokens = itemId != null ? new HashSet<>(32) : null;
+
         String displayName = stack.getHoverName().getString();
-        tokenize(displayName, (token, idx) -> addDisplayNameToken(token, idx, autocompleteTokens), itemIndex);
+        tokenize(displayName, (token, idx) -> {
+            addDisplayNameToken(token, idx, autocompleteTokens);
+            if (itemTokens != null) itemTokens.add(token);
+        }, itemIndex);
 
         if (neuItem != null) {
-            indexNeuItem(itemIndex, neuItem, autocompleteTokens);
+            indexNeuItem(itemIndex, neuItem, autocompleteTokens, itemTokens);
+        }
+
+        if (itemId != null && !itemTokens.isEmpty()) {
+            itemIdToTokens.merge(itemId, itemTokens, (existing, incoming) -> {
+                existing.addAll(incoming);
+                return existing;
+            });
         }
     }
 
-    private void indexNeuItem(int itemIndex, NeuItem neuItem, Set<String> autocompleteTokens) {
+    private void indexNeuItem(int itemIndex, NeuItem neuItem, Set<String> autocompleteTokens,
+                              @Nullable Set<String> itemTokens) {
         if (neuItem.internalName != null) {
             String lower = neuItem.internalName.toLowerCase(java.util.Locale.ROOT);
             addNameToken(lower, itemIndex);
-            for (String part : lower.split("_")) {
-                if (part.length() > 1) {
-                    addNameToken(part, itemIndex);
+            if (itemTokens != null) {
+                itemTokens.add(lower);
+                for (String part : lower.split("_")) {
+                    if (part.length() > 1) {
+                        itemTokens.add(part);
+                    }
                 }
             }
         }
 
         if (neuItem.lore != null) {
             for (String line : neuItem.lore) {
-                tokenize(line, this::addAnyToken, itemIndex);
+                tokenize(line, (token, idx) -> {
+                    addAnyToken(token, idx);
+                    if (itemTokens != null) itemTokens.add(token);
+                }, itemIndex);
             }
         }
 
@@ -431,35 +483,39 @@ public final class SkyblockSearchIndex {
             String categoryName = neuItem.category.name().toLowerCase(java.util.Locale.ROOT);
             addAnyToken(categoryName, itemIndex);
             addAutocompleteToken(categoryName, autocompleteTokens);
+            if (itemTokens != null) itemTokens.add(categoryName);
         }
 
-        indexPetType(itemIndex, neuItem, autocompleteTokens);
-        indexReforge(itemIndex, neuItem, autocompleteTokens);
-        indexStats(itemIndex, neuItem, autocompleteTokens);
-        indexSlayer(itemIndex, neuItem, autocompleteTokens);
+        indexPetType(itemIndex, neuItem, autocompleteTokens, itemTokens);
+        indexReforge(itemIndex, neuItem, autocompleteTokens, itemTokens);
+        indexStats(itemIndex, neuItem, autocompleteTokens, itemTokens);
+        indexSlayer(itemIndex, neuItem, autocompleteTokens, itemTokens);
 
         if (neuItem.crafttext != null && !neuItem.crafttext.isEmpty()) {
-            tokenize(neuItem.crafttext, this::addAnyToken, itemIndex);
+            tokenize(neuItem.crafttext, (token, idx) -> {
+                addAnyToken(token, idx);
+                if (itemTokens != null) itemTokens.add(token);
+            }, itemIndex);
         }
     }
 
-    private void indexPetType(int itemIndex, NeuItem neuItem, Set<String> autocompleteTokens) {
+    private void indexPetType(int itemIndex, NeuItem neuItem, Set<String> autocompleteTokens,
+                              @Nullable Set<String> itemTokens) {
         if (neuItem.category != SkyblockItemCategory.PET || neuItem.internalName == null) {
             return;
         }
         String petId = extractPetId(neuItem.internalName);
-        if (petId == null) {
-            return;
-        }
         String skill = NeuConstantsRegistry.getPetType(petId);
         if (skill != null) {
             String token = skill.toLowerCase(java.util.Locale.ROOT);
             addAnyToken(token, itemIndex);
             addAutocompleteToken(token, autocompleteTokens);
+            if (itemTokens != null) itemTokens.add(token);
         }
     }
 
-    private void indexReforge(int itemIndex, NeuItem neuItem, Set<String> autocompleteTokens) {
+    private void indexReforge(int itemIndex, NeuItem neuItem, Set<String> autocompleteTokens,
+                              @Nullable Set<String> itemTokens) {
         if (neuItem.internalName == null) {
             return;
         }
@@ -470,10 +526,12 @@ public final class SkyblockSearchIndex {
         tokenize(stone.reforgeName(), (token, idx) -> {
             addAnyToken(token, idx);
             addAutocompleteToken(token, autocompleteTokens);
+            if (itemTokens != null) itemTokens.add(token);
         }, itemIndex);
     }
 
-    private void indexStats(int itemIndex, NeuItem neuItem, Set<String> autocompleteTokens) {
+    private void indexStats(int itemIndex, NeuItem neuItem, Set<String> autocompleteTokens,
+                            @Nullable Set<String> itemTokens) {
         if (neuItem.internalName == null) {
             return;
         }
@@ -482,7 +540,7 @@ public final class SkyblockSearchIndex {
         if (baseStats != null) {
             for (Map.Entry<String, Integer> entry : baseStats.entrySet()) {
                 String statName = entry.getKey().toLowerCase(java.util.Locale.ROOT);
-                indexStatName(statName, itemIndex, autocompleteTokens);
+                indexStatName(statName, itemIndex, autocompleteTokens, itemTokens);
                 addStatValue(statName, entry.getValue(), itemIndex);
             }
         }
@@ -491,7 +549,7 @@ public final class SkyblockSearchIndex {
         if (tieredStats != null) {
             for (Map.Entry<String, int[]> entry : tieredStats.entrySet()) {
                 String statName = entry.getKey().toLowerCase(java.util.Locale.ROOT);
-                indexStatName(statName, itemIndex, autocompleteTokens);
+                indexStatName(statName, itemIndex, autocompleteTokens, itemTokens);
                 for (int value : entry.getValue()) {
                     addStatValue(statName, value, itemIndex);
                 }
@@ -499,13 +557,16 @@ public final class SkyblockSearchIndex {
         }
     }
 
-    private void indexStatName(String statName, int itemIndex, Set<String> autocompleteTokens) {
+    private void indexStatName(String statName, int itemIndex, Set<String> autocompleteTokens,
+                               @Nullable Set<String> itemTokens) {
         addAnyToken(statName, itemIndex);
         addAutocompleteToken(statName, autocompleteTokens);
+        if (itemTokens != null) itemTokens.add(statName);
         for (String part : statName.split("_")) {
             if (part.length() > 1) {
                 addAnyToken(part, itemIndex);
                 addAutocompleteToken(part, autocompleteTokens);
+                if (itemTokens != null) itemTokens.add(part);
             }
         }
     }
@@ -515,7 +576,8 @@ public final class SkyblockSearchIndex {
         valueMap.computeIfAbsent(value, k -> new BitSet()).set(itemIndex);
     }
 
-    private void indexSlayer(int itemIndex, NeuItem neuItem, Set<String> autocompleteTokens) {
+    private void indexSlayer(int itemIndex, NeuItem neuItem, Set<String> autocompleteTokens,
+                             @Nullable Set<String> itemTokens) {
         if (neuItem.slayerReq == null || neuItem.slayerReq.isEmpty()) {
             return;
         }
@@ -523,6 +585,7 @@ public final class SkyblockSearchIndex {
         if (type != null) {
             addAnyToken(type, itemIndex);
             addAutocompleteToken(type, autocompleteTokens);
+            if (itemTokens != null) itemTokens.add(type);
         }
     }
 

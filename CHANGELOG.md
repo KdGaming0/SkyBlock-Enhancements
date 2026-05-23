@@ -1,5 +1,5 @@
-## Changelog for 1.0.9
+## Changelog for 1.0.10
 
 ### **RRV Enhancements**
 **Improvements/Fixes**
-- Hardened RRV overlay tooltip generation against exceptions thrown by other mods during `ItemTooltipCallback`. The client no longer crashes; the error is logged and the tooltip falls back to the item's display name.
+- Fixed a bug where the Personal Compactor tooltip would get stuck on screen when using inventory search highlighting.
