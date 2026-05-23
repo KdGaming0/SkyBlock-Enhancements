@@ -2233,5 +2233,27 @@
       ],
       "specialMechanic": null
     }
+  },
+  "cropSizes": {
+    "SNOOZLING": {
+      "width": 3,
+      "height": 3
+    },
+    "GODSEED": {
+      "width": 3,
+      "height": 3
+    },
+    "GLASSCORN": {
+      "width": 2,
+      "height": 2
+    },
+    "NOCTILUME": {
+      "width": 2,
+      "height": 2
+    },
+    "PLANTBOY_ADVANCE": {
+      "width": 2,
+      "height": 2
+    }
   }
 }

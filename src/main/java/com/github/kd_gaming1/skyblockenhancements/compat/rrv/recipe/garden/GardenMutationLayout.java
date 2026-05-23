@@ -5,8 +5,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,10 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Parsed once from {@code mutations.json} and stored in {@link GardenMutationRegistry}.
  * All fields are final; instances are safe to share across threads.
+ *
+ * <p>Multi-block crop sizes are looked up from a static {@code cropSizes} table
+ * that is populated once during mod initialisation (see {@link #setGlobalCropSizes}).
+ * Crops not listed in the table default to 1×1.
  */
 public final class GardenMutationLayout {
 
@@ -34,6 +39,48 @@ public final class GardenMutationLayout {
 
     public record Effect(String name, String description) {}
 
+    /** Physical size of a crop in blocks (width × height). */
+    public record CropSize(int width, int height) {
+        /** True when the crop occupies more than a single block. */
+        public boolean isMultiblock() {
+            return width > 1 || height > 1;
+        }
+    }
+
+    // ── Global crop-size table (set once during registry init) ────────────────
+
+    private static Map<String, CropSize> globalCropSizes = Map.of();
+
+    /**
+     * Sets the global crop-size lookup table. Must be called once before
+     * any {@link GardenMutationLayout} is parsed — typically during
+     * {@link GardenMutationRegistry} initialisation.
+     */
+    public static void setGlobalCropSizes(Map<String, CropSize> sizes) {
+        globalCropSizes = Map.copyOf(sizes);
+    }
+
+    /** Parses a {@code cropSizes} JsonObject into a {@code Map<String, CropSize>}. */
+    public static Map<String, CropSize> parseCropSizes(@Nullable JsonObject obj) {
+        if (obj == null) return Map.of();
+        Map<String, CropSize> map = new HashMap<>(obj.size());
+        for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+            JsonObject sizeObj = entry.getValue().getAsJsonObject();
+            int w = sizeObj.has("width")  ? sizeObj.get("width").getAsInt()  : 1;
+            int h = sizeObj.has("height") ? sizeObj.get("height").getAsInt() : 1;
+            map.put(entry.getKey(), new CropSize(w, h));
+        }
+        return Collections.unmodifiableMap(map);
+    }
+
+    /** Returns the physical size of a crop, or {@code null} if it defaults to 1×1. */
+    @Nullable
+    public static CropSize cropSize(@Nullable String cropId) {
+        return cropId != null ? globalCropSizes.get(cropId) : null;
+    }
+
+    // ── Instance fields ───────────────────────────────────────────────────────
+
     private final String mutationId;
     private final String name;
     private final String rarity;
@@ -47,7 +94,6 @@ public final class GardenMutationLayout {
     private final List<SpreadingCondition> spreadingConditions;
     private final List<Effect> effects;
     private final List<String> requiredFor;
-    private final Set<String> multiblockCrops;
     @Nullable private final String specialMechanic;
 
     private GardenMutationLayout(
@@ -64,7 +110,6 @@ public final class GardenMutationLayout {
             List<SpreadingCondition> spreadingConditions,
             List<Effect> effects,
             List<String> requiredFor,
-            Set<String> multiblockCrops,
             @Nullable String specialMechanic) {
         this.mutationId = mutationId;
         this.name = name;
@@ -79,11 +124,10 @@ public final class GardenMutationLayout {
         this.spreadingConditions = spreadingConditions;
         this.effects = effects;
         this.requiredFor = requiredFor;
-        this.multiblockCrops = Set.copyOf(multiblockCrops);
         this.specialMechanic = specialMechanic;
     }
 
-    // ── Factory ─────────────────────────────────────────────────────────────────
+    // ── Factory ───────────────────────────────────────────────────────────────
 
     static GardenMutationLayout fromJson(String mutationId, JsonObject root) {
         String name = getString(root, "name", mutationId);
@@ -99,13 +143,12 @@ public final class GardenMutationLayout {
         List<SpreadingCondition> conditions = parseConditions(root.getAsJsonArray("spreadingConditions"));
         List<Effect> effects = parseEffects(root.getAsJsonArray("effects"));
         List<String> requiredFor = parseStringArray(root.getAsJsonArray("requiredFor"));
-        Set<String> multiblockCrops = parseStringSet(root.getAsJsonArray("multiblockCrops"));
         String specialMechanic = parseNullableString(root, "specialMechanic");
 
         return new GardenMutationLayout(
                 mutationId, name, rarity, gridSize, surface, needsWater,
                 stages, costCoins, rewardCopper, grid, conditions, effects, requiredFor,
-                multiblockCrops, specialMechanic);
+                specialMechanic);
     }
 
     private static Cell[] parseGrid(JsonArray layoutArray, int gridSize) {
@@ -176,15 +219,6 @@ public final class GardenMutationLayout {
         return Collections.unmodifiableList(out);
     }
 
-    private static Set<String> parseStringSet(@Nullable JsonArray arr) {
-        if (arr == null) return Set.of();
-        Set<String> out = new HashSet<>(arr.size());
-        for (JsonElement el : arr) {
-            out.add(el.getAsString());
-        }
-        return Collections.unmodifiableSet(out);
-    }
-
     private static String getString(JsonObject obj, String key, String fallback) {
         if (!obj.has(key)) return fallback;
         JsonElement el = obj.get(key);
@@ -199,7 +233,7 @@ public final class GardenMutationLayout {
         return el.isJsonNull() ? null : el.getAsString();
     }
 
-    // ── Getters ─────────────────────────────────────────────────────────────────
+    // ── Getters ───────────────────────────────────────────────────────────────
 
     public String mutationId() { return mutationId; }
     public String name() { return name; }
@@ -214,23 +248,23 @@ public final class GardenMutationLayout {
     public List<SpreadingCondition> spreadingConditions() { return spreadingConditions; }
     public List<Effect> effects() { return effects; }
     public List<String> requiredFor() { return requiredFor; }
-    public Set<String> multiblockCrops() { return multiblockCrops; }
 
     /** The special growth/harvest mechanic for this mutation, or {@code null} if none. */
     @Nullable
     public String specialMechanic() { return specialMechanic; }
 
     /**
-     * Returns {@code true} if the given item ID is part of this mutation's multiblock crop set.
+     * Returns the number of grid cells that contain the given ingredient item ID.
+     * Used by tooltips to show the quantity of an ingredient in the layout.
      */
-    public boolean isMultiblock(@Nullable String itemId) {
-        return itemId != null && multiblockCrops.contains(itemId);
-    }
-
-    /**
-     * Returns {@code true} if this mutation's own ID is in the multiblock crop set.
-     */
-    public boolean isMultiblockTarget() {
-        return multiblockCrops.contains(mutationId);
+    public int countIngredientOccurrences(String itemId) {
+        if (itemId == null || itemId.isEmpty()) return 0;
+        int count = 0;
+        for (Cell cell : grid) {
+            if (cell.type() == CellType.INGREDIENT && itemId.equals(cell.itemId())) {
+                count++;
+            }
+        }
+        return count;
     }
 }

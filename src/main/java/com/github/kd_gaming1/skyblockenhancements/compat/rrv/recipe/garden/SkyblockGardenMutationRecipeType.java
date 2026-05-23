@@ -24,7 +24,7 @@ public class SkyblockGardenMutationRecipeType implements ReliableClientRecipeTyp
     public static final int DISPLAY_HEIGHT = 150;
 
     private static final int METADATA_PANEL_HEIGHT = 12;
-    private static final int GRID_OFFSET_Y = METADATA_PANEL_HEIGHT + 1;
+    private static final int GRID_OFFSET_Y = METADATA_PANEL_HEIGHT + 2;  // was +1 → 14px
     private static final int CELL_SIZE = 16;
     private static final int CELL_GAP  = 0;
     private static final int GRID_SIZE = 6;

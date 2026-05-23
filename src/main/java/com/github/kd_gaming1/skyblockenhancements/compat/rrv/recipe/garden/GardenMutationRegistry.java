@@ -48,6 +48,9 @@ public final class GardenMutationRegistry {
 
             JsonObject root = JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8))
                     .getAsJsonObject();
+            GardenMutationLayout.setGlobalCropSizes(
+                    GardenMutationLayout.parseCropSizes(root.getAsJsonObject("cropSizes"))
+            );
             JsonObject mutations = root.getAsJsonObject("mutations");
             if (mutations == null) {
                 LOGGER.warn("Garden mutation JSON missing 'mutations' object");
