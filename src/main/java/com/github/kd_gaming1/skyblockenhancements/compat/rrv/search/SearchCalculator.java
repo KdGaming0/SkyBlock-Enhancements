@@ -120,8 +120,15 @@ public final class SearchCalculator {
             if (c >= '0' && c <= '9') { seenDigitOrParen = true; continue; }
             if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == ' ' || c == '\t') { continue; }
             switch (c) {
-                case '.', '+', '-', '*', '/', '^', '%', 'x', '(', ')', ',' -> {
+                case '.', '+', '-', '*', '/', '^', '%', '(', ')', ',' -> {
                     if (c == '(' || c == ')') seenDigitOrParen = true;
+                }
+                case 'x' -> {
+                    // Only treat 'x' as multiplication if preceded by a digit.
+                    // Prevents item names like "Dr-x455" from being considered math.
+                    if (i == 0) return false;
+                    char prev = s.charAt(i - 1);
+                    if (prev < '0' || prev > '9') return false;
                 }
                 default -> { return false; }
             }

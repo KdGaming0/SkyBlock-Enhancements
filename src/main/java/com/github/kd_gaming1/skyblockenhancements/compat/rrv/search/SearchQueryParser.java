@@ -65,8 +65,10 @@ public final class SearchQueryParser {
                 if (stats == null) stats = new ArrayList<>(4);
                 stats.add(stat);
             } else {
-                if (keywords == null) keywords = new ArrayList<>(4);
-                keywords.add(new SearchQuery.KeywordClause(token));
+                for (String part : splitOnNonAlphanumeric(token)) {
+                    if (keywords == null) keywords = new ArrayList<>(4);
+                    keywords.add(new SearchQuery.KeywordClause(part));
+                }
             }
         }
 
@@ -150,5 +152,38 @@ public final class SearchQueryParser {
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Splits a token on non-alphanumeric characters, matching the behaviour of
+     * {@link SkyblockSearchIndex#tokenize}. Only sub-tokens with length {@code > 1}
+     * are returned, mirroring the index's minimum token length.
+     */
+    private static List<String> splitOnNonAlphanumeric(String token) {
+        List<String> parts = new ArrayList<>(4);
+        int len = token.length();
+        int start = -1;
+
+        for (int i = 0; i < len; i++) {
+            char c = token.charAt(i);
+            if (Character.isLetterOrDigit(c)) {
+                if (start < 0) {
+                    start = i;
+                }
+            } else {
+                if (start >= 0) {
+                    if (i - start > 1) {
+                        parts.add(token.substring(start, i));
+                    }
+                    start = -1;
+                }
+            }
+        }
+
+        if (start >= 0 && len - start > 1) {
+            parts.add(token.substring(start, len));
+        }
+
+        return parts.isEmpty() ? List.of(token) : parts;
     }
 }
