@@ -3,6 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.rrv.search;
 import cc.cassian.rrv.common.overlay.itemlist.view.SearchBar;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.search.SearchAutocomplete;
+import com.github.kd_gaming1.skyblockenhancements.compat.rrv.search.SearchCalculator;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.search.SearchSuggestionState;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -64,8 +65,10 @@ public abstract class EditBoxCalculatorHintMixin {
     /**
      * At HEAD of renderWidget:
      * <ol>
-     *   <li>Draw autocomplete ghost text behind the typed text (if applicable).</li>
-     *   <li>Suppress vanilla suggestion rendering so we can draw it ourselves at TAIL.</li>
+     *   <li>Suppress vanilla suggestion rendering <em>only when the cursor is at the
+     *       end</em> — that's the only case where vanilla would actually draw it.</li>
+     *   <li>When the cursor is elsewhere vanilla already skips the suggestion, so
+     *       clearing the field is unnecessary and can only cause stale-state bugs.</li>
      * </ol>
      */
     @Inject(method = "renderWidget", at = @At("HEAD"))
@@ -74,7 +77,8 @@ public abstract class EditBoxCalculatorHintMixin {
 
         if (!isTrackedSearchBar()) return;
 
-        if (suggestion != null && !suggestion.isEmpty()) {
+        if (getCursorPosition() == value.length()
+                && suggestion != null && !suggestion.isEmpty()) {
             sbe$pendingSuggestion = suggestion;
             sbe$didSuppress = true;
             suggestion = null;
@@ -102,10 +106,17 @@ public abstract class EditBoxCalculatorHintMixin {
         if (font == null) return;
 
         // Priority 1: calculator hint
-        if (suggestion != null && !suggestion.isEmpty()) {
+        // Use the suggestion field when available; fall back to a live evaluation so
+        // the hint is never lost if the field was cleared unexpectedly.
+        String calcHint = suggestion;
+        if ((calcHint == null || calcHint.isEmpty()) && isTrackedSearchBar()) {
+            calcHint = SearchCalculator.tryEvaluate(value);
+        }
+
+        if (calcHint != null && !calcHint.isEmpty()) {
             String displayed = font.plainSubstrByWidth(value.substring(displayPos), getInnerWidth());
             int hintX = textX + font.width(displayed);
-            gfx.drawString(font, suggestion, hintX, textY, dimColor(textColor), textShadow);
+            gfx.drawString(font, calcHint, hintX, textY, dimColor(textColor), textShadow);
             return;
         }
 
