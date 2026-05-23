@@ -93,6 +93,10 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
     @Nullable private List<Component> cachedInfoTooltip;
     @Nullable private RecipeViewMenu.AdditionalStackModifier targetTooltipModifier;
 
+    /** Set to {@code true} during rendering when an info tooltip is displayed.
+     *  Consumed by the scroll Mixin to suppress recipe navigation. */
+    public static volatile boolean tooltipActive = false;
+
     // ── construction ──────────────────────────────────────────────────────────
 
     public SkyblockGardenMutationClientRecipe(GardenMutationLayout layout, String[] wikiUrls) {
@@ -351,6 +355,7 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
     @Override
     public void renderRecipe(RecipeViewScreen screen, RecipePosition pos, GuiGraphics gfx,
                              int mouseX, int mouseY, float partialTicks) {
+        tooltipActive = false; // reset at frame start; set below if tooltip is shown
         renderMetadata(gfx);
         renderSurfaceIndicator(gfx);
         renderWaterIndicator(gfx);
@@ -728,6 +733,7 @@ public class SkyblockGardenMutationClientRecipe extends AbstractSkyblockClientRe
         }
         if (!tooltip.isEmpty()) {
             gfx.setComponentTooltipForNextFrame(font(), tooltip, mouseX, mouseY);
+            tooltipActive = true;
         }
     }
 
