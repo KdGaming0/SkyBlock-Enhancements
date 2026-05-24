@@ -11,7 +11,7 @@
     "homepage": "https://modrinth.com/mod/skyblock-enhancements",
     "sources": "https://github.com/KdGaming0/SkyBlock-Enhancements"
   },
-  "license": "PolyForm Shield License 1.0.0",
+  "license": "MIT",
   "icon": "assets/skyblock_enhancements/logo.png",
   "environment": "*",
   "entrypoints": {

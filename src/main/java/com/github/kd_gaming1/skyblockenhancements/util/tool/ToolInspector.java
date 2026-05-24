@@ -5,8 +5,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 
-import java.util.Optional;
-
 /**
  * High-level façade that combines tool detection and stat extraction in one call.
  */
