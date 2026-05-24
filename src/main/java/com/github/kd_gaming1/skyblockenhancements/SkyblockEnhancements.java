@@ -11,6 +11,7 @@ import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsCon
 import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
 import com.github.kd_gaming1.skyblockenhancements.feature.ItemGlowManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminderFeature;
+import com.github.kd_gaming1.skyblockenhancements.feature.mining.PickaxeAbilityNotifier;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceDataFetcher;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceStore;
@@ -40,8 +41,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Util;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,6 +90,8 @@ public class SkyblockEnhancements implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             HypixelLocationState.reset();
         });
+
+        PickaxeAbilityNotifier.init();
 
         MissingEnchants.init();
         ItemGlowManager.init();

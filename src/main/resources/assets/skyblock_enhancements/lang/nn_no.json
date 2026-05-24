@@ -61,6 +61,14 @@
   "skyblock_enhancements.midnightconfig.reminderSoundPitch": "Tonehøgd for påminningslyd",
   "skyblock_enhancements.midnightconfig.reminderSoundPitch.tooltip": "Juster tonehøgda for påminningslydar.\nOmråde: 0.5 (låg) til 2.0 (høg)",
 
+  "skyblock_enhancements.midnightconfig.pickaxeAbilityText": "Varsling for hakkeevne",
+
+  "skyblock_enhancements.midnightconfig.notifyPickaxeAbilityReady": "Varsle når hakkeevne er klar",
+  "skyblock_enhancements.midnightconfig.notifyPickaxeAbilityReady.tooltip": "Viser ein stor tittel på skjermen når nedtellinga for hakkeevna di er ferdig.",
+
+  "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound": "Spel lyd når hakkeevne er klar",
+  "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound.tooltip": "Spelar av ein kort plinglyd saman med tittelvarslinga.",
+
   "skyblock_enhancements.midnightconfig.storageOverlayText": "Lagringsdashbord-innstillingar",
 
   "skyblock_enhancements.midnightconfig.enableStorageDashboard": "Aktiver lagringsdashbord",

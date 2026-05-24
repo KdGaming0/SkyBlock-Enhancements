@@ -53,7 +53,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
     public static String defaultGlowColor = "#ff9900";
 
-    @Comment(category = SKYBLOCK_ENHANCEMENTS)
+    @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
     public static Comment reminderSoundText;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
@@ -67,6 +67,15 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 0.5, max = 2)
     public static double reminderSoundPitch = 1.0;
+
+    @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
+    public static Comment pickaxeAbilityText;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean notifyPickaxeAbilityReady = false;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean pickaxeAbilityReadySound = false;
 
     public enum ReminderSoundType {
         UI, BELL, CHIME, LEVEL_UP, EXPERIENCE, HARP, PLING, SUCCESS
@@ -170,7 +179,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
         DOT, COMMA, BOTH
     }
 
-    @Comment(category = RRV_INTEGRATION)
+    @Comment(category = RRV_INTEGRATION, centered = true)
     public static Comment rrvCalculatorText;
 
     @Entry(category = RRV_INTEGRATION)
@@ -253,7 +262,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = TOOLTIP_ENHANCEMENTS)
     public static boolean showNotMaxedEnchantments = true;
 
-    @Comment(category = TOOLTIP_ENHANCEMENTS)
+    @Comment(category = TOOLTIP_ENHANCEMENTS, centered = true)
     public static Comment priceTooltipsText;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS)
@@ -274,7 +283,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = TOOLTIP_ENHANCEMENTS)
     public static boolean showBazaarSpread = false;
 
-    @Comment(category = TOOLTIP_ENHANCEMENTS)
+    @Comment(category = TOOLTIP_ENHANCEMENTS, centered = true)
     public static Comment tooltipScrollText;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS)
@@ -314,7 +323,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = GENERAL_ENHANCEMENTS)
     public static boolean hideTextureErrors = false;
 
-    @Comment(category = GENERAL_ENHANCEMENTS)
+    @Comment(category = GENERAL_ENHANCEMENTS, centered = true)
     public static Comment fullbrightText;
 
     @Entry(category = GENERAL_ENHANCEMENTS)

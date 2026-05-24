@@ -61,6 +61,14 @@
   "skyblock_enhancements.midnightconfig.reminderSoundPitch": "Reminder Sound Pitch",
   "skyblock_enhancements.midnightconfig.reminderSoundPitch.tooltip": "Adjust the pitch of reminder sounds.\nRange: 0.5 (low) to 2.0 (high)",
 
+  "skyblock_enhancements.midnightconfig.pickaxeAbilityText": "Pickaxe Ability Notification",
+
+  "skyblock_enhancements.midnightconfig.notifyPickaxeAbilityReady": "Notify When Pickaxe Ability is Ready",
+  "skyblock_enhancements.midnightconfig.notifyPickaxeAbilityReady.tooltip": "Shows a large on-screen title when your pickaxe ability cooldown finishes.",
+
+  "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound": "Play Sound on Pickaxe Ability Ready",
+  "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound.tooltip": "Plays a short pling sound alongside the title notification.",
+
   "skyblock_enhancements.midnightconfig.storageOverlayText": "Storage Dashboard Settings",
 
   "skyblock_enhancements.midnightconfig.enableStorageDashboard": "Enable Storage Dashboard",
