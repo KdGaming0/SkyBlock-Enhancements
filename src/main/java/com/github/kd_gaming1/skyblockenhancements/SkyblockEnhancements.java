@@ -3,6 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements;
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
 import cc.cassian.rrv.api.recipe.ItemView;
+import com.github.kd_gaming1.skyblockenhancements.command.TabStatTestCommand;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.DataReadinessTracker;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockRecipeIndex;
@@ -29,6 +30,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
 import com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.IrisCompat;
+import com.github.kd_gaming1.skyblockenhancements.util.tab.TabListMonitor;
 import eu.midnightdust.lib.config.MidnightConfig;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.concurrent.CompletableFuture;
@@ -91,8 +93,11 @@ public class SkyblockEnhancements implements ClientModInitializer {
             HypixelLocationState.reset();
         });
 
-        PickaxeAbilityNotifier.init();
+        TabStatTestCommand.register();
+        Commands.register();
 
+        PickaxeAbilityNotifier.init();
+        TabListMonitor.register();
         MissingEnchants.init();
         ItemGlowManager.init();
         Fullbright.init();
@@ -127,7 +132,6 @@ public class SkyblockEnhancements implements ClientModInitializer {
      * Partial injection is performed if one source fails, with a retry scheduled per config.
      */
     private void initRecipeViewer() {
-        Commands.register();
         if (!RrvCompat.isActive()) return;
 
         // Register cache invalidation with RRV so overlays stay in sync on reload.
