@@ -5,6 +5,7 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.arg
 
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.util.NetworkStats;
 import com.github.kd_gaming1.skyblockenhancements.util.tab.SkyblockStats;
 import com.github.kd_gaming1.skyblockenhancements.util.tab.TabListMonitor;
 import com.github.kd_gaming1.skyblockenhancements.util.tab.TabStatParser;
@@ -32,28 +33,30 @@ import java.util.Map;
  *   <tr><td>{@code /sbe tabstats find <text>}</td><td>Show lines containing {@code text}</td></tr>
  * </table>
  */
-public final class TabStatTestCommand {
+public final class TestCommand {
 
     private static final String P = "§a[TabStats] ";
     private static final String E = "§c[TabStats] ";
     private static final String G = "§7[TabStats] ";
 
-    private TabStatTestCommand() {}
+    private TestCommand() {}
 
     public static void register() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             var root = literal("skyblockenhancements")
                             .then(literal("tabstats")
-                                    .executes(TabStatTestCommand::cmdStats)
+                                    .executes(TestCommand::cmdStats)
                                     .then(literal("raw")
-                                            .executes(TabStatTestCommand::cmdRaw))
+                                            .executes(TestCommand::cmdRaw))
                                     .then(literal("normalize")
-                                            .executes(TabStatTestCommand::cmdNormalize))
+                                            .executes(TestCommand::cmdNormalize))
                                     .then(literal("mining")
-                                            .executes(TabStatTestCommand::cmdMining))
+                                            .executes(TestCommand::cmdMining))
                                     .then(literal("find")
                                             .then(argument("text", StringArgumentType.greedyString())
-                                                    .executes(TabStatTestCommand::cmdFind))));
+                                                    .executes(TestCommand::cmdFind)))
+                            .then(literal("network")
+                                    .executes(TestCommand::cmdNetwork)));
 
             var rootNode = dispatcher.register(root);
             dispatcher.register(literal("sbe").redirect(rootNode));
@@ -186,6 +189,31 @@ public final class TabStatTestCommand {
         }
         if (hits == 0) warn(ctx, "No matches.");
         return 1;
+    }
+
+    // ── /sbe network ──────────────────────────────────────────────────────────
+
+    private static int cmdNetwork(CommandContext<FabricClientCommandSource> ctx) {
+        if (!checkDevMode(ctx)) return 0;
+
+        int    ping   = NetworkStats.getPingMs();
+        double tps    = NetworkStats.getTps();
+        int    tpsSamples = NetworkStats.getTpsSampleCount();
+        boolean tpsReady  = NetworkStats.hasEnoughData();
+
+        header(ctx, "Network Stats");
+        info(ctx, "Ping  … " + (ping >= 0 ? "§6" + ping + " §7ms" : "§cno connection"));
+        info(ctx, "TPS   … " + (tpsReady
+                ? tpsColor(tps) + String.format("%.2f", tps)
+                : "§7gathering… §8(" + tpsSamples + "/20)"));
+        return 1;
+    }
+
+    private static String tpsColor(double tps) {
+        if (tps >= 19.0) return "§a";
+        if (tps >= 15.0) return "§e";
+        if (tps >= 10.0) return "§6";
+        return "§c";
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

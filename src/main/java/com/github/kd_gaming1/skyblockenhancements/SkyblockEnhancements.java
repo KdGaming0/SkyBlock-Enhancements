@@ -3,7 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements;
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
 import cc.cassian.rrv.api.recipe.ItemView;
-import com.github.kd_gaming1.skyblockenhancements.command.TabStatTestCommand;
+import com.github.kd_gaming1.skyblockenhancements.command.TestCommand;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.DataReadinessTracker;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockRecipeIndex;
@@ -93,7 +93,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
             HypixelLocationState.reset();
         });
 
-        TabStatTestCommand.register();
+        TestCommand.register();
         Commands.register();
 
         PickaxeAbilityNotifier.init();
