@@ -122,6 +122,9 @@
   "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching": "Keep Bookmarks Visible When Searching",
   "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching.tooltip": "Keeps the bookmark/craftables side panel visible even when the search bar is empty.\nOnly applies when RRV is set to \"Only visible when searching\".",
 
+  "skyblock_enhancements.midnightconfig.hideEmptyBookmarkPanel": "Hide Empty Bookmark Panel",
+  "skyblock_enhancements.midnightconfig.hideEmptyBookmarkPanel.tooltip": "Automatically hides the bookmarks side panel when it contains no bookmarks.",
+
   "skyblock_enhancements.midnightconfig.wideRrvSearchBar": "Wide RRV Search Bar",
   "skyblock_enhancements.midnightconfig.wideRrvSearchBar.tooltip": "Forces the RRV search bar to be wider when in the item-list position.",
 

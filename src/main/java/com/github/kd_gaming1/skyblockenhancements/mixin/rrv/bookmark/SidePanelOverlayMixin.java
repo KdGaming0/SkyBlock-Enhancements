@@ -2,6 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.mixin.rrv.bookmark;
 
 import cc.cassian.rrv.common.config.Configs;
 import cc.cassian.rrv.common.config.options.OverlayDisplay;
+import cc.cassian.rrv.common.config.options.SidePanel;
 import cc.cassian.rrv.common.overlay.itemlist.panel.SidePanelOverlay;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,6 +23,20 @@ public class SidePanelOverlayMixin {
                 && SkyblockEnhancementsConfig.keepBookmarksVisibleWhenSearching
                 && Configs.CLIENT_SETTINGS.isShowOverlays() == OverlayDisplay.WHEN_SEARCHING) {
             ci.cancel();
+        }
+    }
+
+    @Inject(
+            method = "updateSidePanelIndex",
+            at = @At("RETURN"),
+            remap = false)
+    private void sbe$autoHideEmptyPanel(String reason, CallbackInfo ci) {
+        if (!SidePanelOverlay.showBookmarks() || !SkyblockEnhancementsConfig.hideEmptyBookmarkPanel) {
+            return;
+        }
+
+        if (((SidePanelOverlay) (Object) this).availableItems().isEmpty()) {
+            Configs.CLIENT_SETTINGS.setSidePanel(SidePanel.DISABLED);
         }
     }
 }

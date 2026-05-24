@@ -154,6 +154,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static boolean keepBookmarksVisibleWhenSearching = true;
 
     @Entry(category = RRV_INTEGRATION)
+    public static boolean hideEmptyBookmarkPanel = true;
+
+    @Entry(category = RRV_INTEGRATION)
     public static boolean wideRrvSearchBar = true;
 
     @Entry(category = RRV_INTEGRATION, isSlider = true, min = 100, max = 300, precision = 1)
