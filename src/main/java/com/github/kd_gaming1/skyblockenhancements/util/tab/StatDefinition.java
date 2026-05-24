@@ -1,5 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.util.tab;
 
+import com.github.kd_gaming1.skyblockenhancements.util.StatValueType;
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;

@@ -3,7 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements;
 import com.github.kd_gaming1.skyblockenhancements.command.Commands;
 import com.github.kd_gaming1.skyblockenhancements.command.ReminderCommand;
 import cc.cassian.rrv.api.recipe.ItemView;
-import com.github.kd_gaming1.skyblockenhancements.command.TestCommand;
+import com.github.kd_gaming1.skyblockenhancements.command.DebugCommand;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.DataReadinessTracker;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.FullStackListCache;
 import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.SkyblockRecipeIndex;
@@ -31,6 +31,7 @@ import com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.IrisCompat;
 import com.github.kd_gaming1.skyblockenhancements.util.tab.TabListMonitor;
+import com.github.kd_gaming1.skyblockenhancements.util.tool.HeldItemTracker;
 import eu.midnightdust.lib.config.MidnightConfig;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.concurrent.CompletableFuture;
@@ -93,9 +94,10 @@ public class SkyblockEnhancements implements ClientModInitializer {
             HypixelLocationState.reset();
         });
 
-        TestCommand.register();
+        DebugCommand.register();
         Commands.register();
 
+        HeldItemTracker.register();
         PickaxeAbilityNotifier.init();
         TabListMonitor.register();
         MissingEnchants.init();

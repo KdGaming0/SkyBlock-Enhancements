@@ -1,4 +1,6 @@
-package com.github.kd_gaming1.skyblockenhancements.util.tab;
+package com.github.kd_gaming1.skyblockenhancements.util;
+
+import com.github.kd_gaming1.skyblockenhancements.util.tab.StatDefinition;
 
 /**
  * The primitive type of a stat's parsed value.
