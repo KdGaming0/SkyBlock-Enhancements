@@ -144,6 +144,9 @@
   "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces": "Calculator Max Decimal Places",
   "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces.tooltip": "Maximum number of decimal places shown in calculator results.\nRange: 0–10.  Has no effect when the result is a whole number.",
 
+  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber": "Show Full Numbers",
+  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber.tooltip": "When enabled, shows the full raw number without K/M/B/T suffixes.\nWhen disabled, only formats clean multiples (e.g., 10000 → 10K, but 10001 → 10001) to preserve accuracy.",
+
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Name and ID Only",
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full Tooltip Search",
 

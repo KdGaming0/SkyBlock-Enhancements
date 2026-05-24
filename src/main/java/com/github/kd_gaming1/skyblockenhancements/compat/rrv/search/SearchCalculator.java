@@ -459,8 +459,11 @@ public final class SearchCalculator {
     /**
      * Formats a calculator result using the user's configured precision and separator.
      *
-     * <p>Large values are scaled into T/B/M/K suffix bands.  The fractional part is
-     * controlled by {@link SkyblockEnhancementsConfig#rrvCalculatorRoundingEnabled}
+     * <p>Large values are scaled into T/B/M/K suffix bands (unless the "show full number"
+     * option is enabled).  When suffixes are enabled, they are only applied to "clean" multiples
+     * (e.g. 10000 → 10K, but 10001 → 10001) to preserve accuracy.
+     * The fractional part is controlled by
+     * {@link SkyblockEnhancementsConfig#rrvCalculatorRoundingEnabled}
      * and {@link SkyblockEnhancementsConfig#rrvCalculatorMaxDecimalPlaces}.
      */
     private static String format(double v) {
@@ -470,17 +473,34 @@ public final class SearchCalculator {
         double scaled;
         String suffix;
 
-        if      (abs >= 1e12) { scaled = abs / 1e12; suffix = "T"; }
-        else if (abs >= 1e9)  { scaled = abs / 1e9;  suffix = "B"; }
-        else if (abs >= 1e6)  { scaled = abs / 1e6;  suffix = "M"; }
-        else if (abs >= 1e3)  { scaled = abs / 1e3;  suffix = "K"; }
-        else                  { scaled = abs;         suffix = "";  }
+        if (SkyblockEnhancementsConfig.rrvCalculatorShowFullNumber) {
+            // Show the full raw number without suffix scaling
+            scaled = abs;
+            suffix = "";
+        } else {
+            // Apply K/M/B/T suffix scaling only for clean multiples
+            if      (abs >= 1e12 && isCleanMultiple(abs, 1e12)) { scaled = abs / 1e12; suffix = "T"; }
+            else if (abs >= 1e9  && isCleanMultiple(abs, 1e9))  { scaled = abs / 1e9;  suffix = "B"; }
+            else if (abs >= 1e6  && isCleanMultiple(abs, 1e6))  { scaled = abs / 1e6;  suffix = "M"; }
+            else if (abs >= 1e3  && isCleanMultiple(abs, 1e3))  { scaled = abs / 1e3;  suffix = "K"; }
+            else                  { scaled = abs;         suffix = "";  }
+        }
 
         char decimalSep = getActiveDecimalSeparator();
         if (decimalSep == '\0') decimalSep = '.'; // BOTH → dot in output
 
         String formatted = formatNumber(scaled, decimalSep);
         return (negative ? "-" : "") + formatted + suffix;
+    }
+
+    /**
+     * Checks if a number is a clean multiple of a divisor (i.e., divides evenly).
+     * Allows for small floating-point precision errors.
+     */
+    private static boolean isCleanMultiple(double value, double divisor) {
+        double remainder = value % divisor;
+        // Consider it clean if the remainder is negligibly small (within floating-point error)
+        return Math.abs(remainder) < 1e-9 || Math.abs(remainder - divisor) < 1e-9;
     }
 
     /**
@@ -504,7 +524,7 @@ public final class SearchCalculator {
         BigDecimal bd = BigDecimal.valueOf(value);
 
         RoundingMode mode = roundingEnabled ? RoundingMode.HALF_UP : RoundingMode.DOWN;
-        bd = bd.setScale(maxDecimals > 0 ? maxDecimals : 0, mode);
+        bd = bd.setScale(Math.max(maxDecimals, 0), mode);
 
         String plain = bd.toPlainString();
 

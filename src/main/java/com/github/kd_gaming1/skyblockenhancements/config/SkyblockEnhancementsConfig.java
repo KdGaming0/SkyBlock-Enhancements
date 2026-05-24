@@ -182,6 +182,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = RRV_INTEGRATION, isSlider = true, min = 0, max = 10, precision = 1)
     public static int rrvCalculatorMaxDecimalPlaces = 2;
 
+    @Entry(category = RRV_INTEGRATION)
+    public static boolean rrvCalculatorShowFullNumber = false;
+
     // ═══════════════════════════════════════════════════════════════════════════
     //  Chat Enhancements
     // ═══════════════════════════════════════════════════════════════════════════
