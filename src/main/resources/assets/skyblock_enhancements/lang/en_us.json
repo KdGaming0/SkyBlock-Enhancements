@@ -69,6 +69,46 @@
   "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound": "Play Sound on Pickaxe Ability Ready",
   "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound.tooltip": "Plays a short pling sound alongside the title notification.",
 
+  "skyblock_enhancements.midnightconfig.category.mining_enhancements": "Mining Enhancements",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetMiningText": "Ping Offset Mining",
+
+  "skyblock_enhancements.midnightconfig.enablePingOffsetMining": "Enable Ping Offset Mining",
+  "skyblock_enhancements.midnightconfig.enablePingOffsetMining.tooltip": "Shows a colored highlight on the block you're mining that indicates the optimal moment to release the mining key, accounting for server ping and TPS.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetShowOnLook": "Show on Look",
+  "skyblock_enhancements.midnightconfig.pingOffsetShowOnLook.tooltip": "Shows the highlight/outline when merely looking at a mineable block, before you start breaking it.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetShowHighlight": "Show Block Highlight",
+  "skyblock_enhancements.midnightconfig.pingOffsetShowHighlight.tooltip": "Renders a translucent colored fill on the targeted block.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetShowOutline": "Show Block Outline",
+  "skyblock_enhancements.midnightconfig.pingOffsetShowOutline.tooltip": "Renders a wireframe outline around the targeted block.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetColorUseMid": "Use Middle Color (Yellow)",
+  "skyblock_enhancements.midnightconfig.pingOffsetColorUseMid.tooltip": "When enabled, the overlay cycles red at 0-70%, yellow at 73-99%, then snaps to green at 100%. When disabled, it stays red until 100% then snaps directly to green with no middle color.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetColorStart": "Start Color",
+  "skyblock_enhancements.midnightconfig.pingOffsetColorStart.tooltip": "Color at the beginning of the mining progress (0%).",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetColorMid": "Mid Color",
+  "skyblock_enhancements.midnightconfig.pingOffsetColorMid.tooltip": "Color at the middle threshold of mining progress (85%).",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetColorEnd": "End Color",
+  "skyblock_enhancements.midnightconfig.pingOffsetColorEnd.tooltip": "Color when the block is ready to break (100%).",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetLineWidth": "Outline Line Width",
+  "skyblock_enhancements.midnightconfig.pingOffsetLineWidth.tooltip": "Thickness of the block outline.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces": "Highlight Block Faces",
+  "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces.tooltip": "Renders the translucent highlight on all faces of the block.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha": "Highlight Opacity",
+  "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha.tooltip": "Opacity of the block face highlight (0-100).",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetMarginMs": "Timing Margin (ms)",
+  "skyblock_enhancements.midnightconfig.pingOffsetMarginMs.tooltip": "Adjusts when the overlay turns green relative to the predicted break time. Positive values delay the signal (if you switch too early). Negative values trigger it sooner (for slow reaction time). 0 for exact ping-only timing.",
+
   "skyblock_enhancements.midnightconfig.storageOverlayText": "Storage Dashboard Settings",
 
   "skyblock_enhancements.midnightconfig.enableStorageDashboard": "Enable Storage Dashboard",
@@ -153,10 +193,10 @@
   "skyblock_enhancements.midnightconfig.rrvCalculatorRoundingEnabled.tooltip": "When enabled, calculator results are rounded to the configured number of decimal places.\nWhen disabled, values are truncated (not rounded) and trailing zeros are stripped.",
 
   "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces": "Calculator Max Decimal Places",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces.tooltip": "Maximum number of decimal places shown in calculator results.\nRange: 0–10.  Has no effect when the result is a whole number.",
+  "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces.tooltip": "Maximum number of decimal places shown in calculator results.\nRange: 0-10.  Has no effect when the result is a whole number.",
 
   "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber": "Show Full Numbers",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber.tooltip": "When enabled, shows the full raw number without K/M/B/T suffixes.\nWhen disabled, only formats clean multiples (e.g., 10000 → 10K, but 10001 → 10001) to preserve accuracy.",
+  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber.tooltip": "When enabled, shows the full raw number without K/M/B/T suffixes.\nWhen disabled, only formats clean multiples (e.g., 10000 -> 10K, but 10001 -> 10001) to preserve accuracy.",
 
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Name and ID Only",
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full Tooltip Search",
@@ -305,7 +345,7 @@
   "key.skyblock_enhancements.full_stack_price": "Show BZ Price for Full Stack",
   "key.skyblock_enhancements.current_amount_price": "Show BZ Price for Current Amount",
 
-  "skyblock_enhancements.midnightconfig.rrvConfigHint": "More options available in Skyblock Enhancements config → Recipe Viewer Tab",
+  "skyblock_enhancements.midnightconfig.rrvConfigHint": "More options available in Skyblock Enhancements config -> Recipe Viewer Tab",
   "skyblock_enhancements.midnightconfig.openFromRrv": "Open SBE Config...",
   "skyblock_enhancements.recipe.not_found": "This item (ID: %s) does not have a recipe."
 }

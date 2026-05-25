@@ -69,6 +69,46 @@
   "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound": "Spel lyd når hakkeevne er klar",
   "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound.tooltip": "Spelar av ein kort plinglyd saman med tittelvarslinga.",
 
+  "skyblock_enhancements.midnightconfig.category.mining_enhancements": "Gruvedrift-forbetringar",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetMiningText": "Ping-offset gruvedrift",
+
+  "skyblock_enhancements.midnightconfig.enablePingOffsetMining": "Aktiver ping-offset gruvedrift",
+  "skyblock_enhancements.midnightconfig.enablePingOffsetMining.tooltip": "Viser ei farga markering på blokka du grav etter som indikerer det optimale tidspunktet for å sleppe graveknappen, med omsyn til server-ping og TPS.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetShowOnLook": "Vis ved blikk",
+  "skyblock_enhancements.midnightconfig.pingOffsetShowOnLook.tooltip": "Viser markeringa/omrisset når du berre ser på ein gruvbar blokk, før du byrjar å brekkje henne.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetShowHighlight": "Vis blokkeffekt",
+  "skyblock_enhancements.midnightconfig.pingOffsetShowHighlight.tooltip": "Teiknar ein gjennomskineleg farga fyll på den målretta blokka.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetShowOutline": "Vis blokkomriss",
+  "skyblock_enhancements.midnightconfig.pingOffsetShowOutline.tooltip": "Teiknar eit trådrammeomriss rundt den målretta blokka.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetColorUseMid": "Bruk mellomfarge (gul)",
+  "skyblock_enhancements.midnightconfig.pingOffsetColorUseMid.tooltip": "Når aktivert, går overlegget frå raud (0-70%), til gul (73-99%), og så til grøn ved 100%. Når deaktivert, held det seg raud heilt til 100%, og går direkte til grøn utan mellomfarge.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetColorStart": "Startfarge",
+  "skyblock_enhancements.midnightconfig.pingOffsetColorStart.tooltip": "Farge ved starten av graveframdrifta (0%).",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetColorMid": "Middels farge",
+  "skyblock_enhancements.midnightconfig.pingOffsetColorMid.tooltip": "Farge ved midttresholdet for graveframdrift (85%).",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetColorEnd": "Sluttfarge",
+  "skyblock_enhancements.midnightconfig.pingOffsetColorEnd.tooltip": "Farge når blokka er klar til å brekkast (100%).",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetLineWidth": "Breidd på omrisslinje",
+  "skyblock_enhancements.midnightconfig.pingOffsetLineWidth.tooltip": "Tjukkleik på blokkomrisset.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces": "Framhev blokkflater",
+  "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces.tooltip": "Teiknar den gjennomskinelege effekten på alle flatene til blokka.",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha": "Dekkevne for effekt",
+  "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha.tooltip": "Dekkevne på blokkeffekten (0-100).",
+
+  "skyblock_enhancements.midnightconfig.pingOffsetMarginMs": "Tidsmargin (ms)",
+  "skyblock_enhancements.midnightconfig.pingOffsetMarginMs.tooltip": "Justerer når overlegget blir grønt i høve til den føresette bretida. Positive verdiar forseinkar signalet (viss du byter for tidleg). Negative verdiar utløyser det tidlegare (for trege reaksjonstider). 0 for nøyaktig ping-basert tidsstyring.",
+
   "skyblock_enhancements.midnightconfig.storageOverlayText": "Lagringsdashbord-innstillingar",
 
   "skyblock_enhancements.midnightconfig.enableStorageDashboard": "Aktiver lagringsdashbord",
@@ -119,32 +159,14 @@
   "skyblock_enhancements.midnightconfig.hideCategoryButtons": "Skjul kategoriknappar",
   "skyblock_enhancements.midnightconfig.hideCategoryButtons.tooltip": "Skjuler kategorifilterknappane ovanfor RRV-søkjefeltet heilt.",
 
-  "skyblock_enhancements.midnightconfig.wideRrvSearchBar": "Breitt RRV-søkjefelt",
-  "skyblock_enhancements.midnightconfig.wideRrvSearchBar.tooltip": "Tvingar RRV-søkjefeltet til å vere breitt når det er i gjenstandsliste-posisjon.",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorText": "Søkekalkulator",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorDecimalSeparator": "Desimalseparator for kalkulator",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorDecimalSeparator.tooltip": "Kva teikn som skal godtakast som desimalseparator i søkefelt-kalkulatoren.\nPUNKTUM = berre '.' | KOMMA = berre ',' | BEGGE = godta begge (avviser uklare tal som inneheld begge).",
-
-  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.DOT": "Punktum (.)",
-  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.COMMA": "Komma (,)",
-  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.BOTH": "Begge",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorRoundingEnabled": "Slå på avrunding i kalkulator",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorRoundingEnabled.tooltip": "Når denne er på, vert kalkulatorresultat avrunda til det valde talet på",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces": "Maksimaltal desimaltal i kalkulator",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces.tooltip": "Maksimaltal desimaltal som vert vist i kalkulatorresultat.\nOmråde: 0–10.  Har ingen effekt når resultatet er eit heilt tal.",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber": "Vis fulle tal",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber.tooltip": "Når aktivert, viser full råtal utan K/M/B/T-suffiks.\nNår deaktivert, formaterar berre reine mangfald (t.d. 10000 → 10K, men 10001 → 10001) for å bevara nøyaktigheit.",
-
   "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching": "Hald bokmerke synleg ved søk",
   "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching.tooltip": "Held bokmerke-/tilverkingspanelet synleg sjølv når søkjefeltet er tomt.\nGjeld berre når RRV er sett til \"Berre synleg ved søk\".",
 
   "skyblock_enhancements.midnightconfig.hideEmptyBookmarkPanel": "Gøym tomt bokmerkepanel",
   "skyblock_enhancements.midnightconfig.hideEmptyBookmarkPanel.tooltip": "Gøymer bokmerkesidepanelet automatisk når det ikkje inneheld bokmerke.",
+
+  "skyblock_enhancements.midnightconfig.wideRrvSearchBar": "Breitt RRV-søkjefelt",
+  "skyblock_enhancements.midnightconfig.wideRrvSearchBar.tooltip": "Tvingar RRV-søkjefeltet til å vere breitt når det er i gjenstandsliste-posisjon.",
 
   "skyblock_enhancements.midnightconfig.rrvSearchBarWidth": "Breidd på RRV-søkjefelt",
   "skyblock_enhancements.midnightconfig.rrvSearchBarWidth.tooltip": "Minimumsbreidd på RRV-søkjefeltet i pikslar.\nOmråde: 100-300",
@@ -157,6 +179,24 @@
 
   "skyblock_enhancements.midnightconfig.bigCraftButton": "Stor tilverkingsknapp",
   "skyblock_enhancements.midnightconfig.bigCraftButton.tooltip": "Viser ein stor 'Craft'-knapp under oppskrifta i staden for ein liten '+'-knapp ved resultatsporet.",
+
+  "skyblock_enhancements.midnightconfig.rrvCalculatorText": "Søkekalkulator",
+
+  "skyblock_enhancements.midnightconfig.rrvCalculatorDecimalSeparator": "Desimalseparator for kalkulator",
+  "skyblock_enhancements.midnightconfig.rrvCalculatorDecimalSeparator.tooltip": "Kva teikn som skal godtakast som desimalseparator i søkefelt-kalkulatoren.\nPUNKTUM = berre '.' | KOMMA = berre ',' | BEGGE = godta begge (avviser uklare tal som inneheld begge).",
+
+  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.DOT": "Punktum (.)",
+  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.COMMA": "Komma (,)",
+  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.BOTH": "Begge",
+
+  "skyblock_enhancements.midnightconfig.rrvCalculatorRoundingEnabled": "Slå på avrunding i kalkulator",
+  "skyblock_enhancements.midnightconfig.rrvCalculatorRoundingEnabled.tooltip": "Når denne er på, vert kalkulatorresultat avrunda til det valde talet på desimalplassar.\nNår denne er av, vert verdiar kutta (ikkje avrunda) og etterfølgjande nuller fjerna.",
+
+  "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces": "Maksimaltal desimaltal i kalkulator",
+  "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces.tooltip": "Maksimaltal desimaltal som vert vist i kalkulatorresultat.\nOmråde: 0-10.  Har ingen effekt når resultatet er eit heilt tal.",
+
+  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber": "Vis fulle tal",
+  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber.tooltip": "Når aktivert, viser full råtal utan K/M/B/T-suffiks.\nNår deaktivert, formaterar berre reine mangfald (t.d. 10000 -> 10K, men 10001 -> 10001) for å bevara nøyaktigheit.",
 
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Berre namn og ID",
   "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full verktøytips-søk",
@@ -305,6 +345,7 @@
   "key.skyblock_enhancements.full_stack_price": "Vis BZ-pris for full stabel",
   "key.skyblock_enhancements.current_amount_price": "Vis BZ-pris for gjeldande mengde",
 
-  "skyblock_enhancements.midnightconfig.rrvConfigHint": "Fleire alternativ tilgjengelege i Skyblock-forbetringar-konfig → RRV-integrasjon",
-  "skyblock_enhancements.midnightconfig.openFromRrv": "Opne SBE konfig..."
+  "skyblock_enhancements.midnightconfig.rrvConfigHint": "Fleire alternativ tilgjengelege i Skyblock-forbetringar-konfig -> RRV-integrasjon",
+  "skyblock_enhancements.midnightconfig.openFromRrv": "Opne SBE konfig...",
+  "skyblock_enhancements.recipe.not_found": "Denne gjenstanden (ID: %s) har ikkje nokon oppskrift."
 }

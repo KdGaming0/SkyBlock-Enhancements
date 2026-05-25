@@ -12,7 +12,7 @@ public final class HypixelLocationState {
     private static boolean onMiningIsland = false;
 
     private static final Set<String> MINING_ISLAND_MAPS = Set.of(
-            "Dwarven Mines", "Crystal Hollows"
+            "Dwarven Mines", "Crystal Hollows", "Mineshaft"
     );
 
     private HypixelLocationState() {}

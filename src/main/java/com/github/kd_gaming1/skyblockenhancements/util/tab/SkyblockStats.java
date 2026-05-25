@@ -2,36 +2,28 @@ package com.github.kd_gaming1.skyblockenhancements.util.tab;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 import java.util.*;
 
 /**
- * Public façade for all SkyBlock stats extracted from the tab list.
- *
- * <p>This is the single source of truth every feature should query. All getters
- * are O(1) map look-ups and produce no garbage on repeated calls. The internal
- * cache is updated automatically by {@link TabListMonitor}.
- *
- * <p>Two Fabric events are provided:
- * <ul>
- *   <li>{@link #STAT_CHANGED} — fired once per stat whose value changed.</li>
- *   <li>{@link #TAB_REFRESHED} — fired once after every full re-parse.</li>
- * </ul>
+ * Public facade for all SkyBlock stats extracted from the tab list.
+ * Updated automatically by {@link TabListMonitor}.
  */
 public final class SkyblockStats {
 
     private SkyblockStats() {}
 
-    // ── Mutable state (client-thread only) ────────────────────────────────────
+    // ── Mutable state ───────────────────────────────────────────────────────
 
     private static final Map<String, String> stats = new HashMap<>(32);
     private static boolean ready = false;
     private static long lastUpdateTick = 0;
     private static int parsedStatCount = 0;
 
-    // ── Events ────────────────────────────────────────────────────────────────
+    // ── Events ──────────────────────────────────────────────────────────────
 
-    /** Fired once for each stat whose value differs from the previous parse. */
     public static final Event<StatChangeCallback> STAT_CHANGED = EventFactory.createArrayBacked(
             StatChangeCallback.class,
             callbacks -> (key, oldValue, newValue) -> {
@@ -41,15 +33,9 @@ public final class SkyblockStats {
 
     @FunctionalInterface
     public interface StatChangeCallback {
-        /**
-         * @param key       the stat's canonical primary key
-         * @param oldValue  previous raw value, or {@code null} if the stat is new
-         * @param newValue  current raw value, or {@code null} if the stat was removed
-         */
         void onStatChanged(String key, String oldValue, String newValue);
     }
 
-    /** Fired once after the tab list is re-parsed, regardless of whether values changed. */
     public static final Event<TabRefreshedCallback> TAB_REFRESHED = EventFactory.createArrayBacked(
             TabRefreshedCallback.class,
             callbacks -> allStats -> {
@@ -59,28 +45,24 @@ public final class SkyblockStats {
 
     @FunctionalInterface
     public interface TabRefreshedCallback {
-        /** @param allStats unmodifiable snapshot of every parsed stat */
         void onTabRefreshed(Map<String, String> allStats);
     }
 
-    // ── Mining Speed helpers (primary use-case) ───────────────────────────────
+    // ── Mining Speed ────────────────────────────────────────────────────────
 
-    /** @return the current mining speed if present in the tab list */
     public static OptionalInt getMiningSpeed() {
         return getInt("mining_speed");
     }
 
-    /** @return mining speed, or {@code 0} when unavailable */
     public static int getMiningSpeedOrZero() {
         return getMiningSpeed().orElse(0);
     }
 
-    /** @return {@code true} if the tab list currently shows a mining speed value */
     public static boolean hasMiningSpeed() {
         return hasStat("mining_speed");
     }
 
-    // ── Generic typed access ──────────────────────────────────────────────────
+    // ── Generic typed access ────────────────────────────────────────────────
 
     public static OptionalInt getInt(String key) {
         String raw = stats.get(key);
@@ -105,36 +87,98 @@ public final class SkyblockStats {
         return stats.containsKey(key);
     }
 
-    // ── Bulk access ───────────────────────────────────────────────────────────
-
-    /** @return unmodifiable snapshot of all parsed stats (primaryKey → rawValue) */
     public static Map<String, String> getAllStats() {
         return Collections.unmodifiableMap(new HashMap<>(stats));
     }
 
-    /** @return unmodifiable set of every stat key currently available */
     public static Set<String> getAvailableStatKeys() {
         return Collections.unmodifiableSet(new HashSet<>(stats.keySet()));
     }
 
-    // ── Meta ──────────────────────────────────────────────────────────────────
+    // ── Meta ────────────────────────────────────────────────────────────────
 
-    /** @return {@code true} after at least one successful parse has occurred */
     public static boolean isReady() {
         return ready;
     }
 
-    /** @return the client tick at which the cache was last updated */
     public static long getLastUpdateTick() {
         return lastUpdateTick;
     }
 
-    /** @return how many distinct stats were parsed on the last refresh */
     public static int getParsedStatCount() {
         return parsedStatCount;
     }
 
-    // ── Internal: called by TabListMonitor ────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════════════
+    //  Demand-based missing-stat warnings
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private static final int WARN_COOLDOWN_TICKS = 5 * 20;
+
+    private static final class Demand {
+        final String statKey;
+        final String displayName;
+        int ticksSinceLastWarn = WARN_COOLDOWN_TICKS;
+
+        Demand(String statKey, String displayName) {
+            this.statKey = statKey;
+            this.displayName = displayName;
+        }
+    }
+
+    private static final Map<String, Demand> demands = new HashMap<>();
+
+    /**
+     * Registers that a feature requires a stat from the tab list.
+     * If the stat is not available, a warning is sent every 5 seconds.
+     * The demand is automatically cleared when the stat appears.
+     */
+    public static void demandStat(String statKey, String displayName) {
+        if (hasStat(statKey)) return;
+        demands.computeIfAbsent(statKey, k -> new Demand(statKey, displayName));
+    }
+
+    /** Checks all active demands and sends warnings for any still unmet. */
+    public static void checkDemands() {
+        if (demands.isEmpty()) return;
+        demands.entrySet().removeIf(e -> hasStat(e.getKey()));
+        if (demands.isEmpty()) return;
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+
+        for (Demand d : demands.values()) {
+            d.ticksSinceLastWarn++;
+            if (d.ticksSinceLastWarn >= WARN_COOLDOWN_TICKS) {
+                d.ticksSinceLastWarn = 0;
+                sendMissingStatWarning(mc, d.displayName);
+            }
+        }
+    }
+
+    public static void clearDemands() {
+        demands.clear();
+    }
+
+    private static void sendMissingStatWarning(Minecraft mc, String statName) {
+        assert mc.player != null;
+        mc.player.displayClientMessage(Component.literal(
+                "§c[SkyblockEnhancements] " + statName + " not found in tab list!"), false);
+        mc.player.displayClientMessage(Component.literal(
+                "§7If one of your widgets is not visible, the tab list is most likely overflowing."), false);
+        mc.player.displayClientMessage(Component.literal(
+                "§7The tab list has a finite amount of space — you need to prioritize what to show."), false);
+        mc.player.displayClientMessage(Component.literal(
+                "§eTo fix: rearrange or disable some widgets so that " + statName + " is visible."), false);
+        mc.player.displayClientMessage(Component.literal(
+                "§eSome times you have to edit widget and enable sub option like TDOD fix this."), false);
+        mc.player.displayClientMessage(Component.literal(
+                "§eUse \"/tab\" to edit and rearrange your widgets."), false);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    //  Internal: called by TabListMonitor
+    // ═════════════════════════════════════════════════════════════════════════
 
     static void updateFromParseResult(TabStatParser.ParseResult result) {
         Map<String, String> incoming = result.getAllStats();
@@ -150,7 +194,6 @@ public final class SkyblockStats {
             return;
         }
 
-        // Detect changes and removals.
         for (Map.Entry<String, String> e : incoming.entrySet()) {
             String key = e.getKey();
             String newVal = e.getValue();
@@ -180,5 +223,6 @@ public final class SkyblockStats {
         ready = false;
         stats.clear();
         parsedStatCount = 0;
+        clearDemands();
     }
 }

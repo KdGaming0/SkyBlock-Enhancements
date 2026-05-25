@@ -13,6 +13,7 @@ import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
 import com.github.kd_gaming1.skyblockenhancements.feature.ItemGlowManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.katreminder.KatReminderFeature;
 import com.github.kd_gaming1.skyblockenhancements.feature.mining.PickaxeAbilityNotifier;
+import com.github.kd_gaming1.skyblockenhancements.feature.mining.PingOffsetMiningFeature;
 import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceDataFetcher;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceStore;
@@ -98,6 +99,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
         Commands.register();
 
         HeldItemTracker.register();
+        PingOffsetMiningFeature.register();
         PickaxeAbilityNotifier.init();
         TabListMonitor.register();
         MissingEnchants.init();

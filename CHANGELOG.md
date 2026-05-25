@@ -9,3 +9,4 @@
 ### **Skyblock Enhancements**
 **Additions**
 - Added Pickaxe Ability ready on-screen notifications.
+- Added Ping Offset Mining overlay — renders a colored highlight and outline on the block you're mining to indicate the optimal moment to switch, accounting for server ping and TPS.

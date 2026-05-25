@@ -16,6 +16,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static final String CHAT_ENHANCEMENTS     = "chat_enhancements";
     public static final String TOOLTIP_ENHANCEMENTS  = "tooltip_enhancements";
     public static final String GENERAL_ENHANCEMENTS  = "general_enhancements";
+    public static final String MINING_ENHANCEMENTS   = "mining_enhancements";
     public static final String DEV_TOOLS             = "dev_tools";
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -68,6 +69,53 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 0.5, max = 2)
     public static double reminderSoundPitch = 1.0;
 
+    public enum ReminderSoundType {
+        UI, BELL, CHIME, LEVEL_UP, EXPERIENCE, HARP, PLING, SUCCESS
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  Mining Enhancements
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    @Comment(category = MINING_ENHANCEMENTS, centered = true)
+    public static Comment pingOffsetMiningText;
+
+    @Entry(category = MINING_ENHANCEMENTS)
+    public static boolean enablePingOffsetMining = false;
+
+    @Entry(category = MINING_ENHANCEMENTS)
+    public static boolean pingOffsetShowOnLook = true;
+
+    @Entry(category = MINING_ENHANCEMENTS)
+    public static boolean pingOffsetShowHighlight = true;
+
+    @Entry(category = MINING_ENHANCEMENTS)
+    public static boolean pingOffsetShowOutline = true;
+
+    @Entry(category = MINING_ENHANCEMENTS, isColor = true)
+    public static String pingOffsetColorStart = "#FF0000";
+
+    @Entry(category = MINING_ENHANCEMENTS, isColor = true)
+    public static String pingOffsetColorMid = "#FFFF00";
+
+    @Entry(category = MINING_ENHANCEMENTS, isColor = true)
+    public static String pingOffsetColorEnd = "#00FF00";
+
+    @Entry(category = MINING_ENHANCEMENTS, isSlider = true, min = 0.5, max = 2.0)
+    public static double pingOffsetLineWidth = 4.0;
+
+    @Entry(category = MINING_ENHANCEMENTS)
+    public static boolean pingOffsetHighlightFaces = true;
+
+    @Entry(category = MINING_ENHANCEMENTS)
+    public static boolean pingOffsetColorUseMid = true;
+
+    @Entry(category = MINING_ENHANCEMENTS, isSlider = true, min = 0, max = 100)
+    public static int pingOffsetHighlightAlpha = 60;
+
+    @Entry(category = MINING_ENHANCEMENTS, isSlider = true, min = -100, max = 100, precision = 1)
+    public static int pingOffsetMarginMs = 0;
+
     @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
     public static Comment pickaxeAbilityText;
 
@@ -76,10 +124,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean pickaxeAbilityReadySound = false;
-
-    public enum ReminderSoundType {
-        UI, BELL, CHIME, LEVEL_UP, EXPERIENCE, HARP, PLING, SUCCESS
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  Storage Overlay
@@ -389,6 +433,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
         super.writeChanges();
 
         var mc = Minecraft.getInstance();
+        //noinspection ConstantValue
         if (mc.gameRenderer == null) return;
         LightTexture lt = mc.gameRenderer.lightTexture();
         if (lt instanceof LightTextureAccessor accessor) {
