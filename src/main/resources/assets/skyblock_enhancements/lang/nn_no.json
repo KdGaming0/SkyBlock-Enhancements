@@ -174,6 +174,9 @@
   "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent": "Breidd på RRV-gjenstandsliste",
   "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent.tooltip": "Prosent av den tilgjengelege skjermbreidda som RRV-gjenstandslistepanelet brukar.\n100% fyller rommet mellom inventar og skjermkant.\nLågare verdiar gjer panelet mindre frå høgre side innover.",
 
+  "skyblock_enhancements.midnightconfig.rrvSidePanelWidthPercent": "Breidd på RRV sidepanel",
+  "skyblock_enhancements.midnightconfig.rrvSidePanelWidthPercent.tooltip": "Prosent av standardbreidda som RRV-bokmerke-/tilverkingspanelet brukar.\n100% brukar den normale utrekna breidda.\nLågare verdiar gjer panelet mindre innover.",
+
   "skyblock_enhancements.midnightconfig.showCollectionRequirements": "Vis samlingskrav",
   "skyblock_enhancements.midnightconfig.showCollectionRequirements.tooltip": "Viser ein raud indikator og verktøytips på tilverkingsoppskrifter som krev eit samlingsnivå eller anna vilkår for å tilverke.",
 

@@ -215,6 +215,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = RRV_INTEGRATION, isSlider = true, min = 25, max = 100, precision = 1)
     public static int rrvItemListWidthPercent = 100;
 
+    @Entry(category = RRV_INTEGRATION, isSlider = true, min = 25, max = 100, precision = 1)
+    public static int rrvSidePanelWidthPercent = 100;
+
     public enum RrvSearchMode {
         /** Display name + SkyBlock ID only. Fast, no tooltip generation. */
         NAME_AND_ID,
