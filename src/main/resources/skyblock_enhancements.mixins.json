@@ -46,6 +46,8 @@
     "rrv.bookmark.SidePanelWidthMixin",
     "rrv.craftables.ClientRecipeCacheMixin",
     "rrv.fix.QuickNavRecipeViewMixin",
+    "rrv.fix.RecipeViewMenuContainerIdMixin",
+    "rrv.fix.RecipeViewMenuSlotPaddingMixin",
     "rrv.fix.RecipeViewMenuSlotSafetyMixin",
     "rrv.fix.RecipeViewScreenScrollMixin",
     "rrv.fix.RrvRecipeRequestMixin",

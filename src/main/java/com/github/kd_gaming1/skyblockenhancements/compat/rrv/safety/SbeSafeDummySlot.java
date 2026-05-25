@@ -15,8 +15,10 @@ import net.minecraft.world.item.ItemStack;
  */
 public final class SbeSafeDummySlot extends Slot {
 
+    private static final SimpleContainer SHARED_CONTAINER = new SimpleContainer(1);
+
     public SbeSafeDummySlot() {
-        super(new SimpleContainer(1), 0, Integer.MIN_VALUE / 2, Integer.MIN_VALUE / 2);
+        super(SHARED_CONTAINER, 0, Integer.MIN_VALUE / 2, Integer.MIN_VALUE / 2);
     }
 
     @Override

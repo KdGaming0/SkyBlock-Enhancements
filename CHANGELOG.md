@@ -1,7 +1,11 @@
-## Changelog for 1.0.11
+## Changelog for 1.0.12
 
 ### **RRV Enhancements**
 **Improvements/Fixes**
+- Improved RRV cross-mod compatibility with a defensive container facade that prevents crashes when other mods interact with the recipe viewer.
+  - **Container ID Isolation**: RRV's `RecipeViewMenu` now uses unique negative container IDs, preventing server inventory packets from being misrouted to the recipe viewer and triggering mod event cascades.
+  - **Slot List Padding**: After every recipe page change, the slot list is padded with inactive dummy slots up to a standard chest size (54). This prevents `IndexOutOfBoundsException` crashes from mods that assume stable inventory layouts and access slots by hardcoded indices (e.g. slot 29).
+  - **Allocation reduction**: `SbeSafeDummySlot` now shares a single `SimpleContainer` instance across all dummy slots, reducing GC pressure during slot rebuilds.
 - Improved Advanced Item Search functionality, allowing for more accurate and efficient searches.
   - Quick Use Guide:
     - *Keywords*: `zombie slayer` finds items matching all words (AND logic).
