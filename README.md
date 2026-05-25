@@ -30,6 +30,16 @@ Recipe data is sourced from the **NEU repository**, downloaded and cached on fir
   - Supports basic operators (+, -, *, /, %), exponentiation (^), and parentheses.
   - SkyBlock Suffixes: Understands magnitude abbreviations (k, m, b, t) and the stack suffix (st) for bulk calculations (e.g., 1st * 25k).
   - Advanced Math: Support for scientific notation (e.g., 1.5e6) and functions like sqrt(), abs(), floor(), ceil(), and round().
+- **Advanced Item Search**: Search by name, lore, stats, and structured item metadata using an indexed query engine.
+  - *Keywords*: `zombie slayer` finds items matching all words (AND logic).
+  - *Stat thresholds*: `mining_speed>50`, `health<=100`, `damage=50`. You can also use short aliases like `ms>50` (mining speed), `cc>=10` (crit chance), `cd` (crit damage), `hp`, `def`, `str`, `speed` (walk speed), etc.
+  - *Rarity*: `rarity:legendary` or `r:mythic`.
+  - *Item type*: `type:sword`, `type:helmet`, `t:bow`.
+  - *Slayer requirements*: `slayer:zombie>3` (Zombie Slayer 4+), `slayer:eman`, `sl>5`.
+  - *Skill requirements*: `skill:combat>20`, `sk:farming>10`.
+  - *Catacombs*: `catacombs>10`, `cata>=15`.
+  - *Boolean flags*: `soulbound`, `dungeon`, `rift`.
+  - *Mix freely*: `fleet mining_speed>50 rarity:legendary` combines keywords, stats, and filters.
 - **Category Filtering**: Filter the item list to only show items for a specific category, like armor or weapons.
 - **Compact Item List**: Compacts related items (such as dungeon star variants) into families to reduce clutter in the item list.
 - All recipe types include a **Wiki** button that opens the item's page on the SkyBlock wiki.

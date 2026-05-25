@@ -78,6 +78,12 @@ public final class InventorySearchEvaluator {
                 return true;
             }
 
+            // Numeric threshold filters (slayer>3, skill:combat>20) need structured
+            // data from the NeuItem. Evaluate them directly when possible.
+            if (!query.filters().isEmpty() && !neuItemMatchesFilters(stack, query)) {
+                return false;
+            }
+
             // General fallback: search through the LORE component (pre-parsed, no
             // tooltip building). Catches dynamic content not captured by NEU tokens.
             return loreMatchesQuery(stack, query);
@@ -147,12 +153,160 @@ public final class InventorySearchEvaluator {
     // ── Lore component fallback ────────────────────────────────────────────────
 
     /**
-     * Searches through the stack's {@link ItemLore} component for query keywords.
-     * This is a lightweight fallback that avoids building full tooltips — it reads
-     * the already-parsed lore lines directly.
+     * Evaluates numeric-threshold filter clauses against the item's {@link NeuItem} data.
+     * String-only filters are skipped (they are already handled by
+     * {@link SkyblockSearchIndex#itemMatchesInventoryQuery}).
      *
-     * <p>Each keyword must appear in at least one lore line (AND semantics).
-     * Matching uses simple {@link String#contains} after lowercasing.
+     * @return {@code true} if all numeric filters pass or no NeuItem is available
+     */
+    private static boolean neuItemMatchesFilters(ItemStack stack, SearchQuery query) {
+        var neuItem = FullStackListCache.getCachedNeuItem(stack);
+        if (neuItem == null) {
+            return true; // Can't evaluate — be permissive
+        }
+
+        for (SearchQuery.FilterClause f : query.filters()) {
+            if (f.stringValue() != null && (f.op() == null || f.op() == SearchQuery.FilterClause.Operator.EQ)) {
+                continue; // String filters handled by token set
+            }
+
+            boolean pass = switch (f.key()) {
+                case "slayer" -> neuItemMatchesSlayerFilter(neuItem, f);
+                case "skill" -> neuItemMatchesSkillFilter(neuItem, f);
+                case "catacombs" -> neuItemMatchesCatacombsFilter(neuItem, f);
+                case "rarity", "type", "soulbound", "dungeon", "rift" -> true; // handled by tokens
+                default -> true;
+            };
+            if (!pass) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean neuItemMatchesSlayerFilter(com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem neuItem,
+                                                      SearchQuery.FilterClause f) {
+        if (neuItem.slayerReq == null || neuItem.slayerReq.isEmpty()) {
+            return false;
+        }
+        String type = SkyblockSearchIndex.extractSlayerTypeStatic(neuItem.slayerReq);
+        int level = SkyblockSearchIndex.extractSlayerLevelStatic(neuItem.slayerReq);
+        if (type == null || level <= 0) {
+            return false;
+        }
+        if (f.stringValue() != null && !type.equals(f.stringValue())) {
+            return false;
+        }
+        return compareInt(level, f.op(), f.intValue());
+    }
+
+    private static boolean neuItemMatchesSkillFilter(com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem neuItem,
+                                                     SearchQuery.FilterClause f) {
+        if (neuItem.lore == null) {
+            return false;
+        }
+        String targetSkill = f.stringValue();
+        for (String line : neuItem.lore) {
+            String clean = com.github.kd_gaming1.skyblockenhancements.util.StringUtil.stripColorCodes(line).toLowerCase(java.util.Locale.ROOT);
+            int skillIdx = clean.indexOf(" skill ");
+            if (skillIdx < 0 || !clean.contains("requires") || clean.contains("catacombs")) {
+                continue;
+            }
+            String afterSkill = clean.substring(skillIdx + 7).trim();
+            int end = 0;
+            for (int i = 0; i < afterSkill.length(); i++) {
+                char c = afterSkill.charAt(i);
+                if (c >= '0' && c <= '9') {
+                    end = i + 1;
+                }
+            }
+            if (end == 0) {
+                continue;
+            }
+            try {
+                int level = Integer.parseInt(afterSkill.substring(0, end));
+                String beforeSkill = clean.substring(0, skillIdx).trim();
+                int lastSpace = beforeSkill.lastIndexOf(' ');
+                String skillName = lastSpace >= 0 ? beforeSkill.substring(lastSpace + 1) : beforeSkill;
+                skillName = SkyblockSearchIndex.normalizeFilterTokenStatic(skillName);
+                if (targetSkill != null && !targetSkill.equals(skillName)) {
+                    continue;
+                }
+                if (compareInt(level, f.op(), f.intValue())) {
+                    return true;
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+        return false;
+    }
+
+    private static boolean neuItemMatchesCatacombsFilter(com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItem neuItem,
+                                                         SearchQuery.FilterClause f) {
+        if (neuItem.lore == null) {
+            return false;
+        }
+        for (String line : neuItem.lore) {
+            String clean = com.github.kd_gaming1.skyblockenhancements.util.StringUtil.stripColorCodes(line).toLowerCase(java.util.Locale.ROOT);
+            if (!clean.contains("catacombs")) {
+                continue;
+            }
+            int skillIdx = clean.indexOf(" skill ");
+            if (skillIdx >= 0 && clean.contains("requires")) {
+                String afterSkill = clean.substring(skillIdx + 7).trim();
+                int end = 0;
+                for (int i = 0; i < afterSkill.length(); i++) {
+                    char c = afterSkill.charAt(i);
+                    if (c >= '0' && c <= '9') {
+                        end = i + 1;
+                    }
+                }
+                if (end > 0) {
+                    try {
+                        int level = Integer.parseInt(afterSkill.substring(0, end));
+                        if (compareInt(level, f.op(), f.intValue())) {
+                            return true;
+                        }
+                    } catch (NumberFormatException ignored) {}
+                }
+                continue;
+            }
+            int floorIdx = clean.indexOf("floor ");
+            if (floorIdx >= 0) {
+                String afterFloor = clean.substring(floorIdx + 6).trim();
+                int space = afterFloor.indexOf(' ');
+                if (space > 0) {
+                    afterFloor = afterFloor.substring(0, space);
+                }
+                afterFloor = afterFloor.replace(".", "").trim();
+                int level = SkyblockSearchIndex.romanToIntStatic(afterFloor);
+                if (level > 0 && compareInt(level, f.op(), f.intValue())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean compareInt(int actual, SearchQuery.FilterClause.Operator op, int expected) {
+        if (op == null) {
+            return actual == expected;
+        }
+        return switch (op) {
+            case EQ -> actual == expected;
+            case GT -> actual > expected;
+            case LT -> actual < expected;
+            case GTE -> actual >= expected;
+            case LTE -> actual <= expected;
+        };
+    }
+
+    /**
+     * Searches through the stack's {@link ItemLore} component for query keywords and
+     * string filter values. This is a lightweight fallback that avoids building full
+     * tooltips — it reads the already-parsed lore lines directly.
+     *
+     * <p>Each keyword and each string filter value must appear in at least one lore line
+     * (AND semantics). Matching uses simple {@link String#contains} after lowercasing.
      */
     private static boolean loreMatchesQuery(ItemStack stack, SearchQuery query) {
         ItemLore lore = stack.get(DataComponents.LORE);
@@ -169,6 +323,15 @@ public final class InventorySearchEvaluator {
             String token = kw.token();
             if (!loreLineContains(lines, token)) {
                 return false;
+            }
+        }
+
+        for (SearchQuery.FilterClause f : query.filters()) {
+            String value = f.stringValue();
+            if (value != null && (f.op() == null || f.op() == SearchQuery.FilterClause.Operator.EQ)) {
+                if (!loreLineContains(lines, value)) {
+                    return false;
+                }
             }
         }
         return true;

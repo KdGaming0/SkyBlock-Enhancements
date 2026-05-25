@@ -33,7 +33,7 @@ public final class SkyblockSearchFilter {
         // Inject active category filter at the index level if one is selected
         SkyblockItemCategory activeCategory = SkyblockCategoryState.getActiveCategory();
         if (activeCategory != null) {
-            query = new SearchQuery(query.keywords(), query.stats(), activeCategory);
+            query = new SearchQuery(query.keywords(), query.stats(), query.filters(), activeCategory);
         }
 
         // Empty text + no category → return everything
