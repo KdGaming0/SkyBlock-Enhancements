@@ -1,5 +1,6 @@
 package com.github.kd_gaming1.skyblockenhancements.command;
 
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
@@ -14,10 +15,12 @@ import com.github.kd_gaming1.skyblockenhancements.repo.io.AtomicFileWriter;
 import com.github.kd_gaming1.skyblockenhancements.repo.network.JsonHttpClient;
 import com.github.kd_gaming1.skyblockenhancements.util.ItemDebugHelper;
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
+import com.github.kd_gaming1.skyblockenhancements.util.tab.SkyblockStats;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.net.http.HttpClient;
 import java.nio.file.Path;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -45,7 +48,10 @@ public class Commands {
                             .executes(Commands::executeDebugItem))
                     .then(literal("storage")
                             .then(literal("clear-cache")
-                                    .executes(Commands::executeClearStorageCache)));
+                                    .executes(Commands::executeClearStorageCache)))
+                    .then(literal("ignore_tab_stat")
+                            .then(argument("stat", StringArgumentType.word())
+                                    .executes(Commands::executeIgnoreTabStat)));
 
             var rootNode = dispatcher.register(root);
             dispatcher.register(literal("sbe").redirect(rootNode));
@@ -119,6 +125,13 @@ public class Commands {
     private static int executeClearStorageCache(CommandContext<FabricClientCommandSource> ctx) {
         StorageFeature.clearCache();
         ctx.getSource().sendFeedback(Component.literal(PREFIX + "Storage cache cleared."));
+        return 1;
+    }
+
+    private static int executeIgnoreTabStat(CommandContext<FabricClientCommandSource> ctx) {
+        String stat = StringArgumentType.getString(ctx, "stat");
+        SkyblockStats.ignoreDemand(stat);
+        ctx.getSource().sendFeedback(Component.literal(PREFIX + "Ignored missing-stat warnings for " + stat + " this session."));
         return 1;
     }
 

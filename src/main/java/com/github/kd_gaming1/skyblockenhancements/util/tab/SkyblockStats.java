@@ -3,7 +3,10 @@ package com.github.kd_gaming1.skyblockenhancements.util.tab;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -118,15 +121,20 @@ public final class SkyblockStats {
     private static final class Demand {
         final String statKey;
         final String displayName;
+        @Nullable final String enableHint;
+        @Nullable final String reason;
         int ticksSinceLastWarn = WARN_COOLDOWN_TICKS;
 
-        Demand(String statKey, String displayName) {
+        Demand(String statKey, String displayName, @Nullable String enableHint, @Nullable String reason) {
             this.statKey = statKey;
             this.displayName = displayName;
+            this.enableHint = enableHint;
+            this.reason = reason;
         }
     }
 
     private static final Map<String, Demand> demands = new HashMap<>();
+    private static final Set<String> ignoredDemands = new HashSet<>();
 
     /**
      * Registers that a feature requires a stat from the tab list.
@@ -134,8 +142,22 @@ public final class SkyblockStats {
      * The demand is automatically cleared when the stat appears.
      */
     public static void demandStat(String statKey, String displayName) {
+        demandStat(statKey, displayName, null, null);
+    }
+
+    public static void demandStat(String statKey, String displayName, @Nullable String enableHint) {
+        demandStat(statKey, displayName, enableHint, null);
+    }
+
+    public static void demandStat(String statKey, String displayName, @Nullable String enableHint, @Nullable String reason) {
         if (hasStat(statKey)) return;
-        demands.computeIfAbsent(statKey, k -> new Demand(statKey, displayName));
+        if (ignoredDemands.contains(statKey)) return;
+        demands.computeIfAbsent(statKey, k -> new Demand(statKey, displayName, enableHint, reason));
+    }
+
+    public static void ignoreDemand(String statKey) {
+        ignoredDemands.add(statKey);
+        demands.remove(statKey);
     }
 
     /** Checks all active demands and sends warnings for any still unmet. */
@@ -151,7 +173,7 @@ public final class SkyblockStats {
             d.ticksSinceLastWarn++;
             if (d.ticksSinceLastWarn >= WARN_COOLDOWN_TICKS) {
                 d.ticksSinceLastWarn = 0;
-                sendMissingStatWarning(mc, d.displayName);
+                sendMissingStatWarning(mc, d);
             }
         }
     }
@@ -160,20 +182,32 @@ public final class SkyblockStats {
         demands.clear();
     }
 
-    private static void sendMissingStatWarning(Minecraft mc, String statName) {
+    private static void sendMissingStatWarning(Minecraft mc, Demand d) {
         assert mc.player != null;
-        mc.player.displayClientMessage(Component.literal(
-                "§c[SkyblockEnhancements] " + statName + " not found in tab list!"), false);
-        mc.player.displayClientMessage(Component.literal(
-                "§7If one of your widgets is not visible, the tab list is most likely overflowing."), false);
-        mc.player.displayClientMessage(Component.literal(
-                "§7The tab list has a finite amount of space — you need to prioritize what to show."), false);
-        mc.player.displayClientMessage(Component.literal(
-                "§eTo fix: rearrange or disable some widgets so that " + statName + " is visible."), false);
-        mc.player.displayClientMessage(Component.literal(
-                "§eSome times you have to edit widget and enable sub option like TDOD fix this."), false);
-        mc.player.displayClientMessage(Component.literal(
-                "§eUse \"/tab\" to edit and rearrange your widgets."), false);
+
+        MutableComponent message = Component.literal(
+                "§c[SkyblockEnhancements] " + d.displayName + " not found in tab list!");
+
+        if (d.reason != null || d.enableHint != null) {
+            StringBuilder detail = new StringBuilder("\n§7");
+            if (d.reason != null) {
+                detail.append(d.reason);
+            }
+            if (d.enableHint != null) {
+                if (d.reason != null) {
+                    detail.append(" ");
+                }
+                detail.append(d.enableHint);
+            }
+            message.append(Component.literal(detail.toString()));
+        }
+
+        MutableComponent ignore = Component.literal("§e[Ignore]")
+                .withStyle(style -> style.withClickEvent(
+                        new ClickEvent.RunCommand("/skyblockenhancements ignore_tab_stat " + d.statKey)));
+
+        message.append(Component.literal("\n")).append(ignore);
+        mc.player.displayClientMessage(message, false);
     }
 
     // ═════════════════════════════════════════════════════════════════════════

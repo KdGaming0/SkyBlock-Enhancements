@@ -129,9 +129,6 @@ public final class MiningProgressTracker {
             case COOLDOWN -> tickCooldown(mc);
         }
 
-        if (ticksSinceEnabled > 100) {
-            SkyblockStats.checkDemands();
-        }
         syncRenderer();
     }
 
@@ -180,7 +177,10 @@ public final class MiningProgressTracker {
         int miningSpeed = SkyblockStats.getMiningSpeedOrZero();
         if (miningSpeed <= 0) {
             if (ticksSinceEnabled > 100 && !SkyblockStats.hasMiningSpeed()) {
-                SkyblockStats.demandStat("mining_speed", "Mining Speed");
+                SkyblockStats.demandStat("mining_speed", "Mining Speed",
+                        "/tab -> Stats Widget -> Shown Stats -> Mining Speed",
+                        "Needed for Ping Offset Mining feature.");
+                SkyblockStats.checkDemands();
             }
             return;
         }
