@@ -7,6 +7,7 @@
   "skyblock_enhancements.midnightconfig.category.chat_enhancements": "Chat-forbetringar",
   "skyblock_enhancements.midnightconfig.category.tooltip_enhancements": "Verktøytips-forbetringar",
   "skyblock_enhancements.midnightconfig.category.general_enhancements": "Generelle forbetringar",
+  "skyblock_enhancements.midnightconfig.category.potion_overlay": "Drikkeoverlegg",
   "skyblock_enhancements.midnightconfig.category.dev_tools": "Utviklarverktøy",
 
   "skyblock_enhancements.midnightconfig.text": "Generelle Skyblock-funksjonar",
@@ -325,6 +326,20 @@
 
   "skyblock_enhancements.midnightconfig.fullbrightStrength": "Fullbright-styrke",
   "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "Styrken på fullbright-effekten.\nOmråde: 0-100",
+
+  "skyblock_enhancements.midnightconfig.potionOverlayText": "Drikkeeffekt-overlegg",
+
+  "skyblock_enhancements.midnightconfig.enablePotionOverlay": "Aktiver overlegg for drikkeeffektar",
+  "skyblock_enhancements.midnightconfig.enablePotionOverlay.tooltip": "Viser ei farga fyll på drikkeeffekt-spor i GUI-et for å slå av/på effektar. Grøn = aktivert, raud = deaktivert.",
+
+  "skyblock_enhancements.midnightconfig.disabledPotionOverlayColor": "Farge for deaktivert effekt",
+  "skyblock_enhancements.midnightconfig.disabledPotionOverlayColor.tooltip": "Fyllfarge for deaktiverte drikkeeffektar. Bruk hex-format som #RRGGBB.",
+
+  "skyblock_enhancements.midnightconfig.enabledPotionOverlayColor": "Farge for aktivert effekt",
+  "skyblock_enhancements.midnightconfig.enabledPotionOverlayColor.tooltip": "Fyllfarge for aktiverte drikkeeffektar. Bruk hex-format som #RRGGBB.",
+
+  "skyblock_enhancements.midnightconfig.potionOverlayAlpha": "Dekkevne for overlegg",
+  "skyblock_enhancements.midnightconfig.potionOverlayAlpha.tooltip": "Gjennomsiktigheita til drikkeeffekt-overlegget. Område: 0 (usynleg) til 255 (heilt ujamnt).",
 
   "skyblock_enhancements.midnightconfig.devToolsText": "Utviklarverktøy",
 

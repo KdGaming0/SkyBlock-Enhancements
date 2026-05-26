@@ -7,6 +7,7 @@
   "skyblock_enhancements.midnightconfig.category.chat_enhancements": "Chat Enhancements",
   "skyblock_enhancements.midnightconfig.category.tooltip_enhancements": "Tooltip Enhancements",
   "skyblock_enhancements.midnightconfig.category.general_enhancements": "General Enhancements",
+  "skyblock_enhancements.midnightconfig.category.potion_overlay": "Potion Overlay",
   "skyblock_enhancements.midnightconfig.category.dev_tools": "Dev Tools",
 
   "skyblock_enhancements.midnightconfig.text": "General Skyblock Features",
@@ -325,6 +326,20 @@
 
   "skyblock_enhancements.midnightconfig.fullbrightStrength": "Fullbright Strength",
   "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "Strength of the fullbright effect.\nRange: 0-100",
+
+  "skyblock_enhancements.midnightconfig.potionOverlayText": "Potion Effect Overlay",
+
+  "skyblock_enhancements.midnightconfig.enablePotionOverlay": "Enable Potion Effect Status Overlay",
+  "skyblock_enhancements.midnightconfig.enablePotionOverlay.tooltip": "Shows a colored tint on potion effect slots in the Toggle Potion Effects GUI. Green = enabled, Red = disabled.",
+
+  "skyblock_enhancements.midnightconfig.disabledPotionOverlayColor": "Disabled Effect Color",
+  "skyblock_enhancements.midnightconfig.disabledPotionOverlayColor.tooltip": "Overlay color for disabled potion effects. Use hex format like #RRGGBB.",
+
+  "skyblock_enhancements.midnightconfig.enabledPotionOverlayColor": "Enabled Effect Color",
+  "skyblock_enhancements.midnightconfig.enabledPotionOverlayColor.tooltip": "Overlay color for enabled potion effects. Use hex format like #RRGGBB.",
+
+  "skyblock_enhancements.midnightconfig.potionOverlayAlpha": "Overlay Opacity",
+  "skyblock_enhancements.midnightconfig.potionOverlayAlpha.tooltip": "Transparency of the potion effect overlay. Range: 0 (invisible) to 255 (fully opaque).",
 
   "skyblock_enhancements.midnightconfig.devToolsText": "Developer Tools",
 

@@ -3,8 +3,9 @@
 ### **RRV Enhancements**
 **Improvements/Fixes**
 - Improved RRV cross-mod compatibility with a defensive container facade that prevents crashes when other mods interact with the recipe viewer.
-  - **Container ID Isolation**: RRV's `RecipeViewMenu` now uses unique negative container IDs, preventing server inventory packets from being misrouted to the recipe viewer and triggering mod event cascades.
-  - **Slot List Padding**: After every recipe page change, the slot list is padded with inactive dummy slots up to a standard chest size (54). This prevents `IndexOutOfBoundsException` crashes from mods that assume stable inventory layouts and access slots by hardcoded indices (e.g. slot 29).
+  - **Container ID Isolation**: RRV's `RecipeViewMenu` now uses unique negative container IDs via `@ModifyArg` on the constructor's `super()` call. Servers never emit negative container IDs, so no server packet targets the recipe viewer directly.
+  - **Slot List Padding**: Before `updateReferences()` runs inside `updateByPage()`, the slot list is padded with inactive dummy slots up to a standard chest size (54). This prevents `IndexOutOfBoundsException` crashes from mods that assume stable inventory layouts and access slots by hardcoded indices (e.g. slot 29).
+  - **Packet Suppression for Parent Menu**: While the recipe viewer is open, `initializeContents` and `setItem` calls for the active parent container menu are silently dropped. This prevents mod event cascades from firing on the parent menu while RRV is on screen.
   - **Allocation reduction**: `SbeSafeDummySlot` now shares a single `SimpleContainer` instance across all dummy slots, reducing GC pressure during slot rebuilds.
 - Improved Advanced Item Search functionality, allowing for more accurate and efficient searches.
   - Quick Use Guide:
@@ -17,3 +18,8 @@
     - *Catacombs*: `catacombs>10`, `cata>=15`.
     - *Boolean flags*: `soulbound`, `dungeon`, `rift`.
 - Fixed mob drop recipes not showing more than 12 drops, even though the mob has more drops.
+
+### **Skyblock Enhancements**
+**Additions**
+- Added **Potion Effect Status Overlay** for the Hypixel "Toggle Potion Effects" GUI.
+  - Disabled effects are tinted in a configurable red overlay; enabled effects are tinted in configurable green.

@@ -69,6 +69,21 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 0.5, max = 2)
     public static double reminderSoundPitch = 1.0;
 
+    @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
+    public static Comment potionOverlayText;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean enablePotionOverlay = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
+    public static String enabledPotionOverlayColor = "#44FF44";
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
+    public static String disabledPotionOverlayColor = "#FF4444";
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 0, max = 255)
+    public static int potionOverlayAlpha = 102;
+
     public enum ReminderSoundType {
         UI, BELL, CHIME, LEVEL_UP, EXPERIENCE, HARP, PLING, SUCCESS
     }
@@ -116,13 +131,13 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = MINING_ENHANCEMENTS, isSlider = true, min = -100, max = 100, precision = 1)
     public static int pingOffsetMarginMs = 0;
 
-    @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
+    @Comment(category = MINING_ENHANCEMENTS, centered = true)
     public static Comment pickaxeAbilityText;
 
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    @Entry(category = MINING_ENHANCEMENTS)
     public static boolean notifyPickaxeAbilityReady = false;
 
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    @Entry(category = MINING_ENHANCEMENTS)
     public static boolean pickaxeAbilityReadySound = false;
 
     // ═══════════════════════════════════════════════════════════════════════════
