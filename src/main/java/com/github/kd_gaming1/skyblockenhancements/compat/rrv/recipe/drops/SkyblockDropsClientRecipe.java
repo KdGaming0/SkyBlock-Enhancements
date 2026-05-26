@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
 
-    private static final int MAX_DROPS = 12;
-    private static final int BUTTON_ROW_Y_OFFSET = SkyblockDropsRecipeType.WIKI_BUTTON_TOP;
-    private static final int NAME_CAPTION_Y      = SkyblockDropsRecipeType.NAME_CAPTION_TOP;
     private static final int NAME_SIDE_PADDING = 4;
 
     /** De-duplicates warn logs so unresolved refs don't spam once per scroll tick. */
@@ -47,9 +44,9 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
 
     public SkyblockDropsClientRecipe(SkyblockDropsServerRecipe src) {
         super(src.getWikiUrls());
-        this.mobName  = src.getMobName() != null ? src.getMobName() : "";
-        this.chances  = src.getChances();
-        this.drops    = buildDropsList(src.getDrops());
+        this.mobName = src.getMobName() != null ? src.getMobName() : "";
+        this.chances = src.getChances();
+        this.drops = buildDropsList(src.getDrops());
 
         MobPreview resolved = MobRenderResolver.resolve(src.getRenderRef());
         if (resolved == null) logUnresolvedOnce(src.getRenderRef());
@@ -58,10 +55,10 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
     }
 
     private static List<SlotContent> buildDropsList(SlotContent[] rawDrops) {
-        int slotCount = SkyblockDropsRecipeType.INSTANCE.getSlotCount();
-        List<SlotContent> out = new ArrayList<>(slotCount);
-        for (int i = 0; i < slotCount; i++) {
-            out.add(i < rawDrops.length && rawDrops[i] != null ? rawDrops[i] : SlotContent.of());
+        int count = rawDrops.length;
+        List<SlotContent> out = new ArrayList<>(count);
+        for (SlotContent rawDrop : rawDrops) {
+            out.add(rawDrop != null ? rawDrop : SlotContent.of());
         }
         return out;
     }
@@ -75,7 +72,7 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
 
     private RecipeViewMenu.AdditionalStackModifier[] buildChanceModifiers() {
         if (chances == null || chances.length == 0) return new RecipeViewMenu.AdditionalStackModifier[0];
-        int limit = Math.min(chances.length, MAX_DROPS);
+        int limit = Math.min(chances.length, drops.size());
         RecipeViewMenu.AdditionalStackModifier[] mods = new RecipeViewMenu.AdditionalStackModifier[limit];
         for (int i = 0; i < limit; i++) {
             String chance = chances[i];
@@ -99,8 +96,7 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
 
     @Override
     public void bindSlots(RecipeViewMenu.SlotFillContext ctx) {
-        int limit = Math.min(drops.size(), MAX_DROPS);
-        for (int i = 0; i < limit; i++) {
+        for (int i = 0; i < drops.size(); i++) {
             bindOptional(ctx, i, drops.get(i));
         }
         attachChanceTooltips(ctx);
@@ -178,7 +174,7 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
         int textWidth = font().width(line);
         int x = NAME_SIDE_PADDING + (maxWidth - textWidth) / 2;
 
-        gfx.drawString(font(), line, x, NAME_CAPTION_Y, RecipeColors.WHITE, true);
+        gfx.drawString(font(), line, x, SkyblockDropsRecipeType.nameCaptionTop(), RecipeColors.WHITE, true);
     }
 
     private void renderHoverTooltipIfNeeded(GuiGraphics gfx, RecipeViewScreen screen,
@@ -199,6 +195,6 @@ public class SkyblockDropsClientRecipe extends AbstractSkyblockClientRecipe {
     @Nullable
     protected AbstractButton placeButtons(RecipeViewScreen screen, RecipePosition pos) {
         int btnX = (SkyblockDropsRecipeType.displayWidth() - RecipeLayoutConstants.WIKI_BUTTON_WIDTH) / 2;
-        return placeWikiButton(screen, pos.left() + btnX, pos.top() + BUTTON_ROW_Y_OFFSET);
+        return placeWikiButton(screen, pos.left() + btnX, pos.top() + SkyblockDropsRecipeType.wikiButtonTop());
     }
 }

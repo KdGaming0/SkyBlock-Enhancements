@@ -16,3 +16,4 @@
     - *Skill requirements*: `skill:combat>20`, `sk:farming>10`.
     - *Catacombs*: `catacombs>10`, `cata>=15`.
     - *Boolean flags*: `soulbound`, `dungeon`, `rift`.
+- Fixed mob drop recipes not showing more than 12 drops, even though the mob has more drops.

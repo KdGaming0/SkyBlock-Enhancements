@@ -7,7 +7,11 @@ import com.github.kd_gaming1.skyblockenhancements.compat.rrv.recipe.base.RecipeT
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 
-/** Mob drop table: up to 12 drop slots paired with chance strings, plus the NEU render ref. */
+/**
+ * Mob drop table: stores every drop slot paired with chance strings, plus the NEU render ref.
+ * There is no hard drop count limit; the clamp during deserialization is set to a generous
+ * ceiling (64) to prevent unbounded allocation from malformed NBT payloads.
+ */
 public class SkyblockDropsServerRecipe extends AbstractSkyblockServerRecipe {
 
     public static final ReliableServerRecipeType<SkyblockDropsServerRecipe> TYPE =
@@ -16,7 +20,8 @@ public class SkyblockDropsServerRecipe extends AbstractSkyblockServerRecipe {
                     () -> new SkyblockDropsServerRecipe(
                             "", "", new SlotContent[0], new String[0], new String[0]));
 
-    private static final int MAX_DROPS = 12;
+    /** Deserialization safety cap. Far above any known NEU mob drop table (max observed: 28). */
+    private static final int DESER_CAP = 64;
 
     private String mobName;
     private String renderRef;
@@ -49,7 +54,7 @@ public class SkyblockDropsServerRecipe extends AbstractSkyblockServerRecipe {
     protected void readFields(CompoundTag tag) {
         mobName   = tag.getStringOr(RecipeTagCodec.KEY_MOB, "");
         renderRef = tag.getStringOr(RecipeTagCodec.KEY_RENDER, "");
-        drops     = RecipeTagCodec.readSlotArray(tag, RecipeTagCodec.KEY_COUNT, RecipeTagCodec.KEY_DROPS_PREFIX, MAX_DROPS);
+        drops     = RecipeTagCodec.readSlotArray(tag, RecipeTagCodec.KEY_COUNT, RecipeTagCodec.KEY_DROPS_PREFIX, DESER_CAP);
         chances   = RecipeTagCodec.readStringArray(tag, RecipeTagCodec.KEY_CHANCES, drops.length);
     }
 
