@@ -182,7 +182,7 @@ public class KatUpgradeReminderManager {
                 .append(Component.literal(". We've created a fresh one for you and backed up your old file.").withStyle(ChatFormatting.YELLOW));
 
         assert client.player != null;
-        client.player.displayClientMessage(message, false);
+        client.player.sendSystemMessage(message);
     }
 
     private void sendReadyMessage(Minecraft client, KatUpgradeReminder reminder) {
@@ -195,7 +195,7 @@ public class KatUpgradeReminderManager {
                         .withClickEvent(new ClickEvent.RunCommand("/call kat"))));
 
         assert client.player != null;
-        client.player.displayClientMessage(message, false);
+        client.player.sendSystemMessage(message);
     }
 
     private ChatFormatting mapRarityColor(String rarity) {

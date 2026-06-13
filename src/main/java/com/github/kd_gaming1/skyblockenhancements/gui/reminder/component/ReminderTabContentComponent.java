@@ -7,7 +7,7 @@ import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManag
 import com.github.kd_gaming1.skyblockenhancements.gui.reminder.ReminderColors;
 import com.github.kd_gaming1.skyblockenhancements.gui.reminder.ReminderScreenState;
 import com.github.kd_gaming1.skyblockenhancements.gui.reminder.ReminderScreenState.Tab;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public class ReminderTabContentComponent extends AbstractComponent {
 
@@ -60,7 +60,7 @@ public class ReminderTabContentComponent extends AbstractComponent {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY,
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY,
                        float partialTick, int parentWidth, int parentHeight) {
         Tab  currentTab  = state.getActiveTab();
         ReminderScreenState.RepeatMode currentMode = state.getRepeatMode();

@@ -4,7 +4,7 @@ import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsCon
 import com.github.kd_gaming1.skyblockenhancements.gui.context.GuiContext;
 import com.github.kd_gaming1.skyblockenhancements.mixin.access.AbstractContainerMenuStateAccessor;
 import com.github.kd_gaming1.skyblockenhancements.util.StringUtil;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -49,7 +49,7 @@ public final class PotionOverlayRenderer {
     /**
      * Called from the mixin at the tail of {@code AbstractContainerScreen.renderSlot}.
      */
-    public static void render(GuiGraphics graphics, AbstractContainerScreen<?> screen, Slot slot) {
+    public static void render(GuiGraphicsExtractor graphics, AbstractContainerScreen<?> screen, Slot slot) {
         if (!SkyblockEnhancementsConfig.enablePotionOverlay) {
             return;
         }
@@ -158,7 +158,7 @@ public final class PotionOverlayRenderer {
     //  Rendering
     // ═══════════════════════════════════════════════════════════════════════════
 
-    private static void renderOverlay(GuiGraphics graphics, Slot slot, SlotState state) {
+    private static void renderOverlay(GuiGraphicsExtractor graphics, Slot slot, SlotState state) {
         int color = switch (state) {
             case DISABLED -> buildColor(SkyblockEnhancementsConfig.disabledPotionOverlayColor);
             case ENABLED  -> buildColor(SkyblockEnhancementsConfig.enabledPotionOverlayColor);

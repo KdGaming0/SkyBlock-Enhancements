@@ -149,7 +149,7 @@ public final class ItemDebugHelper {
     private static void chat(String message) {
         var mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player != null) {
-            mc.player.displayClientMessage(Component.literal(message), false);
+            mc.player.sendSystemMessage(Component.literal(message));
         }
     }
 }

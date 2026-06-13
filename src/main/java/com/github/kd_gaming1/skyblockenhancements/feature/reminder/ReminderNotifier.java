@@ -58,7 +58,7 @@ public final class ReminderNotifier {
                             .withStyle(ChatFormatting.DARK_GRAY));
         }
 
-        client.gui.getChat().addMessage(msg);
+        client.gui.getChat().addClientSystemMessage(msg);
     }
 
     private void sendTitle(Minecraft client, Reminder reminder) {

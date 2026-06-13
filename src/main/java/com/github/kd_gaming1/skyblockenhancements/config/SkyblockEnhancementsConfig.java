@@ -1,10 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.config;
 
-import com.github.kd_gaming1.skyblockenhancements.access.LightTextureAccessor;
 import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
 
 public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSettings {
 
@@ -275,13 +272,8 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Override
     public void writeChanges() {
         super.writeChanges();
-
-        var mc = Minecraft.getInstance();
-        //noinspection ConstantValue
-        if (mc.gameRenderer == null) return;
-        LightTexture lt = mc.gameRenderer.lightTexture();
-        if (lt instanceof LightTextureAccessor accessor) {
-            accessor.skyblockenhancements$markDirty();
-        }
+        // In 26.1 the lightmap render state is recalculated each frame, so no explicit
+        // dirty notification is required. The fullbright mixin in LightTextureMixin
+        // reads the config directly during Lightmap#render.
     }
 }

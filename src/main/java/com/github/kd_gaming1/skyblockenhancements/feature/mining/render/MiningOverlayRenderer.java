@@ -1,12 +1,13 @@
 package com.github.kd_gaming1.skyblockenhancements.feature.mining.render;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
-import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.platform.CompareOp;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
@@ -44,7 +45,7 @@ public final class MiningOverlayRenderer {
     // ── Public API ────────────────────────────────────────────────────────────
 
     public void register() {
-        WorldRenderEvents.AFTER_ENTITIES.register(this::onRender);
+        LevelRenderEvents.END_MAIN.register(this::onRender);
     }
 
     public void updateProgress(double progress, int elapsedTick, BlockPos targetPos) {
@@ -59,7 +60,7 @@ public final class MiningOverlayRenderer {
 
     // ── Main render entry ─────────────────────────────────────────────────────
 
-    private void onRender(WorldRenderContext context) {
+    private void onRender(LevelRenderContext context) {
         if (targetPos == null) return;
         if (!SkyblockEnhancementsConfig.enablePingOffsetMining) return;
 
@@ -70,7 +71,7 @@ public final class MiningOverlayRenderer {
         boolean showOutline = SkyblockEnhancementsConfig.pingOffsetShowOutline;
         if (!showHighlight && !showOutline) return;
 
-        var consumers = context.consumers();
+        var consumers = context.bufferSource();
         if (consumers == null) return;
 
         BlockState blockState = mc.level.getBlockState(targetPos);
@@ -82,7 +83,7 @@ public final class MiningOverlayRenderer {
         int outlineColor = MiningColors.getOutlineColor(currentProgress, currentTick);
         int highlightColor = MiningColors.getHighlightColor(currentProgress, currentTick);
 
-        PoseStack poseStack = context.matrices();
+        PoseStack poseStack = context.poseStack();
         if (poseStack == null) return;
 
         Vec3 cameraPos = context.gameRenderer().getMainCamera().position();
@@ -210,7 +211,7 @@ public final class MiningOverlayRenderer {
         private static final RenderPipeline HIGHLIGHT_PIPELINE =
                 RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
                         .withLocation("pipeline/skyblock_mining_highlight")
-                        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+                        .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
                         .withCull(false)
                         .build();
 
@@ -222,7 +223,7 @@ public final class MiningOverlayRenderer {
         private static final RenderPipeline OUTLINE_PIPELINE =
                 RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
                         .withLocation("pipeline/skyblock_mining_outline")
-                        .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+                        .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
                         .build();
 
         /** Wireframe lines with no depth test — renders through walls. */

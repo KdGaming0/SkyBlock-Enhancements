@@ -3,7 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements.feature;
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import eu.midnightdust.lib.config.MidnightConfig;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -16,7 +16,7 @@ public class Fullbright {
 
     public static void init() {
         toggleKey =
-                KeyBindingHelper.registerKeyBinding(
+                KeyMappingHelper.registerKeyMapping(
                         new KeyMapping(
                                 "key.skyblock_enhancements.fullbright",
                                 GLFW.GLFW_KEY_UNKNOWN,
@@ -31,8 +31,8 @@ public class Fullbright {
 
             if (client.player != null) {
                 boolean on = SkyblockEnhancementsConfig.enableFullbright;
-                client.player.displayClientMessage(
-                        Component.literal("Fullbright " + (on ? "§aenabled" : "§cdisabled")), true);
+                client.gui.setOverlayMessage(
+                        Component.literal("Fullbright " + (on ? "§aenabled" : "§cdisabled")), false);
             }
         }
     }

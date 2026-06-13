@@ -8,7 +8,7 @@ import com.daqem.uilib.gui.widget.ButtonWidget;
 import com.github.kd_gaming1.skyblockenhancements.gui.reminder.ReminderColors;
 import com.github.kd_gaming1.skyblockenhancements.gui.reminder.ReminderScreenState;
 import com.github.kd_gaming1.skyblockenhancements.gui.reminder.ReminderScreenState.Tab;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -97,7 +97,7 @@ public class ReminderTabBarComponent extends AbstractComponent {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY,
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY,
                        float partialTick, int parentWidth, int parentHeight) {
         if (cachedTab != state.getActiveTab()) {
             cachedTab = state.getActiveTab();

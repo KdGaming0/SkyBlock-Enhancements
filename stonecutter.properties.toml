@@ -1,0 +1,19 @@
+# See https://stonecutter.kikugie.dev/wiki/config/properties#centralized-properties
+mod.id = "skyblock_enhancements"
+mod.name = "SkyBlock Enhancements"
+mod.group = "com.github.kd_gaming1"
+mod.version = "1.1.0"
+
+deps.fabric_loader = "0.19.2"
+loomx.loom_version = "1.16-SNAPSHOT"
+
+["26.1"]
+mod.mc_compat = "~26.1"
+mod.mc_releases = ["26.1", "26.1.1", "26.1.2"]
+
+deps.fabric_api = "0.151.0+26.1.2"
+deps.midnightlib_version = "1.9.3+26.1-fabric"
+deps.hm_api_version = "1.0.3+26.1"
+deps.modmenu_version = "18.0.0-beta.1"
+deps.uilib_version="20.1.3"
+deps.architectury_api_version="20.0.6+fabric"

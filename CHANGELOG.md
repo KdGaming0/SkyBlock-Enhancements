@@ -2,6 +2,7 @@
 
 ### **Skyblock Enhancements**
 **Improvements/Fixes**
+- Updated to 26.1
 - Fixed a bug where the position overlay height no longer worked
 
 ### Removed RRV integration, Storage Overlay, Chat Enhancements

@@ -1,7 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.mixin.potionoverlay;
 
 import com.github.kd_gaming1.skyblockenhancements.feature.potionoverlay.PotionOverlayRenderer;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,10 +20,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class PotionOverlayMixin {
 
     @Inject(
-            method = "renderSlot",
+            method = "extractSlot",
             at = @At("TAIL")
     )
-    private void sbe$onRenderSlot(GuiGraphics graphics, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
+    private void sbe$onRenderSlot(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
         //noinspection unchecked
         PotionOverlayRenderer.render(graphics, (AbstractContainerScreen<?>) (Object) this, slot);
     }

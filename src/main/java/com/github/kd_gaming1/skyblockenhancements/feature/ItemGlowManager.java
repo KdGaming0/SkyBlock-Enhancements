@@ -4,7 +4,7 @@ import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsCon
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
@@ -87,7 +87,7 @@ public class ItemGlowManager {
             }
         });
 
-        ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register((client, world) -> clear());
+        ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register((client, world) -> clear());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> clear());
 
         ClientTickEvents.END_CLIENT_TICK.register(ItemGlowManager::tick);

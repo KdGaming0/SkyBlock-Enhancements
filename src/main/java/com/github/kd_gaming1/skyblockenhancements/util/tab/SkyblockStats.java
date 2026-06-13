@@ -207,7 +207,7 @@ public final class SkyblockStats {
                         new ClickEvent.RunCommand("/skyblockenhancements ignore_tab_stat " + d.statKey)));
 
         message.append(Component.literal("\n")).append(ignore);
-        mc.player.displayClientMessage(message, false);
+        mc.player.sendSystemMessage(message);
     }
 
     // ═════════════════════════════════════════════════════════════════════════

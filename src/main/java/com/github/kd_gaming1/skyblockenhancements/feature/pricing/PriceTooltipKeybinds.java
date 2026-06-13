@@ -3,7 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements.feature.pricing;
 import com.github.kd_gaming1.skyblockenhancements.feature.KeybindCategories;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
@@ -28,13 +28,13 @@ public final class PriceTooltipKeybinds {
 
     /** Registers the two modifier keybinds. Call once during mod init. */
     public static void init() {
-        fullStackKey = KeyBindingHelper.registerKeyBinding(
+        fullStackKey = KeyMappingHelper.registerKeyMapping(
                 new KeyMapping(
                         "key.skyblock_enhancements.full_stack_price",
                         GLFW.GLFW_KEY_LEFT_CONTROL,
                         CATEGORY));
 
-        currentAmountKey = KeyBindingHelper.registerKeyBinding(
+        currentAmountKey = KeyMappingHelper.registerKeyMapping(
                 new KeyMapping(
                         "key.skyblock_enhancements.current_amount_price",
                         GLFW.GLFW_KEY_LEFT_SHIFT,
@@ -96,6 +96,6 @@ public final class PriceTooltipKeybinds {
 
     /** Reads the current {@code KeyMapping.key} via Fabric API. */
     private static InputConstants.Key getBoundKey(KeyMapping mapping) {
-        return KeyBindingHelper.getBoundKeyOf(mapping);
+        return KeyMappingHelper.getBoundKeyOf(mapping);
     }
 }

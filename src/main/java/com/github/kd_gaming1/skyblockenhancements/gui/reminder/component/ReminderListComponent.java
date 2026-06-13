@@ -10,7 +10,7 @@ import com.github.kd_gaming1.skyblockenhancements.feature.reminder.Reminder;
 import com.github.kd_gaming1.skyblockenhancements.gui.reminder.ReminderColors;
 import com.github.kd_gaming1.skyblockenhancements.gui.reminder.ReminderScreenState;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import java.util.List;
 
@@ -131,8 +131,8 @@ public class ReminderListComponent extends AbstractComponent {
     }
 
     @Override
-    public void render(
-            GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, int parentWidth, int parentHeight) {
+    public void extractRenderState(
+            GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick, int parentWidth, int parentHeight) {
         if (state.isListDirty()) {
             state.clearListDirty();
             state.refreshReminders();

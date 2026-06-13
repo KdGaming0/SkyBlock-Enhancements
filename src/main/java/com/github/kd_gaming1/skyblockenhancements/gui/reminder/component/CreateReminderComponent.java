@@ -14,7 +14,7 @@ import com.github.kd_gaming1.skyblockenhancements.gui.reminder.ReminderScreenSta
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
@@ -316,6 +316,6 @@ public class CreateReminderComponent extends AbstractComponent {
     }
 
     @Override
-    public void render(GuiGraphics g, int mx, int my, float pt, int pw, int ph) {
+    public void extractRenderState(GuiGraphicsExtractor g, int mx, int my, float pt, int pw, int ph) {
     }
 }

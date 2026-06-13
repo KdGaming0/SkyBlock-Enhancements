@@ -5,7 +5,7 @@ import com.github.kd_gaming1.skyblockenhancements.feature.tooltipscroll.TopAncho
 import com.github.kd_gaming1.skyblockenhancements.feature.tooltipscroll.TooltipScrollState;
 import java.util.List;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
 import net.minecraft.resources.Identifier;
@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(GuiGraphics.class)
+@Mixin(GuiGraphicsExtractor.class)
 public abstract class TooltipScrollGuiGraphicsMixin {
 
     @Shadow @Final private Matrix3x2fStack pose;
@@ -32,10 +32,10 @@ public abstract class TooltipScrollGuiGraphicsMixin {
 
     /**
      * Redirects the {@code positioner.positionTooltip(...)} call inside
-     * {@code GuiGraphics.renderTooltip}.
+     * {@code GuiGraphicsExtractor.renderTooltip}.
      */
     @Redirect(
-            method = "renderTooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipPositioner;Lnet/minecraft/resources/Identifier;)V",
+            method = "tooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipPositioner;Lnet/minecraft/resources/Identifier;)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipPositioner;positionTooltip(IIIIII)Lorg/joml/Vector2ic;"
@@ -68,7 +68,7 @@ public abstract class TooltipScrollGuiGraphicsMixin {
      * there is a non-zero scroll offset to apply.
      */
     @Inject(
-            method = "renderTooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipPositioner;Lnet/minecraft/resources/Identifier;)V",
+            method = "tooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipPositioner;Lnet/minecraft/resources/Identifier;)V",
             at = @At("HEAD")
     )
     private void onRenderTooltipHead(
@@ -101,7 +101,7 @@ public abstract class TooltipScrollGuiGraphicsMixin {
      * The push/pop pairing must always be symmetric.
      */
     @Inject(
-            method = "renderTooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipPositioner;Lnet/minecraft/resources/Identifier;)V",
+            method = "tooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipPositioner;Lnet/minecraft/resources/Identifier;)V",
             at = @At("TAIL")
     )
     private void onRenderTooltipTail(
