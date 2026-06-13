@@ -45,7 +45,7 @@ public final class MiningOverlayRenderer {
     // ── Public API ────────────────────────────────────────────────────────────
 
     public void register() {
-        LevelRenderEvents.END_MAIN.register(this::onRender);
+        LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(this::onRender);
     }
 
     public void updateProgress(double progress, int elapsedTick, BlockPos targetPos) {

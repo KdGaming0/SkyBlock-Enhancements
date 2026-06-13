@@ -95,10 +95,10 @@ public final class BlockStrengthRegistry {
         regGem(Blocks.YELLOW_STAINED_GLASS,       3800, 8);   // Topaz
         regGem(Blocks.YELLOW_STAINED_GLASS_PANE,  3800, 8);
 
-        regGem(Blocks.PINK_STAINED_GLASS,         4800, 9);   // Jasper
-        regGem(Blocks.PINK_STAINED_GLASS_PANE,    4800, 9);
-        regGem(Blocks.GRAY_STAINED_GLASS,         5200, 9);   // Onyx
-        regGem(Blocks.GRAY_STAINED_GLASS_PANE,    5200, 9);
+        regGem(Blocks.MAGENTA_STAINED_GLASS,         4800, 9);   // Jasper
+        regGem(Blocks.MAGENTA_STAINED_GLASS_PANE,    4800, 9);
+        regGem(Blocks.BLACK_STAINED_GLASS,         5200, 9);   // Onyx
+        regGem(Blocks.BLACK_STAINED_GLASS_PANE,    5200, 9);
         regGem(Blocks.BLUE_STAINED_GLASS,         5200, 9);   // Aquamarine
         regGem(Blocks.BLUE_STAINED_GLASS_PANE,    5200, 9);
         regGem(Blocks.BROWN_STAINED_GLASS,        5200, 9);   // Citrine

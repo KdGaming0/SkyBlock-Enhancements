@@ -45,3 +45,5 @@ AGENTS.md
 graphify-out
 .graphifyignore
 docs
+CLAUDE.md
+.claude
