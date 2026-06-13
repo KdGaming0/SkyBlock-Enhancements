@@ -1,5 +1,11 @@
-## Changelog for 1.0.13
+## Changelog for 1.1.0
 
-### **RRV Enhancements**
+### **Skyblock Enhancements**
 **Improvements/Fixes**
-- Improved the search bar calculator code
+- Fixed a bug where the position overlay height no longer worked
+
+### Removed RRV integration, Storage Overlay, Chat Enhancements
+- These are now parts of dedicated mods.
+- https://modrinth.com/project/enhanced-skyrecipes
+- https://modrinth.com/mod/skyblock-enhanced-storage
+- https://modrinth.com/mod/enhanced-chat

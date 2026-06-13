@@ -54,7 +54,7 @@ public final class PotionOverlayRenderer {
             return;
         }
 
-        if (!GuiContext.matches(screen, TITLE_PREFIX)) {
+        if (!GuiContext.contains(screen, TITLE_PREFIX)) {
             return;
         }
 

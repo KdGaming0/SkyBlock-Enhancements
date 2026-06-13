@@ -39,6 +39,14 @@ public final class GuiContext {
     }
 
     /**
+     * Checks whether the given container screen's title contains the supplied
+     * substring. Returns {@code false} for non-container screens.
+     */
+    public static boolean contains(Screen screen, String substring) {
+        return getTitle(screen).filter(title -> title.contains(substring)).isPresent();
+    }
+
+    /**
      * Executes the given action only if the screen's title starts with the
      * supplied prefix.
      */
