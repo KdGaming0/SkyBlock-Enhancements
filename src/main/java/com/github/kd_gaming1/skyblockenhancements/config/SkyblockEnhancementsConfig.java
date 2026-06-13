@@ -11,9 +11,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     // ── Category IDs ────────────────────────────────────────────────────────────
 
     public static final String SKYBLOCK_ENHANCEMENTS = "skyblock_enhancements";
-    public static final String STORAGE_OVERLAY       = "storage_overlay";
-    public static final String RRV_INTEGRATION       = "rrv_integration";
-    public static final String CHAT_ENHANCEMENTS     = "chat_enhancements";
     public static final String TOOLTIP_ENHANCEMENTS  = "tooltip_enhancements";
     public static final String GENERAL_ENHANCEMENTS  = "general_enhancements";
     public static final String MINING_ENHANCEMENTS   = "mining_enhancements";
@@ -141,177 +138,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static boolean pickaxeAbilityReadySound = false;
 
     // ═══════════════════════════════════════════════════════════════════════════
-    //  Storage Overlay
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    @Hidden
-    @Comment(category = STORAGE_OVERLAY, centered = true)
-    public static Comment storageOverlayText;
-
-    @Hidden
-    @Entry(category = STORAGE_OVERLAY)
-    public static boolean enableStorageDashboard_Test = false;
-
-    @Hidden
-    @Entry(category = STORAGE_OVERLAY)
-    public static boolean persistStorageSnapshots = true;
-
-    @Hidden
-    @Entry(category = STORAGE_OVERLAY, isSlider = true, min = 1, max = 8)
-    public static int storageOverlayColumns = 3;
-
-    @Hidden
-    @Entry(category = STORAGE_OVERLAY, isSlider = true, min = 100, max = 600)
-    public static int storageOverlayHeight = 300;
-
-    @Hidden
-    @Entry(category = STORAGE_OVERLAY, isSlider = true, min = 1, max = 50)
-    public static int storageScrollSpeed = 10;
-
-    @Hidden
-    @Entry(category = STORAGE_OVERLAY)
-    public static boolean storageInverseScroll = false;
-
-    @Hidden
-    @Entry(category = STORAGE_OVERLAY, isColor = true)
-    public static String storageSearchHighlightColor = "#AAFF0055";
-
-    @Hidden
-    @Entry(category = STORAGE_OVERLAY, isColor = true)
-    public static String storageActivePageOutlineColor = "#4878CCFF";
-
-    @Hidden
-    @Entry(category = STORAGE_OVERLAY, isColor = true)
-    public static String storageInactivePageBorderColor = "#1A3060FF";
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  RRV Integration
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean enableRecipeViewer = true;
-
-    @Entry(category = RRV_INTEGRATION, isSlider = true, min = 5, max = 512, precision = 1)
-    public static int repoRefreshCheckMinutes = 15;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean compactItemList = true;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean enableRecipeDiagnostics = false;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static RrvSearchMode rrvSearchMode = RrvSearchMode.FULL_TOOLTIP;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean hideCategoryButtonsWhenNotSearching = true;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean hideCategoryButtons = false;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean keepBookmarksVisibleWhenSearching = true;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean hideEmptyBookmarkPanel = true;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean wideRrvSearchBar = true;
-
-    @Entry(category = RRV_INTEGRATION, isSlider = true, min = 100, max = 300, precision = 1)
-    public static int rrvSearchBarWidth = 200;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean showCollectionRequirements = true;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean bigCraftButton = false;
-
-    @Entry(category = RRV_INTEGRATION, isSlider = true, min = 25, max = 100, precision = 1)
-    public static int rrvItemListWidthPercent = 100;
-
-    @Entry(category = RRV_INTEGRATION, isSlider = true, min = 25, max = 100, precision = 1)
-    public static int rrvSidePanelWidthPercent = 100;
-
-    public enum RrvSearchMode {
-        /** Display name + SkyBlock ID only. Fast, no tooltip generation. */
-        NAME_AND_ID,
-        /** Display name + SkyBlock ID + full tooltip lore. Slower, more matches. */
-        FULL_TOOLTIP
-    }
-
-    public enum CalculatorDecimalSeparator {
-        DOT, COMMA, BOTH
-    }
-
-    @Comment(category = RRV_INTEGRATION, centered = true)
-    public static Comment rrvCalculatorText;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static CalculatorDecimalSeparator rrvCalculatorDecimalSeparator = CalculatorDecimalSeparator.DOT;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean rrvCalculatorRoundingEnabled = true;
-
-    @Entry(category = RRV_INTEGRATION, isSlider = true, min = 0, max = 10, precision = 1)
-    public static int rrvCalculatorMaxDecimalPlaces = 2;
-
-    @Entry(category = RRV_INTEGRATION)
-    public static boolean rrvCalculatorShowFullNumber = false;
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  Chat Enhancements
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    @Comment(category = CHAT_ENHANCEMENTS, centered = true)
-    public static Comment chatEnhancementsText;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean extendedChatHistory = true;
-
-    @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 100, max = 2048)
-    public static int chatHistorySize = 1024;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean compactDuplicateMessages = true;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean compactIgnoreInteractable = true;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean onlyCompactConsecutive = false;
-
-    @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 0, max = 60)
-    public static int compactTimeWindowMinutes = 10;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean centerHypixelText = true;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean smoothSeparators = true;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean enableChatTabs = true;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean enableChatContextMenu = true;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean rightClickChatCopies = false;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean enableChatSearch = true;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean alwaysShowChatSearch = false;
-
-    @Entry(category = CHAT_ENHANCEMENTS)
-    public static boolean enableChatAnimation = false;
-
-    @Entry(category = CHAT_ENHANCEMENTS, isSlider = true, min = 50, max = 500)
-    public static int chatAnimationDurationMs = 150;
-
-    // ═══════════════════════════════════════════════════════════════════════════
     //  Tooltip Enhancements
     // ═══════════════════════════════════════════════════════════════════════════
 
@@ -334,7 +160,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static boolean enablePriceTooltips = true;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS, isSlider = true, min = 5, max = 60)
-    public static int priceRefreshIntervalMinutes = 15;
+    public static int priceRefreshIntervalMinutes = 20;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS)
     public static boolean enablePriceTickerText = true;

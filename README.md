@@ -12,38 +12,6 @@
 
 ## ✨ Features
 
-### Recipe Viewer Integration
-> Requires the [Reliable Recipe Viewer (RRV)](https://modrinth.com/mod/rrv) mod.
-
-Recipe data is sourced from the **NEU repository**, downloaded and cached on first launch. Use `/skyblockenhancements refresh repoData` to manually force a refresh.
-
-- **SkyBlock Crafting**: 3×3 crafting grid recipes for SkyBlock items.
-- **SkyBlock Forge**: Forge recipes with ingredient slots, output item, and a human-readable duration (e.g. "2h 30m").
-- **SkyBlock NPC Shop**: NPC shop recipes showing up to 5 cost items and a result. Includes an "NPC Info" button linking to the NPC's info card.
-- **SkyBlock NPC Info**: Info cards for every NPC — head, island, coordinates, lore, and a "⬈ Navigate" button for [SkyHanni](https://modrinth.com/mod/skyhanni) users.
-- **SkyBlock Mob Drops**: Mob drop tables in a 4×3 grid with per-item drop chance tooltips.
-- **SkyBlock Trade**: Simple 1:1 trade recipes.
-- **Kat Pet Upgrade**: Kat upgrade recipes showing the input pet, materials, coin cost, upgrade time, and resulting pet.
-- **SkyBlock Essence Upgrade**: Essence upgrade recipes showing the input item, essence type and cost, any companion materials, and the resulting upgraded item.
-- **SkyBlock Wiki**: Fallback card for items with wiki URLs but no other recipe data, keeping every item clickable in the viewer.
-- **Search Calculator**: Evaluate math expressions directly in the RRV search bar with real-time "ghost text" results.
-  - Supports basic operators (+, -, *, /, %), exponentiation (^), and parentheses.
-  - SkyBlock Suffixes: Understands magnitude abbreviations (k, m, b, t) and the stack suffix (st) for bulk calculations (e.g., 1st * 25k).
-  - Advanced Math: Support for scientific notation (e.g., 1.5e6) and functions like sqrt(), abs(), floor(), ceil(), and round().
-- **Advanced Item Search**: Search by name, lore, stats, and structured item metadata using an indexed query engine.
-  - *Keywords*: `zombie slayer` finds items matching all words (AND logic).
-  - *Stat thresholds*: `mining_speed>50`, `health<=100`, `damage=50`. You can also use short aliases like `ms>50` (mining speed), `cc>=10` (crit chance), `cd` (crit damage), `hp`, `def`, `str`, `speed` (walk speed), etc.
-  - *Rarity*: `rarity:legendary` or `r:mythic`.
-  - *Item type*: `type:sword`, `type:helmet`, `t:bow`.
-  - *Slayer requirements*: `slayer:zombie>3` (Zombie Slayer 4+), `slayer:eman`, `sl>5`.
-  - *Skill requirements*: `skill:combat>20`, `sk:farming>10`.
-  - *Catacombs*: `catacombs>10`, `cata>=15`.
-  - *Boolean flags*: `soulbound`, `dungeon`, `rift`.
-  - *Mix freely*: `fleet mining_speed>50 rarity:legendary` combines keywords, stats, and filters.
-- **Category Filtering**: Filter the item list to only show items for a specific category, like armor or weapons.
-- **Compact Item List**: Compacts related items (such as dungeon star variants) into families to reduce clutter in the item list.
-- All recipe types include a **Wiki** button that opens the item's page on the SkyBlock wiki.
-
 ### Skyblock Enhancements
 - **Missing Enchants**: Identify missing and non-maxed enchantments directly in item tooltips.
   - *Configurable*: Option to only show when holding `Shift`.
@@ -53,19 +21,6 @@ Recipe data is sourced from the **NEU repository**, downloaded and cached on fir
 - **General Reminders** (`/remindme`): Create and manage custom reminders with real-time or play-time triggers, repeating options, and multiple output types (chat, title box, sound, or chat + title). Includes a graphical interface (`/remindme gui`) for easy management.
 - **Item Glow Outline**: Adds a customizable glow outline to dropped items, with optional see-through-walls support and a configurable color.
 - **Hide Cheap Coins**: Hides cheap coin ground drops (coin/coins player-head drops).
-
-### Chat Enhancements
-- **Compact Duplicate Messages**: Merges repeated chat messages into a single line with an occurrence counter (×N).
-  - Option to only compact consecutive duplicates.
-  - Configurable time window for how long to wait before resetting the compact counter.
-- **Centered Hypixel Text**: Properly centers space-padded Hypixel messages in the chat window.
-- **Smooth Separators**: Replaces dash/line separator characters with clean horizontal lines.
-- **Chat Tabs**: Adds Hypixel channel tab buttons (All, Party, Guild, PM, Co-op) above the chat input. (Button textures were made by [Bentcheesee](https://modrinth.com/user/Bentcheesee). Huge thanks!)
-- **Chat Context Menu**: Right-click a message to open a menu with options to Copy Text, Copy Message Body, Copy with Formatting Codes, or Delete the message.
-- **Right-Click to Copy**: Alternative simple right-click copying without the context menu.
-- **Chat Search**: Search through chat history with an in-chat search box. Option to always show the search field.
-- **Extended Chat History**: Increases the chat history limit from 100 to a configurable value (up to 2048).
-- **Chat Animation**: Smooth slide-up animation when new messages arrive and when the chat screen opens, with a configurable animation duration.
 
 ### Tooltip Enhancements
 - **Price Tooltips**: Shows AH Lowest BIN and Bazaar prices in item tooltips while on SkyBlock.
@@ -115,9 +70,8 @@ Use code **SBE** at checkout for **25% off** your first purchase.
 1. Install **Minecraft** with the **Fabric Loader**.
 2. Download the latest `.jar` file from [Modrinth](https://modrinth.com/mod/skyblock-enhancements).
 3. Ensure you have the **Fabric API** and **UI Lib** installed in your `mods` folder.
-4. Optionally install [RRV](https://modrinth.com/mod/rrv) to enable the recipe viewer integration.
-5. Drag and drop the `SkyBlock Enhancements` `.jar` file into your `.minecraft/mods` folder.
-6. Launch the game!
+4. Drag and drop the `SkyBlock Enhancements` `.jar` file into your `.minecraft/mods` folder.
+5. Launch the game!
 
 ## 💻 Commands
 
@@ -127,7 +81,6 @@ Access the mod's features using the following commands:
 | :--- | :--- |
 | `/skyblockenhancements` | Open the main configuration menu. |
 | `/skyblockenhancements config` | Alternate way to open the configuration menu. |
-| `/skyblockenhancements refresh repoData` | Manually refresh the internal data repository cache. |
 | `/remindme create <amount> <unit> <trigger> <output> message <message>` | Create a custom reminder. |
 | `/remindme gui` | Open the graphical reminder management interface. |
 | `/remindme list` | List all active reminders. |

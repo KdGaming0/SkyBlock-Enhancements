@@ -1,4 +1,4 @@
-package com.github.kd_gaming1.skyblockenhancements.compat.rrv.util;
+package com.github.kd_gaming1.skyblockenhancements.util;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

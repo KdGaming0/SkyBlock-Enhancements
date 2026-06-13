@@ -16,9 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * Thin wrapper around {@link HttpClient} for JSON endpoints.
  *
  * <p>Centralises timeout configuration, user-agent headers, and Gson deserialisation
- * so that {@link com.github.kd_gaming1.skyblockenhancements.repo.NeuRepoDownloader}
- * and {@link com.github.kd_gaming1.skyblockenhancements.repo.hypixel.HypixelItemsDownloader}
- * share the same HTTP behaviour.
+ * for the mod's external data downloads.
  */
 public final class JsonHttpClient {
 

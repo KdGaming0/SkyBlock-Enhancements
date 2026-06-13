@@ -1,52 +1,34 @@
 {
   "skyblock_enhancements.midnightconfig.title": "Skyblock-forbetringar",
-
   "skyblock_enhancements.midnightconfig.category.skyblock_enhancements": "Skyblock-forbetringar",
-  "skyblock_enhancements.midnightconfig.category.storage_overlay": "Lagringsoverlegg",
-  "skyblock_enhancements.midnightconfig.category.rrv_integration": "Oppskriftsvisar-integrasjon",
-  "skyblock_enhancements.midnightconfig.category.chat_enhancements": "Chat-forbetringar",
   "skyblock_enhancements.midnightconfig.category.tooltip_enhancements": "Verktøytips-forbetringar",
   "skyblock_enhancements.midnightconfig.category.general_enhancements": "Generelle forbetringar",
   "skyblock_enhancements.midnightconfig.category.potion_overlay": "Drikkeoverlegg",
   "skyblock_enhancements.midnightconfig.category.dev_tools": "Utviklarverktøy",
-
   "skyblock_enhancements.midnightconfig.text": "Generelle Skyblock-funksjonar",
-
   "skyblock_enhancements.midnightconfig.preventWeaponPlacement": "Hindre plassering av våpen",
   "skyblock_enhancements.midnightconfig.preventWeaponPlacement.tooltip": "Hindrar at Skyblock-sverd (f.eks. Spirit Sceptre) blir plasserte som blokker, men lèt deg framleis bruke evnene deira.",
-
   "skyblock_enhancements.midnightconfig.hideCheapCoins": "Skjul billige myntar",
   "skyblock_enhancements.midnightconfig.hideCheapCoins.tooltip": "Skjuler billige myntar på bakken (myntar/spelarhovud).",
-
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades": "Sett Kat-påminning for kjæledyroppgraderingar",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.tooltip": "Lag automatisk ei påminning når Kat byrjar å oppgradere kjæledyret ditt, slik at du får beskjed når det er klart til å hentast.",
-
   "skyblock_enhancements.midnightconfig.showWhenPressingShift": "Berre vis manglande fortryllingar når du trykker Shift",
   "skyblock_enhancements.midnightconfig.showWhenPressingShift.tooltip": "Berre vis manglande fortryllingar når du trykker Shift.\nViss du set denne til falsk, vil manglande fortryllingar alltid vere synlege.",
-
   "skyblock_enhancements.midnightconfig.enterToConfirmSign": "Enter for å stadfeste inndataskilt\n(trykk Shift + Enter for ny linje)",
   "skyblock_enhancements.midnightconfig.enterToConfirmSign.tooltip": "Trykk Enter for å fullføre skiltredigering på Hypixel-inndataskilt (AH og BZ).\nShift pluss Enter lagar alltid ei ny linje, akkurat som i vanilla.",
-
   "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns": "Bruk Enter-stadfesting på alle skilt",
   "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns.tooltip": "Ignorerer Hypixel sin inndataskiltsjekk og brukar Enter for å stadfeste på alle skiltredigerarar. Shift pluss Enter lagar alltid ei ny linje.",
-
   "skyblock_enhancements.midnightconfig.enableItemGlowOutline": "Aktiver glødande omriss for gjenstandar",
   "skyblock_enhancements.midnightconfig.enableItemGlowOutline.tooltip": "Viser eit glødande omriss på gjenstandar som ligg på bakken nær deg.",
-
   "skyblock_enhancements.midnightconfig.showThroughWalls": "Vis glød gjennom veggar",
   "skyblock_enhancements.midnightconfig.showThroughWalls.tooltip": "Viser det glødande omrisset sjølv om gjenstanden er bak ei blokk.",
-
   "skyblock_enhancements.midnightconfig.defaultGlowColor": "Standard glødfarge",
   "skyblock_enhancements.midnightconfig.defaultGlowColor.tooltip": "Standardfarge for det glødande omrisset. Bruk hex-format som #RRGGBB.",
-
   "skyblock_enhancements.midnightconfig.reminderSoundText": "Lydinnstillingar for påminningar",
-
   "skyblock_enhancements.midnightconfig.enableReminderSound": "Aktiver lyd for påminning",
   "skyblock_enhancements.midnightconfig.enableReminderSound.tooltip": "Spel av ein lyd når ei påminning blir utløyst.",
-
   "skyblock_enhancements.midnightconfig.reminderSound": "Lydtype for påminning",
   "skyblock_enhancements.midnightconfig.reminderSound.tooltip": "Vel kva lyd som skal spelast for påminningar.\nKlikk for å bla gjennom tilgjengelege lydar.",
-
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.UI": "UI",
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.BELL": "Bjølle",
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.CHIME": "Klokkespel",
@@ -55,315 +37,153 @@
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.HARP": "Harpe",
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.PLING": "Pling",
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.SUCCESS": "Suksess",
-
   "skyblock_enhancements.midnightconfig.reminderSoundVolume": "Lydvolum for påminning",
   "skyblock_enhancements.midnightconfig.reminderSoundVolume.tooltip": "Juster volumet for påminningslydar.\nOmråde: 0.0 (stille) til 3.0",
-
   "skyblock_enhancements.midnightconfig.reminderSoundPitch": "Tonehøgd for påminningslyd",
   "skyblock_enhancements.midnightconfig.reminderSoundPitch.tooltip": "Juster tonehøgda for påminningslydar.\nOmråde: 0.5 (låg) til 2.0 (høg)",
-
   "skyblock_enhancements.midnightconfig.pickaxeAbilityText": "Varsling for hakkeevne",
-
   "skyblock_enhancements.midnightconfig.notifyPickaxeAbilityReady": "Varsle når hakkeevne er klar",
   "skyblock_enhancements.midnightconfig.notifyPickaxeAbilityReady.tooltip": "Viser ein stor tittel på skjermen når nedtellinga for hakkeevna di er ferdig.",
-
   "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound": "Spel lyd når hakkeevne er klar",
   "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound.tooltip": "Spelar av ein kort plinglyd saman med tittelvarslinga.",
-
   "skyblock_enhancements.midnightconfig.category.mining_enhancements": "Gruvedrift-forbetringar",
-
   "skyblock_enhancements.midnightconfig.pingOffsetMiningText": "Ping-offset gruvedrift",
-
   "skyblock_enhancements.midnightconfig.enablePingOffsetMining": "Aktiver ping-offset gruvedrift",
   "skyblock_enhancements.midnightconfig.enablePingOffsetMining.tooltip": "Viser ei farga markering på blokka du grav etter som indikerer det optimale tidspunktet for å sleppe graveknappen, med omsyn til server-ping og TPS.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetShowOnLook": "Vis ved blikk",
   "skyblock_enhancements.midnightconfig.pingOffsetShowOnLook.tooltip": "Viser markeringa/omrisset når du berre ser på ein gruvbar blokk, før du byrjar å brekkje henne.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetShowHighlight": "Vis blokkeffekt",
   "skyblock_enhancements.midnightconfig.pingOffsetShowHighlight.tooltip": "Teiknar ein gjennomskineleg farga fyll på den målretta blokka.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetShowOutline": "Vis blokkomriss",
   "skyblock_enhancements.midnightconfig.pingOffsetShowOutline.tooltip": "Teiknar eit trådrammeomriss rundt den målretta blokka.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetColorUseMid": "Bruk mellomfarge (gul)",
   "skyblock_enhancements.midnightconfig.pingOffsetColorUseMid.tooltip": "Når aktivert, går overlegget frå raud (0-70%), til gul (73-99%), og så til grøn ved 100%. Når deaktivert, held det seg raud heilt til 100%, og går direkte til grøn utan mellomfarge.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetColorStart": "Startfarge",
   "skyblock_enhancements.midnightconfig.pingOffsetColorStart.tooltip": "Farge ved starten av graveframdrifta (0%).",
-
   "skyblock_enhancements.midnightconfig.pingOffsetColorMid": "Middels farge",
   "skyblock_enhancements.midnightconfig.pingOffsetColorMid.tooltip": "Farge ved midttresholdet for graveframdrift (85%).",
-
   "skyblock_enhancements.midnightconfig.pingOffsetColorEnd": "Sluttfarge",
   "skyblock_enhancements.midnightconfig.pingOffsetColorEnd.tooltip": "Farge når blokka er klar til å brekkast (100%).",
-
   "skyblock_enhancements.midnightconfig.pingOffsetLineWidth": "Breidd på omrisslinje",
   "skyblock_enhancements.midnightconfig.pingOffsetLineWidth.tooltip": "Tjukkleik på blokkomrisset.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces": "Framhev blokkflater",
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces.tooltip": "Teiknar den gjennomskinelege effekten på alle flatene til blokka.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha": "Dekkevne for effekt",
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha.tooltip": "Dekkevne på blokkeffekten (0-100).",
-
   "skyblock_enhancements.midnightconfig.pingOffsetMarginMs": "Tidsmargin (ms)",
   "skyblock_enhancements.midnightconfig.pingOffsetMarginMs.tooltip": "Justerer når overlegget blir grønt i høve til den føresette bretida. Positive verdiar forseinkar signalet (viss du byter for tidleg). Negative verdiar utløyser det tidlegare (for trege reaksjonstider). 0 for nøyaktig ping-basert tidsstyring.",
-
-  "skyblock_enhancements.midnightconfig.storageOverlayText": "Lagringsdashbord-innstillingar",
-
   "skyblock_enhancements.midnightconfig.enableStorageDashboard": "Aktiver lagringsdashbord",
   "skyblock_enhancements.midnightconfig.enableStorageDashboard.tooltip": "Gjør om Hypixel-lagringsgrensesnitt til eit samla, blaubart dashbord med alle mellomlagra sider synlege på ein gong.",
-
   "skyblock_enhancements.midnightconfig.persistStorageSnapshots": "Behald lagringsøyeblikksbilete",
   "skyblock_enhancements.midnightconfig.persistStorageSnapshots.tooltip": "Lagrer fanga lagringssider på disk slik at dei varar mellom speleøkter.",
-
-  "skyblock_enhancements.midnightconfig.storageOverlayColumns": "Kolonner for lagringsoverlegg",
-  "skyblock_enhancements.midnightconfig.storageOverlayColumns.tooltip": "Tal på lagringssider viste side om side i overlegget.\nOmråde: 1-8",
-
-  "skyblock_enhancements.midnightconfig.storageOverlayHeight": "Høgd for lagringsoverlegg",
-  "skyblock_enhancements.midnightconfig.storageOverlayHeight.tooltip": "Høgda på lagringsoverlegget i pikslar.\nOmråde: 100-600",
-
-  "skyblock_enhancements.midnightconfig.storageScrollSpeed": "Rullefart for lagring",
-  "skyblock_enhancements.midnightconfig.storageScrollSpeed.tooltip": "Kor raskt lagringsoverlegget rullar.\nOmråde: 1-50",
-
-  "skyblock_enhancements.midnightconfig.storageInverseScroll": "Inverter lagringsrulling",
-  "skyblock_enhancements.midnightconfig.storageInverseScroll.tooltip": "Inverterer rulleretninga for lagringsoverlegget.",
-
-  "skyblock_enhancements.midnightconfig.storageSearchHighlightColor": "Farge for søkmarkeriing",
-  "skyblock_enhancements.midnightconfig.storageSearchHighlightColor.tooltip": "Farge brukt for å framheve gjenstandar som passar med eit søk i lagringsoverlegget.",
-
-  "skyblock_enhancements.midnightconfig.storageActivePageOutlineColor": "Omrissfarge for aktiv side",
-  "skyblock_enhancements.midnightconfig.storageActivePageOutlineColor.tooltip": "Omrissfarge for den valde lagringssida.",
-
-  "skyblock_enhancements.midnightconfig.storageInactivePageBorderColor": "Kantfarge for inaktiv side",
-  "skyblock_enhancements.midnightconfig.storageInactivePageBorderColor.tooltip": "Kantfarge for lagringssider som ikkje er valde.",
-
-  "skyblock_enhancements.midnightconfig.enableRecipeViewer": "Aktiver integrasjon av oppskriftsvisar",
-  "skyblock_enhancements.midnightconfig.enableRecipeViewer.tooltip": "Aktiverer integrasjon med Reliable Recipe Viewer (RRV) for å vise SkyBlock-oppskrifter.\nKrev at RRV er installert.",
-
-  "skyblock_enhancements.midnightconfig.repoRefreshCheckMinutes": "Oppdateringsintervall for repo (minutt)",
-  "skyblock_enhancements.midnightconfig.repoRefreshCheckMinutes.tooltip": "Kor ofte NEU-repo-data blir sjekka for oppdatering.\nOmråde: 5-512 minutt",
-
-  "skyblock_enhancements.midnightconfig.compactItemList": "Kompakt gjenstandsliste",
-  "skyblock_enhancements.midnightconfig.compactItemList.tooltip": "Viser ei kompakt liste av gjenstandar i oppskriftsvisaren.",
-
-  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics": "Aktiver oppskriftsdiagnostikk",
-  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Loggfører detaljert oppskriftsdiagnostikk for feilsøking.\nBerre nyttig for utviklarar.",
-
-  "skyblock_enhancements.midnightconfig.rrvSearchMode": "RRV-søkjemodus",
-  "skyblock_enhancements.midnightconfig.rrvSearchMode.tooltip": "Styrer korleis RRV-gjenstandsfiltret søkjer i inventorplasser.\nBerre namn og ID: sjekkar gjenstandsnamn og SkyBlock-ID (raskt).\nFull verktøytips-søk: skannar også heile verktøytipset (tregare, fleire treff).",
-
   "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching": "Skjul kategoriknappar når ein ikkje søkjer",
   "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching.tooltip": "Skjuler kategorifilterknappane ovanfor RRV-søkjefeltet når det ikkje er noko søkjetekst.",
-
   "skyblock_enhancements.midnightconfig.hideCategoryButtons": "Skjul kategoriknappar",
   "skyblock_enhancements.midnightconfig.hideCategoryButtons.tooltip": "Skjuler kategorifilterknappane ovanfor RRV-søkjefeltet heilt.",
-
   "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching": "Hald bokmerke synleg ved søk",
   "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching.tooltip": "Held bokmerke-/tilverkingspanelet synleg sjølv når søkjefeltet er tomt.\nGjeld berre når RRV er sett til \"Berre synleg ved søk\".",
-
   "skyblock_enhancements.midnightconfig.hideEmptyBookmarkPanel": "Gøym tomt bokmerkepanel",
   "skyblock_enhancements.midnightconfig.hideEmptyBookmarkPanel.tooltip": "Gøymer bokmerkesidepanelet automatisk når det ikkje inneheld bokmerke.",
-
   "skyblock_enhancements.midnightconfig.wideRrvSearchBar": "Breitt RRV-søkjefelt",
   "skyblock_enhancements.midnightconfig.wideRrvSearchBar.tooltip": "Tvingar RRV-søkjefeltet til å vere breitt når det er i gjenstandsliste-posisjon.",
-
-  "skyblock_enhancements.midnightconfig.rrvSearchBarWidth": "Breidd på RRV-søkjefelt",
-  "skyblock_enhancements.midnightconfig.rrvSearchBarWidth.tooltip": "Minimumsbreidd på RRV-søkjefeltet i pikslar.\nOmråde: 100-300",
-
-  "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent": "Breidd på RRV-gjenstandsliste",
-  "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent.tooltip": "Prosent av den tilgjengelege skjermbreidda som RRV-gjenstandslistepanelet brukar.\n100% fyller rommet mellom inventar og skjermkant.\nLågare verdiar gjer panelet mindre frå høgre side innover.",
-
-  "skyblock_enhancements.midnightconfig.rrvSidePanelWidthPercent": "Breidd på RRV sidepanel",
-  "skyblock_enhancements.midnightconfig.rrvSidePanelWidthPercent.tooltip": "Prosent av standardbreidda som RRV-bokmerke-/tilverkingspanelet brukar.\n100% brukar den normale utrekna breidda.\nLågare verdiar gjer panelet mindre innover.",
-
-  "skyblock_enhancements.midnightconfig.showCollectionRequirements": "Vis samlingskrav",
-  "skyblock_enhancements.midnightconfig.showCollectionRequirements.tooltip": "Viser ein raud indikator og verktøytips på tilverkingsoppskrifter som krev eit samlingsnivå eller anna vilkår for å tilverke.",
-
-  "skyblock_enhancements.midnightconfig.bigCraftButton": "Stor tilverkingsknapp",
-  "skyblock_enhancements.midnightconfig.bigCraftButton.tooltip": "Viser ein stor 'Craft'-knapp under oppskrifta i staden for ein liten '+'-knapp ved resultatsporet.",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorText": "Søkekalkulator",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorDecimalSeparator": "Desimalseparator for kalkulator",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorDecimalSeparator.tooltip": "Kva teikn som skal godtakast som desimalseparator i søkefelt-kalkulatoren.\nPUNKTUM = berre '.' | KOMMA = berre ',' | BEGGE = godta begge (avviser uklare tal som inneheld begge).",
-
-  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.DOT": "Punktum (.)",
-  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.COMMA": "Komma (,)",
-  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.BOTH": "Begge",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorRoundingEnabled": "Slå på avrunding i kalkulator",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorRoundingEnabled.tooltip": "Når denne er på, vert kalkulatorresultat avrunda til det valde talet på desimalplassar.\nNår denne er av, vert verdiar kutta (ikkje avrunda) og etterfølgjande nuller fjerna.",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces": "Maksimaltal desimaltal i kalkulator",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces.tooltip": "Maksimaltal desimaltal som vert vist i kalkulatorresultat.\nOmråde: 0-10.  Har ingen effekt når resultatet er eit heilt tal.",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber": "Vis fulle tal",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber.tooltip": "Når aktivert, viser full råtal utan K/M/B/T-suffiks.\nNår deaktivert, formaterar berre reine mangfald (t.d. 10000 -> 10K, men 10001 -> 10001) for å bevara nøyaktigheit.",
-
-  "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Berre namn og ID",
-  "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full verktøytips-søk",
-
-  "skyblock_enhancements.midnightconfig.chatEnhancementsText": "Chat-forbetringsfunksjonar",
-
   "skyblock_enhancements.midnightconfig.extendedChatHistory": "Utvida chathistorikk",
   "skyblock_enhancements.midnightconfig.extendedChatHistory.tooltip": "Aukar maks tal på chatmeldingar som blir haldne i historikken forbi standarden på 100.",
-
-  "skyblock_enhancements.midnightconfig.chatHistorySize": "Storleik på chathistorikk",
-  "skyblock_enhancements.midnightconfig.chatHistorySize.tooltip": "Maksimalt tal på chatmeldingar lagra i historikken.\nOmråde: 100-2048",
-
   "skyblock_enhancements.midnightconfig.compactDuplicateMessages": "Kompaktér dupliserte meldingar",
   "skyblock_enhancements.midnightconfig.compactDuplicateMessages.tooltip": "Slår saman dupliserte chatmeldingar og viser ein teljar i staden.",
-
   "skyblock_enhancements.midnightconfig.compactIgnoreInteractable": "Ikkje kompaktér interaktive meldingar",
   "skyblock_enhancements.midnightconfig.compactIgnoreInteractable.tooltip": "Hopp over kompatering for meldingar med klikkbare element.",
-
   "skyblock_enhancements.midnightconfig.onlyCompactConsecutive": "Kompaktér berre påfølgjande",
   "skyblock_enhancements.midnightconfig.onlyCompactConsecutive.tooltip": "Berre kompaktér dupliserte meldingar som kjem rett etter kvarandre.",
-
   "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes": "Tidsvindu for komprimering (minutt)",
   "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes.tooltip": "Tidsvindu der dupliserte meldingar skal kompaktast.\nOmråde: 0-60",
-
   "skyblock_enhancements.midnightconfig.centerHypixelText": "Sentrér Hypixel-tekst",
   "skyblock_enhancements.midnightconfig.centerHypixelText.tooltip": "Sentrerer tekst som Hypixel sender med mellomromsutfylling.",
-
   "skyblock_enhancements.midnightconfig.smoothSeparators": "Jamne skiljelinjer",
   "skyblock_enhancements.midnightconfig.smoothSeparators.tooltip": "Brukar jamne animerte skiljelinjer mellom chat-seksjonar.",
-
   "skyblock_enhancements.midnightconfig.enableChatTabs": "Aktiver chat-faner",
   "skyblock_enhancements.midnightconfig.enableChatTabs.tooltip": "Legg til fanekategoriar for chat (Alle, Party, Laug, osv.).",
-
   "skyblock_enhancements.midnightconfig.enableChatContextMenu": "Aktiver chat-kontekstmeny",
   "skyblock_enhancements.midnightconfig.enableChatContextMenu.tooltip": "Høgreklikk på chatmeldingar for å opne ein kontekstmeny.",
-
   "skyblock_enhancements.midnightconfig.rightClickChatCopies": "Høgreklikk kopierer melding",
   "skyblock_enhancements.midnightconfig.rightClickChatCopies.tooltip": "Høgreklikk på ei chatmelding kopierer ho til utklippstavla.",
-
   "skyblock_enhancements.midnightconfig.enableChatSearch": "Aktiver chatsøk",
   "skyblock_enhancements.midnightconfig.enableChatSearch.tooltip": "Lèt deg søkje gjennom chathistorikken.",
-
   "skyblock_enhancements.midnightconfig.alwaysShowChatSearch": "Vis alltid søkefelt",
   "skyblock_enhancements.midnightconfig.alwaysShowChatSearch.tooltip": "Held søkefeltet i chat synleg heile tida.",
-
   "skyblock_enhancements.midnightconfig.enableChatAnimation": "Aktiver chatanimasjon",
   "skyblock_enhancements.midnightconfig.enableChatAnimation.tooltip": "Animerer chatmeldingar med ein glatt glide-effekt.",
-
-  "skyblock_enhancements.midnightconfig.chatAnimationDurationMs": "Animasjonslengd for chat (ms)",
-  "skyblock_enhancements.midnightconfig.chatAnimationDurationMs.tooltip": "Lengd på chat-glideanimasjonen i millisekund.\nOmråde: 50-500",
-
   "skyblock_enhancements.midnightconfig.tooltipEnhancementsText": "Verktøytips-forbetringsfunksjonar",
-
   "skyblock_enhancements.midnightconfig.enchantmentsText": "Fortryllingsverktøytips",
-
   "skyblock_enhancements.midnightconfig.showMissingEnchantments": "Vis manglande fortryllingar",
   "skyblock_enhancements.midnightconfig.showMissingEnchantments.tooltip": "Viser fortryllingar som manglar frå ein gjenstand i verktøytipset.",
-
   "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments": "Vis ikkje-maksa fortryllingar",
   "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments.tooltip": "Framhever fortryllingar som ikkje er på maksnivå.",
-
   "skyblock_enhancements.midnightconfig.priceTooltipsText": "Pris-verktøytips",
-
   "skyblock_enhancements.midnightconfig.enablePriceTooltips": "Vis pris-verktøytips",
   "skyblock_enhancements.midnightconfig.enablePriceTooltips.tooltip": "Viser Bazaar- og auksjonshus-prisinformasjon i verktøytips for gjenstandar.",
-
   "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes": "Prisoppdateringsintervall (minutt)",
   "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes.tooltip": "Kor ofte prisdata blir henta frå API-et.\nOmråde: 5-60",
-
   "skyblock_enhancements.midnightconfig.enablePriceTickerText": "Aktiver pris-tikkartekst",
   "skyblock_enhancements.midnightconfig.enablePriceTickerText.tooltip": "Viser ein rullande tikkertekst for prisendringar i verktøytips.",
-
   "skyblock_enhancements.midnightconfig.roundPriceNumbers": "Rund av prisnummer",
   "skyblock_enhancements.midnightconfig.roundPriceNumbers.tooltip": "Rundar av prisverdiar for reinare visning (f.eks. 1,2M i staden for 1 234 567).",
-
   "skyblock_enhancements.midnightconfig.showBazaarBuySell": "Vis Bazaar kjøp/sal-prisar",
   "skyblock_enhancements.midnightconfig.showBazaarBuySell.tooltip": "Viser separate kjøps- og sal-prisar for Bazaar-gjenstandar.",
-
   "skyblock_enhancements.midnightconfig.showBazaarSpread": "Vis Bazaar-spreiing",
   "skyblock_enhancements.midnightconfig.showBazaarSpread.tooltip": "Viser spreiinga (skilnaden) mellom kjøps- og sal-prisar på Bazaar.",
-
   "skyblock_enhancements.midnightconfig.tooltipScrollText": "Rulleinnstillingar for verktøytips",
-
   "skyblock_enhancements.midnightconfig.enableTooltipScroll": "Aktiver rulling av verktøytips",
   "skyblock_enhancements.midnightconfig.enableTooltipScroll.tooltip": "Lèt deg rulle gjennom lange verktøytips med musehjulet.",
-
   "skyblock_enhancements.midnightconfig.anchorTooltipToTop": "Fest verktøytips på toppen",
   "skyblock_enhancements.midnightconfig.anchorTooltipToTop.tooltip": "Fest lange verktøytips på toppen av skjermen i staden for botnen.",
-
   "skyblock_enhancements.midnightconfig.tooltipScrollSpeed": "Rullefart for verktøytips",
   "skyblock_enhancements.midnightconfig.tooltipScrollSpeed.tooltip": "Kor raskt verktøytips rullar.\nOmråde: 1-30",
-
   "skyblock_enhancements.midnightconfig.invertTooltipScroll": "Inverter rulling for verktøytips",
   "skyblock_enhancements.midnightconfig.invertTooltipScroll.tooltip": "Inverterer rulleretninga for verktøytips.",
-
   "skyblock_enhancements.midnightconfig.enableHorizontalScroll": "Aktiver horisontal rulling",
   "skyblock_enhancements.midnightconfig.enableHorizontalScroll.tooltip": "Lèt deg rulle horisontalt i verktøytips.",
-
   "skyblock_enhancements.midnightconfig.text2": "Generelle forbetringsfunksjonar",
-
   "skyblock_enhancements.midnightconfig.noDoubleSneak": "Hindre dobbeltsniking",
   "skyblock_enhancements.midnightconfig.noDoubleSneak.tooltip": "Hindrar at snikeknappen slår seg av og på to gonger ved eit trykk.",
-
   "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring": "Deaktiver åtvaring om ressurspakke",
   "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring.tooltip": "Slår av åtvaringa om ressurspakke-kompatibilitet.",
-
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation": "Deaktiver kommandostadfesting",
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation.tooltip": "Hoppar over stadfestingsvindauget for visse kommandoar.",
-
   "skyblock_enhancements.midnightconfig.hideItemFrames": "Skjul gjenstandsrammer",
   "skyblock_enhancements.midnightconfig.hideItemFrames.tooltip": "Skjuler gjenstandramme-entitetar frå rendering.",
-
   "skyblock_enhancements.midnightconfig.hideTextureErrors": "Skjul teksturfeil",
   "skyblock_enhancements.midnightconfig.hideTextureErrors.tooltip": "Undertrykkar feilmeldingar for teksturinnlasting i loggen.",
-
   "skyblock_enhancements.midnightconfig.fullbrightText": "Fullbright-innstillingar",
-
   "skyblock_enhancements.midnightconfig.enableFullbright": "Aktiver Fullbright",
   "skyblock_enhancements.midnightconfig.enableFullbright.tooltip": "Gjer speleverda heilt opplyst uavhengig av lysnivå.",
-
   "skyblock_enhancements.midnightconfig.fullbrightUseGamma": "Fullbright med gamma",
   "skyblock_enhancements.midnightconfig.fullbrightUseGamma.tooltip": "Brukar gammajustering for fullbright i staden for tilpassa lys.",
-
   "skyblock_enhancements.midnightconfig.fullbrightStrength": "Fullbright-styrke",
   "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "Styrken på fullbright-effekten.\nOmråde: 0-100",
-
   "skyblock_enhancements.midnightconfig.potionOverlayText": "Drikkeeffekt-overlegg",
-
   "skyblock_enhancements.midnightconfig.enablePotionOverlay": "Aktiver overlegg for drikkeeffektar",
   "skyblock_enhancements.midnightconfig.enablePotionOverlay.tooltip": "Viser ei farga fyll på drikkeeffekt-spor i GUI-et for å slå av/på effektar. Grøn = aktivert, raud = deaktivert.",
-
   "skyblock_enhancements.midnightconfig.disabledPotionOverlayColor": "Farge for deaktivert effekt",
   "skyblock_enhancements.midnightconfig.disabledPotionOverlayColor.tooltip": "Fyllfarge for deaktiverte drikkeeffektar. Bruk hex-format som #RRGGBB.",
-
   "skyblock_enhancements.midnightconfig.enabledPotionOverlayColor": "Farge for aktivert effekt",
   "skyblock_enhancements.midnightconfig.enabledPotionOverlayColor.tooltip": "Fyllfarge for aktiverte drikkeeffektar. Bruk hex-format som #RRGGBB.",
-
   "skyblock_enhancements.midnightconfig.potionOverlayAlpha": "Dekkevne for overlegg",
   "skyblock_enhancements.midnightconfig.potionOverlayAlpha.tooltip": "Gjennomsiktigheita til drikkeeffekt-overlegget. Område: 0 (usynleg) til 255 (heilt ujamnt).",
-
   "skyblock_enhancements.midnightconfig.devToolsText": "Utviklarverktøy",
-
   "skyblock_enhancements.midnightconfig.devMode": "Utviklarmodus",
   "skyblock_enhancements.midnightconfig.devMode.tooltip": "Aktiverer verktøy og logging berre for utviklarar.\nBlir automatisk aktivert i utviklingsmiljø.",
-
   "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper": "Aktiver feilsøking for gjenstandar på bakken",
   "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper.tooltip": "Viser feilsøkingsinformasjon om gjenstandar på bakken i nærleiken.",
-
   "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby": "Feilsøk berre gjenstandar i nærleiken",
   "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby.tooltip": "Viser berre feilsøkingsinfo for gjenstandar innanfor den innstilte radiusen.",
-
   "skyblock_enhancements.midnightconfig.groundItemDebugRadius": "Feilsøkingsradius",
   "skyblock_enhancements.midnightconfig.groundItemDebugRadius.tooltip": "Radius i blokker for å skanne etter gjenstandar på bakken under feilsøking.\nOmråde: 4-64",
-
   "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks": "Feilsøkingsintervall (ticks)",
   "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks.tooltip": "Kor ofte feilsøkingsinfo for gjenstandar på bakken blir oppdatert, i ticks.\nOmråde: 1-200",
-
   "key.category.skyblock_enhancements.general": "Skyblock-forbetringar",
   "key.skyblock_enhancements.fullbright": "Skru av/på Fullbright",
   "key.skyblock_enhancements.full_stack_price": "Vis BZ-pris for full stabel",
   "key.skyblock_enhancements.current_amount_price": "Vis BZ-pris for gjeldande mengde",
-
-  "skyblock_enhancements.midnightconfig.rrvConfigHint": "Fleire alternativ tilgjengelege i Skyblock-forbetringar-konfig -> RRV-integrasjon",
   "skyblock_enhancements.midnightconfig.openFromRrv": "Opne SBE konfig...",
   "skyblock_enhancements.recipe.not_found": "Denne gjenstanden (ID: %s) har ikkje nokon oppskrift."
 }

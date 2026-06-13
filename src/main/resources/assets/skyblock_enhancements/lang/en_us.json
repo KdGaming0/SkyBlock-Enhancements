@@ -1,52 +1,34 @@
 {
   "skyblock_enhancements.midnightconfig.title": "Skyblock Enhancements",
-
   "skyblock_enhancements.midnightconfig.category.skyblock_enhancements": "Skyblock Enhancements",
-  "skyblock_enhancements.midnightconfig.category.storage_overlay": "Storage Overlay",
-  "skyblock_enhancements.midnightconfig.category.rrv_integration": "Recipe Viewer Integration",
-  "skyblock_enhancements.midnightconfig.category.chat_enhancements": "Chat Enhancements",
   "skyblock_enhancements.midnightconfig.category.tooltip_enhancements": "Tooltip Enhancements",
   "skyblock_enhancements.midnightconfig.category.general_enhancements": "General Enhancements",
   "skyblock_enhancements.midnightconfig.category.potion_overlay": "Potion Overlay",
   "skyblock_enhancements.midnightconfig.category.dev_tools": "Dev Tools",
-
   "skyblock_enhancements.midnightconfig.text": "General Skyblock Features",
-
   "skyblock_enhancements.midnightconfig.preventWeaponPlacement": "Prevent Weapon Placement",
   "skyblock_enhancements.midnightconfig.preventWeaponPlacement.tooltip": "Prevents Skyblock swords (e.g. Spirit Sceptre) from being placed as blocks while still allowing their abilities to activate.",
-
   "skyblock_enhancements.midnightconfig.hideCheapCoins": "Hide Cheap Coins",
   "skyblock_enhancements.midnightconfig.hideCheapCoins.tooltip": "Hides cheap coin ground drops (coin/coins player-head drops).",
-
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades": "Set Kat Reminder for Pet Upgrades",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.tooltip": "Automatically create a reminder when Kat starts upgrading your pet so you get notified when it's ready to pick up.",
-
   "skyblock_enhancements.midnightconfig.showWhenPressingShift": "Only Show Missing Enchantments When Pressing Shift",
   "skyblock_enhancements.midnightconfig.showWhenPressingShift.tooltip": "Only show missing enchantments when pressing Shift.\nSetting this to false makes missing enchantments always visible.",
-
   "skyblock_enhancements.midnightconfig.enterToConfirmSign": "Enter to Confirm Input Sign\n(press Shift + Enter for new line)",
   "skyblock_enhancements.midnightconfig.enterToConfirmSign.tooltip": "Press Enter to finish sign editing on Hypixel input signs (AH and BZ).\nShift plus Enter always makes a new line like vanilla.",
-
   "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns": "Apply Enter Confirm to All Signs",
   "skyblock_enhancements.midnightconfig.enterToConfirmAllSigns.tooltip": "Ignores the Hypixel input sign check and applies Enter to confirm on every sign editor. Shift plus Enter always makes a new line.",
-
   "skyblock_enhancements.midnightconfig.enableItemGlowOutline": "Enable Item Glow Outline",
   "skyblock_enhancements.midnightconfig.enableItemGlowOutline.tooltip": "Shows a glow outline on item drops near you.",
-
   "skyblock_enhancements.midnightconfig.showThroughWalls": "Show Glow Through Walls",
   "skyblock_enhancements.midnightconfig.showThroughWalls.tooltip": "Shows the glow outline even if the item is behind a block.",
-
   "skyblock_enhancements.midnightconfig.defaultGlowColor": "Default Glow Color",
   "skyblock_enhancements.midnightconfig.defaultGlowColor.tooltip": "Default color for the item glow outline. Use hex format like #RRGGBB.",
-
   "skyblock_enhancements.midnightconfig.reminderSoundText": "Reminder Sound Settings",
-
   "skyblock_enhancements.midnightconfig.enableReminderSound": "Enable Reminder Sound",
   "skyblock_enhancements.midnightconfig.enableReminderSound.tooltip": "Play a sound when a reminder is triggered.",
-
   "skyblock_enhancements.midnightconfig.reminderSound": "Reminder Sound Type",
   "skyblock_enhancements.midnightconfig.reminderSound.tooltip": "Choose which sound to play for reminders.\nClick to cycle through available sounds.",
-
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.UI": "UI",
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.BELL": "Bell",
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.CHIME": "Chime",
@@ -55,315 +37,153 @@
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.HARP": "Harp",
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.PLING": "Pling",
   "skyblock_enhancements.midnightconfig.enum.ReminderSoundType.SUCCESS": "Success",
-
   "skyblock_enhancements.midnightconfig.reminderSoundVolume": "Reminder Sound Volume",
   "skyblock_enhancements.midnightconfig.reminderSoundVolume.tooltip": "Adjust the volume of reminder sounds.\nRange: 0.0 (silent) to 3.0",
-
   "skyblock_enhancements.midnightconfig.reminderSoundPitch": "Reminder Sound Pitch",
   "skyblock_enhancements.midnightconfig.reminderSoundPitch.tooltip": "Adjust the pitch of reminder sounds.\nRange: 0.5 (low) to 2.0 (high)",
-
   "skyblock_enhancements.midnightconfig.pickaxeAbilityText": "Pickaxe Ability Notification",
-
   "skyblock_enhancements.midnightconfig.notifyPickaxeAbilityReady": "Notify When Pickaxe Ability is Ready",
   "skyblock_enhancements.midnightconfig.notifyPickaxeAbilityReady.tooltip": "Shows a large on-screen title when your pickaxe ability cooldown finishes.",
-
   "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound": "Play Sound on Pickaxe Ability Ready",
   "skyblock_enhancements.midnightconfig.pickaxeAbilityReadySound.tooltip": "Plays a short pling sound alongside the title notification.",
-
   "skyblock_enhancements.midnightconfig.category.mining_enhancements": "Mining Enhancements",
-
   "skyblock_enhancements.midnightconfig.pingOffsetMiningText": "Ping Offset Mining",
-
   "skyblock_enhancements.midnightconfig.enablePingOffsetMining": "Enable Ping Offset Mining",
   "skyblock_enhancements.midnightconfig.enablePingOffsetMining.tooltip": "Shows a colored highlight on the block you're mining that indicates the optimal moment to release the mining key, accounting for server ping and TPS.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetShowOnLook": "Show on Look",
   "skyblock_enhancements.midnightconfig.pingOffsetShowOnLook.tooltip": "Shows the highlight/outline when merely looking at a mineable block, before you start breaking it.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetShowHighlight": "Show Block Highlight",
   "skyblock_enhancements.midnightconfig.pingOffsetShowHighlight.tooltip": "Renders a translucent colored fill on the targeted block.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetShowOutline": "Show Block Outline",
   "skyblock_enhancements.midnightconfig.pingOffsetShowOutline.tooltip": "Renders a wireframe outline around the targeted block.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetColorUseMid": "Use Middle Color (Yellow)",
   "skyblock_enhancements.midnightconfig.pingOffsetColorUseMid.tooltip": "When enabled, the overlay cycles red at 0-70%, yellow at 73-99%, then snaps to green at 100%. When disabled, it stays red until 100% then snaps directly to green with no middle color.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetColorStart": "Start Color",
   "skyblock_enhancements.midnightconfig.pingOffsetColorStart.tooltip": "Color at the beginning of the mining progress (0%).",
-
   "skyblock_enhancements.midnightconfig.pingOffsetColorMid": "Mid Color",
   "skyblock_enhancements.midnightconfig.pingOffsetColorMid.tooltip": "Color at the middle threshold of mining progress (85%).",
-
   "skyblock_enhancements.midnightconfig.pingOffsetColorEnd": "End Color",
   "skyblock_enhancements.midnightconfig.pingOffsetColorEnd.tooltip": "Color when the block is ready to break (100%).",
-
   "skyblock_enhancements.midnightconfig.pingOffsetLineWidth": "Outline Line Width",
   "skyblock_enhancements.midnightconfig.pingOffsetLineWidth.tooltip": "Thickness of the block outline.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces": "Highlight Block Faces",
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces.tooltip": "Renders the translucent highlight on all faces of the block.",
-
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha": "Highlight Opacity",
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha.tooltip": "Opacity of the block face highlight (0-100).",
-
   "skyblock_enhancements.midnightconfig.pingOffsetMarginMs": "Timing Margin (ms)",
   "skyblock_enhancements.midnightconfig.pingOffsetMarginMs.tooltip": "Adjusts when the overlay turns green relative to the predicted break time. Positive values delay the signal (if you switch too early). Negative values trigger it sooner (for slow reaction time). 0 for exact ping-only timing.",
-
-  "skyblock_enhancements.midnightconfig.storageOverlayText": "Storage Dashboard Settings",
-
   "skyblock_enhancements.midnightconfig.enableStorageDashboard": "Enable Storage Dashboard",
   "skyblock_enhancements.midnightconfig.enableStorageDashboard.tooltip": "Transforms Hypixel storage GUIs into a unified, browsable dashboard with all cached pages visible at once.",
-
   "skyblock_enhancements.midnightconfig.persistStorageSnapshots": "Persist Storage Snapshots",
   "skyblock_enhancements.midnightconfig.persistStorageSnapshots.tooltip": "Saves captured storage pages to disk so they persist between game sessions.",
-
-  "skyblock_enhancements.midnightconfig.storageOverlayColumns": "Storage Overlay Columns",
-  "skyblock_enhancements.midnightconfig.storageOverlayColumns.tooltip": "Number of storage pages displayed side by side in the overlay.\nRange: 1-8",
-
-  "skyblock_enhancements.midnightconfig.storageOverlayHeight": "Storage Overlay Height",
-  "skyblock_enhancements.midnightconfig.storageOverlayHeight.tooltip": "Height of the storage overlay in pixels.\nRange: 100-600",
-
-  "skyblock_enhancements.midnightconfig.storageScrollSpeed": "Storage Scroll Speed",
-  "skyblock_enhancements.midnightconfig.storageScrollSpeed.tooltip": "How fast the storage overlay scrolls.\nRange: 1-50",
-
-  "skyblock_enhancements.midnightconfig.storageInverseScroll": "Invert Storage Scroll",
-  "skyblock_enhancements.midnightconfig.storageInverseScroll.tooltip": "Inverts the scroll direction for the storage overlay.",
-
-  "skyblock_enhancements.midnightconfig.storageSearchHighlightColor": "Search Highlight Color",
-  "skyblock_enhancements.midnightconfig.storageSearchHighlightColor.tooltip": "Color used to highlight items matching a search query in the storage overlay.",
-
-  "skyblock_enhancements.midnightconfig.storageActivePageOutlineColor": "Active Page Outline Color",
-  "skyblock_enhancements.midnightconfig.storageActivePageOutlineColor.tooltip": "Outline color for the currently selected storage page.",
-
-  "skyblock_enhancements.midnightconfig.storageInactivePageBorderColor": "Inactive Page Border Color",
-  "skyblock_enhancements.midnightconfig.storageInactivePageBorderColor.tooltip": "Border color for storage pages that are not currently selected.",
-
-  "skyblock_enhancements.midnightconfig.enableRecipeViewer": "Enable Recipe Viewer Integration",
-  "skyblock_enhancements.midnightconfig.enableRecipeViewer.tooltip": "Enables integration with Reliable Recipe Viewer (RRV) to show SkyBlock recipes.\nRequires RRV to be installed.",
-
-  "skyblock_enhancements.midnightconfig.repoRefreshCheckMinutes": "Repo Refresh Check Interval (minutes)",
-  "skyblock_enhancements.midnightconfig.repoRefreshCheckMinutes.tooltip": "How often the NEU repo data is checked for refresh.\nRange: 5-512 minutes",
-
-  "skyblock_enhancements.midnightconfig.compactItemList": "Compact Item List",
-  "skyblock_enhancements.midnightconfig.compactItemList.tooltip": "Shows a compact list of items in the recipe viewer.",
-
-  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics": "Enable Recipe Diagnostics",
-  "skyblock_enhancements.midnightconfig.enableRecipeDiagnostics.tooltip": "Logs detailed recipe diagnostics for debugging purposes.\nOnly useful for developers.",
-
-  "skyblock_enhancements.midnightconfig.rrvSearchMode": "RRV Search Mode",
-  "skyblock_enhancements.midnightconfig.rrvSearchMode.tooltip": "Controls how the RRV item filter searches inventory slots.\nName and ID Only: checks item name and SkyBlock ID (fast).\nFull Tooltip Search: also scans the entire tooltip text (slower, more matches).",
-
   "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching": "Hide Category Buttons When Not Searching",
   "skyblock_enhancements.midnightconfig.hideCategoryButtonsWhenNotSearching.tooltip": "Hides the category filter buttons above the RRV search bar when no search text is entered.",
-
   "skyblock_enhancements.midnightconfig.hideCategoryButtons": "Hide Category Buttons",
   "skyblock_enhancements.midnightconfig.hideCategoryButtons.tooltip": "Completely hides the category filter buttons above the RRV search bar.",
-
   "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching": "Keep Bookmarks Visible When Searching",
   "skyblock_enhancements.midnightconfig.keepBookmarksVisibleWhenSearching.tooltip": "Keeps the bookmark/craftables side panel visible even when the search bar is empty.\nOnly applies when RRV is set to \"Only visible when searching\".",
-
   "skyblock_enhancements.midnightconfig.hideEmptyBookmarkPanel": "Hide Empty Bookmark Panel",
   "skyblock_enhancements.midnightconfig.hideEmptyBookmarkPanel.tooltip": "Automatically hides the bookmarks side panel when it contains no bookmarks.",
-
   "skyblock_enhancements.midnightconfig.wideRrvSearchBar": "Wide RRV Search Bar",
   "skyblock_enhancements.midnightconfig.wideRrvSearchBar.tooltip": "Forces the RRV search bar to be wider when in the item-list position.",
-
-  "skyblock_enhancements.midnightconfig.rrvSearchBarWidth": "RRV Search Bar Width",
-  "skyblock_enhancements.midnightconfig.rrvSearchBarWidth.tooltip": "Minimum width of the RRV search bar in pixels.\nRange: 100-300",
-
-  "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent": "RRV Item List Width",
-  "skyblock_enhancements.midnightconfig.rrvItemListWidthPercent.tooltip": "Percentage of the available screen width used by the RRV item list panel.\n100% fills the space between inventory and screen edge.\nLower values shrink the panel from the right side inward.",
-
-  "skyblock_enhancements.midnightconfig.rrvSidePanelWidthPercent": "RRV Side Panel Width",
-  "skyblock_enhancements.midnightconfig.rrvSidePanelWidthPercent.tooltip": "Percentage of the default width used by the RRV bookmarks/craftables side panel.\n100% uses the normal calculated width.\nLower values shrink the panel inward.",
-
-  "skyblock_enhancements.midnightconfig.showCollectionRequirements": "Show Collection Requirements",
-  "skyblock_enhancements.midnightconfig.showCollectionRequirements.tooltip": "Shows a red indicator and tooltip on crafting recipes that require a collection level or other condition to craft.",
-
-  "skyblock_enhancements.midnightconfig.bigCraftButton": "Big Craft Button",
-  "skyblock_enhancements.midnightconfig.bigCraftButton.tooltip": "Shows a large 'Craft' text button below the recipe instead of a small '+' icon next to the output slot.",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorText": "Search Calculator",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorDecimalSeparator": "Calculator Decimal Separator",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorDecimalSeparator.tooltip": "Which character to accept as the decimal separator in the search-bar calculator.\nDOT = only '.'  |  COMMA = only ','  |  BOTH = accept either (rejects ambiguous numbers containing both).",
-
-  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.DOT": "Dot (.)",
-  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.COMMA": "Comma (,)",
-  "skyblock_enhancements.midnightconfig.enum.CalculatorDecimalSeparator.BOTH": "Both",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorRoundingEnabled": "Enable Calculator Rounding",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorRoundingEnabled.tooltip": "When enabled, calculator results are rounded to the configured number of decimal places.\nWhen disabled, values are truncated (not rounded) and trailing zeros are stripped.",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces": "Calculator Max Decimal Places",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorMaxDecimalPlaces.tooltip": "Maximum number of decimal places shown in calculator results.\nRange: 0-10.  Has no effect when the result is a whole number.",
-
-  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber": "Show Full Numbers",
-  "skyblock_enhancements.midnightconfig.rrvCalculatorShowFullNumber.tooltip": "When enabled, shows the full raw number without K/M/B/T suffixes.\nWhen disabled, only formats clean multiples (e.g., 10000 -> 10K, but 10001 -> 10001) to preserve accuracy.",
-
-  "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.NAME_AND_ID": "Name and ID Only",
-  "skyblock_enhancements.midnightconfig.enum.RrvSearchMode.FULL_TOOLTIP": "Full Tooltip Search",
-
-  "skyblock_enhancements.midnightconfig.chatEnhancementsText": "Chat Enhancement Features",
-
   "skyblock_enhancements.midnightconfig.extendedChatHistory": "Extended Chat History",
   "skyblock_enhancements.midnightconfig.extendedChatHistory.tooltip": "Increases the maximum number of chat messages kept in history beyond the default 100.",
-
-  "skyblock_enhancements.midnightconfig.chatHistorySize": "Chat History Size",
-  "skyblock_enhancements.midnightconfig.chatHistorySize.tooltip": "Maximum number of chat messages stored in history.\nRange: 100-2048",
-
   "skyblock_enhancements.midnightconfig.compactDuplicateMessages": "Compact Duplicate Messages",
   "skyblock_enhancements.midnightconfig.compactDuplicateMessages.tooltip": "Collapses duplicate chat messages and shows a count badge instead.",
-
   "skyblock_enhancements.midnightconfig.compactIgnoreInteractable": "Compact Ignore Interactable",
   "skyblock_enhancements.midnightconfig.compactIgnoreInteractable.tooltip": "Skips compacting for messages with clickable elements.",
-
   "skyblock_enhancements.midnightconfig.onlyCompactConsecutive": "Only Compact Consecutive",
   "skyblock_enhancements.midnightconfig.onlyCompactConsecutive.tooltip": "Only compact duplicate messages that appear consecutively.",
-
   "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes": "Compact Time Window (minutes)",
   "skyblock_enhancements.midnightconfig.compactTimeWindowMinutes.tooltip": "Time window in which duplicate messages should be compacted.\nRange: 0-60",
-
   "skyblock_enhancements.midnightconfig.centerHypixelText": "Center Hypixel Text",
   "skyblock_enhancements.midnightconfig.centerHypixelText.tooltip": "Centers text that Hypixel sends with spacing padding.",
-
   "skyblock_enhancements.midnightconfig.smoothSeparators": "Smooth Separators",
   "skyblock_enhancements.midnightconfig.smoothSeparators.tooltip": "Uses smooth animated separators between chat sections.",
-
   "skyblock_enhancements.midnightconfig.enableChatTabs": "Enable Chat Tabs",
   "skyblock_enhancements.midnightconfig.enableChatTabs.tooltip": "Adds tabbed chat categories (All, Party, Guild, etc.).",
-
   "skyblock_enhancements.midnightconfig.enableChatContextMenu": "Enable Chat Context Menu",
   "skyblock_enhancements.midnightconfig.enableChatContextMenu.tooltip": "Right-click on chat messages to open a context menu.",
-
   "skyblock_enhancements.midnightconfig.rightClickChatCopies": "Right-Click Copies Message",
   "skyblock_enhancements.midnightconfig.rightClickChatCopies.tooltip": "Right-clicking a chat message copies it to the clipboard.",
-
   "skyblock_enhancements.midnightconfig.enableChatSearch": "Enable Chat Search",
   "skyblock_enhancements.midnightconfig.enableChatSearch.tooltip": "Allows searching through chat history.",
-
   "skyblock_enhancements.midnightconfig.alwaysShowChatSearch": "Always Show Chat Search",
   "skyblock_enhancements.midnightconfig.alwaysShowChatSearch.tooltip": "Keeps the chat search bar visible at all times.",
-
   "skyblock_enhancements.midnightconfig.enableChatAnimation": "Enable Chat Animation",
   "skyblock_enhancements.midnightconfig.enableChatAnimation.tooltip": "Animates chat messages with a smooth slide-in effect.",
-
-  "skyblock_enhancements.midnightconfig.chatAnimationDurationMs": "Chat Animation Duration (ms)",
-  "skyblock_enhancements.midnightconfig.chatAnimationDurationMs.tooltip": "Duration of the chat slide-in animation in milliseconds.\nRange: 50-500",
-
   "skyblock_enhancements.midnightconfig.tooltipEnhancementsText": "Tooltip Enhancement Features",
-
   "skyblock_enhancements.midnightconfig.enchantmentsText": "Enchantment Tooltips",
-
   "skyblock_enhancements.midnightconfig.showMissingEnchantments": "Show Missing Enchantments",
   "skyblock_enhancements.midnightconfig.showMissingEnchantments.tooltip": "Shows enchantments that are missing from an item in its tooltip.",
-
   "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments": "Show Not-Maxed Enchantments",
   "skyblock_enhancements.midnightconfig.showNotMaxedEnchantments.tooltip": "Highlights enchantments that are not at their maximum level.",
-
   "skyblock_enhancements.midnightconfig.priceTooltipsText": "Price Tooltips",
-
   "skyblock_enhancements.midnightconfig.enablePriceTooltips": "Enable Price Tooltips",
   "skyblock_enhancements.midnightconfig.enablePriceTooltips.tooltip": "Shows Bazaar and Auction House price information in item tooltips.",
-
   "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes": "Price Refresh Interval (minutes)",
   "skyblock_enhancements.midnightconfig.priceRefreshIntervalMinutes.tooltip": "How often price data is fetched from the API.\nRange: 5-60",
-
   "skyblock_enhancements.midnightconfig.enablePriceTickerText": "Enable Price Ticker Text",
   "skyblock_enhancements.midnightconfig.enablePriceTickerText.tooltip": "Shows a scrolling ticker for price changes in tooltips.",
-
   "skyblock_enhancements.midnightconfig.roundPriceNumbers": "Round Price Numbers",
   "skyblock_enhancements.midnightconfig.roundPriceNumbers.tooltip": "Rounds price values for cleaner display (e.g. 1.2M instead of 1,234,567).",
-
   "skyblock_enhancements.midnightconfig.showBazaarBuySell": "Show Bazaar Buy/Sell Prices",
   "skyblock_enhancements.midnightconfig.showBazaarBuySell.tooltip": "Shows separate buy and sell prices for Bazaar items.",
-
   "skyblock_enhancements.midnightconfig.showBazaarSpread": "Show Bazaar Spread",
   "skyblock_enhancements.midnightconfig.showBazaarSpread.tooltip": "Shows the spread (difference) between buy and sell prices on the Bazaar.",
-
   "skyblock_enhancements.midnightconfig.tooltipScrollText": "Tooltip Scroll Settings",
-
   "skyblock_enhancements.midnightconfig.enableTooltipScroll": "Enable Tooltip Scroll",
   "skyblock_enhancements.midnightconfig.enableTooltipScroll.tooltip": "Allows scrolling through long item tooltips with the mouse wheel.",
-
   "skyblock_enhancements.midnightconfig.anchorTooltipToTop": "Anchor Tooltip to Top",
   "skyblock_enhancements.midnightconfig.anchorTooltipToTop.tooltip": "Anchors long tooltips to the top of the screen instead of the bottom.",
-
   "skyblock_enhancements.midnightconfig.tooltipScrollSpeed": "Tooltip Scroll Speed",
   "skyblock_enhancements.midnightconfig.tooltipScrollSpeed.tooltip": "How fast tooltips scroll.\nRange: 1-30",
-
   "skyblock_enhancements.midnightconfig.invertTooltipScroll": "Invert Tooltip Scroll",
   "skyblock_enhancements.midnightconfig.invertTooltipScroll.tooltip": "Inverts the scroll direction for tooltips.",
-
   "skyblock_enhancements.midnightconfig.enableHorizontalScroll": "Enable Horizontal Scroll",
   "skyblock_enhancements.midnightconfig.enableHorizontalScroll.tooltip": "Allows horizontal scrolling in tooltips.",
-
   "skyblock_enhancements.midnightconfig.text2": "General Enhancement Features",
-
   "skyblock_enhancements.midnightconfig.noDoubleSneak": "No Double Sneak",
   "skyblock_enhancements.midnightconfig.noDoubleSneak.tooltip": "Prevents the sneak key from toggling twice when pressed once.",
-
   "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring": "Disable Resource Pack Warning",
   "skyblock_enhancements.midnightconfig.disableResourcePackCompatibilityWaring.tooltip": "Disables the resource pack compatibility warning popup.",
-
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation": "Disable Command Confirmation",
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation.tooltip": "Skips the confirmation prompt for certain commands.",
-
   "skyblock_enhancements.midnightconfig.hideItemFrames": "Hide Item Frames",
   "skyblock_enhancements.midnightconfig.hideItemFrames.tooltip": "Hides item frame entities from rendering.",
-
   "skyblock_enhancements.midnightconfig.hideTextureErrors": "Hide Texture Errors",
   "skyblock_enhancements.midnightconfig.hideTextureErrors.tooltip": "Suppresses texture loading error messages in the log.",
-
   "skyblock_enhancements.midnightconfig.fullbrightText": "Fullbright Settings",
-
   "skyblock_enhancements.midnightconfig.enableFullbright": "Enable Fullbright",
   "skyblock_enhancements.midnightconfig.enableFullbright.tooltip": "Makes the game world fully bright regardless of light level.",
-
   "skyblock_enhancements.midnightconfig.fullbrightUseGamma": "Fullbright Use Gamma",
   "skyblock_enhancements.midnightconfig.fullbrightUseGamma.tooltip": "Uses gamma adjustment for fullbright instead of custom lighting.",
-
   "skyblock_enhancements.midnightconfig.fullbrightStrength": "Fullbright Strength",
   "skyblock_enhancements.midnightconfig.fullbrightStrength.tooltip": "Strength of the fullbright effect.\nRange: 0-100",
-
   "skyblock_enhancements.midnightconfig.potionOverlayText": "Potion Effect Overlay",
-
   "skyblock_enhancements.midnightconfig.enablePotionOverlay": "Enable Potion Effect Status Overlay",
   "skyblock_enhancements.midnightconfig.enablePotionOverlay.tooltip": "Shows a colored tint on potion effect slots in the Toggle Potion Effects GUI. Green = enabled, Red = disabled.",
-
   "skyblock_enhancements.midnightconfig.disabledPotionOverlayColor": "Disabled Effect Color",
   "skyblock_enhancements.midnightconfig.disabledPotionOverlayColor.tooltip": "Overlay color for disabled potion effects. Use hex format like #RRGGBB.",
-
   "skyblock_enhancements.midnightconfig.enabledPotionOverlayColor": "Enabled Effect Color",
   "skyblock_enhancements.midnightconfig.enabledPotionOverlayColor.tooltip": "Overlay color for enabled potion effects. Use hex format like #RRGGBB.",
-
   "skyblock_enhancements.midnightconfig.potionOverlayAlpha": "Overlay Opacity",
   "skyblock_enhancements.midnightconfig.potionOverlayAlpha.tooltip": "Transparency of the potion effect overlay. Range: 0 (invisible) to 255 (fully opaque).",
-
   "skyblock_enhancements.midnightconfig.devToolsText": "Developer Tools",
-
   "skyblock_enhancements.midnightconfig.devMode": "Dev Mode",
   "skyblock_enhancements.midnightconfig.devMode.tooltip": "Enables developer-only tools and logging.\nAuto-enabled in development environments.",
-
   "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper": "Enable Ground Item Debug",
   "skyblock_enhancements.midnightconfig.enableGroundItemDebugHelper.tooltip": "Shows debug information about items on the ground nearby.",
-
   "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby": "Debug Only Nearby Items",
   "skyblock_enhancements.midnightconfig.groundItemDebugOnlyNearby.tooltip": "Only show debug info for items within the configured radius.",
-
   "skyblock_enhancements.midnightconfig.groundItemDebugRadius": "Debug Radius",
   "skyblock_enhancements.midnightconfig.groundItemDebugRadius.tooltip": "Radius in blocks to scan for ground items when debugging.\nRange: 4-64",
-
   "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks": "Debug Interval (ticks)",
   "skyblock_enhancements.midnightconfig.groundItemDebugIntervalTicks.tooltip": "How often to refresh ground item debug info, in ticks.\nRange: 1-200",
-
   "key.category.skyblock_enhancements.general": "Skyblock Enhancements",
   "key.skyblock_enhancements.fullbright": "Toggle Fullbright",
   "key.skyblock_enhancements.full_stack_price": "Show BZ Price for Full Stack",
   "key.skyblock_enhancements.current_amount_price": "Show BZ Price for Current Amount",
-
-  "skyblock_enhancements.midnightconfig.rrvConfigHint": "More options available in Skyblock Enhancements config -> Recipe Viewer Tab",
   "skyblock_enhancements.midnightconfig.openFromRrv": "Open SBE Config...",
   "skyblock_enhancements.recipe.not_found": "This item (ID: %s) does not have a recipe."
 }

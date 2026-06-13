@@ -4,22 +4,9 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.arg
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 import com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements;
-import com.github.kd_gaming1.skyblockenhancements.feature.storage.StorageFeature;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.RrvCompat;
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.injection.DataReadinessTracker;
-import com.github.kd_gaming1.skyblockenhancements.feature.missingenchants.MissingEnchants;
-import com.github.kd_gaming1.skyblockenhancements.repo.DownloadSession;
-import com.github.kd_gaming1.skyblockenhancements.repo.item.ItemStackBuilder;
-import com.github.kd_gaming1.skyblockenhancements.repo.neu.NeuItemRegistry;
-import com.github.kd_gaming1.skyblockenhancements.repo.io.AtomicFileWriter;
-import com.github.kd_gaming1.skyblockenhancements.repo.network.JsonHttpClient;
+import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.util.ItemDebugHelper;
-import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 import com.github.kd_gaming1.skyblockenhancements.util.tab.SkyblockStats;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import java.net.http.HttpClient;
-import java.nio.file.Path;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import eu.midnightdust.lib.config.MidnightConfig;
@@ -41,14 +28,8 @@ public class Commands {
                     .executes(Commands::executeOpenConfig)
                     .then(literal("config")
                             .executes(Commands::executeOpenConfig))
-                    .then(literal("refresh")
-                            .then(literal("repoData")
-                                    .executes(Commands::executeRefreshRepoData)))
                     .then(literal("debugitem")
                             .executes(Commands::executeDebugItem))
-                    .then(literal("storage")
-                            .then(literal("clear-cache")
-                                    .executes(Commands::executeClearStorageCache)))
                     .then(literal("ignore_tab_stat")
                             .then(argument("stat", StringArgumentType.word())
                                     .executes(Commands::executeIgnoreTabStat)));
@@ -83,30 +64,6 @@ public class Commands {
         return 1;
     }
 
-    private static final String ENCHANTS_URL =
-            "https://raw.githubusercontent.com/NotEnoughUpdates/NotEnoughUpdates-REPO/master/constants/enchants.json";
-
-    private static void refreshEnchantsData(CommandContext<FabricClientCommandSource> ctx) {
-        try {
-            JsonHttpClient client = new JsonHttpClient(HttpClient.newHttpClient(), new GsonBuilder().create());
-            String text = client.getString(ENCHANTS_URL);
-            if (text != null) {
-                Path target = net.fabricmc.loader.api.FabricLoader.getInstance()
-                        .getConfigDir()
-                        .resolve(SkyblockEnhancements.MOD_ID)
-                        .resolve("data")
-                        .resolve("constants")
-                        .resolve("enchants.json");
-                AtomicFileWriter.writeString(target, text);
-            } else {
-                ctx.getSource().sendError(Component.literal(PREFIX_ERROR + "Failed to download enchants data."));
-            }
-        } catch (Exception e) {
-            SkyblockEnhancements.LOGGER.error("Failed to refresh enchants data", e);
-            ctx.getSource().sendError(Component.literal(PREFIX_ERROR + "Failed to refresh enchants data."));
-        }
-    }
-
     private static int executeDebugItem(CommandContext<FabricClientCommandSource> ctx) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return 0;
@@ -122,42 +79,10 @@ public class Commands {
         return 1;
     }
 
-    private static int executeClearStorageCache(CommandContext<FabricClientCommandSource> ctx) {
-        StorageFeature.clearCache();
-        ctx.getSource().sendFeedback(Component.literal(PREFIX + "Storage cache cleared."));
-        return 1;
-    }
-
     private static int executeIgnoreTabStat(CommandContext<FabricClientCommandSource> ctx) {
         String stat = StringArgumentType.getString(ctx, "stat");
         SkyblockStats.ignoreDemand(stat);
         ctx.getSource().sendFeedback(Component.literal(PREFIX + "Ignored missing-stat warnings for " + stat + " this session."));
-        return 1;
-    }
-
-    private static int executeRefreshRepoData(CommandContext<FabricClientCommandSource> ctx) {
-        ctx.getSource().sendFeedback(
-                Component.literal("§e[Skyblock Enhancements] Refreshing repository data..."));
-
-        refreshEnchantsData(ctx);
-
-        JsonLookup.clearCache();
-        MissingEnchants.invalidateRepoDataCaches();
-
-        if (RrvCompat.isActive()) {
-            ctx.getSource().sendFeedback(Component.literal(PREFIX + "Refreshing NEU item repo..."));
-            ItemStackBuilder.clearCache();
-            DownloadSession session = SkyblockEnhancements.getInstance().getRepoDownloader().refresh();
-            DataReadinessTracker.waitAndInject(session).thenRun(() -> {
-                ctx.getSource().sendFeedback(
-                        Component.literal(PREFIX + "Item repo refreshed ("
-                                + NeuItemRegistry.size() + " items)")
-                );
-            });
-        }
-
-        ctx.getSource().sendFeedback(
-                Component.literal(PREFIX + "Repository data refreshed successfully!"));
         return 1;
     }
 }

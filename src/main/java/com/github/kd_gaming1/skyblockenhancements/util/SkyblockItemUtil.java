@@ -1,6 +1,6 @@
 package com.github.kd_gaming1.skyblockenhancements.util;
 
-import com.github.kd_gaming1.skyblockenhancements.compat.rrv.util.PetIdResolver;
+import com.github.kd_gaming1.skyblockenhancements.util.PetIdResolver;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
