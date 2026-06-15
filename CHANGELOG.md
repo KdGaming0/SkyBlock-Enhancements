@@ -1,6 +1,5 @@
-## Changelog for 1.1.1
+## Changelog for 1.1.2
 
-### **Mining Enhancements**
+### **General Enhancements**
 **Improvements/Fixes**
-- Fixed the Ping Offset Overlay not working for Jesper and Onyx.
-- Fixed the Block out line for Ping Offset Overlay not rendering correctly.
+- Fixed Fullbright not actually brightening the world after the Minecraft 26.1 update. Turning it on now lights everything up fully again, and the strength slider works as expected.

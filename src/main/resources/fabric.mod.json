@@ -3,7 +3,7 @@
   "id": "${id}",
   "version": "${version}",
   "name": "${name}",
-  "description": "A Hypixel Skyblock mod with some enhancements for the game not found in the big mods ",
+  "description": "Enhancements for Hypixel SkyBlock.",
   "authors": [
     "Kd_Gaming1"
   ],

@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.mixin;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
+import com.github.kd_gaming1.skyblockenhancements.feature.Fullbright;
 import com.github.kd_gaming1.skyblockenhancements.util.IrisCompat;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -26,6 +27,6 @@ public class OptionInstanceMixin<T> {
         if (!(caption.getContents() instanceof TranslatableContents tc)
                 || !tc.getKey().equals("options.gamma")) return;
         cir.setReturnValue((T) Double.valueOf(
-                (SkyblockEnhancementsConfig.fullbrightStrength / 100.0) * 15.0));
+                SkyblockEnhancementsConfig.fullbrightStrength / 100.0 * Fullbright.GAMMA_SCALE));
     }
 }

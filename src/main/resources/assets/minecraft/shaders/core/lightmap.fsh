@@ -1,19 +1,26 @@
 #version 330
 
+// SkyBlock Enhancements: a verbatim copy of the vanilla 26.1 lightmap shader with one extra
+// uniform (FullbrightIntensity) and one extra final blend. Keeping the rest byte-identical to
+// vanilla means normal lighting is unchanged and re-porting to a new Minecraft version is just
+// "re-copy vanilla, re-add the two marked lines". The matching std140 layout is uploaded by
+// LightTextureMixin, which appends FullbrightIntensity right after BrightnessFactor.
 layout(std140) uniform LightmapInfo {
-    float AmbientLightFactor;
     float SkyFactor;
     float BlockFactor;
     float NightVisionFactor;
     float DarknessScale;
-    float DarkenWorldFactor;
+    float BossOverlayWorldDarkeningFactor;
     float BrightnessFactor;
-    float FullbrightIntensity;
+    float FullbrightIntensity; // SkyBlock Enhancements
+    vec3 BlockLightTint;
     vec3 SkyLightColor;
     vec3 AmbientColor;
+    vec3 NightVisionColor;
 } lightmapInfo;
 
 in vec2 texCoord;
+
 out vec4 fragColor;
 
 float get_brightness(float level) {
@@ -22,48 +29,48 @@ float get_brightness(float level) {
 
 vec3 notGamma(vec3 color) {
     float maxComponent = max(max(color.x, color.y), color.z);
-    if (maxComponent <= 1e-6) return vec3(0.0);
-    float maxInverted = 1.0 - maxComponent;
-    float maxScaled = 1.0 - maxInverted * maxInverted * maxInverted * maxInverted;
+    float maxInverted = 1.0f - maxComponent;
+    float maxScaled = 1.0f - maxInverted * maxInverted * maxInverted * maxInverted;
     return color * (maxScaled / maxComponent);
 }
 
+float parabolicMixFactor(float level) {
+    return (2.0 * level - 1.0) * (2.0 * level - 1.0);
+}
+
 void main() {
-    float block_brightness = get_brightness(floor(texCoord.x * 16) / 15) * lightmapInfo.BlockFactor;
-    float sky_brightness = get_brightness(floor(texCoord.y * 16) / 15) * lightmapInfo.SkyFactor;
+    // Calculate block and sky brightness levels based on texture coordinates
+    float block_level = floor(texCoord.x * 16) / 15;
+    float sky_level = floor(texCoord.y * 16) / 15;
 
-    vec3 color = vec3(
-        block_brightness,
-        block_brightness * ((block_brightness * 0.6 + 0.4) * 0.6 + 0.4),
-        block_brightness * (block_brightness * block_brightness * 0.6 + 0.4)
-    );
+    float block_brightness = get_brightness(block_level) * lightmapInfo.BlockFactor;
+    float sky_brightness = get_brightness(sky_level) * lightmapInfo.SkyFactor;
 
-    color = mix(color, lightmapInfo.AmbientColor, lightmapInfo.AmbientLightFactor);
+    // Calculate ambient color with or without night vision
+    vec3 nightVisionColor = lightmapInfo.NightVisionColor * lightmapInfo.NightVisionFactor;
+    vec3 color = max(lightmapInfo.AmbientColor, nightVisionColor);
+
+    // Add sky light
     color += lightmapInfo.SkyLightColor * sky_brightness;
-    color = mix(color, vec3(0.75), 0.04);
 
-    if (lightmapInfo.AmbientLightFactor == 0.0) {
-        vec3 darkened_color = color * vec3(0.7, 0.6, 0.6);
-        color = mix(color, darkened_color, lightmapInfo.DarkenWorldFactor);
-    }
+    // Add block light
+    vec3 BlockLightColor = mix(lightmapInfo.BlockLightTint, vec3(1.0), 0.9 * parabolicMixFactor(block_level));
+    color += BlockLightColor * block_brightness;
 
-    if (lightmapInfo.NightVisionFactor > 0.0 && lightmapInfo.FullbrightIntensity <= 0.0) {
-        float max_component = max(color.r, max(color.g, color.b));
-        if (max_component > 0.0 && max_component < 1.0) {
-             vec3 bright_color = color / max_component;
-             color = mix(color, bright_color, lightmapInfo.NightVisionFactor);
-        }
-    }
+    // Apply boss overlay darkening effect
+    color = mix(color, color * vec3(0.7, 0.6, 0.6), lightmapInfo.BossOverlayWorldDarkeningFactor);
 
-    if (lightmapInfo.AmbientLightFactor == 0.0) {
-        color -= vec3(lightmapInfo.DarknessScale);
-    }
+    // Apply darkness effect scale
+    color = color - vec3(lightmapInfo.DarknessScale);
 
+    // Apply brightness
     color = clamp(color, 0.0, 1.0);
-    color = mix(color, notGamma(color), lightmapInfo.BrightnessFactor);
+    vec3 notGamma = notGamma(color);
+    color = mix(color, notGamma, lightmapInfo.BrightnessFactor);
 
+    // SkyBlock Enhancements: smooth fullbright — blend toward white, independent of vanilla
+    // brightness. 0.0 leaves vanilla output untouched; 1.0 is full white (fullbright).
     color = mix(color, vec3(1.0), lightmapInfo.FullbrightIntensity);
 
-    color = mix(color, vec3(0.75), 0.04);
     fragColor = vec4(color, 1.0);
 }
