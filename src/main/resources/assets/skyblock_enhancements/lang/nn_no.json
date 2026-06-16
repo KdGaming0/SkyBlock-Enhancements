@@ -12,6 +12,9 @@
   "skyblock_enhancements.midnightconfig.hideCheapCoins.tooltip": "Skjuler billige myntar på bakken (myntar/spelarhovud).",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades": "Sett Kat-påminning for kjæledyroppgraderingar",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.tooltip": "Lag automatisk ei påminning når Kat byrjar å oppgradere kjæledyret ditt, slik at du får beskjed når det er klart til å hentast.",
+  "skyblock_enhancements.midnightconfig.slotLockingText": "Sporlåsing",
+  "skyblock_enhancements.midnightconfig.enableSlotLocking": "Aktiver sporlåsing",
+  "skyblock_enhancements.midnightconfig.enableSlotLocking.tooltip": "Lås inventarspor slik at gjenstandane ikkje kan flyttast eller sleppast ved klikk. Hald musa over eit spor og trykk Lås spor-tasten (standard L, kan byttast i Kontrollar) for å låse eller låse opp; låste spor viser ei lita hengelås. Låsane blir lagra per Skyblock-profil.",
   "skyblock_enhancements.midnightconfig.saveCursorPosition": "Lagre musepeikarposisjon mellom inventar",
   "skyblock_enhancements.midnightconfig.saveCursorPosition.tooltip": "Hugsar musepeikarposisjonen når du lukkar eit inventar og gjenopprettar den når eit nytt inventar opnar.",
   "skyblock_enhancements.midnightconfig.saveCursorPositionToleranceMs": "Toleranse for lagra musepeikar (ms)",
@@ -195,6 +198,10 @@
   "key.skyblock_enhancements.fullbright": "Skru av/på Fullbright",
   "key.skyblock_enhancements.full_stack_price": "Vis BZ-pris for full stabel",
   "key.skyblock_enhancements.current_amount_price": "Vis BZ-pris for gjeldande mengde",
+  "key.skyblock_enhancements.lock_slot": "Lås/lås opp spor under musa",
+  "skyblock_enhancements.slotlock.locked": "Spor §clåst",
+  "skyblock_enhancements.slotlock.unlocked": "Spor §aulåst",
+  "skyblock_enhancements.slotlock.waiting_profile": "§cVentar på SkyBlock-profil...",
   "skyblock_enhancements.midnightconfig.openFromRrv": "Opne SBE konfig...",
   "skyblock_enhancements.recipe.not_found": "Denne gjenstanden (ID: %s) har ikkje nokon oppskrift."
 }

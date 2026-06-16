@@ -12,6 +12,9 @@
   "skyblock_enhancements.midnightconfig.hideCheapCoins.tooltip": "Hides cheap coin ground drops (coin/coins player-head drops).",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades": "Set Kat Reminder for Pet Upgrades",
   "skyblock_enhancements.midnightconfig.setKatReminderForPetUpgrades.tooltip": "Automatically create a reminder when Kat starts upgrading your pet so you get notified when it's ready to pick up.",
+  "skyblock_enhancements.midnightconfig.slotLockingText": "Slot Locking",
+  "skyblock_enhancements.midnightconfig.enableSlotLocking": "Enable Slot Locking",
+  "skyblock_enhancements.midnightconfig.enableSlotLocking.tooltip": "Lock inventory slots so their items can't be moved or dropped by clicking. Hover a slot and press the Lock Slot key (default L, rebindable in Controls) to lock or unlock it; locked slots show a small padlock. Locks are saved per Skyblock profile.",
   "skyblock_enhancements.midnightconfig.saveCursorPosition": "Save Cursor Position Between Inventories",
   "skyblock_enhancements.midnightconfig.saveCursorPosition.tooltip": "Remembers your mouse position when closing an inventory and restores it when a new inventory opens.",
   "skyblock_enhancements.midnightconfig.saveCursorPositionToleranceMs": "Cursor Save Tolerance (ms)",
@@ -195,6 +198,10 @@
   "key.skyblock_enhancements.fullbright": "Toggle Fullbright",
   "key.skyblock_enhancements.full_stack_price": "Show BZ Price for Full Stack",
   "key.skyblock_enhancements.current_amount_price": "Show BZ Price for Current Amount",
+  "key.skyblock_enhancements.lock_slot": "Lock/Unlock Hovered Slot",
+  "skyblock_enhancements.slotlock.locked": "Slot §clocked",
+  "skyblock_enhancements.slotlock.unlocked": "Slot §aunlocked",
+  "skyblock_enhancements.slotlock.waiting_profile": "§cWaiting for SkyBlock profile...",
   "skyblock_enhancements.midnightconfig.openFromRrv": "Open SBE Config...",
   "skyblock_enhancements.recipe.not_found": "This item (ID: %s) does not have a recipe."
 }

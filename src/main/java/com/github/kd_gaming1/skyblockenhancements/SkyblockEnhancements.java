@@ -15,12 +15,14 @@ import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceDataFetch
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceStore;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceTooltipEnhancement;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceTooltipKeybinds;
+import com.github.kd_gaming1.skyblockenhancements.feature.slotlock.SlotLockManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderNotifier;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.IrisCompat;
+import com.github.kd_gaming1.skyblockenhancements.util.ProfileIdTracker;
 import com.github.kd_gaming1.skyblockenhancements.util.tab.TabListMonitor;
 import com.github.kd_gaming1.skyblockenhancements.util.tool.HeldItemTracker;
 import eu.midnightdust.lib.config.MidnightConfig;
@@ -73,6 +75,11 @@ public class SkyblockEnhancements implements ClientModInitializer {
                 Util.make(new Object2IntOpenHashMap<>(), map -> map.put(LocationUpdateS2CPacket.ID, 1)));
 
         HypixelLocationState.register();
+        ProfileIdTracker.register(
+                FabricLoader.getInstance()
+                        .getConfigDir()
+                        .resolve(MOD_ID)
+                        .resolve("profile_id_cache.json"));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             HypixelLocationState.reset();
         });
@@ -88,6 +95,8 @@ public class SkyblockEnhancements implements ClientModInitializer {
         ItemGlowManager.init();
         Fullbright.init();
         PriceTooltipKeybinds.init();
+        SlotLockManager.init(
+                FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("slot_locks.json"));
         priceTooltip.register();
         priceFetcher.start();
 

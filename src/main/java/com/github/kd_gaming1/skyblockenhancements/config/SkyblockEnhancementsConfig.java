@@ -33,6 +33,12 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean setKatReminderForPetUpgrades = true;
 
+    @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
+    public static Comment slotLockingText;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean enableSlotLocking = true;
+
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean saveCursorPosition = true;
 
