@@ -25,6 +25,7 @@
     "itemglow.EntityRenderStateMixin",
     "itemglow.LevelRendererMixin",
     "potionoverlay.PotionOverlayMixin",
+    "savecursorposition.SaveCursorPositionMouseHandlerMixin",
     "tooltipscroll.ClientTextTooltipAccessor",
     "tooltipscroll.TooltipScrollGuiGraphicsMixin",
     "tooltipscroll.TooltipScrollMouseMixin"

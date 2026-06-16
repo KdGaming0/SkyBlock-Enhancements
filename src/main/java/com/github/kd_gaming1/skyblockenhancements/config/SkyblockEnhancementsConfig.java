@@ -1,6 +1,9 @@
 package com.github.kd_gaming1.skyblockenhancements.config;
 
+import com.github.kd_gaming1.skyblockenhancements.feature.savecursorposition.CursorFilterMode;
 import eu.midnightdust.lib.config.MidnightConfig;
+import java.util.ArrayList;
+import java.util.List;
 import net.fabricmc.loader.api.FabricLoader;
 
 public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSettings {
@@ -29,6 +32,18 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean setKatReminderForPetUpgrades = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean saveCursorPosition = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 10, max = 5000)
+    public static int saveCursorPositionToleranceMs = 500;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static CursorFilterMode saveCursorPositionFilterMode = CursorFilterMode.ALL;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static List<String> saveCursorPositionFilterList = new ArrayList<>();
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean showWhenPressingShift = true;

@@ -1,5 +1,5 @@
-## Changelog for 1.1.2
+## Changelog for 1.1.3
 
 ### **General Enhancements**
 **Improvements/Fixes**
-- Fixed Fullbright not actually brightening the world after the Minecraft 26.1 update. Turning it on now lights everything up fully again, and the strength slider works as expected.
+- Added a setting to save your mouse cursor position between inventory screens. When enabled, reopening an inventory quickly will place the cursor back where it was, with a configurable time tolerance and an optional whitelist/blacklist for specific menu titles.
