@@ -16,7 +16,6 @@
     "LightTextureMixin",
     "NetworkPacketMixin",
     "OptionInstanceMixin",
-    "ProfileIdCommandHideMixin",
     "ProfileIdResponseMixin",
     "PackCompatibilityMixin",
     "PreventWeaponPlacementMixin",

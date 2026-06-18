@@ -9,22 +9,17 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Hides the {@code /profileid} response and its suggestion-spam follow-ups from chat.
+ * Forwards system chat to {@link ProfileIdTracker#handleIncomingChat(String)} so the tracker can
+ * parse Hypixel's automatic {@code Profile ID: ...} messages.
  *
- * <p>The unformatted text is handed to {@link ProfileIdTracker#handleIncomingChat(String)}
- * for parsing; if the tracker identifies the message as part of its probe, the packet is
- * cancelled before it reaches the chat GUI.
- *
- * <p>Only system chat is intercepted; the {@code /profileid} response is sent as a system
- * message on Hypixel.
+ * <p>Hypixel sends these messages automatically on every SkyBlock server change, so the mod does
+ * not need to issue {@code /profileid} itself.
  */
 @Mixin(ClientPacketListener.class)
 public class ProfileIdResponseMixin {
 
-    @Inject(method = "handleSystemChat", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "handleSystemChat", at = @At("HEAD"))
     private void skyblockenhancements$handleSystemChat(ClientboundSystemChatPacket packet, CallbackInfo ci) {
-        if (ProfileIdTracker.handleIncomingChat(packet.content().getString())) {
-            ci.cancel();
-        }
+        ProfileIdTracker.handleIncomingChat(packet.content().getString());
     }
 }

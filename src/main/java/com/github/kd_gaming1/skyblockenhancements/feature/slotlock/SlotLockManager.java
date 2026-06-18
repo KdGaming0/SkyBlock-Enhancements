@@ -34,8 +34,9 @@ import java.util.Set;
  *
  * <p>Locks are keyed by the screen-stable {@link Slot#getContainerSlot()} index (0–40), scoped to
  * a bucket of {@code accountUuid} (off SkyBlock) or {@code accountUuid|<profileUuid>} (a specific
- * SkyBlock profile). The profile UUID is obtained via {@link ProfileIdTracker}, which probes the
- * server with {@code /profileid}; this is faster and more reliable than parsing the tab list.
+ * SkyBlock profile). The profile UUID is obtained via {@link ProfileIdTracker}, which parses
+ * Hypixel's automatic {@code Profile ID: ...} chat messages; this is faster and more reliable than
+ * parsing the tab list.
  * While on SkyBlock and the UUID is not yet known (and not cached), no locks are shown and no
  * new locks can be set, preventing a flash of the wrong bucket.
  */
