@@ -1,3 +1,10 @@
+/*
+ * This feature is inspired by Revvilon/PingOffsetMiner:
+ * https://github.com/Revvilon/PingOffsetMiner
+ *
+ * Some mining-overlay and ping-offset timing code were adapted from that project.
+ */
+
 package com.github.kd_gaming1.skyblockenhancements.feature.mining;
 
 import com.github.kd_gaming1.skyblockenhancements.feature.mining.render.MiningOverlayRenderer;

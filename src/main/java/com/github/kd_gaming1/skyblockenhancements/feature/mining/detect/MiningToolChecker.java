@@ -1,3 +1,8 @@
+/*
+ * Part of the ping-offset mining feature inspired by PingOffsetMiner:
+ * https://github.com/Revvilon/PingOffsetMiner
+ */
+
 package com.github.kd_gaming1.skyblockenhancements.feature.mining.detect;
 
 import com.github.kd_gaming1.skyblockenhancements.feature.mining.data.BlockStrengthEntry;

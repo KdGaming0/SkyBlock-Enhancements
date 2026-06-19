@@ -5,6 +5,15 @@ following open-source projects. We gratefully acknowledge their authors.
 
 ---
 
+## PingOffsetMiner
+
+- **Author:** Revvilon
+- **Project:** https://github.com/Revvilon/PingOffsetMiner
+- **License:** CC0 1.0 Universal (Public Domain Dedication)
+
+The ping-offset mining feature in SkyBlock Enhancements was inspired by PingOffsetMiner. 
+Certain timing calculations, overlay rendering concepts, and mining-state handling patterns were adapted from that project and modified for this mod.
+
 ## NotEnoughUpdates (NEU)
 
 - **Authors:** NotEnoughUpdates contributors
