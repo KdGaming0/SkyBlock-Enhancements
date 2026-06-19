@@ -1,3 +1,17 @@
+/*
+ * Based on code from Firmament:
+ * https://github.com/FirmamentMC/Firmament
+ *
+ * This file contains significant portions adapted from Firmament's
+ * Save Cursor Position implementation.
+ *
+ * The original code is licensed under the GNU General Public License v3.0.
+ *
+ * Modifications:
+ * - Translated from Kotlin to Java
+ * - Modified for Skyblock Enhancements
+ */
+
 package com.github.kd_gaming1.skyblockenhancements.feature.savecursorposition;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;

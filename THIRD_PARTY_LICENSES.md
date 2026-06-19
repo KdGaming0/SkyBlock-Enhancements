@@ -31,7 +31,7 @@ scientific notation, configurable decimal separators, and SkyBlock-specific suff
 - **Project:** https://github.com/FirmamentMC/Firmament
 - **License:** GNU General Public License v3.0 (GPL-3.0)
 
-Some inventory QoL behavior (including save-cursor position between inventory) was heavily inspired by Firmament.
+Some inventory QoL behavior (including save-cursor position between inventory) was adapted from Firmament.
 
 > GNU LESSER GENERAL PUBLIC LICENSE
 > Version 3, 29 June 2007
