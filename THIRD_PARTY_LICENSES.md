@@ -5,61 +5,24 @@ following open-source projects. We gratefully acknowledge their authors.
 
 ---
 
-## compact-chat
+## NotEnoughUpdates (NEU)
 
-**Author:** Caoimhe Byrne (caoimhee)
-**License:** MIT
-**Source:** <https://github.com/caoimhebyrne/compact-chat>
+- **Authors:** NotEnoughUpdates contributors
+- **Project:** https://github.com/NotEnoughUpdates/NotEnoughUpdates
+- **License:** GNU Lesser General Public License v3.0 or later (LGPL-3.0-or-later)
 
-The compact duplicate messages feature adapts the general approach and
-mixin patterns from compact-chat (duck interface for message list
-access, high-priority mixin on `addMessage`). The implementation was
-then substantially rewritten and extended with Hypixel-specific
-separator handling, configurable consecutive-only mode, and integration
-with the mod's custom rendering pipeline.
+The search-bar calculator (`ExpressionCalculator.java`) is a derivative work based on
+NEU’s calculator implementation. The lexer, shunting-yard parsing flow, and BigDecimal
+RPN evaluation were adapted and extended (functions/constants, implicit multiplication,
+scientific notation, configurable decimal separators, and SkyBlock-specific suffixes).
 
-The MIT license text is reproduced below.
+## Firmament
 
-> MIT License
->
-> Copyright (c) 2025 Caoimhe Byrne
->
-> Permission is hereby granted, free of charge, to any person obtaining
-> a copy of this software and associated documentation files (the
-> "Software"), to deal in the Software without restriction, including
-> without limitation the rights to use, copy, modify, merge, publish,
-> distribute, sublicense, and/or sell copies of the Software, and to
-> permit persons to whom the Software is furnished to do so, subject to
-> the following conditions:
->
-> The above copyright notice and this permission notice shall be
-> included in all copies or substantial portions of the Software.
->
-> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-> EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-> MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-> NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-> BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-> ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-> CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-> SOFTWARE.
+- **Authors:** Firmament contributors
+- **Project:** https://github.com/FirmamentMC/Firmament
+- **License:** GNU General Public License v3.0 (GPL-3.0)
 
----
-
-## NotEnoughUpdates
-
-**Authors:** NotEnoughUpdates contributors  
-**License:** GNU Lesser General Public License v3.0 or later (LGPL-3.0+)  
-**Source:** <https://github.com/NotEnoughUpdates/NotEnoughUpdates>
-
-The search-bar calculator (`ExpressionCalculator.java`) is a derivative
-work based on NEU's `Calculator`. The
-original lexer, shunting-yard algorithm, and BigDecimal RPN evaluator
-are preserved and extended with functions, constants, implicit
-multiplication, scientific notation, configurable decimal separators,
-and SkyBlock-specific suffixes.
-
-The LGPL-3.0 license text is reproduced below.
+Some inventory QoL behavior (including save-cursor position between inventory) was heavily inspired by Firmament.
 
 > GNU LESSER GENERAL PUBLIC LICENSE
 > Version 3, 29 June 2007
