@@ -164,7 +164,7 @@
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation": "Deaktiver kommandostadfesting",
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation.tooltip": "Hoppar over stadfestingsvindauget for visse kommandoar.",
   "skyblock_enhancements.midnightconfig.hideItemFrames": "Skjul gjenstandsrammer",
-  "skyblock_enhancements.midnightconfig.hideItemFrames.tooltip": "Skjuler gjenstandramme-entitetar frå rendering.",
+  "skyblock_enhancements.midnightconfig.hideItemFrames.tooltip": "Skjuler ramma på gjenstandsramma, men viser framleis gjenstanden.",
   "skyblock_enhancements.midnightconfig.hideTextureErrors": "Skjul teksturfeil",
   "skyblock_enhancements.midnightconfig.hideTextureErrors.tooltip": "Undertrykkar feilmeldingar for teksturinnlasting i loggen.",
   "skyblock_enhancements.midnightconfig.fullbrightText": "Fullbright-innstillingar",

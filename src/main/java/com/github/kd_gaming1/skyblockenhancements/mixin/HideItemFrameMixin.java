@@ -56,7 +56,7 @@ public class HideItemFrameMixin {
         }
 
         if (cached) {
-            state.isInvisible = true;
+            state.frameModel.clear();
         }
     }
 }

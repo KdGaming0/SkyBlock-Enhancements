@@ -227,7 +227,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static boolean disableCommandConfirmation = true;
 
     @Entry(category = GENERAL_ENHANCEMENTS)
-    public static boolean hideItemFrames = true;
+    public static boolean hideItemFrames = false;
 
     @Entry(category = GENERAL_ENHANCEMENTS)
     public static boolean hideTextureErrors = false;

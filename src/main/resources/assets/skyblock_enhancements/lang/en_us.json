@@ -164,7 +164,7 @@
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation": "Disable Command Confirmation",
   "skyblock_enhancements.midnightconfig.disableCommandConfirmation.tooltip": "Skips the confirmation prompt for certain commands.",
   "skyblock_enhancements.midnightconfig.hideItemFrames": "Hide Item Frames",
-  "skyblock_enhancements.midnightconfig.hideItemFrames.tooltip": "Hides item frame entities from rendering.",
+  "skyblock_enhancements.midnightconfig.hideItemFrames.tooltip": "Hides the item frame while keeping the displayed item visible.",
   "skyblock_enhancements.midnightconfig.hideTextureErrors": "Hide Texture Errors",
   "skyblock_enhancements.midnightconfig.hideTextureErrors.tooltip": "Suppresses texture loading error messages in the log.",
   "skyblock_enhancements.midnightconfig.fullbrightText": "Fullbright Settings",

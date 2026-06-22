@@ -2,7 +2,7 @@
 mod.id = "skyblock_enhancements"
 mod.name = "SkyBlock Enhancements"
 mod.group = "com.github.kd_gaming1"
-mod.version = "1.1.4"
+mod.version = "1.1.5"
 
 deps.fabric_loader = "0.19.3"
 loomx.loom_version = "1.16-SNAPSHOT"
