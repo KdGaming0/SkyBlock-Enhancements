@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.config;
 
 import com.github.kd_gaming1.skyblockenhancements.feature.savecursorposition.CursorFilterMode;
+import com.github.kd_gaming1.skyblockenhancements.feature.slotmanage.SlotBindOutlineVisibility;
 import eu.midnightdust.lib.config.MidnightConfig;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,24 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static boolean enableSlotLocking = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean enableSlotBinding = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static SlotBindOutlineVisibility slotBindOutlineVisibility = SlotBindOutlineVisibility.ALWAYS;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
+    public static String slotBindSourceColor = "#FFFF00";
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
+    public static String slotBindTargetColor = "#55FF55";
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
+    public static String slotBindLineColor = "#FFFF00";
+
+    @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
+    public static Comment divider1;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean saveCursorPosition = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS, isSlider = true, min = 10, max = 5000)
@@ -51,8 +70,8 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static List<String> saveCursorPositionFilterList = new ArrayList<>();
 
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean showWhenPressingShift = true;
+    @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
+    public static Comment divider2;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean enterToConfirmSign = true;
@@ -167,6 +186,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = TOOLTIP_ENHANCEMENTS)
     public static boolean showNotMaxedEnchantments = true;
+
+    @Entry(category = TOOLTIP_ENHANCEMENTS)
+    public static boolean showWhenPressingShift = true;
 
     @Comment(category = TOOLTIP_ENHANCEMENTS, centered = true)
     public static Comment priceTooltipsText;
