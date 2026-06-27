@@ -21,6 +21,9 @@
 - **General Reminders** (`/remindme`): Create and manage custom reminders with real-time or play-time triggers, repeating options, and multiple output types (chat, title box, sound, or chat + title). Includes a graphical interface (`/remindme gui`) for easy management.
 - **Item Glow Outline**: Adds a customizable glow outline to dropped items, with optional see-through-walls support and a configurable color.
 - **Hide Cheap Coins**: Hides cheap coin ground drops (coin/coins player-head drops).
+- **Slot Locking & Binding**: Link inventory slots to hotbar slots for quick item swapping. Hold the Slot Edit key (default **L**) and left-click an inventory slot, then a hotbar slot, to create the link.
+  - Hold down Shift and click one of the bound slots to instantly swap the item between the inventory and hotbar slot.
+  - Press L quickly to lock a slot, preventing accidental item movement. Press L again to unlock.
 
 ### Tooltip Enhancements
 - **Price Tooltips**: Shows AH Lowest BIN and Bazaar prices in item tooltips while on SkyBlock.
@@ -48,12 +51,6 @@ Download on **Modrinth**.
 Also check out the **Skyblock Enhanced** modpack! It's an easy-to-install modpack that includes **SkyBlock Enhancements** along with many other essential mods. It comes pre-configured, so you can simply install and play with everything you need.
 
 [<img height="40" src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg">](https://modrinth.com/modpack/skyblock-enhanced-modern-edition)
-
-## ❤️ Support the Project
-
-Want to support my work? You can do this on **Ko‑fi**. All donations are highly appreciated and help me continue providing support and updates. Thank you to everyone who wants to help!
-
-[**☕ Support on Ko-fi**](https://ko-fi.com)
 
 ## 🌐 Server Hosting Partner
 
@@ -89,3 +86,5 @@ Access the mod's features using the following commands:
 | `/remindme snooze <id> <amount> <unit>` | Delay a reminder. |
 
 > Previously licensed under Polyform Shield, now MIT as of 08.04.2026
+
+> AI tools were extensively used during the development of this project.
