@@ -80,8 +80,6 @@
   "skyblock_enhancements.midnightconfig.pingOffsetColorEnd.tooltip": "Color when the block is ready to break (100%).",
   "skyblock_enhancements.midnightconfig.pingOffsetLineWidth": "Outline Line Width",
   "skyblock_enhancements.midnightconfig.pingOffsetLineWidth.tooltip": "Thickness of the block outline.",
-  "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces": "Highlight Block Faces",
-  "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces.tooltip": "Renders the translucent highlight on all faces of the block.",
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha": "Highlight Opacity",
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha.tooltip": "Opacity of the block face highlight (0-100).",
   "skyblock_enhancements.midnightconfig.pingOffsetMarginMs": "Timing Margin (ms)",

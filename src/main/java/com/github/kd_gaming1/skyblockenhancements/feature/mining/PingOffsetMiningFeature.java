@@ -1,8 +1,7 @@
 /*
- * This feature is inspired by Revvilon/PingOffsetMiner:
- * https://github.com/Revvilon/PingOffsetMiner
- *
- * Some mining-overlay and ping-offset timing code were adapted from that project.
+ * Ping-offset mining: a derivative of Revvilon/PingOffsetMiner (CC0-1.0),
+ * https://github.com/Revvilon/PingOffsetMiner — re-architected for this mod and
+ * ported to Minecraft 26.1. See THIRD_PARTY_LICENSES.md for the full attribution.
  */
 
 package com.github.kd_gaming1.skyblockenhancements.feature.mining;

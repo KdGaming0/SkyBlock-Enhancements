@@ -1,8 +1,7 @@
 /*
- * This feature is inspired by Revvilon/PingOffsetMiner:
- * https://github.com/Revvilon/PingOffsetMiner
- *
- * Some mining-overlay and ping-offset timing code were adapted from that project.
+ * Through-wall block overlay adapted from Revvilon/PingOffsetMiner (PomRendering),
+ * CC0-1.0: https://github.com/Revvilon/PingOffsetMiner — geometry rebuilt against
+ * the Minecraft 26.1 render pipeline. See THIRD_PARTY_LICENSES.md for attribution.
  */
 
 package com.github.kd_gaming1.skyblockenhancements.feature.mining.render;
@@ -45,9 +44,14 @@ public final class MiningOverlayRenderer {
 
     private MiningOverlayRenderer() {}
 
-    private volatile double progress;
-    private volatile int elapsedTick;
-    private volatile BlockPos targetPos;
+    /**
+     * One consistent view of what to draw. Held behind a single volatile so the
+     * render thread always reads progress and position together — never a torn
+     * mix of two separate updates.
+     */
+    private record Snapshot(double progress, BlockPos targetPos) {}
+
+    private volatile Snapshot snapshot;
 
     // ── Public API ────────────────────────────────────────────────────────────
 
@@ -55,20 +59,19 @@ public final class MiningOverlayRenderer {
         LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(this::onRender);
     }
 
-    public void updateProgress(double progress, int elapsedTick, BlockPos targetPos) {
-        this.progress = progress;
-        this.elapsedTick = elapsedTick;
-        this.targetPos = targetPos;
+    public void updateProgress(double progress, BlockPos targetPos) {
+        this.snapshot = new Snapshot(progress, targetPos);
     }
 
     public void clear() {
-        this.targetPos = null;
+        this.snapshot = null;
     }
 
     // ── Main render entry ─────────────────────────────────────────────────────
 
     private void onRender(LevelRenderContext context) {
-        if (targetPos == null) return;
+        Snapshot current = this.snapshot;
+        if (current == null) return;
         if (!SkyblockEnhancementsConfig.enablePingOffsetMining) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -81,14 +84,13 @@ public final class MiningOverlayRenderer {
         var consumers = context.bufferSource();
         if (consumers == null) return;
 
+        BlockPos targetPos = current.targetPos();
         BlockState blockState = mc.level.getBlockState(targetPos);
         VoxelShape shape = blockState.getShape(mc.level, targetPos);
         if (shape.isEmpty()) return;
 
-        double currentProgress = this.progress;
-        int currentTick = this.elapsedTick;
-        int outlineColor = MiningColors.getOutlineColor(currentProgress, currentTick);
-        int highlightColor = MiningColors.getHighlightColor(currentProgress, currentTick);
+        int outlineColor = MiningColors.getOutlineColor(current.progress());
+        int highlightColor = MiningColors.getHighlightColor(current.progress());
 
         PoseStack poseStack = context.poseStack();
         if (poseStack == null) return;

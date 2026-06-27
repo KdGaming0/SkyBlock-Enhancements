@@ -1,12 +1,13 @@
 /*
- * Part of the ping-offset mining feature inspired by PingOffsetMiner:
- * https://github.com/Revvilon/PingOffsetMiner
+ * Part of the ping-offset mining feature adapted from Revvilon/PingOffsetMiner,
+ * CC0-1.0: https://github.com/Revvilon/PingOffsetMiner
+ * See THIRD_PARTY_LICENSES.md for the full attribution.
  */
 
 package com.github.kd_gaming1.skyblockenhancements.feature.mining.detect;
 
-import com.github.kd_gaming1.skyblockenhancements.feature.mining.data.BlockStrengthEntry;
 import com.github.kd_gaming1.skyblockenhancements.feature.mining.data.BlockStrengthRegistry;
+import com.github.kd_gaming1.skyblockenhancements.feature.mining.data.BlockStrengthRegistry.Entry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -16,12 +17,8 @@ import net.minecraft.world.phys.HitResult;
 import java.util.Optional;
 
 /**
- * Detects which block the player is currently looking at and whether it has
- * SkyBlock-specific mining data.
- *
- * <p>Uses Minecraft's built-in pick raycast (same as the crosshair). Only
- * resolves the target when the attack key is held — lazy evaluation for
- * performance.
+ * Resolves the block the player's crosshair is on, using Minecraft's built-in
+ * pick raycast (the same one that drives the crosshair highlight).
  */
 public final class TargetBlockDetector {
 
@@ -29,50 +26,41 @@ public final class TargetBlockDetector {
 
     private static final double RAYCAST_DISTANCE = 5.0;
 
+    /** A registered target block paired with its world position. */
+    public record Result(Entry entry, BlockPos pos) {}
+
     /**
-     * Raycasts from the player's eyes and returns the BlockStrengthEntry
-     * for the targeted block, if any.
-     *
-     * @return Optional containing the entry and position if the targeted block
-     *         is registered in BlockStrengthRegistry
+     * Returns the registered mining data for the targeted block, if the
+     * crosshair is on a block that {@link BlockStrengthRegistry} knows.
      */
     public static Optional<Result> getTargetBlock() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return Optional.empty();
 
-        HitResult hit = mc.player.pick(RAYCAST_DISTANCE, 0f, false);
-        if (!(hit instanceof BlockHitResult blockHit)) return Optional.empty();
-        if (blockHit.getType() == HitResult.Type.MISS) return Optional.empty();
+        Optional<BlockPos> pos = raycastBlockPos(mc);
+        if (pos.isEmpty()) return Optional.empty();
 
-        BlockPos pos = blockHit.getBlockPos();
-        BlockState state = mc.level.getBlockState(pos);
+        BlockState state = mc.level.getBlockState(pos.get());
         if (state.isAir()) return Optional.empty();
 
         return BlockStrengthRegistry.get(state.getBlock())
-                .map(entry -> new Result(entry, pos, blockHit));
+                .map(entry -> new Result(entry, pos.get()));
     }
 
     /**
-     * Returns the targeted block position without doing a registry lookup.
-     * Useful for checking if the player is still looking at the same block.
+     * Returns the targeted block position without a registry lookup — used to
+     * check whether the player is still aiming at the same block.
      */
     public static Optional<BlockPos> getTargetPos() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return Optional.empty();
+        return raycastBlockPos(mc);
+    }
 
+    private static Optional<BlockPos> raycastBlockPos(Minecraft mc) {
         HitResult hit = mc.player.pick(RAYCAST_DISTANCE, 0f, false);
         if (!(hit instanceof BlockHitResult blockHit)) return Optional.empty();
         if (blockHit.getType() == HitResult.Type.MISS) return Optional.empty();
-
         return Optional.of(blockHit.getBlockPos());
-    }
-
-    /**
-     * Result tuple: block data + position + hit result.
-     */
-    public record Result(BlockStrengthEntry entry, BlockPos pos, BlockHitResult hitResult) {
-        public long packedPos() {
-            return pos.asLong();
-        }
     }
 }

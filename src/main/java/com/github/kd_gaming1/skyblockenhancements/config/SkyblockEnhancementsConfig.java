@@ -135,13 +135,10 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static double pingOffsetLineWidth = 4.0;
 
     @Entry(category = MINING_ENHANCEMENTS)
-    public static boolean pingOffsetHighlightFaces = true;
-
-    @Entry(category = MINING_ENHANCEMENTS)
-    public static boolean pingOffsetColorUseMid = true;
+    public static boolean pingOffsetColorUseMid = false;
 
     @Entry(category = MINING_ENHANCEMENTS, isSlider = true, min = 0, max = 100)
-    public static int pingOffsetHighlightAlpha = 60;
+    public static int pingOffsetHighlightAlpha = 16;
 
     @Entry(category = MINING_ENHANCEMENTS, isSlider = true, min = -100, max = 100, precision = 1)
     public static int pingOffsetMarginMs = 0;

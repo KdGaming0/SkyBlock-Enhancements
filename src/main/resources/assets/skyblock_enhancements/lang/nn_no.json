@@ -80,8 +80,6 @@
   "skyblock_enhancements.midnightconfig.pingOffsetColorEnd.tooltip": "Farge når blokka er klar til å brekkast (100%).",
   "skyblock_enhancements.midnightconfig.pingOffsetLineWidth": "Breidd på omrisslinje",
   "skyblock_enhancements.midnightconfig.pingOffsetLineWidth.tooltip": "Tjukkleik på blokkomrisset.",
-  "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces": "Framhev blokkflater",
-  "skyblock_enhancements.midnightconfig.pingOffsetHighlightFaces.tooltip": "Teiknar den gjennomskinelege effekten på alle flatene til blokka.",
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha": "Dekkevne for effekt",
   "skyblock_enhancements.midnightconfig.pingOffsetHighlightAlpha.tooltip": "Dekkevne på blokkeffekten (0-100).",
   "skyblock_enhancements.midnightconfig.pingOffsetMarginMs": "Tidsmargin (ms)",

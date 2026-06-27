@@ -1,95 +1,94 @@
+/*
+ * Progress-to-colour banding adapted from Revvilon/PingOffsetMiner (PomRendering),
+ * CC0-1.0: https://github.com/Revvilon/PingOffsetMiner
+ * See THIRD_PARTY_LICENSES.md for the full attribution.
+ */
+
 package com.github.kd_gaming1.skyblockenhancements.feature.mining.render;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 
 /**
- * Colour constants and discrete-band interpolation for the mining progress
- * visualiser.
+ * Turns mining progress into the ARGB colour the overlay draws.
  *
- * <p>When {@code pingOffsetColorUseMid} is {@code true} (default):
+ * <p>Colours come from the config pickers ({@code pingOffsetColorStart/Mid/End});
+ * the highlight fill alpha comes from {@code pingOffsetHighlightAlpha}. The
+ * outline is always fully opaque. Bands (three-colour mode, the default):
  * <pre>
- * Progress 0%  – 70%  : SOLID RED    ("keep mining")
- * Progress 70% – 73%  : RED → YELLOW blend
- * Progress 73% – 99%  : SOLID YELLOW ("getting close")
- * Progress 100%       : SOLID GREEN  ("switch NOW")
- * Progress 100%+      : FLASHING BRIGHT GREEN ("SWITCH NOW!")
+ *   0%   – 70%  : start colour        ("keep mining")
+ *   70%  – 73%  : start → mid blend
+ *   73%  – &lt;100% : mid colour          ("getting close")
+ *   &ge;100%      : end colour          ("switch NOW")
  * </pre>
- *
- * <p>When {@code pingOffsetColorUseMid} is {@code false} — red straight to green:
- * <pre>
- * Progress 0%  – 99%  : SOLID RED    ("keep mining")
- * Progress 100%       : SOLID GREEN  ("switch NOW")
- * Progress 100%+      : FLASHING BRIGHT GREEN ("SWITCH NOW!")
- * </pre>
+ * Two-colour mode ({@code pingOffsetColorUseMid = false}) drops the mid band:
+ * start until 100%, then end.
  */
 public final class MiningColors {
 
     private MiningColors() {}
 
-    /** Outline alpha — fully opaque for crisp edges. */
-    public static final int ALPHA_OUTLINE = 0xFF;
+    /** Fallbacks used when a config colour string fails to parse. */
+    private static final int FALLBACK_START = 0xFF3333; // red
+    private static final int FALLBACK_MID   = 0xFFCC00; // yellow
+    private static final int FALLBACK_END   = 0x33DD55; // green
 
-    /**
-     * Highlight fill alpha — tuned low so the block underneath remains clearly
-     * visible. At ~30 % the fill reads as a tinted glow, not a solid paint wash.
-     */
-    public static final int ALPHA_HIGHLIGHT = 0x50;
+    private static final double MID_START = 0.70;
+    private static final double MID_BLEND_WIDTH = 0.03;
 
-    private static final int RED_R = 0xFF,    RED_G = 0x33,    RED_B = 0x33;
-    private static final int YELLOW_R = 0xFF, YELLOW_G = 0xCC, YELLOW_B = 0x00;
-    private static final int GREEN_R = 0x33,  GREEN_G = 0xDD,  GREEN_B = 0x55;
-    private static final int BRIGHT_R = 0x77, BRIGHT_G = 0xFF, BRIGHT_B = 0x77;
+    public static int getOutlineColor(double progress) {
+        return packColor(rgbForProgress(progress), 0xFF);
+    }
 
-    private static final double YELLOW_START = 0.70;
-    private static final double FLASH_START = 1.00;
-    private static final double BLEND_WIDTH = 0.03;
-    private static final int FLASH_PERIOD_TICKS = 2;
+    public static int getHighlightColor(double progress) {
+        int alpha = percentToAlpha(SkyblockEnhancementsConfig.pingOffsetHighlightAlpha);
+        return packColor(rgbForProgress(progress), alpha);
+    }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+    private static int rgbForProgress(double progress) {
+        int start = parseColor(SkyblockEnhancementsConfig.pingOffsetColorStart, FALLBACK_START);
+        int end = parseColor(SkyblockEnhancementsConfig.pingOffsetColorEnd, FALLBACK_END);
 
-    public static int getColor(double progress, int elapsedTick, int alpha) {
-        int r, g, b;
+        if (progress >= 1.0) return end;
+        if (!SkyblockEnhancementsConfig.pingOffsetColorUseMid) return start;
 
-        if (progress > FLASH_START) {
-            boolean flashOn = (elapsedTick / FLASH_PERIOD_TICKS) % 2 == 0;
-            if (flashOn) {
-                r = BRIGHT_R; g = BRIGHT_G; b = BRIGHT_B;
-            } else {
-                r = GREEN_R; g = GREEN_G; b = GREEN_B;
-            }
-        } else if (progress >= FLASH_START) {
-            r = GREEN_R; g = GREEN_G; b = GREEN_B;
-        } else if (SkyblockEnhancementsConfig.pingOffsetColorUseMid) {
-            // Three-color mode: red → yellow → green
-            if (progress >= YELLOW_START + BLEND_WIDTH) {
-                r = YELLOW_R; g = YELLOW_G; b = YELLOW_B;
-            } else if (progress >= YELLOW_START) {
-                double t = (progress - YELLOW_START) / BLEND_WIDTH;
-                r = lerp(RED_R, YELLOW_R, t);
-                g = lerp(RED_G, YELLOW_G, t);
-                b = lerp(RED_B, YELLOW_B, t);
-            } else {
-                r = RED_R; g = RED_G; b = RED_B;
-            }
-        } else {
-            // Two-color mode: red → green (no yellow)
-            r = RED_R; g = RED_G; b = RED_B;
+        int mid = parseColor(SkyblockEnhancementsConfig.pingOffsetColorMid, FALLBACK_MID);
+        if (progress >= MID_START + MID_BLEND_WIDTH) return mid;
+        if (progress >= MID_START) {
+            double t = (progress - MID_START) / MID_BLEND_WIDTH;
+            return lerpColor(start, mid, t);
         }
-
-        return (alpha << 24) | (r << 16) | (g << 8) | b;
+        return start;
     }
 
-    public static int getOutlineColor(double progress, int elapsedTick) {
-        return getColor(progress, elapsedTick, ALPHA_OUTLINE);
+    // ── Colour helpers ──────────────────────────────────────────────────────
+
+    private static int packColor(int rgb, int alpha) {
+        return (alpha << 24) | (rgb & 0xFFFFFF);
     }
 
-    public static int getHighlightColor(double progress, int elapsedTick) {
-        return getColor(progress, elapsedTick, ALPHA_HIGHLIGHT);
+    private static int percentToAlpha(int percent) {
+        int clamped = Math.max(0, Math.min(100, percent));
+        return Math.round(clamped * 255f / 100f);
     }
 
-    // ── Integer linear interpolation ──────────────────────────────────────────
+    private static int lerpColor(int from, int to, double t) {
+        int r = lerp((from >> 16) & 0xFF, (to >> 16) & 0xFF, t);
+        int g = lerp((from >> 8) & 0xFF, (to >> 8) & 0xFF, t);
+        int b = lerp(from & 0xFF, to & 0xFF, t);
+        return (r << 16) | (g << 8) | b;
+    }
 
     private static int lerp(int from, int to, double t) {
         return from + (int) ((to - from) * t);
+    }
+
+    /** Parses {@code "#RRGGBB"} (or {@code "RRGGBB"}) to a 24-bit RGB int, defaulting on failure. */
+    private static int parseColor(String hex, int fallback) {
+        if (hex == null) return fallback;
+        try {
+            return Integer.parseInt(hex.replace("#", "").trim(), 16) & 0xFFFFFF;
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 }
