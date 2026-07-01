@@ -54,6 +54,9 @@ public final class SlotManager {
     /** First inventory slot picked in a pending bind, as a {@code getContainerSlot()} index. */
     private static Integer pendingBindSlot;
 
+    /** Slot the cursor pressed down on in bind mode, as a {@code getContainerSlot()} index (drag start). */
+    private static Integer dragAnchorSlot;
+
     // Tap-vs-hold detection (driven by the tick handler).
     private static boolean editKeyWasDown;
     private static long editKeyDownAtMillis;
@@ -79,6 +82,7 @@ public final class SlotManager {
             accountUuid = null;
             bucketKey = null;
             pendingBindSlot = null;
+            dragAnchorSlot = null;
             contextHoveredSlot = null;
         });
     }
@@ -116,6 +120,21 @@ public final class SlotManager {
     public static Integer getBinding(int containerSlot) {
         Bucket bucket = activeBucket(false);
         return bucket == null ? null : bucket.binds.get(containerSlot);
+    }
+
+    /**
+     * Inverse of {@link #getBinding}: the first inventory position bound to the given hotbar slot, or
+     * {@code null} if none. Lets a shift-click on the hotbar <em>target</em> pull its bound item down.
+     */
+    public static Integer getSourceBoundToHotbar(int hotbarSlot) {
+        Bucket bucket = activeBucket(false);
+        if (bucket == null) return null;
+        for (Map.Entry<Integer, Integer> entry : bucket.binds.entrySet()) {
+            if (entry.getValue() == hotbarSlot) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     /** Unmodifiable view of the active bucket's inventory→hotbar binds, for rendering. */
@@ -171,6 +190,40 @@ public final class SlotManager {
             return;
         }
         pendingBindSlot = containerSlot; // select / replace the pending source
+    }
+
+    /** Records the slot a bind-mode left-press started on, so a release elsewhere can be a drag. */
+    public static void beginDrag(int containerSlot) {
+        dragAnchorSlot = containerSlot;
+    }
+
+    /**
+     * Bind-mode left-release. Completes a bind when the press started on one side (inventory source
+     * 9–40 or hotbar 0–8) and released on the opposite side — the "hold key + drag item to slot"
+     * gesture. A same-slot release is a plain click, already handled on press, so it is ignored here.
+     */
+    public static void handleBindDragRelease(Slot rel) {
+        Integer anchor = dragAnchorSlot;
+        dragAnchorSlot = null;
+        if (anchor == null || rel == null || !(rel.container instanceof Inventory)) return;
+
+        int relSlot = rel.getContainerSlot();
+        if (relSlot == anchor) return;
+
+        boolean anchorHotbar = anchor >= 0 && anchor <= 8;
+        boolean relHotbar = relSlot >= 0 && relSlot <= 8;
+        if (anchorHotbar == relHotbar) return;
+
+        int source = anchorHotbar ? relSlot : anchor;
+        int hotbar = anchorHotbar ? anchor : relSlot;
+
+        Bucket bucket = activeBucket(true);
+        if (bucket == null) return;
+        bucket.binds.put(source, hotbar);
+        pendingBindSlot = null;
+        pruneAndSave(bucket);
+        playSound(true);
+        overlay("skyblock_enhancements.slotbind.created");
     }
 
     /** Explicit unlink (right-click in bind mode, or shift+right-click). Returns whether it removed one. */

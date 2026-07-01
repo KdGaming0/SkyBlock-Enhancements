@@ -12,6 +12,7 @@ import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -63,6 +64,9 @@ public abstract class SlotManageMixin {
                 if (slot != null) {
                     if (event.button() == 0) {
                         SlotManager.handleBindClick(slot);
+                        if (slot.container instanceof Inventory) {
+                            SlotManager.beginDrag(slot.getContainerSlot());
+                        }
                     } else if (event.button() == 1) {
                         SlotManager.unbindSlot(slot);
                     }
@@ -81,17 +85,46 @@ public abstract class SlotManageMixin {
             return;
         }
         if (event.button() == 0) {
-            Integer hotbarButton = SlotManager.getBinding(slot.getContainerSlot());
-            if (hotbarButton == null || !menu.getCarried().isEmpty()) {
-                return; // unbound, or don't intercept while dragging an item on the cursor
+            if (!menu.getCarried().isEmpty()) {
+                return;
             }
-            slotClicked(slot, slot.index, hotbarButton, ContainerInput.SWAP);
+            int containerSlot = slot.getContainerSlot();
+            Integer hotbarButton = SlotManager.getBinding(containerSlot);
+            Slot source = slot;
+            if (hotbarButton == null) {
+                Integer sourceSlot = SlotManager.getSourceBoundToHotbar(containerSlot);
+                if (sourceSlot != null) {
+                    source = sbe$findInventorySlot(sourceSlot);
+                    hotbarButton = containerSlot;
+                }
+            }
+            if (hotbarButton == null || source == null) {
+                return;
+            }
+            slotClicked(source, source.index, hotbarButton, ContainerInput.SWAP);
             cir.setReturnValue(true);
         } else if (event.button() == 1) {
             if (SlotManager.unbindSlot(slot)) {
                 cir.setReturnValue(true);
             }
         }
+    }
+
+    @Inject(method = "mouseReleased", at = @At("HEAD"), cancellable = true)
+    private void sbe$onMouseReleased(MouseButtonEvent event, CallbackInfoReturnable<Boolean> cir) {
+        boolean lockEnabled = SkyblockEnhancementsConfig.enableSlotLocking;
+        boolean bindEnabled = SkyblockEnhancementsConfig.enableSlotBinding;
+        if (!lockEnabled && !bindEnabled) {
+            return;
+        }
+        if (!SlotManager.isEditKeyDown()) {
+            return;
+        }
+        // A left-release over the opposite side of where the press started completes a drag-to-bind.
+        if (bindEnabled && (Object) this instanceof InventoryScreen && event.button() == 0) {
+            SlotManager.handleBindDragRelease(getHoveredSlot(event.x(), event.y()));
+        }
+        cir.setReturnValue(true); // press was swallowed in edit mode; swallow the matching release too
     }
 
     @Inject(method = "slotClicked", at = @At("HEAD"), cancellable = true)
@@ -106,5 +139,16 @@ public abstract class SlotManageMixin {
         if (containerInput == ContainerInput.SWAP && SlotManager.isLocked(buttonNum)) {
             ci.cancel();
         }
+    }
+
+    /** Resolves the live {@link Slot} for a player-inventory {@code getContainerSlot()} index (0–40). */
+    @Unique
+    private Slot sbe$findInventorySlot(int containerSlot) {
+        for (Slot s : menu.slots) {
+            if (s.container instanceof Inventory && s.getContainerSlot() == containerSlot) {
+                return s;
+            }
+        }
+        return null;
     }
 }
