@@ -10,10 +10,13 @@ public final class HypixelLocationState {
     private static boolean onHypixel = false;
     private static boolean onSkyblock = false;
     private static boolean onMiningIsland = false;
+    private static boolean inDungeon = false;
 
     private static final Set<String> MINING_ISLAND_MAPS = Set.of(
             "Dwarven Mines", "Crystal Hollows", "Mineshaft"
     );
+
+    private static final String DUNGEON_MAP = "Dungeon";
 
     private HypixelLocationState() {}
 
@@ -30,6 +33,10 @@ public final class HypixelLocationState {
             onMiningIsland = location.map()
                     .map(MINING_ISLAND_MAPS::contains)
                     .orElse(false);
+
+            inDungeon = location.map()
+                    .map(DUNGEON_MAP::equals)
+                    .orElse(false);
         });
     }
 
@@ -41,9 +48,14 @@ public final class HypixelLocationState {
         return onMiningIsland;
     }
 
+    public static boolean isInDungeon() {
+        return inDungeon;
+    }
+
     public static void reset() {
         onHypixel = false;
         onSkyblock = false;
         onMiningIsland = false;
+        inDungeon = false;
     }
 }
