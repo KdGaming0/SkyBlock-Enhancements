@@ -3,6 +3,7 @@ package com.github.kd_gaming1.skyblockenhancements.config;
 import com.github.kd_gaming1.skyblockenhancements.feature.savecursorposition.CursorFilterMode;
 import com.github.kd_gaming1.skyblockenhancements.feature.slotmanage.LockedDropMode;
 import com.github.kd_gaming1.skyblockenhancements.feature.slotmanage.SlotBindOutlineVisibility;
+import com.github.kd_gaming1.skyblockenhancements.util.ItemRarity;
 import eu.midnightdust.lib.config.MidnightConfig;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +59,21 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
     public static String slotBindLineColor = "#FFFF00";
+
+    @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
+    public static Comment rarityDropGuardText;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean enableRarityDropGuard = false;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static ItemRarity rarityDropGuardMinRarity = ItemRarity.RARE;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean rarityDropGuardTripleDrop = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean rarityDropGuardBlockOutsideDrop = true;
 
     @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
     public static Comment divider1;

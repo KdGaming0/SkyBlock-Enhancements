@@ -64,9 +64,24 @@ public final class StatDefinition {
         String stripped = LEADING_NOISE.matcher(normalizedLine).replaceFirst("");
         String upper = stripped.toUpperCase(Locale.ROOT);
         for (String alias : aliases) {
-            if (upper.startsWith(alias)) return true;
+            if (upper.startsWith(alias) && isAliasBoundary(upper, alias.length())) return true;
         }
         return false;
+    }
+
+    /**
+     * A matched alias is only a real match if what follows it is a word boundary. After skipping
+     * spaces, a following <em>letter</em> means the line is a different, longer stat name — e.g.
+     * "Mining Speed Boost" (a HOTM ability) must not match the "MINING SPEED" alias, and "MSB" must
+     * not match "MS". A digit, sign, colon, percent, or end-of-line (a bare or multi-line stat) all
+     * remain valid boundaries.
+     */
+    private static boolean isAliasBoundary(String upper, int aliasLen) {
+        int i = aliasLen;
+        while (i < upper.length() && upper.charAt(i) == ' ') i++;
+        if (i >= upper.length()) return true;
+        char c = upper.charAt(i);
+        return c < 'A' || c > 'Z';
     }
 
     /**
@@ -80,7 +95,8 @@ public final class StatDefinition {
 
         int bestMatchLen = 0;
         for (String alias : aliases) {
-            if (upper.startsWith(alias) && alias.length() > bestMatchLen) {
+            if (upper.startsWith(alias) && isAliasBoundary(upper, alias.length())
+                    && alias.length() > bestMatchLen) {
                 bestMatchLen = alias.length();
             }
         }

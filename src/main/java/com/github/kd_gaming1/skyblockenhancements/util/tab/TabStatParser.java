@@ -1,8 +1,10 @@
 package com.github.kd_gaming1.skyblockenhancements.util.tab;
 
+import com.github.kd_gaming1.skyblockenhancements.util.StatValueType;
 import com.github.kd_gaming1.skyblockenhancements.util.StringUtil;
 
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -66,6 +68,8 @@ public final class TabStatParser {
      * The value must start with a digit, sign, or known prefix.
      */
     private static final Pattern SPACE_PAIR = Pattern.compile("^([A-Za-z][A-Za-z\\s]{2,}?)\\s+([\\d\\-+~%£$].*)$");
+    /** The leading numeric token of a value: sign, digits/commas, optional decimal, optional k/M/B or %. */
+    private static final Pattern LEADING_NUMBER = Pattern.compile("[+\\-~]?\\d[\\d,]*(?:\\.\\d+)?\\s*[kKmMbB%]?");
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  Public API
@@ -107,6 +111,14 @@ public final class TabStatParser {
                         rawValue = next;
                         i++; // consume the value line
                     }
+                }
+
+                // Typed validation: a numeric stat must carry an actual numeric token. If a value
+                // slipped through with none (future Hypixel decoration), don't store it — a bad
+                // value would otherwise zero the stat and silently break consumers (e.g. POM).
+                if (!rawValue.isEmpty() && def.valueType() != StatValueType.STRING) {
+                    String number = extractLeadingNumber(rawValue);
+                    rawValue = number != null ? number : "";
                 }
 
                 if (!rawValue.isEmpty()) {
@@ -303,6 +315,16 @@ public final class TabStatParser {
     // ═══════════════════════════════════════════════════════════════════════════
     //  Internal helpers
     // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Returns the leading numeric token of {@code value} (e.g. {@code "1,712"}, {@code "1.2k"},
+     * {@code "45%"}), or {@code null} if the value does not begin with a number. Trimming the value
+     * to this token also strips any trailing decoration before it reaches {@link #parseInt} etc.
+     */
+    private static String extractLeadingNumber(String value) {
+        Matcher m = LEADING_NUMBER.matcher(value);
+        return m.lookingAt() ? m.group().trim() : null;
+    }
 
     /** Strips commas, whitespace, and known sentinel strings from a raw value. */
     private static String cleanValue(String value) {

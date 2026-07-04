@@ -2,20 +2,18 @@ package com.github.kd_gaming1.skyblockenhancements.feature;
 
 import com.github.kd_gaming1.skyblockenhancements.config.SkyblockEnhancementsConfig;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
+import com.github.kd_gaming1.skyblockenhancements.util.ItemRarity;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.level.block.TransparentBlock;
 import net.minecraft.world.phys.Vec3;
 
@@ -34,25 +32,19 @@ public class ItemGlowManager {
     private static final double LOOK_DOT_THRESHOLD = 0.15;
     private static volatile boolean onSkyblock = false;
 
-    /** Skyblock rarity name → outline RGB color. */
-    private static final Map<String, Integer> RARITY_COLORS = Map.ofEntries(
-            Map.entry("COMMON",       0xFFFFFF),
-            Map.entry("UNCOMMON",     0x55FF55),
-            Map.entry("RARE",         0x5555FF),
-            Map.entry("EPIC",         0x800080),
-            Map.entry("LEGENDARY",    0xFFD700),
-            Map.entry("MYTHIC",       0xFF55FF),
-            Map.entry("DIVINE",       0x00FFFF),
-            Map.entry("SPECIAL",      0xFF5555),
-            Map.entry("VERY SPECIAL", 0xFF5555),
-            Map.entry("ULTIMATE",     0xAA0000),
-            Map.entry("ADMIN",        0xAA0000)
-    );
-
-    /** Checked bottom-up; first match wins. Order matters for substrings (e.g. "VERY SPECIAL" before "SPECIAL"). */
-    private static final List<String> RARITY_ORDER = List.of(
-            "VERY SPECIAL", "ULTIMATE", "DIVINE", "MYTHIC", "LEGENDARY",
-            "EPIC", "RARE", "UNCOMMON", "SPECIAL", "ADMIN", "COMMON"
+    /** Skyblock rarity → outline RGB color. Rarity extraction itself lives in {@link ItemRarity}. */
+    private static final Map<ItemRarity, Integer> RARITY_COLORS = Map.ofEntries(
+            Map.entry(ItemRarity.COMMON,       0xFFFFFF),
+            Map.entry(ItemRarity.UNCOMMON,     0x55FF55),
+            Map.entry(ItemRarity.RARE,         0x5555FF),
+            Map.entry(ItemRarity.EPIC,         0x800080),
+            Map.entry(ItemRarity.LEGENDARY,    0xFFD700),
+            Map.entry(ItemRarity.MYTHIC,       0xFF55FF),
+            Map.entry(ItemRarity.DIVINE,       0x00FFFF),
+            Map.entry(ItemRarity.SPECIAL,      0xFF5555),
+            Map.entry(ItemRarity.VERY_SPECIAL, 0xFF5555),
+            Map.entry(ItemRarity.ULTIMATE,     0xAA0000),
+            Map.entry(ItemRarity.ADMIN,        0xAA0000)
     );
 
     /** UUID → glow color for every actively tracked item. */
@@ -133,8 +125,9 @@ public class ItemGlowManager {
     /** Registers an item for glow tracking and resolves its rarity color from lore. */
     private static void onItemSpawned(ItemEntity item) {
         if (HypixelLocationState.isOnHypixel() && isShowcaseItem(item)) return;
-        String rarity = extractRarity(item);
-        int color = RARITY_COLORS.getOrDefault(rarity, parseColor(SkyblockEnhancementsConfig.defaultGlowColor));
+        int color = ItemRarity.fromItem(item.getItem())
+                .map(RARITY_COLORS::get)
+                .orElseGet(() -> parseColor(SkyblockEnhancementsConfig.defaultGlowColor));
         UUID uuid = item.getUUID();
         glowColors.put(uuid, color);
         trackedEntities.put(uuid, item);
@@ -189,29 +182,6 @@ public class ItemGlowManager {
     }
 
     // --- Helpers ---
-
-    /**
-     * Scans the item's lore bottom-up and returns the first matching Skyblock rarity string.
-     * Returns "UNKNOWN" if the item has no lore or no recognizable rarity line.
-     */
-    private static String extractRarity(ItemEntity item) {
-        long start = System.nanoTime();
-        ItemLore lore = item.getItem().get(DataComponents.LORE);
-
-        if (lore == null) return "UNKNOWN";
-
-        List<Component> lines = lore.lines();
-        for (int i = lines.size() - 1; i >= 0; i--) {
-            String line = lines.get(i).getString().toUpperCase(Locale.ROOT);
-            for (String rarity : RARITY_ORDER) {
-                if (line.contains(rarity)) {
-                    return rarity;
-                }
-            }
-        }
-
-        return "UNKNOWN";
-    }
 
     /**
      * Returns true if the item appears to be sitting on a showcase stand.

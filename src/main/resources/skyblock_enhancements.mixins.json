@@ -22,6 +22,8 @@
     "SignEnterToConfirmMixin",
     "access.AbstractContainerMenuStateAccessor",
     "access.AbstractSignEditScreenAccessor",
+    "dropguard.ContainerDropGuardMixin",
+    "dropguard.PlayerItemDropGuardMixin",
     "itemglow.EntityRendererMixin",
     "itemglow.EntityRenderStateMixin",
     "itemglow.LevelRendererMixin",
