@@ -214,7 +214,7 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static Comment priceTooltipsText;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS)
-    public static boolean enablePriceTooltips = true;
+    public static boolean enablePriceTooltips = false;
 
     @Entry(category = TOOLTIP_ENHANCEMENTS, isSlider = true, min = 5, max = 60)
     public static int priceRefreshIntervalMinutes = 20;
