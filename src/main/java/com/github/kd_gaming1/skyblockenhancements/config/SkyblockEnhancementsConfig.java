@@ -1,6 +1,7 @@
 package com.github.kd_gaming1.skyblockenhancements.config;
 
 import com.github.kd_gaming1.skyblockenhancements.feature.savecursorposition.CursorFilterMode;
+import com.github.kd_gaming1.skyblockenhancements.feature.slotmanage.LockCornerPosition;
 import com.github.kd_gaming1.skyblockenhancements.feature.slotmanage.LockedDropMode;
 import com.github.kd_gaming1.skyblockenhancements.feature.slotmanage.SlotBindOutlineVisibility;
 import com.github.kd_gaming1.skyblockenhancements.util.ItemRarity;
@@ -41,6 +42,9 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean enableSlotLocking = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static LockCornerPosition lockCornerPosition = LockCornerPosition.TOP_RIGHT;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static LockedDropMode dropLockedItemsWithQ = LockedDropMode.IN_DUNGEONS;

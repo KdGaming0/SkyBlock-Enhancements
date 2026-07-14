@@ -23,8 +23,14 @@ public final class SlotOverlayRenderer {
 
     private SlotOverlayRenderer() {}
 
-    private static final Identifier LOCK_SPRITE =
-            Identifier.fromNamespaceAndPath("skyblock_enhancements", "slot/locked");
+    private static final Identifier LOCK_SPRITE_TOP_LEFT =
+            Identifier.fromNamespaceAndPath("skyblock_enhancements", "slot/padlock_topleft");
+    private static final Identifier LOCK_SPRITE_TOP_RIGHT =
+            Identifier.fromNamespaceAndPath("skyblock_enhancements", "slot/padlock_topright");
+    private static final Identifier LOCK_SPRITE_BOTTOM_LEFT =
+            Identifier.fromNamespaceAndPath("skyblock_enhancements", "slot/padlock_bottomleft");
+    private static final Identifier LOCK_SPRITE_BOTTOM_RIGHT =
+            Identifier.fromNamespaceAndPath("skyblock_enhancements", "slot/padlock_bottomright");
 
     private static final int OUTLINE_ALPHA = 0xCC000000;
     private static final int LINE_ALPHA = 0xFF000000;
@@ -36,7 +42,16 @@ public final class SlotOverlayRenderer {
         if (!SkyblockEnhancementsConfig.enableSlotLocking) return;
         if (!(slot.container instanceof Inventory)) return;
         if (!SlotManager.isLocked(slot.getContainerSlot())) return;
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, LOCK_SPRITE, slot.x, slot.y, 16, 16);
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, lockSprite(), slot.x, slot.y, 16, 16);
+    }
+
+    private static Identifier lockSprite() {
+        return switch (SkyblockEnhancementsConfig.lockCornerPosition) {
+            case TOP_LEFT -> LOCK_SPRITE_TOP_LEFT;
+            case TOP_RIGHT -> LOCK_SPRITE_TOP_RIGHT;
+            case BOTTOM_LEFT -> LOCK_SPRITE_BOTTOM_LEFT;
+            case BOTTOM_RIGHT -> LOCK_SPRITE_BOTTOM_RIGHT;
+        };
     }
 
     /** Per-slot bind outline (source/target/pending). Drawn below the stack-count text. */

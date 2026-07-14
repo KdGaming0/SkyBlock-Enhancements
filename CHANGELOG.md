@@ -1,5 +1,5 @@
-## Changelog for 1.1.10
+## Changelog for 1.1.11
 
-### **Tooltip Enhancements**
-**Changed**
-- Default disabled ah and bz price in tooltips.
+### **Slot Locking**
+**Added**
+- New "Lock Icon Position" option to choose which corner of a locked slot the padlock icon appears in (defaults to top right).
