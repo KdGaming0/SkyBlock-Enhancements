@@ -32,6 +32,7 @@ bin/
 # fabric
 
 run/
+versions
 
 # java
 
@@ -41,10 +42,7 @@ replay_*.log
 *.jfr
 
 # ai
-AGENTS.md
 graphify-out
 .graphifyignore
-docs
-CLAUDE.md
 .claude
 IMPLEMENTATION_LOG.md

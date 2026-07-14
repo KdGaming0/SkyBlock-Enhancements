@@ -166,6 +166,7 @@ if (sc.current.version in compatibleVersions) {
                 minecraftVersions.addAll(compatibleVersions)
                 requires { slug = "fabric-api" }
                 optional { slug = "modmenu" }
+                embeds   { slug = "midnightlib" }
             }
         }
     }
