@@ -1,5 +1,5 @@
-## Changelog for 1.1.11
+## Changelog for 1.1.12
 
-### **Slot Locking**
-**Added**
-- New "Lock Icon Position" option to choose which corner of a locked slot the padlock icon appears in (defaults to top right).
+### **Tooltip Scrolling**
+**Changed**
+- Scrollable screens now keep mouse-wheel priority. Hold Left Alt to scroll the active tooltip instead.

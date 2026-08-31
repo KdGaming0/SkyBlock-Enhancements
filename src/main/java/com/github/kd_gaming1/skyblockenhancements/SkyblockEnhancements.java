@@ -15,11 +15,12 @@ import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceDataFetch
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceStore;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceTooltipEnhancement;
 import com.github.kd_gaming1.skyblockenhancements.feature.pricing.PriceTooltipKeybinds;
-import com.github.kd_gaming1.skyblockenhancements.feature.slotmanage.SlotManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderManager;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderNotifier;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.ReminderStorage;
 import com.github.kd_gaming1.skyblockenhancements.feature.reminder.RemindersFileData;
+import com.github.kd_gaming1.skyblockenhancements.feature.slotmanage.SlotManager;
+import com.github.kd_gaming1.skyblockenhancements.feature.tooltipscroll.TooltipScrollInput;
 import com.github.kd_gaming1.skyblockenhancements.util.HypixelLocationState;
 import com.github.kd_gaming1.skyblockenhancements.util.IrisCompat;
 import com.github.kd_gaming1.skyblockenhancements.util.ProfileIdTracker;
@@ -95,6 +96,7 @@ public class SkyblockEnhancements implements ClientModInitializer {
         ItemGlowManager.init();
         Fullbright.init();
         PriceTooltipKeybinds.init();
+        TooltipScrollInput.register();
         SlotManager.init(
                 FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("slot_locks.json"));
         priceTooltip.register();

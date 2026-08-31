@@ -14,6 +14,9 @@ public final class TooltipScrollState {
     private static double currentX;
     private static double currentY;
 
+    /** Whether the most recently extracted screen frame contained a tooltip. */
+    private static boolean tooltipActive;
+
     // ── Hover identity (replaces lastComponents) ─────────────────────────────
     private static String lastScreenClass;
     private static int lastMouseX = Integer.MIN_VALUE;
@@ -25,6 +28,11 @@ public final class TooltipScrollState {
     private static final int POSITION_THRESHOLD = 20;
 
     private TooltipScrollState() {}
+
+    /** Clears the activity marker before the screen extracts its next frame. */
+    public static void beginFrame() {
+        tooltipActive = false;
+    }
 
     public static void scrollX(double amount) {
         targetX += amount;
@@ -69,6 +77,19 @@ public final class TooltipScrollState {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
         lastFirstLine = firstLine;
+        tooltipActive = !components.isEmpty();
+    }
+
+    /**
+     * Returns whether wheel input still belongs to the tooltip rendered in the
+     * most recently completed frame.
+     */
+    public static boolean isTooltipActive(Screen screen, double mouseX, double mouseY) {
+        return tooltipActive
+                && screen != null
+                && screen.getClass().getName().equals(lastScreenClass)
+                && Math.abs(mouseX - lastMouseX) < POSITION_THRESHOLD
+                && Math.abs(mouseY - lastMouseY) < POSITION_THRESHOLD;
     }
 
     public static float getXOffset() {
@@ -81,6 +102,7 @@ public final class TooltipScrollState {
 
     public static void resetAll() {
         reset();
+        tooltipActive = false;
         lastScreenClass = null;
         lastMouseX = Integer.MIN_VALUE;
         lastMouseY = Integer.MIN_VALUE;

@@ -33,7 +33,6 @@
     "slotmanage.SlotOverlayMixin",
     "savecursorposition.SaveCursorPositionMouseHandlerMixin",
     "tooltipscroll.ClientTextTooltipAccessor",
-    "tooltipscroll.TooltipScrollGuiGraphicsMixin",
-    "tooltipscroll.TooltipScrollMouseMixin"
+    "tooltipscroll.TooltipScrollGuiGraphicsMixin"
   ]
 }
