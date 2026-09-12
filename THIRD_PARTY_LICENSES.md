@@ -5,31 +5,6 @@ following open-source projects. We gratefully acknowledge their authors.
 
 ---
 
-## PingOffsetMiner
-
-- **Author:** Revvilon
-- **Project:** https://github.com/Revvilon/PingOffsetMiner
-- **License:** CC0 1.0 Universal (Public Domain Dedication)
-
-The **Ping Offset Mining** feature in SkyBlock Enhancements (everything under
-`feature/mining/`) is a **derivative work** of PingOffsetMiner. It is a substantial
-reuse of that project's logic — not merely "inspired by" it — that was re-architected
-into this mod's structure and ported from Minecraft 1.21.11 to 26.1. Concretely, the
-following were adapted from the listed PingOffsetMiner source files:
-
-| SkyBlock Enhancements                         | Adapted from (PingOffsetMiner) |
-|-----------------------------------------------|--------------------------------|
-| `BreakTimeCalculator` (break-time + ping-offset math) | `pomGetter/SpeedCalc` |
-| `BlockStrengthRegistry` (block strength / breaking-power table) | `pomGetter/PomBlockData` |
-| `MiningOverlayRenderer` + `MiningColors` (through-wall overlay, progress colours) | `render/PomRendering` |
-| `MiningProgressTracker` (mining state handling) | `events/worldTickEvent` |
-| `PickaxeAbilityNotifier` (ability chat detection) | `events/onChatMessage` |
-
-CC0-1.0 is a public-domain dedication, so **no attribution is legally required**;
-this credit is given voluntarily to acknowledge the original author. The rendering
-was rebuilt for the 26.1 pipeline, the data tables and timing were re-verified
-against the Hypixel SkyBlock wiki.
-
 ## NotEnoughUpdates (NEU)
 
 - **Authors:** NotEnoughUpdates contributors

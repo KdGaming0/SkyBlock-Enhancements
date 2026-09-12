@@ -1,5 +1,11 @@
-## Changelog for 1.1.12
+## Changelog for 1.2.0
 
-### **Tooltip Scrolling**
-**Changed**
-- Scrollable screens now keep mouse-wheel priority. Hold Left Alt to scroll the active tooltip instead.
+### **Mining**
+**Removed**
+- Removed the unreliable Ping Offset Mining feature and its settings.
+- Removed pickaxe ability notifications and their settings.
+
+### **Cleanup**
+**Removed**
+- Removed dropped-item glow and its settings.
+- Removed the unused Hide Cheap Coins and automatic ground-item debug options.

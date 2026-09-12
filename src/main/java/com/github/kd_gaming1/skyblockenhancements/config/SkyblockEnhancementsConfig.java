@@ -17,7 +17,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static final String SKYBLOCK_ENHANCEMENTS = "skyblock_enhancements";
     public static final String TOOLTIP_ENHANCEMENTS  = "tooltip_enhancements";
     public static final String GENERAL_ENHANCEMENTS  = "general_enhancements";
-    public static final String MINING_ENHANCEMENTS   = "mining_enhancements";
     public static final String DEV_TOOLS             = "dev_tools";
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -29,10 +28,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean preventWeaponPlacement = true;
-
-    @Hidden
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean hideCheapCoins = false;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean setKatReminderForPetUpgrades = true;
@@ -103,15 +98,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean enterToConfirmAllSigns = false;
 
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean enableItemGlowOutline = true;
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS)
-    public static boolean showThroughWalls = true;
-
-    @Entry(category = SKYBLOCK_ENHANCEMENTS, isColor = true)
-    public static String defaultGlowColor = "#ff9900";
-
     @Comment(category = SKYBLOCK_ENHANCEMENTS, centered = true)
     public static Comment reminderSoundText;
 
@@ -145,55 +131,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public enum ReminderSoundType {
         UI, BELL, CHIME, LEVEL_UP, EXPERIENCE, HARP, PLING, SUCCESS
     }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  Mining Enhancements
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    @Comment(category = MINING_ENHANCEMENTS, centered = true)
-    public static Comment pingOffsetMiningText;
-
-    @Entry(category = MINING_ENHANCEMENTS)
-    public static boolean enablePingOffsetMining = false;
-
-    @Entry(category = MINING_ENHANCEMENTS)
-    public static boolean pingOffsetShowOnLook = true;
-
-    @Entry(category = MINING_ENHANCEMENTS)
-    public static boolean pingOffsetShowHighlight = true;
-
-    @Entry(category = MINING_ENHANCEMENTS)
-    public static boolean pingOffsetShowOutline = true;
-
-    @Entry(category = MINING_ENHANCEMENTS, isColor = true)
-    public static String pingOffsetColorStart = "#FF0000";
-
-    @Entry(category = MINING_ENHANCEMENTS, isColor = true)
-    public static String pingOffsetColorMid = "#FFFF00";
-
-    @Entry(category = MINING_ENHANCEMENTS, isColor = true)
-    public static String pingOffsetColorEnd = "#00FF00";
-
-    @Entry(category = MINING_ENHANCEMENTS, isSlider = true, min = 0.5, max = 2.0)
-    public static double pingOffsetLineWidth = 4.0;
-
-    @Entry(category = MINING_ENHANCEMENTS)
-    public static boolean pingOffsetColorUseMid = false;
-
-    @Entry(category = MINING_ENHANCEMENTS, isSlider = true, min = 0, max = 100)
-    public static int pingOffsetHighlightAlpha = 16;
-
-    @Entry(category = MINING_ENHANCEMENTS, isSlider = true, min = -100, max = 100, precision = 1)
-    public static int pingOffsetMarginMs = 0;
-
-    @Comment(category = MINING_ENHANCEMENTS, centered = true)
-    public static Comment pickaxeAbilityText;
-
-    @Entry(category = MINING_ENHANCEMENTS)
-    public static boolean notifyPickaxeAbilityReady = false;
-
-    @Entry(category = MINING_ENHANCEMENTS)
-    public static boolean pickaxeAbilityReadySound = false;
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  Tooltip Enhancements
@@ -293,26 +230,6 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
 
     @Entry(category = DEV_TOOLS)
     public static boolean devMode = FabricLoader.getInstance().isDevelopmentEnvironment();
-
-    @Condition(requiredOption = "devMode", requiredValue = "true")
-    @Comment(category = DEV_TOOLS, centered = true)
-    public static Comment devToolsText;
-
-    @Condition(requiredOption = "devMode", requiredValue = "true")
-    @Entry(category = DEV_TOOLS)
-    public static boolean enableGroundItemDebugHelper = false;
-
-    @Condition(requiredOption = "devMode", requiredValue = "true")
-    @Entry(category = DEV_TOOLS)
-    public static boolean groundItemDebugOnlyNearby = true;
-
-    @Condition(requiredOption = "devMode", requiredValue = "true")
-    @Entry(category = DEV_TOOLS, isSlider = true, min = 4, max = 64)
-    public static int groundItemDebugRadius = 16;
-
-    @Condition(requiredOption = "devMode", requiredValue = "true")
-    @Entry(category = DEV_TOOLS, isSlider = true, min = 1, max = 200)
-    public static int groundItemDebugIntervalTicks = 20;
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  ModSettings delegation

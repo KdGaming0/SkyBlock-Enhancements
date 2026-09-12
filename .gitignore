@@ -45,4 +45,5 @@ replay_*.log
 graphify-out
 .graphifyignore
 .claude
+.codex
 IMPLEMENTATION_LOG.md

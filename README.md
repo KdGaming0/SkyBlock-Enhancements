@@ -19,8 +19,6 @@
 - **Enter to Confirm Signs**: Press Enter to confirm Hypixel input signs (optionally all signs).
 - **Kat Pet Upgrade Reminders**: Set reminders for pet upgrades at Kat, with configurable sound alerts.
 - **General Reminders** (`/remindme`): Create and manage custom reminders with real-time or play-time triggers, repeating options, and multiple output types (chat, title box, sound, or chat + title). Includes a graphical interface (`/remindme gui`) for easy management.
-- **Item Glow Outline**: Adds a customizable glow outline to dropped items, with optional see-through-walls support and a configurable color.
-- **Hide Cheap Coins**: Hides cheap coin ground drops (coin/coins player-head drops).
 - **Slot Locking & Binding**: Link inventory slots to hotbar slots for quick item swapping. Hold the Slot Edit key (default **L**) and left-click an inventory slot, then a hotbar slot, to create the link.
   - Hold down Shift and click one of the bound slots to instantly swap the item between the inventory and hotbar slot.
   - Press L quickly to lock a slot, preventing accidental item movement. Press L again to unlock.
