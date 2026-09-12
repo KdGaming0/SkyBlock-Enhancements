@@ -1,5 +1,10 @@
 ## Changelog for 1.2.0
 
+### **Enchant tooltips**
+- Fixed enchantment warnings carrying over between items or failing to appear.
+- Enchantment warnings now refresh when settings change or updated enchant data arrives.
+- Improved tooltip responsiveness by loading enchant data in the background.
+
 ### **Minecraft support**
 - Updated to Minecraft 26.2; Minecraft 26.1 is no longer supported.
 

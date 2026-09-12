@@ -10,22 +10,20 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-// import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
-
 /**
  * Extracts the information needed to evaluate missing enchants from a hovered item.
  *
  * <p>Two things are read:
  * <ul>
  *   <li><b>Item type</b> — derived from the rarity/type line at the bottom of the tooltip
- *       (e.g. "LEGENDARY SWORD"). Only types listed in {@code SUPPORTED_TYPES} are considered
+ *       (e.g. "LEGENDARY SWORD"). Only types matched by {@code TYPE_LINE} are considered
  *       enchantable; everything else returns {@code null} so the feature is skipped.</li>
  *   <li><b>Current enchants</b> — the keys of the {@code enchantments} compound inside the
  *       item's Skyblock custom NBT data.</li>
  * </ul>
  *
  * <p>Returns {@code null} from {@link #readHoveredItemInfo} for any item that should be ignored:
- * unsupported type, no enchants, or carrying One For All (which overrides normal enchant rules).
+ * unsupported type or carrying One For All (which overrides normal enchant rules).
  */
 final class HoveredEnchantReader {
 
@@ -64,7 +62,6 @@ final class HoveredEnchantReader {
     }
 
     private Map<String, Integer> extractEnchantIds(CustomData customData) {
-        // LOGGER.wiki("Parsing enchants from NBT");
         CompoundTag tag = customData.copyTag();
 
         return tag.getCompound("enchantments").map(enchantments -> {

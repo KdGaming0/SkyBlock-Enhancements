@@ -2,11 +2,7 @@ package com.github.kd_gaming1.skyblockenhancements.feature.missingenchants;
 
 import com.github.kd_gaming1.skyblockenhancements.util.JsonLookup;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-
-// import static com.github.kd_gaming1.skyblockenhancements.SkyblockEnhancements.LOGGER;
 
 /**
  * Determines which enchants are missing from an item given its type and current enchants.
@@ -27,12 +23,10 @@ import java.util.*;
 final class MissingEnchantResolver {
 
     private final JsonLookup lookup;
-    private final Path enchantsJsonPath;
 
     // Flat map from enchant ID to its pool index, populated once from enchants.json.
     private final Map<String, List<Integer>> poolIdsByEnchant = new HashMap<>();
     private int poolCount = 0;
-    private boolean poolsLoaded = false;
 
     // Pretty-name cache: enchant ID -> display name (e.g. "turbo_wheat" -> "Turbo-Wheat")
     private final Map<String, String> prettyNameCache = new HashMap<>(512);
@@ -40,16 +34,13 @@ final class MissingEnchantResolver {
     private static final String[] ROMAN = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
 
 
-    MissingEnchantResolver(JsonLookup lookup, Path enchantsJsonPath) {
+    MissingEnchantResolver(JsonLookup lookup) {
         this.lookup = lookup;
-        this.enchantsJsonPath = enchantsJsonPath;
+        loadPools();
     }
 
     List<String> findMissingEnchantNames(String itemType, Set<String> currentEnchants) {
-        // LOGGER.wiki("Resolving missing enchants for {}", itemType);
-        if (!loadPoolsIfNeeded()) return List.of();
-
-        List<String> possibleEnchants = lookup.getEnchants(itemType, enchantsJsonPath);
+        List<String> possibleEnchants = lookup.getEnchants(itemType);
         if (possibleEnchants.isEmpty()) return List.of();
 
         // Pre-compute which pools are already satisfied so isMissingEnchant can do a fast BitSet lookup.
@@ -82,23 +73,8 @@ final class MissingEnchantResolver {
         return enchantId.startsWith("ultimate_");
     }
 
-    void clearCaches() {
-        poolIdsByEnchant.clear();
-        poolCount = 0;
-        poolsLoaded = false;
-        prettyNameCache.clear();
-    }
-
-    private boolean loadPoolsIfNeeded() {
-        if (poolsLoaded) return true;
-
-        // File missing means the repo data hasn't been downloaded yet — try again next call.
-        if (!Files.exists(enchantsJsonPath)) return false;
-
-        List<List<String>> pools = lookup.getEnchantPools(enchantsJsonPath);
-        if (pools == null || pools.isEmpty()) return false;
-
-        poolIdsByEnchant.clear();
+    private void loadPools() {
+        List<List<String>> pools = lookup.getEnchantPools();
         poolCount = pools.size();
 
         for (int poolId = 0; poolId < pools.size(); poolId++) {
@@ -107,8 +83,6 @@ final class MissingEnchantResolver {
             }
         }
 
-        poolsLoaded = true;
-        return true;
     }
 
     private BitSet buildSatisfiedPools(Set<String> currentEnchants) {
@@ -144,14 +118,13 @@ final class MissingEnchantResolver {
         return false;
     }
 
-    List<String> findNotMaxedEnchantNames(String itemType, Map<String, Integer> currentEnchants) {
-        List<String> possibleEnchants = lookup.getEnchants(itemType, enchantsJsonPath);
+    List<String> findNotMaxedEnchantNames(Map<String, Integer> currentEnchants) {
         List<String> notMaxed = new ArrayList<>();
 
         for (Map.Entry<String, Integer> entry : currentEnchants.entrySet()) {
             String id = entry.getKey();
             int currentLevel = entry.getValue();
-            int maxLevel = lookup.getMaxLevel(id, enchantsJsonPath);
+            int maxLevel = lookup.getMaxLevel(id);
             if (maxLevel > 0 && currentLevel < maxLevel) {
                 notMaxed.add(toPrettyName(id) + " " + toRoman(currentLevel) + "→" + toRoman(maxLevel));
             }

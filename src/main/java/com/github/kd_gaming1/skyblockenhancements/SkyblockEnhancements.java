@@ -25,7 +25,6 @@ import com.github.kd_gaming1.skyblockenhancements.util.tab.TabListMonitor;
 import com.github.kd_gaming1.skyblockenhancements.util.tool.HeldItemTracker;
 import eu.midnightdust.lib.config.MidnightConfig;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.azureaaron.hmapi.network.HypixelNetworking;
 import net.azureaaron.hmapi.network.packet.v1.s2c.LocationUpdateS2CPacket;
@@ -100,16 +99,6 @@ public class SkyblockEnhancements implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> IrisCompat.tick());
         ClientTickEvents.END_CLIENT_TICK.register(client -> priceFetcher.tick());
 
-        // Enchant data is independent of RRV — always fetch on startup.
-        ClientLifecycleEvents.CLIENT_STARTED.register(
-                client -> CompletableFuture.runAsync(() -> {
-                    try {
-                        downloadEnchantsData();
-                    } catch (Exception e) {
-                        LOGGER.error("Failed to download enchants data", e);
-                    }
-                }));
-
         initReminders();
     }
 
@@ -142,24 +131,6 @@ public class SkyblockEnhancements implements ClientModInitializer {
             RemindersFileData data = reminderManager.saveToStorage();
             reminderStorage.setRemindersData(data);
             reminderStorage.save();
-        }
-    }
-
-    private static void downloadEnchantsData() throws Exception {
-        String url = "https://raw.githubusercontent.com/NotEnoughUpdates/NotEnoughUpdates-REPO/master/constants/enchants.json";
-        java.net.http.HttpClient http = java.net.http.HttpClient.newHttpClient();
-        com.google.gson.Gson gson = new com.google.gson.GsonBuilder().create();
-        com.github.kd_gaming1.skyblockenhancements.repo.network.JsonHttpClient client =
-                new com.github.kd_gaming1.skyblockenhancements.repo.network.JsonHttpClient(http, gson);
-        String text = client.getString(url);
-        if (text != null) {
-            java.nio.file.Path target = FabricLoader.getInstance()
-                    .getConfigDir()
-                    .resolve(MOD_ID)
-                    .resolve("data")
-                    .resolve("constants")
-                    .resolve("enchants.json");
-            com.github.kd_gaming1.skyblockenhancements.repo.io.AtomicFileWriter.writeString(target, text);
         }
     }
 
