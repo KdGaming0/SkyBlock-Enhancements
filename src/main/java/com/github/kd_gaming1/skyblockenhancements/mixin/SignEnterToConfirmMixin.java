@@ -39,7 +39,7 @@ public abstract class SignEnterToConfirmMixin {
         }
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.screen != self) return;
+        if (mc.gui.screen() != self) return;
 
         ((AbstractSignEditScreenAccessor) self).sbe$invokeOnDone();
         cir.setReturnValue(true);

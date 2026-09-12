@@ -43,7 +43,7 @@ public class Fullbright {
 
             if (client.player != null) {
                 boolean on = SkyblockEnhancementsConfig.enableFullbright;
-                client.gui.setOverlayMessage(
+                client.gui.hud.setOverlayMessage(
                         Component.literal("Fullbright " + (on ? "§aenabled" : "§cdisabled")), false);
             }
         }

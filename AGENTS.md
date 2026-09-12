@@ -18,15 +18,15 @@ SkyBlock Enhancements is a Fabric client mod for Minecraft (Hypixel SkyBlock) pr
 
 ## Build system
 
-This repo uses **Stonecutter** (`dev.kikugie.stonecutter`) for multi-Minecraft-version builds. Currently only one version node exists: `26.1` (backed by MC `26.1.2`), configured in `settings.gradle.kts`. Version-specific sources live under `versions/26.1/`; the root `build.gradle.kts` and `src/` are shared/active-version files that Stonecutter manages via symlink-like syncing — do not assume `src/` is a normal single-version source set when reasoning about multi-version behavior.
+This repo uses **Stonecutter** (`dev.kikugie.stonecutter`) for multi-Minecraft-version builds. Currently only one version node exists: `26.2` (backed by MC `26.2`), configured in `settings.gradle.kts`. Version-specific sources live under `versions/26.2/`; the root `build.gradle.kts` and `src/` are shared/active-version files that Stonecutter manages via symlink-like syncing — do not assume `src/` is a normal single-version source set when reasoning about multi-version behavior.
 
 Key properties are centralized in `stonecutter.properties.toml` (mod id/name/group/version, per-MC-version dependency versions) rather than scattered across build scripts.
 
 ### Common commands
 
-Run all Gradle commands through the wrapper (`./gradlew`), targeting the active Stonecutter node `26.1`:
+Run all Gradle commands through the wrapper (`./gradlew`), targeting the active Stonecutter node `26.2`:
 
-- Build: `./gradlew build` (or `./gradlew :26.1:build`)
+- Build: `./gradlew build` (or `./gradlew :26.2:build`)
 - Build and collect jar to `build/libs/<mod version>/`: `./gradlew buildAndCollect`
 - Run the client (dev environment, shared `run/` dir): `./gradlew runClient`
 - Run tests: `./gradlew test` (JUnit 5 via `junit-platform-launcher`; no test sources currently exist in the repo)

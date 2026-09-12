@@ -7,14 +7,14 @@ mod.version = "1.2.0"
 deps.fabric_loader = "0.19.5"
 loomx.loom_version = "1.17-SNAPSHOT"
 
-["26.1"]
-mod.mc_compat = "~26.1"
-mod.mc_releases = ["26.1", "26.1.1", "26.1.2"]
+["26.2"]
+mod.mc_compat = "~26.2"
+mod.mc_releases = ["26.2"]
 
-deps.fabric_api = "0.155.2+26.1.2"
-deps.midnightlib_version = "1.9.3+26.1-fabric"
-deps.modmenu_version = "18.0.0-beta.1"
-deps.hm_api_version = "1.0.3+26.1"
-deps.uilib_version="20.1.4"
+deps.fabric_api = "0.158.0+26.2"
+deps.midnightlib_version = "1.9.3+26.2-fabric"
+deps.modmenu_version = "20.0.1"
+deps.hm_api_version = "1.0.4+26.2"
+deps.uilib_version="21.1.1"
 deps.architectury_api_version="20.0.6+fabric"
 deps.rpc_version="1.2.7"

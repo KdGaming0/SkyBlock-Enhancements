@@ -58,12 +58,12 @@ public final class ReminderNotifier {
                             .withStyle(ChatFormatting.DARK_GRAY));
         }
 
-        client.gui.getChat().addClientSystemMessage(msg);
+        client.gui.hud.getChat().addClientSystemMessage(msg);
     }
 
     private void sendTitle(Minecraft client, Reminder reminder) {
-        client.gui.setTitle(Component.literal(reminder.message).withStyle(ChatFormatting.YELLOW));
-        client.gui.setSubtitle(Component.literal("Reminder").withStyle(ChatFormatting.GOLD));
+        client.gui.hud.setTitle(Component.literal(reminder.message).withStyle(ChatFormatting.YELLOW));
+        client.gui.hud.setSubtitle(Component.literal("Reminder").withStyle(ChatFormatting.GOLD));
     }
 
     private void playReminderSound(Minecraft client) {

@@ -62,7 +62,7 @@ public class SaveCursorPositionMouseHandlerMixin {
         if (mc == null) {
             return;
         }
-        Screen newScreen = mc.screen;
+        Screen newScreen = mc.gui.screen();
         CursorPosition position = SaveCursorPosition.loadCursor(this.xpos, this.ypos, newScreen);
         if (position != null) {
             this.xpos = position.x();

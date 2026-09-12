@@ -54,7 +54,7 @@ public class Commands {
 
         client.schedule(() -> {
             try {
-                client.setScreen(MidnightConfig.getScreen(client.screen, SkyblockEnhancements.MOD_ID));
+                client.gui.setScreen(MidnightConfig.getScreen(client.gui.screen(), SkyblockEnhancements.MOD_ID));
             } catch (Exception e) {
                 SkyblockEnhancements.LOGGER.error("Failed to open config menu", e);
             }

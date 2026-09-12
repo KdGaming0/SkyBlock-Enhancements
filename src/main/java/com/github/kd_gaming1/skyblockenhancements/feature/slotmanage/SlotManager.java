@@ -272,7 +272,7 @@ public final class SlotManager {
         if (!SkyblockEnhancementsConfig.enableSlotLocking) return;
         if (editModeClickConsumed) return;
         if (Util.getMillis() - editKeyDownAtMillis > TAP_MAX_MILLIS) return;
-        if (!(client.screen instanceof AbstractContainerScreen<?>)) return;
+        if (!(client.gui.screen() instanceof AbstractContainerScreen<?>)) return;
         Slot hovered = contextHoveredSlot;
         if (hovered != null && hovered.container instanceof Inventory) {
             toggleLock(hovered.getContainerSlot());
@@ -284,7 +284,7 @@ public final class SlotManager {
     private static Bucket activeBucket(boolean createIfNeeded) {
         if (storage == null || bucketKey == null) {
             if (createIfNeeded && bucketKey == null) {
-                Minecraft.getInstance().gui.setOverlayMessage(
+                Minecraft.getInstance().gui.hud.setOverlayMessage(
                         Component.translatable("skyblock_enhancements.slotlock.waiting_profile"), false);
             }
             return null;
@@ -322,7 +322,7 @@ public final class SlotManager {
     }
 
     private static void overlay(String translationKey) {
-        Minecraft.getInstance().gui.setOverlayMessage(Component.translatable(translationKey), false);
+        Minecraft.getInstance().gui.hud.setOverlayMessage(Component.translatable(translationKey), false);
     }
 
     private static void recomputeBucketKey() {

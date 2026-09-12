@@ -146,7 +146,7 @@ public class ReminderCommand {
             Minecraft client = Minecraft.getInstance();
             client.schedule(() -> {
                 try {
-                    client.setScreen(new ReminderScreen(
+                    client.gui.setScreen(new ReminderScreen(
                             reminderManager,
                             () -> persistReminders(reminderManager)));
                 } catch (Exception e) {

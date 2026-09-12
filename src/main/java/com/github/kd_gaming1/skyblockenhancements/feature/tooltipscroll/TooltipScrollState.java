@@ -52,7 +52,7 @@ public final class TooltipScrollState {
      * Resets scroll only when the screen, position, or item name changes.
      */
     public static void trackTooltip(List<ClientTooltipComponent> components, int mouseX, int mouseY) {
-        Screen screen = Minecraft.getInstance().screen;
+        Screen screen = Minecraft.getInstance().gui.screen();
         String screenClass = screen != null ? screen.getClass().getName() : "null";
 
         // Extract the first text line — usually the item name, which is stable.

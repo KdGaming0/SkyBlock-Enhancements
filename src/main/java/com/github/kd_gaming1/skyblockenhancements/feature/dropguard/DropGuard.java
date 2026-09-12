@@ -107,7 +107,7 @@ public final class DropGuard {
                 ? Component.translatable("skyblock_enhancements.dropguard.blocked_countdown",
                         rarity.displayName(), remaining)
                 : Component.translatable("skyblock_enhancements.dropguard.blocked", rarity.displayName());
-        mc.gui.setOverlayMessage(message, false);
+        mc.gui.hud.setOverlayMessage(message, false);
         mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.DISPENSER_FAIL, 1.0f));
     }
 }
