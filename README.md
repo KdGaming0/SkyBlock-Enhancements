@@ -6,7 +6,7 @@
 [![Requires Fabric API](https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/requires/fabric-api_vector.svg)](https://modrinth.com/mod/fabric-api)
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/skyblock-enhancements?color=00AF5C&label=downloads&logo=modrinth)](https://modrinth.com/mod/skyblock-enhancements)
 
-**Small but meaningful quality-of-life improvements for Hypixel SkyBlock — the tweaks that bigger mods don't cover.**
+**Small but meaningful quality-of-life improvements for Hypixel SkyBlock.**
 
 </div>
 

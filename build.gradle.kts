@@ -53,6 +53,7 @@ dependencies {
 
     implementation("maven.modrinth:ui-lib:${property("deps.uilib_version")}")
 
+    modRuntimeOnly("maven.modrinth:resourcepackcached:${property("deps.rpc_version")}")
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
     modRuntimeOnly("maven.modrinth:modmenu:${property("deps.modmenu_version")}")
 
@@ -128,7 +129,13 @@ tasks {
 
 if (sc.current.version in compatibleVersions) {
     val changelogFile = rootProject.file("CHANGELOG.md")
-    val publishChangelog = if (changelogFile.exists()) changelogFile.readText() else "No changelog provided."
+    val releaseSectionRegex = Regex("""(?ms)^##\s+Update\s+\d+\.\d+\.\d+.*?(?=^##\s+|\z)""")
+
+    val publishChangelog = changelogFile.takeIf(File::exists)
+        ?.readText()
+        ?.let { releaseSectionRegex.find(it)?.value?.trim() }
+        ?.takeIf(String::isNotBlank)
+        ?: "No changelog provided."
 
     publishMods {
         file.set(loomx.modJar.flatMap { it.archiveFile })
@@ -140,10 +147,7 @@ if (sc.current.version in compatibleVersions) {
         type.set(STABLE)
         modLoaders.add("fabric")
 
-        dryRun.set(
-            providers.environmentVariable("MODRINTH_TOKEN").getOrNull() == null
-                    || providers.environmentVariable("CURSEFORGE_TOKEN").getOrNull() == null
-        )
+        dryRun.set(providers.environmentVariable("MODRINTH_TOKEN").getOrNull() == null)
 
         val modrinthId = providers.gradleProperty("publish.modrinth").orNull
         if (!modrinthId.isNullOrEmpty()) {
@@ -151,8 +155,8 @@ if (sc.current.version in compatibleVersions) {
                 projectId.set(modrinthId)
                 accessToken.set(providers.environmentVariable("MODRINTH_TOKEN"))
                 minecraftVersions.addAll(compatibleVersions)
-                requires { slug = "AOEDs9Al" } // UI Lib
                 requires { slug = "P7dR8mSH" } // Fabric API
+                requires { slug = "AOEDs9Al" } // UI Lib
                 optional { slug = "mOgUt4GM" } // ModMenu
                 embeds   { slug = "codAaoxh" } // MidnightLib
             }
@@ -164,9 +168,11 @@ if (sc.current.version in compatibleVersions) {
                 projectId.set(curseforgeId)
                 accessToken.set(providers.environmentVariable("CURSEFORGE_TOKEN"))
                 minecraftVersions.addAll(compatibleVersions)
-                requires { slug = "fabric-api" }
-                optional { slug = "modmenu" }
-                embeds   { slug = "midnightlib" }
+                client.set(true)
+                requires { slug = "fabric-api" } // Fabric API
+                requires { slug = "ui" } // UI Lib
+                optional { slug = "modmenu" } // ModMenu
+                embeds   { slug = "midnightlib" } // MidnightLib
             }
         }
     }
