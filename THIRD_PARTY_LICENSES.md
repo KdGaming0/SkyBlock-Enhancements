@@ -188,3 +188,19 @@ Some inventory QoL behavior (including save-cursor position between inventory) w
 > apply, that proxy's public statement of acceptance of any version is
 > permanent authorization for you to choose that version for the
 > Library.
+
+---
+
+## Odin
+
+- **Author:** odtheking and Odin contributors
+- **Project:** https://github.com/odtheking/Odin
+- **License:** BSD 3-Clause; Copyright (c) 2025, odtheking
+- **Source:** [LocalPlayerMixin.java at 3316286](https://github.com/odtheking/Odin/blob/331628623c59f7a7274e3985ae16f5411ae21123/src/main/java/com/odtheking/mixin/mixins/LocalPlayerMixin.java)
+
+The sprint-input hook in `AutoSprintMixin.java` is adapted from Odin, with
+SkyBlock-only, menu, and optional water checks added. The full copyright notice, license terms,
+and disclaimer are retained in
+[`src/main/resources/licenses/Odin-BSD-3-Clause.txt`](src/main/resources/licenses/Odin-BSD-3-Clause.txt)
+and included in the distributed mod and sources jars. Firmament's sprint
+implementation was reviewed for comparison; its sprint code was not incorporated.

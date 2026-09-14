@@ -1,3 +1,9 @@
+## Update 1.2.1
+
+### **Auto Sprint**
+- Added optional automatic sprinting in SkyBlock, disabled by default.
+- Added a separate setting to allow automatic sprinting in water.
+
 ## Changelog for 1.2.0
 
 ### **Enchant tooltips**

@@ -27,6 +27,12 @@ public class SkyblockEnhancementsConfig extends MidnightConfig implements ModSet
     public static Comment text;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean autoSprint = false;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
+    public static boolean autoSprintInWater = true;
+
+    @Entry(category = SKYBLOCK_ENHANCEMENTS)
     public static boolean preventWeaponPlacement = true;
 
     @Entry(category = SKYBLOCK_ENHANCEMENTS)

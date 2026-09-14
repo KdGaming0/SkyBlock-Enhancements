@@ -13,6 +13,7 @@
 ## ✨ Features
 
 ### Skyblock Enhancements
+- **Auto Sprint**: Automatically sprint when moving forward in SkyBlock. Disabled by default, with a separate option for sprinting in water.
 - **Missing Enchants**: Identify missing and non-maxed enchantments directly in item tooltips.
   - *Configurable*: Option to only show when holding `Shift`.
 - **Prevent Weapon Placement**: Stops weapons like Spirit Sceptre from being placed accidentally.
